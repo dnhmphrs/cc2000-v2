@@ -29,6 +29,7 @@
 
 		let today = new Date();
 		let todayString = today.toISOString().slice(0, 10);
+		console.log(date);
 		console.log(todayString);
 
 		// if date is before 1958-06-01
@@ -59,7 +60,7 @@
 				}
 			}
 
-			track.set(data[conception_date][$spicy]);
+			track.set(data[conception_date][9 - $spicy]); // fix ordering
 			console.log($track);
 			page.set(3);
 		}
@@ -130,13 +131,13 @@
 		height: 16px;
 		width: 16px;
 		border-radius: 50%;
-		background: var(--black);
+		background: var(--true-black);
 		border: solid 2px var(--pink);
 		margin-top: -6px;
 	}
 
 	.calculate {
-		background: var(--blactrue-blackk);
+		background: var(--true-blackk);
 		border: solid 1px var(--pink);
 		color: var(--white);
 		padding: 0.5rem 1rem;
