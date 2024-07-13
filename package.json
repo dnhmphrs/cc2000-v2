@@ -1,6 +1,7 @@
 {
-	"name": "aufbau",
-	"version": "0.6.0",
+	"name": "conception-calculator-2000",
+	"description": "Conceived by Science, Built by Magic.",
+	"version": "0.1.0",
 	"license": "MIT",
 	"scripts": {
 		"dev": "vite dev --port 3000",

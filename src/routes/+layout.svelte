@@ -9,9 +9,6 @@
 	import { screenType, isIframe, screenSize } from '$lib/store/store';
 	import { getDeviceType, getScreenSize } from '$lib/functions/utils';
 
-	import Header from '$lib/components/header/header.svelte';
-	import Footer from '$lib/components/footer/footer.svelte';
-
 	export let data;
 	let Geometry;
 
@@ -34,7 +31,7 @@
 
 	onMount(async () => {
 		// webgl
-		const module = await import('$lib/graphics/three.svelte');
+		const module = await import('$lib/graphics/geometry.svelte');
 		Geometry = module.default;
 
 		handleScreen();
@@ -43,7 +40,6 @@
 		// releasr opacity block once geometry is loaded
 		document.querySelector('main').style.opacity = 1;
 
-
 		return () => {
 			window.removeEventListener('resize', () => handleScreen());
 		};
@@ -51,75 +47,34 @@
 </script>
 
 <svelte:head>
-	<title>MAKE WEB FUN AGAIN</title>
-	<meta
-		name="description"
-		content="AUFBAU // DER LOGISCHE AUFBAU DER WEB"
-	/>
-	<meta
-		name="keywords"
-		content="AUFBAU, Creative, Freelance, Freelancer, Web, Websites, Apps, Shaders, Graphics, WebGL, WebGPU, Rust, Developer, Engineer, Engineering, Development, London, Dan Humphries, Daniel Humphries, UCL, Neuroscience, Mathematics, Machine Learning, ML"
-	/>
+	<title>Conception Calculator 2000</title>
+	<meta name="description" content="Conceived by Science, Built by Magic." />
+	<meta name="keywords" content="conception, calculator, parents, truth, test results, sex?" />
 	<meta name="author" content="AUFBAU" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </svelte:head>
 
 {#if Geometry}
-    <svelte:component this={Geometry} />
+	<svelte:component this={Geometry} />
 {:else}
-    <div class="loading">loading.</div>
+	<div class="loading">gestating...</div>
 {/if}
 
+<svelte:component this={Geometry} />
+
 <main>
-	<header>
-		<Header />
-	</header>
-
-	<body>
-		<slot />
-	</body>
-
-	{#if $screenType==3}
-	<footer>
-		<Footer />
-	</footer>
-	{/if}
-	
+	<slot />
 </main>
 
 <style>
 	main {
+		height: 100vh;
+		height: calc(var(--vh, 1vh) * 100);
+		width: 100%;
+
 		display: flex;
-		flex-direction: column;
-		height: 100dvh;
-		max-height: 100vh;
-		background: none;
-		opacity: 0;
-		overflow: hidden;
-	}
-
-	header {
-		position: absolute;
-		top: 0;
-		width: 100%;
-		z-index: 1;
-	}
-
-	footer {
-		position: absolute;
-		bottom: 0;
-		width: 100%;
-
-	}
-
-	body {
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-		/* padding: calc(1 * var(--margin)); */
-		width: 100%;
-		height: 100%;
-		background: none;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.loading {
