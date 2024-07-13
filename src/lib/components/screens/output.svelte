@@ -20,7 +20,7 @@
 		allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 		loading="lazy"
 	/>
-	<h3 on:click={() => handleProgress()}>Output. Whatevs.</h3>
+	<h3 on:click={() => handleProgress()} on:keydown={() => handleProgress()}>Output. Whatevs.</h3>
 </section>
 
 <style>

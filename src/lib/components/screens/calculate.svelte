@@ -81,7 +81,7 @@
 		<input type="range" id="volume" name="volume" bind:value={$spicy} min="0" max="9" />
 	</div>
 
-	<div class="calculate" on:click={() => handleProgress()}>
+	<div class="calculate" on:click={() => handleProgress()} on:keydown={() => handleProgress()}>
 		<h4>CALCULATE</h4>
 	</div>
 </section>

@@ -7,7 +7,7 @@
 </script>
 
 <section>
-	<h3 on:click={() => handleProgress()}>Transitioning. Blah. Blah.</h3>
+	<h3 on:click={() => handleProgress()} on:keydown={() => handleProgress()}>Transitioning. Blah. Blah.</h3>
 </section>
 
 <style>
