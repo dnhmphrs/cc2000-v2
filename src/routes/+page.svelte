@@ -27,7 +27,7 @@
 		<Transition />
 	{:else if $page == 4}
 		<Output />
-	{/if}\
+	{/if}
 </main>
 
 <style>

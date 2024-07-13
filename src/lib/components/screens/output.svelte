@@ -25,7 +25,8 @@
 
 <style>
 	section {
-		width: 100%;
+		position: relative;
+		/* width: 100%; */
 		height: 100%;
 		display: flex;
 		flex-flow: row wrap;
@@ -43,6 +44,7 @@
 
 	iframe {
 		height: 88%;
+		width: 100%;
 	}
 
 	h3 {
