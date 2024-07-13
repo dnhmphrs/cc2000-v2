@@ -20,13 +20,13 @@
 		allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 		loading="lazy"
 	/>
-	<h1 on:click={() => handleProgress()}>Output. Whatevs.</h1>
+	<h3 on:click={() => handleProgress()}>Output. Whatevs.</h3>
 </section>
 
 <style>
 	section {
 		width: 100%;
-		height: 120%;
+		height: 100%;
 		display: flex;
 		flex-flow: row wrap;
 
@@ -42,10 +42,10 @@
 	}
 
 	iframe {
-		height: 90%;
+		height: 88%;
 	}
 
-	h1 {
+	h3 {
 		text-align: center;
 		flex-shrink: 1;
 		padding: 0.5rem 1rem;
@@ -57,7 +57,7 @@
 		cursor: pointer;
 	}
 
-	h1:hover {
+	h3:hover {
 		border-color: var(--pink);
 		color: var(--pink);
 	}

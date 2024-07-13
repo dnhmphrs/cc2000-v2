@@ -68,21 +68,21 @@
 
 <section>
 	<div>
-		<h5>CONCEPTION CALCULATOR 2000</h5>
+		<h3>CONCEPTION CALCULATOR 2000</h3>
 	</div>
 
 	<div class="dob">
-		<h6>DATE OF BIRTH</h6>
+		<h4>DATE OF BIRTH</h4>
 		<input type="date" bind:value={$date} />
 	</div>
 
 	<div class="spicy">
-		<h6>HOW SPICY?</h6>
+		<h4>HOW SPICY?</h4>
 		<input type="range" id="volume" name="volume" bind:value={$spicy} min="0" max="9" />
 	</div>
 
 	<div class="calculate" on:click={() => handleProgress()}>
-		<h6>CALCULATE</h6>
+		<h4>CALCULATE</h4>
 	</div>
 </section>
 

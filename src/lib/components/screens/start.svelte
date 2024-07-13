@@ -7,7 +7,7 @@
 </script>
 
 <section>
-	<h1 on:click={() => handleProgress()}>In the year 2000. Blah. Blah. Start.</h1>
+	<h3 on:click={() => handleProgress()}>In the year 2000. Blah. Blah. Start.</h3>
 </section>
 
 <style>
@@ -17,7 +17,7 @@
 		display: flex;
 	}
 
-	h1 {
+	h3 {
 		text-align: center;
 
 		position: absolute;
@@ -33,7 +33,7 @@
 		cursor: pointer;
 	}
 
-	h1:hover {
+	h3:hover {
 		border-color: var(--pink);
 		color: var(--pink);
 	}

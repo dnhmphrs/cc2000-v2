@@ -51,17 +51,6 @@ a:hover {
 	color: var(--black);
 }
 
-::-moz-selection {
-	/* Code for Firefox */
-	color: red;
-	background: yellow;
-}
-
-::selection {
-	color: red;
-	background: yellow;
-}
-
 @font-face {
 	font-family: untitled-sans;
 	src: url(/fonts/test-untitled-sans-light.woff2) format('woff2');
