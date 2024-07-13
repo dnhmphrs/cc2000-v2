@@ -20,7 +20,7 @@
 		allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 		loading="lazy"
 	/>
-	<h3 on:click={() => handleProgress()} on:keydown={() => handleProgress()}>Output. Whatevs.</h3>
+	<h4 on:click={() => handleProgress()} on:keydown={() => handleProgress()}>Output. Whatevs.</h4>
 </section>
 
 <style>
@@ -47,7 +47,7 @@
 		width: 100%;
 	}
 
-	h3 {
+	h4 {
 		text-align: center;
 		flex-shrink: 1;
 		padding: 0.5rem 1rem;
@@ -59,7 +59,7 @@
 		cursor: pointer;
 	}
 
-	h3:hover {
+	h4:hover {
 		border-color: var(--pink);
 		color: var(--pink);
 	}
