@@ -1,9 +1,6 @@
 @import 'normalize.css';
 @import '$lib/styles/fonts.css';
 
-@tailwind base;
-/* putting custom CSS before `@tailwind utilities;` so utilities can override it */
-
 /* APP */
 :root {
 	--blue: #0033bb;
