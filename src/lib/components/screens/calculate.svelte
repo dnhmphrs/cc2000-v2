@@ -90,7 +90,7 @@
 <style>
 	section {
 		/* width: 100%; */
-		height: 100%;
+		height: 90%;
 		display: flex;
 		flex-flow: column nowrap;
 
@@ -101,6 +101,10 @@
 		color: var(--pink);
 		border: solid 1px var(--pink);
 		padding: 2rem;
+	}
+
+	h3 {
+		text-align: center;
 	}
 
 	input[type='date'] {
@@ -141,7 +145,7 @@
 		border: solid 1px var(--pink);
 		color: var(--white);
 		padding: 0.5rem 1rem;
-
+		margin-top: 2rem;
 		cursor: pointer;
 	}
 
