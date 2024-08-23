@@ -127,7 +127,7 @@
 		appearance: none;
 		-webkit-appearance: none;
 		cursor: pointer;
-		background: var(--white);
+		background: none;
 	}
 
 	input[type='range']::-webkit-slider-runnable-track {
