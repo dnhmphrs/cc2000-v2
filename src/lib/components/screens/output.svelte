@@ -11,6 +11,8 @@
 	};
 </script>
 
+<img class="background" src="90s_Illustration.jpg" alt="90s illustration" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; border-radius: 12px;"/>
+
 <section>
 	<!-- svelte-ignore a11y-missing-attribute -->
 	<iframe
@@ -21,10 +23,15 @@
 		allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 		loading="lazy"
 	/>
-	<h4 on:click={() => handleProgress()} on:keydown={() => handleProgress()}>Output. Whatevs.</h4>
+	<h4 on:click={() => handleProgress()} on:keydown={() => handleProgress()}>Restart.</h4>
 </section>
 
 <style>
+	.background {
+		opacity: 0;
+		animation: fadein 1s 1s ease-out;
+		animation-fill-mode: forwards;
+	}
 	section {
 		position: relative;
 		/* width: 100%; */
@@ -35,12 +42,15 @@
 		justify-content: space-around;
 		align-items: center;
 
-		background: var(--true-black);
-		color: var(--white);
-		border: solid 1px var(--pink);
+		background: none;
+		color: var(--black);
 
 		padding: 2rem;
 		transform: translateY(-10%);
+
+		opacity: 0;
+		animation: fadein 1s 1s ease-out;
+		animation-fill-mode: forwards;
 	}
 
 	iframe {

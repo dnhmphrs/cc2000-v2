@@ -37,14 +37,20 @@
 	});
 </script>
 
-<section>
+<div class="text">
 	<p on:click={() => handleProgress()} on:keydown={() => handleProgress()}>
 		{displayedText}
 	</p>
+</div>
+
+<section>
+	<div class="calculate" on:click={() => handleProgress()}  on:keydown={() => handleProgress()}>
+		<h4>Process Biometrics</h4>
+	</div>
 </section>
 
 <style>
-	section {
+	.text {
 		position: absolute;
 		top: 0;
 		left: 0;
@@ -53,6 +59,37 @@
 		display: flex;
 		align-items: flex-start; /* Align text to the top */
 		justify-content: flex-start; /* Align text to the left */
+	}
+
+	section {
+		position: relative;
+		/* width: 100%; */
+		height: 80%;
+		display: flex;
+		flex-flow: row wrap;
+
+		justify-content: space-around;
+		align-items: center;
+
+		background: none;
+		color: var(--black);
+
+		padding: 2rem;
+		transform: translateY(-10%);
+
+		opacity: 0;
+		animation: fadein .5s 2s ease-out;
+		animation-fill-mode: forwards;
+	}
+
+	.calculate {
+		margin: 0; /* Remove any default margin */
+		padding: 0 1rem; /* Add some padding */
+		background: var(--black);
+		color: var(--white);
+		white-space: pre-wrap; /* Ensure line breaks are respected */
+		cursor: pointer;
+		background: #150DF7;
 	}
 
 	p {

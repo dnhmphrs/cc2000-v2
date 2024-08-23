@@ -32,7 +32,7 @@
 
 		// Set up renderer
 		renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-		renderer.setClearColor(0xd0d0d0, 1);
+		renderer.setClearColor(0x232323, 1);
 		renderer.setSize(window.innerWidth, window.innerHeight);
 
 		// Set up clock for smooth animations
@@ -43,7 +43,7 @@
 		scene.add(light);
 
 		// Add fog to the scene
-		const color = 0xd0d0d0;
+		const color = 0x232323;
 		const density = 0.01;
 		scene.fog = new THREE.FogExp2(color, density);
 
@@ -186,8 +186,8 @@
 			});
 
 		// Page 3 animation: Change background clearColor and fog color to 0xd0d0d0
-		tweens['backgroundColorChange'] = new Tween({ r: 208, g: 208, b: 208 }) // Start with the original color 0x0b0b0b
-			.to({ r: 12, g: 12, b: 12 }, 3000) // Transition to color 0xd0d0d0
+		tweens['backgroundColorChange'] = new Tween({ r: 35, g: 35, b: 35 }) // Start with the original color 0x0b0b0b
+			.to({ r: 208, g: 208, b: 208 }, 3000) // Transition to color 0xd0d0d0
 			.easing(Easing.Quadratic.InOut)
 			.onUpdate((color) => {
 				const newColor = new THREE.Color(`rgb(${Math.floor(color.r)}, ${Math.floor(color.g)}, ${Math.floor(color.b)})`);
@@ -209,7 +209,7 @@
 
 			// Page 3 animation: Change lighting to 0x0b0b0b
 			tweens['lightingChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 35, g2: 35, b2: 35 }) // Start with the original light color (0xb0b0b0)
-				.to({ r1: 11, g1: 11, b1: 11, r2: 11, g2: 11, b2: 11 }, 3000) // Transition to color 0x0b0b0b
+				.to({ r1: 208, g1: 208, b1: 208, r2: 208, g2: 208, b2: 208 }, 3000) // Transition to color 0x0b0b0b
 				.easing(Easing.Quadratic.InOut)
 				.onUpdate((colors) => {
 					const newSkyColor = new THREE.Color(`rgb(${Math.floor(colors.r1)}, ${Math.floor(colors.g1)}, ${Math.floor(colors.b1)})`);

@@ -99,7 +99,7 @@
 
 		background: none;
 		color: var(--white);
-		border: solid 1px var(--blue);
+		border: solid 1px var(--white);
 		padding: 2rem;
 
 		opacity: 0;
@@ -109,17 +109,17 @@
 
 	h3 {
 		text-align: center;
-		color: var(--blue);
+		color: var(--white);
 	}
 
 	h4 {
-		color: var(--blue);
+		color: var(--white);
 	}
 
 	input[type='date'] {
 		background: var(--white);
-		border: solid 1px var(--blue);
-		color: var(--blue);
+		border: solid 1px var(--white);
+		color: var(--black);
 		padding: 10px;
 	}
 
@@ -134,7 +134,7 @@
 		width: 300px;
 		height: 2px;
 		margin: 5px;
-		background: var(--blue);
+		background: var(--white);
 		border: none;
 		border-radius: 3px;
 	}
@@ -145,22 +145,26 @@
 		height: 16px;
 		width: 16px;
 		border-radius: 50%;
-		background: var(--blue);
+		background: var(--black);
 		border: solid 2px var(--white);
 		margin-top: -6px;
 	}
 
 	.calculate {
 		background: var(--white);
-		border: solid 1px var(--blue);
-		color: var(--blue);
+		border: solid 1px var(--white);
+		color: var(--black);
 		padding: 0.5rem 1rem;
 		margin-top: 2rem;
 		cursor: pointer;
 	}
 
+	.calculate h4 {
+		color: var(--black);
+	}
+
 	.calculate:hover {
-		background: var(--blue);
+		background: var(--black);
 	}
 
 	.calculate:hover h4 {

@@ -3,13 +3,12 @@
 
 /* APP */
 :root {
-	--blue: #0033bb;
 	--black: #232323;
 	--true-black: #0b0b0b;
 	--white: #d0d0d0;
 	--white-50: #fafafa80;
 	--pink: #d0d0d0;
-	--blue: #150df7;
+	--blue: #d0d0d0;
 }
 
 html,
