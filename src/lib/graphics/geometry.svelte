@@ -1,257 +1,212 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
-	// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+	import { page } from '$lib/store/store';
 	import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 	import * as THREE from 'three';
+	import { Tween, Easing } from '@tweenjs/tween.js';
 
-	// import AsciiRenderer from '$lib/components/effects/ascii-renderer.js';
-	// console.log(AsciiRenderer);
+	let container, animationFrameId;
+	let scene, camera, renderer, clock;
+	let spermGroup, cameraGroup;
+	let gridHelpers = [];
+	let sphere, outerSphere;
+	let tweens = {};  // Store tweens for different animations
 
-	let container, pc, id;
-	onDestroy(() => cancelAnimationFrame(id));
-
-	// Setting up the scene
-	let scene = new THREE.Scene();
-
-	let height = window.innerHeight;
-	let width = window.innerWidth;
-
-	// Setting up a camera
-	let camera = new THREE.PerspectiveCamera(30, width / height, 0.5, 400);
-	camera.position.z = 100;
-
-	let sperm, mac;
-
-	var asciiRenderer;
-	var charSet =
-		'010001100110111101110010001d0d00d1000111011011110' +
-		'1100100001d0d00d111001101101111001d0d00d110110001' +
-		'101111011101100110010101100100001d0d00d1110100011' +
-		'0100001100101001d0d00d111011101101111011100100110' +
-		'110001100100001d0d00d1110100011010000110000101110' +
-		'100001d0d00d110100001100101001d0d00d1100111011000' +
-		'010111011001100101001d0d00d1101000011010010111001' +
-		'1001d0d00d11011110110111001100101001d0d00d1100001' +
-		'0110111001100100001d0d00d110111101101110011011000' +
-		'1111001001d0d00d101001101101111011011100010110000' +
-		'1d0d00d1110100011010000110000101110100001d0d00d11' +
-		'1011101101000011011110110010101110110011001010111' +
-		'0010001d0d00d110001001100101011011000110100101100' +
-		'101011101100110010101110011001d0d00d1101001011011' +
-		'10001d0d00d11010000110100101101101001d0d00d111001' +
-		'101101000011000010110110001101100001d0d00d1101110' +
-		'0110111101110100001d0d00d111000001100101011100100' +
-		'11010010111001101101000001d0d00d11000100111010101' +
-		'110100001d0d00d1101000011000010111011001100101001' +
-		'd0d00d1100101011101000110010101110010011011100110' +
-		'000101101100001d0d00d1101100011010010110011001100' +
-		'10100100000';
-
-	// Setting up the renderer. This will be called later to render scene with the camera setup above
-	let renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
-	renderer.setClearColor(0x232323, 1);
-
-	// renderer.setPixelRatio(window.devicePixelRatio);
-	// renderer.setSize(width, height);
-
-	onMount(() => {
-		container.appendChild(renderer.domElement);
-
-		// asciiRenderer = new AsciiRenderer(renderer, {
-		// 	charSet: charSet,
-		// 	fontSize: 1,
-		// 	opacity: 0.1
-		// });
-
-		// asciiRenderer.setSize(width, height);
-		renderer.setSize(width, height);
-
-		setTimeout(() => {
-			window.dispatchEvent(new KeyboardEvent('keydown', { key: 's' }));
-		}, '1000');
+	onDestroy(() => {
+		cancelAnimationFrame(animationFrameId);
+		window.removeEventListener('resize', handleWindowResize);
 	});
 
-	// let controls = new OrbitControls(camera, renderer.domElement);
-	// controls.enablePan = false;
-	// controls.enableZoom = false;
-	// controls.minAzimuthAngle = -Math.PI / 4;
-	// controls.maxAzimuthAngle = (Math.PI * 3) / 4;
-	// controls.enableDamping = true;
-	// controls.dampingFactor = 0.07;
-	// controls.rotateSpeed = 0.05;
-	// controls.update();
+	function initializeScene() {
+		scene = new THREE.Scene();
 
-	{
+		// Set up camera and camera group
+		camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.5, 400);
+		camera.position.z = 0;
+
+		cameraGroup = new THREE.Group();
+		cameraGroup.add(camera);
+		scene.add(cameraGroup);
+
+		// Set up renderer
+		renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+		renderer.setClearColor(0x232323, 1);
+		renderer.setSize(window.innerWidth, window.innerHeight);
+
+		// Set up clock for smooth animations
+		clock = new THREE.Clock();
+
+		// Add basic lights
+		const light = new THREE.HemisphereLight(0xd0d0d0, 0x232323, 1.5);
+		scene.add(light);
+
+		// Add fog to the scene
 		const color = 0x232323;
 		const density = 0.009;
 		scene.fog = new THREE.FogExp2(color, density);
+
+		// Append renderer to DOM
+		container.appendChild(renderer.domElement);
+
+		// Handle window resize
+		window.addEventListener('resize', handleWindowResize);
+
+		// Set up all objects in the scene
+		setupCommonObjects();
+		setupSperm();
+
+		// Create all animations upfront
+		createAnimations();
+
+		// Start rendering
+		renderScene();
 	}
 
-	// ---------------------------------------------------------------------------
+	function handleWindowResize() {
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+	}
 
-	const size = 100;
-	const divisions = 10;
+	function setupCommonObjects() {
+		// Create grid helpers
+		const size = 100;
+		const divisions = 10;
 
-	const gridHelper0 = new THREE.GridHelper(size, divisions, 0xf0f0f0, 0xf0f0f0);
-	gridHelper0.rotation.x += Math.PI / 2;
-	gridHelper0.position.z = -300;
-	scene.add(gridHelper0);
-
-	const gridHelper1 = new THREE.GridHelper(size, divisions, 0xf0f0f0, 0xf0f0f0);
-	gridHelper1.rotation.x += Math.PI / 2;
-	gridHelper1.position.z = -200;
-	scene.add(gridHelper1);
-
-	const gridHelper2 = new THREE.GridHelper(size, divisions, 0xf0f0f0, 0xf0f0f0);
-	gridHelper2.rotation.x += Math.PI / 2;
-	gridHelper2.position.z = -100;
-	scene.add(gridHelper2);
-
-	const gridHelper3 = new THREE.GridHelper(size, divisions, 0xf0f0f0, 0xf0f0f0);
-	gridHelper3.rotation.x += Math.PI / 2;
-	gridHelper3.position.z = 0;
-	scene.add(gridHelper3);
-
-	const sphere = new THREE.Mesh(
-		new THREE.SphereGeometry(14, 32, 16),
-		new THREE.MeshToonMaterial({ color: 0xd0d0d0 })
-	);
-	scene.add(sphere);
-
-	const outerSphere = new THREE.Mesh(
-		new THREE.SphereGeometry(22, 32, 16),
-		// new THREE.MeshPhysicalMaterial({ roughness: 0.2, transmission: 0.8 })
-		new THREE.MeshPhysicalMaterial({ color: 0xd0d0d0, transparent: true, opacity: 0.5 })
-	);
-	scene.add(outerSphere);
-
-	sphere.position.z = -150;
-	outerSphere.position.z = -150;
-
-	const light = new THREE.HemisphereLight(0xd0d0d0, 0x232323, 1.5);
-	scene.add(light);
-
-	// ---------------------------------------------------------------------------
-
-	const gltfLoader = new GLTFLoader();
-
-	let spermGroup = new THREE.Group();
-	gltfLoader.load('/sperm.glb', (glb) => {
-		sperm = glb.scene.children[0];
-
-		// sperm.position.z = 100;
-		sperm.rotation.x += Math.PI;
-		sperm.position.y -= 0.695;
-		sperm.position.z += 4;
-
-		sperm.scale.set(0.2, 0.4, 0.2);
-
-		sperm.traverse(function (child) {
-			if (child.material) {
-				child.material = new THREE.MeshToonMaterial({
-					color: 0xf0f0f0
-				});
-			}
-		});
-
-		spermGroup.add(sperm);
-	});
-
-	scene.add(spermGroup);
-	spermGroup.position.y = -0.1;
-
-	// ---------------------------------------------------------------------------
-
-	let followCamera = () => {
-		spermGroup.position.z = camera.position.z - 5.5;
-	};
-
-	const clock = new THREE.Clock();
-	let previousTime = 0;
-
-	let iteration = 0;
-
-	let render = function () {
-		console.log(asciiRenderer);
-
-		renderer.render(scene, camera);
-		id = requestAnimationFrame(render);
-		// controls.update();
-
-		const elapsedTime = clock.getElapsedTime();
-		const deltaTime = elapsedTime - previousTime;
-		previousTime = elapsedTime;
-
-		//sphere.rotation.x += 0.01;
-		// macGroup.position.z += 1;
-
-		// if ($go) {
-		// 	camera.position.z -= deltaTime * 20;
-		// 	camera.rotation.z += deltaTime / 5;
-		// }
-
-		// camera.position.z -= deltaTime * 20;
-		camera.position.z -= deltaTime * 12.725;
-		gridHelper0.rotation.y -= deltaTime / 10;
-		gridHelper1.rotation.y += deltaTime / 10;
-		gridHelper2.rotation.y -= deltaTime / 10;
-		gridHelper3.rotation.y += deltaTime / 10;
-
-		// if (macGroup.rotation.y <= 0) {
-		// 	macGroup.rotation.y += 0.003;
-		// }
-
-		// if (camera.position.z <= 10) {
-		// 	renderer.setClearColor(0xd0d00d, 1);
-		// }
-
-		if (camera.position.z <= -200) {
-			let even_iteration = iteration % 2 == 0;
-			gridHelper1.rotation.y = even_iteration ? Math.PI / 4 : 0;
-			gridHelper2.rotation.y = even_iteration ? Math.PI / 4 : 0;
-			gridHelper3.rotation.y = even_iteration ? Math.PI / 4 : 0;
-
-			camera.position.z = 100;
-			iteration += 1;
-			// macGroup.rotation.y = -Math.PI;
+		for (let i = 0; i < 4; i++) {
+			const gridHelper = new THREE.GridHelper(size, divisions, 0xf0f0f0, 0xf0f0f0);
+			gridHelper.rotation.x += Math.PI / 2;
+			gridHelper.position.z = -300 + i * 100;
+			scene.add(gridHelper);
+			gridHelpers.push(gridHelper);
 		}
 
-		spermGroup.rotation.z = -elapsedTime * 10;
+		// Create spheres
+		sphere = new THREE.Mesh(
+			new THREE.SphereGeometry(14, 32, 16),
+			new THREE.MeshToonMaterial({ color: 0xd0d0d0 })
+		);
+		scene.add(sphere);
 
-		// spermGroup.rotation.z -= (-spermGroup.rotation.z / Math.PI / 24 + 0.2) / 1.2;
-		// if (spermGroup.rotation.z <= -2 * Math.PI) {
-		// 	spermGroup.rotation.z = 0;
-		// }
+		outerSphere = new THREE.Mesh(
+			new THREE.SphereGeometry(22, 32, 16),
+			new THREE.MeshPhysicalMaterial({ color: 0xd0d0d0, transparent: true, opacity: 0.5 })
+		);
+		scene.add(outerSphere);
 
-		followCamera();
+		sphere.position.z = -150;
+		outerSphere.position.z = -150;
+	}
 
-		// if (firstLoad && camera.position.z >= 100) {
-		// 	camera.fov = 160 - camera.position.z;
-		// 	camera.updateProjectionMatrix();
-		// } else {
-		// 	firstLoad = false;
-		// }
+	function setupSperm() {
+		spermGroup = new THREE.Group();
+		const gltfLoader = new GLTFLoader();
 
-		// this block fixes a bug where the sperm is brielfy visible after entering the
-		// if (camera.position.z <= 10.5) {
-		// 	spermGroup.position.z = -160;
-		// }
+		gltfLoader.load('/sperm.glb', (glb) => {
+			const sperm = glb.scene.children[0];
+			sperm.rotation.x += Math.PI;
+			sperm.position.y -= 0.695;
+			sperm.position.z += 4;
+			sperm.position.set(0, 0, 0); // Position it centrally in the group
+			sperm.scale.set(0.2, 0.2, 0.2); // Uniform scaling to ensure visibility
+
+			sperm.traverse(function (child) {
+				if (child.material) {
+					child.material = new THREE.MeshToonMaterial({
+						color: 0xf0f0f0,
+					});
+				}
+			});
+
+			spermGroup.add(sperm);
+			cameraGroup.add(spermGroup); // Add spermGroup to cameraGroup
+		});
+
+		spermGroup.position.set(0, -0.1, -5.5); // Positioning the group relative to the camera
+	}
+
+	function createAnimations() {
+		// Page 3 animation: Camera moving forward
+		tweens['page3'] = new Tween({ z: cameraGroup.position.z })
+			.to({ z: -200 }, 1000)
+			.easing(Easing.Quadratic.InOut)
+			.onUpdate((coords) => {
+				cameraGroup.position.z = coords.z;
+			});
+
+		// Example additional animation for other pages (e.g., page 4)
+		tweens['page4'] = new Tween({ rotation: 0 })
+			.to({ rotation: 2 * Math.PI }, 5000)
+			.easing(Easing.Quadratic.InOut)
+			.onUpdate((coords) => {
+				sphere.rotation.y = coords.rotation;
+			});
+	}
+
+	function renderScene(time) {
+		const elapsedTime = clock.getElapsedTime();
+		updateScene(elapsedTime);
+
+		renderer.render(scene, camera);
+		animationFrameId = requestAnimationFrame(renderScene);
+
+		// Update active tween
+		Object.values(tweens).forEach((tween) => tween.update(time));
+	}
+
+	function updateScene(elapsedTime) {
+		// Rotate grid helpers smoothly
+		gridHelpers.forEach((gridHelper, index) => {
+			gridHelper.rotation.y += index % 2 === 0 ? -0.01 : 0.01;
+		});
+
+		// Smooth sperm rotation using easing
+		if (spermGroup) {
+			spermGroup.rotation.z = -elapsedTime * 10;
+		}
+	}
+
+	// Define scene configurations
+	const sceneConfigs = {
+		1: setupScene1,
+		2: setupScene2,
+		3: setupScene3,
+		4: setupScene4,
 	};
 
-	window.addEventListener(
-		'resize',
-		function () {
-			let height = window.innerHeight;
-			let width = window.innerWidth;
-			camera.aspect = width / height;
-			camera.updateProjectionMatrix();
-			renderer.setSize(width, height);
-			// asciiRenderer.setSize(width, height);
-		},
-		false
-	);
+	// Functions to set up different scenes based on `page`
+	function setupScene1() {
+		// Example: Reset animations
+		Object.values(tweens).forEach((tween) => tween.stop());
+	}
 
-	render();
+	function setupScene2() {
+		// Example: Reset animations
+		Object.values(tweens).forEach((tween) => tween.stop());
+	}
+
+	function setupScene3() {
+		// Trigger page 3 animation
+		console.log('Setting up scene 3');
+		tweens['page3'].start();
+	}
+
+	function setupScene4() {
+		// Trigger page 4 animation
+		tweens['page4'].start();
+	}
+
+	// React to page changes
+	$: {
+		if (sceneConfigs[$page]) {
+			sceneConfigs[$page]();
+		}
+	}
+
+	// Initialize scene on mount
+	onMount(() => {
+		initializeScene();
+	});
 </script>
 
 <div bind:this={container} class:geometry={true} />
