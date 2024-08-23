@@ -97,38 +97,44 @@
 		justify-content: space-around;
 		align-items: center;
 
-		background: var(--true-black);
-		color: var(--pink);
-		border: solid 1px var(--pink);
+		background: none;
+		color: var(--white);
+		border: solid 1px var(--blue);
 		padding: 2rem;
 
 		opacity: 0;
-		animation: fadein .5s 3s ease;
+		animation: fadein .5s 2s ease;
 		animation-fill-mode: forwards;
 	}
 
 	h3 {
 		text-align: center;
+		color: var(--blue);
+	}
+
+	h4 {
+		color: var(--blue);
 	}
 
 	input[type='date'] {
-		background: var(--pink);
-		border: solid 1px var(--pink);
-		color: var(--black);
+		background: var(--white);
+		border: solid 1px var(--blue);
+		color: var(--blue);
+		padding: 10px;
 	}
 
 	input[type='range'] {
 		appearance: none;
 		-webkit-appearance: none;
 		cursor: pointer;
-		background: var(--true-black);
+		background: var(--white);
 	}
 
 	input[type='range']::-webkit-slider-runnable-track {
 		width: 300px;
 		height: 2px;
 		margin: 5px;
-		background: var(--pink);
+		background: var(--blue);
 		border: none;
 		border-radius: 3px;
 	}
@@ -139,22 +145,25 @@
 		height: 16px;
 		width: 16px;
 		border-radius: 50%;
-		background: var(--true-black);
-		border: solid 2px var(--pink);
+		background: var(--blue);
+		border: solid 2px var(--white);
 		margin-top: -6px;
 	}
 
 	.calculate {
-		background: var(--true-blackk);
-		border: solid 1px var(--pink);
-		color: var(--white);
+		background: var(--white);
+		border: solid 1px var(--blue);
+		color: var(--blue);
 		padding: 0.5rem 1rem;
 		margin-top: 2rem;
 		cursor: pointer;
 	}
 
 	.calculate:hover {
-		border-color: var(--pink);
-		color: var(--pink);
+		background: var(--blue);
+	}
+
+	.calculate:hover h4 {
+		color: var(--white);
 	}
 </style>

@@ -9,6 +9,7 @@
 	--white: #d0d0d0;
 	--white-50: #fafafa80;
 	--pink: #d0d0d0;
+	--blue: #150df7;
 }
 
 html,
@@ -37,8 +38,8 @@ a {
 }
 
 a {
-	color: var(--white);
-	background: var(--white);
+	color: var(--black);
+	background: var(--blue);
 	border: solid 1px var(--black);
 	padding: 2px 6px;
 

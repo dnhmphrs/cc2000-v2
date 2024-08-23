@@ -6,9 +6,9 @@
 	};
 </script>
 
-<section>
+<!-- <section>
 	<h3 on:click={() => handleProgress()} on:keydown={() => handleProgress()}>Transitioning. Blah. Blah.</h3>
-</section>
+</section> -->
 
 <style>
 	section {

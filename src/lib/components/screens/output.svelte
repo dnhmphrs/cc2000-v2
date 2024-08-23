@@ -6,7 +6,8 @@
 	let src = `https://open.spotify.com/embed/track/${uri}?utm_source=generator`;
 
 	let handleProgress = () => {
-		page.set(1);
+		// page.set(1);#
+		window.location.reload();
 	};
 </script>
 
@@ -27,7 +28,7 @@
 	section {
 		position: relative;
 		/* width: 100%; */
-		height: 90%;
+		height: 80%;
 		display: flex;
 		flex-flow: row wrap;
 
@@ -43,7 +44,7 @@
 	}
 
 	iframe {
-		height: 70%;
+		/* height: 100%; */
 		width: 100%;
 	}
 
