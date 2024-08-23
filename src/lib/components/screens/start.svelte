@@ -45,7 +45,7 @@
 
 <section>
 	<div class="calculate" on:click={() => handleProgress()}  on:keydown={() => handleProgress()}>
-		<h4>Process Biometrics</h4>
+		<p>Process Biometrics</p>
 	</div>
 </section>
 
