@@ -101,6 +101,10 @@
 		color: var(--pink);
 		border: solid 1px var(--pink);
 		padding: 2rem;
+
+		opacity: 0;
+		animation: fadein .5s 3s ease;
+		animation-fill-mode: forwards;
 	}
 
 	h3 {
