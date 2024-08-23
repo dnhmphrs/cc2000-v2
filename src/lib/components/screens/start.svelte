@@ -89,7 +89,8 @@
 		color: var(--white);
 		white-space: pre-wrap; /* Ensure line breaks are respected */
 		cursor: pointer;
-		background: #150DF7;
+		background: #232323;
+		border: solid 1px var(--white);
 	}
 
 	p {
@@ -99,6 +100,6 @@
 		color: var(--white);
 		white-space: pre-wrap; /* Ensure line breaks are respected */
 		cursor: pointer;
-		background: #150DF7;
+		background: #232323;
 	}
 </style>
