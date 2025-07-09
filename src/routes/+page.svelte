@@ -32,13 +32,17 @@
 
 <style>
 	main {
-		width: 400px;
-		height: 400px;
+		width: 450px;
+		height: 500px;
+		position: relative;
+		z-index: 10;
 	}
 
 	@media (max-width: 800px) {
 		main {
-			width: 90%;
+			width: 95%;
+			height: 90vh;
+			max-height: 600px;
 		}
 	}
 </style>
