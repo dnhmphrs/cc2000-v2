@@ -17,7 +17,7 @@ html,
 body {
 	position: relative;
 	width: 100%;
-	background: var(--white);
+	background: var(--black);
 	color: var(--black);
 	z-index: 0;
 	overflow-x: hidden;

@@ -74,7 +74,7 @@
 	.terminal-window {
 		width: 100%;
 		height: 80%;
-		background: transparent;
+		background: var(--black);
 		/* border: 2px solid #00ff00; */
 		transform: translateY(-10px);
 		border-radius: 8px;
