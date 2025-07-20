@@ -188,8 +188,8 @@
 	}
 
 	.calculate:hover {
-		background: #0b0b0b;
-		color: #d0d0d0;
+		background: #1b1b1b;
+		color: #f0f0f0;
 	}
 
 	.calculate p {

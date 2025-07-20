@@ -3,19 +3,19 @@
 
 /* APP */
 :root {
-	--black: #232323;
+	--black: #1b1b1b;
 	--true-black: #0b0b0b;
 	--white: #d0d0d0;
 	--white-50: #fafafa80;
 	--pink: #d0d0d0;
-	--blue: #0b0b0b;
+	--blue: #357EC7;
 }
 
 html,
 body {
 	position: relative;
 	width: 100%;
-	background: var(--blue);
+	background: var(--black);
 	color: var(--white);
 	z-index: 0;
 	overflow-x: hidden;

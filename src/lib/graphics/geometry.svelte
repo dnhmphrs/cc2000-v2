@@ -362,12 +362,12 @@
     tweens['backgroundColorChange'].start();
 		tweens['lightingChange'].start();
 
-		// Hide cube grid for page 3
-		cubeGrid.forEach(row => {
-			row.forEach(cube => {
-				cube.visible = false;
-			});
-		});
+		// // Hide cube grid for page 3
+		// cubeGrid.forEach(row => {
+		// 	row.forEach(cube => {
+		// 		cube.visible = false;
+		// 	});
+		// });
 
 		// Keep Mac visible on page 3
 		if (macGroup) {
