@@ -171,7 +171,7 @@
 		color: #f0f0f0;
 		padding: 2rem;
 		opacity: 0;
-		animation: fadein .5s 4s ease-out;
+		animation: fadein .5s 3s ease-out;
 		animation-fill-mode: forwards;
 	}
 
