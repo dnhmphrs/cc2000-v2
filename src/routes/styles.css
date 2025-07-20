@@ -15,7 +15,7 @@ html,
 body {
 	position: relative;
 	width: 100%;
-	background: var(--black);
+	background: var(--blue);
 	color: var(--white);
 	z-index: 0;
 	overflow-x: hidden;

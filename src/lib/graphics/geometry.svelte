@@ -7,11 +7,13 @@
 
 	let container, animationFrameId;
 	let scene, camera, renderer, clock;
-	let spermGroup, cameraGroup, mainGroup, macGroup;
+	let spermGroup, cameraGroup, mainGroup, macGroup, plantGroup, manGroup;
 	let cubeGrid = []; // Array to store cube grid
 	// let gridHelpers = [];
 	let sphere, outerSphere;
 	let tweens = {};  // Store tweens for different animations
+
+	const MAN_START_Y = -30
 
 	onDestroy(() => {
 		cancelAnimationFrame(animationFrameId);
@@ -40,7 +42,8 @@
 		clock = new THREE.Clock();
 
 		// Add basic lights
-		const light = new THREE.HemisphereLight(0xb0b0b0, 0x357EC7, 1.5);
+		const light = new THREE.HemisphereLight(0xf0f0f0, 0xb0b0b0, 1.4);
+		light.position.z = -10;
 		scene.add(light);
 
 		// Add fog to the scene
@@ -56,9 +59,11 @@
 
 		// Set up all objects in the scene
 		setupCommonObjects();
-		setupCubeGrid(); // Add cube grid setup
+		// setupCubeGrid(); // Add cube grid setup
 		setupSperm();
 		setupMac();
+		setupPlant();
+		setupMan();
 
 		// Create all animations upfront
 		createAnimations();
@@ -73,44 +78,44 @@
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 
-	function setupCubeGrid() {
-		const cubeSize = 2.5;
-		const spacing = 5; // Space between cubes
-		const gridSize = 20; // 20x20 grid // TODO - REACTIVELY EDIT THIS BASED ON WINDOW SIZE - FOR WIDESCREEN ESPECIALLY
+	// function setupCubeGrid() {
+	// 	const cubeSize = 2.5;
+	// 	const spacing = 5; // Space between cubes
+	// 	const gridSize = 20; // 20x20 grid // TODO - REACTIVELY EDIT THIS BASED ON WINDOW SIZE - FOR WIDESCREEN ESPECIALLY
 		
-		// Calculate total grid dimensions
-		const totalWidth = (gridSize - 1) * spacing;
-		const totalHeight = (gridSize - 1) * spacing;
+	// 	// Calculate total grid dimensions
+	// 	const totalWidth = (gridSize - 1) * spacing;
+	// 	const totalHeight = (gridSize - 1) * spacing;
 		
-		// Calculate starting position to center the grid
-		const startX = -totalHeight / 2;
-		const startY = -totalWidth / 2;
+	// 	// Calculate starting position to center the grid
+	// 	const startX = -totalHeight / 2;
+	// 	const startY = -totalWidth / 2;
 		
-		// Create cube geometry and material (reuse for performance)
-		const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-		const material = new THREE.MeshToonMaterial({
-			color: 0xf0f0f0,
-			wireframe: true
-		});
+	// 	// Create cube geometry and material (reuse for performance)
+	// 	const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+	// 	const material = new THREE.MeshToonMaterial({
+	// 		color: 0x357EC7,
+	// 		wireframe: false
+	// 	});
 		
-		// Create grid of cubes on YZ plane (X is constant)
-		for (let x = 0; x < gridSize * 2.0; x++) { // twice as wide
-			cubeGrid[x] = [];
-			for (let y = 0; y < gridSize; y++) {
-				const cube = new THREE.Mesh(geometry, material);
+	// 	// Create grid of cubes on YZ plane (X is constant)
+	// 	for (let x = 0; x < gridSize * 2.0; x++) { // twice as wide
+	// 		cubeGrid[x] = [];
+	// 		for (let y = 0; y < gridSize; y++) {
+	// 			const cube = new THREE.Mesh(geometry, material);
 				
-				// Position cubes on YZ plane, with X constant
-				cube.position.set(
-					(startX - gridSize * 4.0) + x * spacing,
-					startY + y * spacing,
-					-25, // Fixed Z position (in front of camera)
-				);
+	// 			// Position cubes on YZ plane, with X constant
+	// 			cube.position.set(
+	// 				(startX - gridSize * 4.0) + x * spacing,
+	// 				startY + y * spacing,
+	// 				-25, // Fixed Z position (in front of camera)
+	// 			);
 				
-				cubeGrid[x][y] = cube;
-				mainGroup.add(cube);
-			}
-		}
-	}
+	// 			cubeGrid[x][y] = cube;
+	// 			mainGroup.add(cube);
+	// 		}
+	// 	}
+	// }
 
 	function setupCommonObjects() {
 		// Create grid helpers
@@ -207,6 +212,77 @@
 		});
 	}
 
+	function setupPlant() {
+		// Create first plant (left side)
+		const plantGroup1 = new THREE.Group();
+		const gltfLoader1 = new GLTFLoader();
+
+		gltfLoader1.load('/plant.glb', (glb) => {
+			const plant1 = glb.scene.children[0];
+			plant1.position.set(-11.5, -6.5, 55); // Left side of the desk
+			plant1.scale.set(0.75, 0.75, 0.75);
+
+			// plant1.traverse(function (child) {
+			// 	if (child.material) {
+			// 		child.material = new THREE.MeshToonMaterial({
+			// 			color: 0xf0f0f0
+			// 		});
+			// 	}
+			// });
+
+			plantGroup1.add(plant1);
+			mainGroup.add(plantGroup1);
+		});
+
+		// Create second plant (right side)
+		const plantGroup2 = new THREE.Group();
+		const gltfLoader2 = new GLTFLoader();
+
+		gltfLoader2.load('/plant.glb', (glb) => {
+			const plant2 = glb.scene.children[0];
+			plant2.position.set(10.5, -6.5, 55); // Right side of the desk
+			plant2.scale.set(0.75, 0.75, 0.75);
+
+			// plant2.traverse(function (child) {
+			// 	if (child.material) {
+			// 		child.material = new THREE.MeshToonMaterial({
+			// 			color: 0xf0f0f0
+			// 		});
+			// 	}
+			// });
+
+			plantGroup2.add(plant2);
+			mainGroup.add(plantGroup2);
+		});
+
+		// Store both plant groups for visibility control
+		plantGroup = [plantGroup1, plantGroup2];
+	}
+
+	function setupMan() {
+		manGroup = new THREE.Group();
+		const gltfLoader = new GLTFLoader();
+
+		gltfLoader.load('/man.glb', (glb) => {
+			const man = glb.scene.children[0];
+			man.position.set(0, 0, 0); // Position it centrally in the group
+			man.scale.set(0.5, 0.5, 0.5); // Uniform scaling to ensure visibility
+
+			man.traverse(function (child) {
+				if (child.material) {
+					child.material = new THREE.MeshToonMaterial({
+						color: 0xf0f0f0
+					});
+				}
+			});
+
+			manGroup.add(man);
+			// Position man below the screen initially (will animate up during page 2)
+			manGroup.position.set(0, MAN_START_Y, -4); // Below screen, will animate to center
+			mainGroup.add(manGroup); // Add manGroup to mainGroup
+		});
+	}
+
 	function createAnimations() {
 		// Page 2 animation: Scene moves into view
 		tweens['spermIntoView'] = new Tween({ z: cameraGroup.position.z })
@@ -221,6 +297,16 @@
 			.easing(Easing.Quadratic.InOut)
 			.onUpdate((coords) => {
 				mainGroup.position.z = coords.z;
+			});
+
+		// Page 2 animation: Man comes up from below
+		tweens['manIntoView'] = new Tween({ y: MAN_START_Y })
+			.to({ y: -8 }, 2500)
+			.easing(Easing.Quadratic.InOut)
+			.onUpdate((coords) => {
+				if (manGroup) {
+					manGroup.position.y = coords.y;
+				}
 			});
 
 
@@ -296,16 +382,16 @@
 		// 	gridHelper.rotation.y += index % 2 === 0 ? 0.0075 : -0.0075;
 		// });
 
-		// Animate cube grid with gentle rotation
-		cubeGrid.forEach((row, y) => {
-			row.forEach((cube, z) => {
-				if (cube.visible) {
-					// Add subtle rotation based on position
-					cube.rotation.y = elapsedTime * 0.5 + (y + z) * 0.1;
-					cube.rotation.x = elapsedTime * 0.3 + (y - z) * 0.05;
-				}
-			});
-		});
+		// // Animate cube grid with gentle rotation
+		// cubeGrid.forEach((row, y) => {
+		// 	row.forEach((cube, z) => {
+		// 		if (cube.visible) {
+		// 			// Add subtle rotation based on position
+		// 			cube.rotation.y = elapsedTime * 0.5 + (y + z) * 0.1;
+		// 			cube.rotation.x = elapsedTime * 0.3 + (y - z) * 0.05;
+		// 		}
+		// 	});
+		// });
 
 		// Smooth sperm rotation using easing
 		if (spermGroup) {
@@ -327,16 +413,31 @@
 		// Reset animations
 		Object.values(tweens).forEach((tween) => tween.stop());
 		
-		// Show cube grid for page 1
-		cubeGrid.forEach(row => {
-			row.forEach(cube => {
-				cube.visible = true;
-			});
-		});
+		// // Show cube grid for page 1
+		// cubeGrid.forEach(row => {
+		// 	row.forEach(cube => {
+		// 		cube.visible = false;
+		// 	});
+		// });
 
 		// Ensure Mac is visible on page 1
 		if (macGroup) {
 			macGroup.visible = true;
+		}
+
+		// Ensure plant is visible on page 1
+		if (plantGroup) {
+			plantGroup.forEach(group => group.visible = true);
+		}
+
+		// Hide man on page 1
+		if (manGroup) {
+			manGroup.visible = false;
+		}
+
+		// Hide sperm on page 1
+		if (spermGroup) {
+			spermGroup.visible = false;
 		}
 	}
 
@@ -345,6 +446,7 @@
 		// Object.values(tweens).forEach((tween) => tween.stop());
 		tweens['spermIntoView'].start();
 		tweens['sceneIntoView'].start();
+		tweens['manIntoView'].start(); // Start the man animation for page 2
 		
 		// // Hide cube grid for page 2
 		// cubeGrid.forEach(row => {
@@ -356,6 +458,21 @@
 		// Keep Mac visible on page 2
 		if (macGroup) {
 			macGroup.visible = true;
+		}
+
+		// Keep plant visible on page 2
+		if (plantGroup) {
+			plantGroup.forEach(group => group.visible = true);
+		}
+
+		// Show man on page 2 (will animate up from below)
+		if (manGroup) {
+			manGroup.visible = true;
+		}
+
+		// Hide sperm on page 2
+		if (spermGroup) {
+			spermGroup.visible = false;
 		}
 	}
 
@@ -377,6 +494,21 @@
 			macGroup.visible = true;
 		}
 
+		// Keep plant visible on page 3
+		if (plantGroup) {
+			plantGroup.forEach(group => group.visible = true);
+		}
+
+		// Keep man visible on page 3
+		if (manGroup) {
+			manGroup.visible = true;
+		}
+
+		// Show sperm on page 3
+		if (spermGroup) {
+			spermGroup.visible = true;
+		}
+
 		// wait 5 seconds, set page to 4
 		setTimeout(() => {
 			page.set(4);
@@ -387,16 +519,26 @@
 		// Trigger page 4 animation
 		// tweens['page4'].start();
 
-		// Hide cube grid for page 4
-		cubeGrid.forEach(row => {
-			row.forEach(cube => {
-				cube.visible = false;
-			});
-		});
+		// // Hide cube grid for page 4
+		// cubeGrid.forEach(row => {
+		// 	row.forEach(cube => {
+		// 		cube.visible = false;
+		// 	});
+		// });
 
 		// Keep Mac visible on page 4
 		if (macGroup) {
 			macGroup.visible = true;
+		}
+
+		// Keep plant visible on page 4
+		if (plantGroup) {
+			plantGroup.forEach(group => group.visible = true);
+		}
+
+		// Keep man visible on page 4
+		if (manGroup) {
+			manGroup.visible = true;
 		}
 
 		// remove the sperm
