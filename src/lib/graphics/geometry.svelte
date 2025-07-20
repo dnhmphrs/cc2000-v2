@@ -23,7 +23,7 @@
 		mainGroup = new THREE.Group();
 
 		// Set up camera and camera group
-		camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.01, 200);
+		camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.01, 200);
 		camera.position.z = 0;
 
 		cameraGroup = new THREE.Group();
@@ -100,7 +100,7 @@
 				cube.position.set(
 					(startX - gridSize * 4.0) + x * spacing,
 					startY + y * spacing,
-					-50, // Fixed Z position (in front of camera)
+					-25, // Fixed Z position (in front of camera)
 				);
 				
 				cubeGrid[x][y] = cube;
@@ -181,13 +181,13 @@
 			wireframe: false 
 		});
 		const desktop = new THREE.Mesh(desktopGeometry, desktopMaterial);
-		desktop.position.set(0, -8, 25); // Position below the Mac
+		desktop.position.set(0, -8, 75); // Position below the Mac
 		macGroup.add(desktop);
 
 		gltfLoader.load('/mac.glb', (glb) => {
 			const mac = glb.scene.children[0];
 			// mac.rotation.x += Math.PI;
-			mac.position.set(0, -5.6, 50); // Position it centrally in the group
+			mac.position.set(0, -5.5, 75); // Position it centrally in the group
 			mac.scale.set(0.2, 0.2, 0.2); // Uniform scaling to ensure visibility
 
 			mac.traverse(function (child) {
