@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$lib/store/store';
 
-	let text = "In the earth year 2000, human technology advanced\nallowing all of mankind to calculate the song playing at their exact moment of conception\nwith the statistical accuracy that only the Internet can provide.";
+	let text = "In the earth year 2000, human technology advanced...\n\nallowing all of mankind to calculate the song playing at their exact moment of conception with the statistical accuracy that only the Internet can provide.";
 	let words = text.split(' '); // Split the text into words
 	let displayedText = ""; // This will hold the text as it's being revealed
 	let wordIndex = 0;
@@ -67,13 +67,13 @@
 		position: absolute;
 		top: 50%;
 		left: 50%;
-		transform: translate(-50%, -50%);
+		transform: translate(-50%, calc(-50% - 70px));
 		width: 90vw;
-		max-width: 800px;
-		height: 80vh;
-		background: #000;
-		border: 2px solid #f0f0f0;
-		border-radius: 8px;
+		max-width: 525px;
+		height: 400px;
+		background: transparent;
+		/* border: 2px solid #0b0b0b;
+		border-radius: 8px; */
 		/* box-shadow: 
 			0 0 20px #2b2b2b,
 			inset 0 0 20px rgba(0, 255, 0, 0.1); */
@@ -82,7 +82,7 @@
 	}
 
 	.terminal-header {
-		background: #f0f0f0;
+		/* background: #0b0b0b; */
 		color: #f0f0f0;
 		padding: 8px 12px;
 		display: flex;
@@ -90,7 +90,8 @@
 		align-items: center;
 		font-weight: bold;
 		font-size: 14px;
-		border-bottom: 2px solid #f0f0f0;
+		border-bottom: 2px solid #0b0b0b;
+		border-radius: 8px;
 	}
 
 	.terminal-title {
@@ -124,8 +125,8 @@
 
 	.terminal-body {
 		height: calc(100% - 40px);
-		background: #0b0b0b;
-		color: #f0f0f0;
+		/* background: #0b0b0b; */
+		color: #0b0b0b;
 		padding: 20px;
 		position: relative;
 		overflow: hidden;
@@ -147,7 +148,7 @@
 		white-space: pre-wrap;
 		cursor: pointer;
 		font-size: 16px;
-		/* font-weight: 700; */
+		font-weight: 700;
 		line-height: 1.4;
 	}
 
@@ -179,21 +180,21 @@
 		margin: 0;
 		padding: 0 1rem;
 		background: transparent;
-		color: #f0f0f0;
+		color: #0b0b0b;
 		white-space: pre-wrap;
 		cursor: pointer;
-		border: 2px solid #f0f0f0;
+		border: 2px solid #0b0b0b;
 		transition: all 0.3s ease;
 	}
 
 	.calculate:hover {
-		background: #f0f0f0;
-		color: #0b0b0b;
+		background: #0b0b0b;
+		color: #f0f0f0;
 	}
 
 	.calculate p {
 		margin: 0;
-		padding: 1rem;
+		padding: 0.5rem;
 		background: transparent;
 		color: inherit;
 		white-space: pre-wrap;

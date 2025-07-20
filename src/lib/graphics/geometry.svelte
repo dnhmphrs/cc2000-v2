@@ -23,7 +23,7 @@
 		mainGroup = new THREE.Group();
 
 		// Set up camera and camera group
-		camera = new THREE.PerspectiveCamera(10, window.innerWidth / window.innerHeight, 0.01, 200);
+		camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.01, 200);
 		camera.position.z = 0;
 
 		cameraGroup = new THREE.Group();
@@ -88,7 +88,7 @@
 		
 		// Create cube geometry and material (reuse for performance)
 		const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-		const material = new THREE.MeshToonMaterial({ color: 0xf0f0f0 });
+		const material = new THREE.MeshToonMaterial({ color: 0xf0f0f0, wireframe: true });
 		
 		// Create grid of cubes on YZ plane (X is constant)
 		for (let x = 0; x < gridSize * 2.0; x++) { // twice as wide
@@ -171,31 +171,37 @@
 	}
 
 	function setupMac() {
-		spermGroup = new THREE.Group();
+		macGroup = new THREE.Group();
 		const gltfLoader = new GLTFLoader();
+
+		// Create desktop surface (cuboid)
+		const desktopGeometry = new THREE.BoxGeometry(40, 2, 50);
+		const desktopMaterial = new THREE.MeshToonMaterial({ 
+			color: 0xf0f0f0, // Brown wood color
+			wireframe: false 
+		});
+		const desktop = new THREE.Mesh(desktopGeometry, desktopMaterial);
+		desktop.position.set(0, -8, 25); // Position below the Mac
+		macGroup.add(desktop);
 
 		gltfLoader.load('/mac.glb', (glb) => {
 			const mac = glb.scene.children[0];
-			mac.rotation.x += Math.PI;
-			// sperm.position.y -= 1.695;
-			mac.position.z += 4;
-			mac.position.set(0, 0, 0); // Position it centrally in the group
+			// mac.rotation.x += Math.PI;
+			mac.position.set(0, -5.6, 50); // Position it centrally in the group
 			mac.scale.set(0.2, 0.2, 0.2); // Uniform scaling to ensure visibility
 
 			mac.traverse(function (child) {
 				if (child.material) {
 					child.material = new THREE.MeshToonMaterial({
-						color: 0xf0f0f0,
+						color: 0xf0f0f0
 					});
 				}
 			});
 
-			macGroup.add(sperm);
-			macGroup.position.y = -0.1;
-			mainGroup.add(macGroup); // Add spermGroup to cameraGroup
+			macGroup.add(mac);
+			// macGroup.position.set(0, 0, 50); // Position the Mac group in front of the camera
+			mainGroup.add(macGroup); // Add macGroup to mainGroup
 		});
-
-		// spermGroup.position.set(0, -0.1, -1.5); // Positioning the group relative to the camera
 	}
 
 	function createAnimations() {
@@ -324,6 +330,11 @@
 				cube.visible = true;
 			});
 		});
+
+		// Ensure Mac is visible on page 1
+		if (macGroup) {
+			macGroup.visible = true;
+		}
 	}
 
 	function setupScene2() {
@@ -338,6 +349,11 @@
 		// 		cube.visible = false;
 		// 	});
 		// });
+
+		// Keep Mac visible on page 2
+		if (macGroup) {
+			macGroup.visible = true;
+		}
 	}
 
 	function setupScene3() {
@@ -352,6 +368,11 @@
 				cube.visible = false;
 			});
 		});
+
+		// Keep Mac visible on page 3
+		if (macGroup) {
+			macGroup.visible = true;
+		}
 
 		// wait 5 seconds, set page to 4
 		setTimeout(() => {
@@ -369,6 +390,11 @@
 				cube.visible = false;
 			});
 		});
+
+		// Keep Mac visible on page 4
+		if (macGroup) {
+			macGroup.visible = true;
+		}
 
 		// remove the sperm
 		cameraGroup.remove(spermGroup);
