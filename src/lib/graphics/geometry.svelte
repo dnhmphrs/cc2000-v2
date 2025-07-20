@@ -8,6 +8,7 @@
 	let container, animationFrameId;
 	let scene, camera, renderer, clock;
 	let spermGroup, cameraGroup, mainGroup, macGroup;
+	let cubeGrid = []; // Array to store cube grid
 	// let gridHelpers = [];
 	let sphere, outerSphere;
 	let tweens = {};  // Store tweens for different animations
@@ -22,7 +23,7 @@
 		mainGroup = new THREE.Group();
 
 		// Set up camera and camera group
-		camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.01, 200);
+		camera = new THREE.PerspectiveCamera(10, window.innerWidth / window.innerHeight, 0.01, 200);
 		camera.position.z = 0;
 
 		cameraGroup = new THREE.Group();
@@ -32,18 +33,18 @@
 
 		// Set up renderer
 		renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-		renderer.setClearColor(0x232323, 1);
+		renderer.setClearColor(0x357EC7, 1);
 		renderer.setSize(window.innerWidth, window.innerHeight);
 
 		// Set up clock for smooth animations
 		clock = new THREE.Clock();
 
 		// Add basic lights
-		const light = new THREE.HemisphereLight(0xb0b0b0, 0x232323, 1.5);
+		const light = new THREE.HemisphereLight(0xb0b0b0, 0x357EC7, 1.5);
 		scene.add(light);
 
 		// Add fog to the scene
-		const color = 0x232323;
+		const color = 0x357EC7;
 		const density = 0.01;
 		scene.fog = new THREE.FogExp2(color, density);
 
@@ -55,6 +56,7 @@
 
 		// Set up all objects in the scene
 		setupCommonObjects();
+		setupCubeGrid(); // Add cube grid setup
 		setupSperm();
 		setupMac();
 
@@ -69,6 +71,42 @@
 		camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
+	}
+
+	function setupCubeGrid() {
+		const cubeSize = 2.5;
+		const spacing = 5; // Space between cubes
+		const gridSize = 20; // 20x20 grid // TODO - REACTIVELY EDIT THIS BASED ON WINDOW SIZE - FOR WIDESCREEN ESPECIALLY
+		
+		// Calculate total grid dimensions
+		const totalWidth = (gridSize - 1) * spacing;
+		const totalHeight = (gridSize - 1) * spacing;
+		
+		// Calculate starting position to center the grid
+		const startX = -totalHeight / 2;
+		const startY = -totalWidth / 2;
+		
+		// Create cube geometry and material (reuse for performance)
+		const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+		const material = new THREE.MeshToonMaterial({ color: 0xf0f0f0 });
+		
+		// Create grid of cubes on YZ plane (X is constant)
+		for (let x = 0; x < gridSize * 2.0; x++) { // twice as wide
+			cubeGrid[x] = [];
+			for (let y = 0; y < gridSize; y++) {
+				const cube = new THREE.Mesh(geometry, material);
+				
+				// Position cubes on YZ plane, with X constant
+				cube.position.set(
+					(startX - gridSize * 4.0) + x * spacing,
+					startY + y * spacing,
+					-20, // Fixed Z position (in front of camera)
+				);
+				
+				cubeGrid[x][y] = cube;
+				mainGroup.add(cube);
+			}
+		}
 	}
 
 	function setupCommonObjects() {
@@ -186,7 +224,7 @@
 			});
 
 		// Page 3 animation: Change background clearColor and fog color to 0xd0d0d0
-		tweens['backgroundColorChange'] = new Tween({ r: 35, g: 35, b: 35 }) // Start with the original color 0x0b0b0b
+		tweens['backgroundColorChange'] = new Tween({ r: 53, g: 126, b: 199 }) // Start with the original color 0x357EC7
 			.to({ r: 208, g: 208, b: 208 }, 3000) // Transition to color 0xd0d0d0
 			.easing(Easing.Quadratic.InOut)
 			.onUpdate((color) => {
@@ -195,9 +233,9 @@
 				scene.fog.color.set(newColor);
 			});
 
-			// Page 3 animation: Change hemisphere light colors to 0x0b0b0b
+			// Page 3 animation: Change hemisphere light colors to 0x357EC7
 			// tweens['hemisphereLightChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 35, g2: 35, b2: 35 }) // Start with the original light colors
-			//     .to({ r1: 11, g1: 11, b1: 11, r2: 11, g2: 11, b2: 11 }, 2500) // Transition to 0x0b0b0b for both sky and ground colors
+			//     .to({ r1: 11, g1: 11, b1: 11, r2: 11, g2: 11, b2: 11 }, 2500) // Transition to 0x357EC7 for both sky and ground colors
 			//     .easing(Easing.Quadratic.InOut)
 			//     .onUpdate((colors) => {
 			//         const newSkyColor = new THREE.Color(`rgb(${Math.floor(colors.r1)}, ${Math.floor(colors.g1)}, ${Math.floor(colors.b1)})`);
@@ -207,9 +245,9 @@
 			//     });
 
 
-			// Page 3 animation: Change lighting to 0x0b0b0b
-			tweens['lightingChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 35, g2: 35, b2: 35 }) // Start with the original light color (0xb0b0b0)
-				.to({ r1: 208, g1: 208, b1: 208, r2: 208, g2: 208, b2: 208 }, 3000) // Transition to color 0x0b0b0b
+			// Page 3 animation: Change lighting to 0x357EC7
+			tweens['lightingChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 53, g2: 126, b2: 199 }) // Start with the original light color (0xb0b0b0)
+				.to({ r1: 208, g1: 208, b1: 208, r2: 208, g2: 208, b2: 208 }, 3000) // Transition to color 0x357EC7
 				.easing(Easing.Quadratic.InOut)
 				.onUpdate((colors) => {
 					const newSkyColor = new THREE.Color(`rgb(${Math.floor(colors.r1)}, ${Math.floor(colors.g1)}, ${Math.floor(colors.b1)})`);
@@ -249,6 +287,17 @@
 		// 	gridHelper.rotation.y += index % 2 === 0 ? 0.0075 : -0.0075;
 		// });
 
+		// Animate cube grid with gentle rotation
+		cubeGrid.forEach((row, y) => {
+			row.forEach((cube, z) => {
+				if (cube.visible) {
+					// Add subtle rotation based on position
+					cube.rotation.y = elapsedTime * 0.5 + (y + z) * 0.1;
+					cube.rotation.x = elapsedTime * 0.3 + (y - z) * 0.05;
+				}
+			});
+		});
+
 		// Smooth sperm rotation using easing
 		if (spermGroup) {
 			// if page = 3 speed is fast
@@ -266,15 +315,29 @@
 
 	// Functions to set up different scenes based on `page`
 	function setupScene1() {
-		// Example: Reset animations
+		// Reset animations
 		Object.values(tweens).forEach((tween) => tween.stop());
+		
+		// Show cube grid for page 1
+		cubeGrid.forEach(row => {
+			row.forEach(cube => {
+				cube.visible = true;
+			});
+		});
 	}
 
 	function setupScene2() {
-		// Example: Reset animations
+		// Reset animations
 		// Object.values(tweens).forEach((tween) => tween.stop());
 		tweens['spermIntoView'].start();
 		tweens['sceneIntoView'].start();
+		
+		// // Hide cube grid for page 2
+		// cubeGrid.forEach(row => {
+		// 	row.forEach(cube => {
+		// 		cube.visible = false;
+		// 	});
+		// });
 	}
 
 	function setupScene3() {
@@ -282,6 +345,13 @@
 		tweens['flyThrough'].start();
     tweens['backgroundColorChange'].start();
 		tweens['lightingChange'].start();
+
+		// Hide cube grid for page 3
+		cubeGrid.forEach(row => {
+			row.forEach(cube => {
+				cube.visible = false;
+			});
+		});
 
 		// wait 5 seconds, set page to 4
 		setTimeout(() => {
@@ -292,6 +362,13 @@
 	function setupScene4() {
 		// Trigger page 4 animation
 		// tweens['page4'].start();
+
+		// Hide cube grid for page 4
+		cubeGrid.forEach(row => {
+			row.forEach(cube => {
+				cube.visible = false;
+			});
+		});
 
 		// remove the sperm
 		cameraGroup.remove(spermGroup);

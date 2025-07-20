@@ -8,14 +8,14 @@
 	--white: #d0d0d0;
 	--white-50: #fafafa80;
 	--pink: #d0d0d0;
-	--blue: #d0d0d0;
+	--blue: #357eC7;
 }
 
 html,
 body {
 	position: relative;
 	width: 100%;
-	background: var(--true-black);
+	background: var(--blue);
 	color: var(--white);
 	z-index: 0;
 	overflow-x: hidden;
