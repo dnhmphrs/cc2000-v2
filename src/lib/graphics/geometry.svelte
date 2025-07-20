@@ -33,18 +33,18 @@
 
 		// Set up renderer
 		renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-		renderer.setClearColor(0x357EC7, 1);
+		renderer.setClearColor(0x0b0b0b, 1);
 		renderer.setSize(window.innerWidth, window.innerHeight);
 
 		// Set up clock for smooth animations
 		clock = new THREE.Clock();
 
 		// Add basic lights
-		const light = new THREE.HemisphereLight(0xb0b0b0, 0x357EC7, 1.5);
+		const light = new THREE.HemisphereLight(0xb0b0b0, 0x0b0b0b, 1.5);
 		scene.add(light);
 
 		// Add fog to the scene
-		const color = 0x357EC7;
+		const color = 0x0b0b0b;
 		const density = 0.01;
 		scene.fog = new THREE.FogExp2(color, density);
 
@@ -90,18 +90,25 @@
 		const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 		const material = new THREE.MeshToonMaterial({ color: 0xf0f0f0, wireframe: true });
 		
-		// Create grid of cubes on YZ plane (X is constant)
+		// Create concave arc grid of cubes
 		for (let x = 0; x < gridSize * 2.0; x++) { // twice as wide
 			cubeGrid[x] = [];
 			for (let y = 0; y < gridSize; y++) {
 				const cube = new THREE.Mesh(geometry, material);
 				
-				// Position cubes on YZ plane, with X constant
-				cube.position.set(
-					(startX - gridSize * 4.0) + x * spacing,
-					startY + y * spacing,
-					-20, // Fixed Z position (in front of camera)
-				);
+				// Calculate position in a concave arc
+				const xPos = (startX - gridSize * 4.0) + x * spacing;
+				const yPos = startY + y * spacing;
+				
+				// Create concave curve by adjusting Z position based on distance from center
+				const centerX = (gridSize * 2.0 - 1) * spacing / 2 - gridSize * 4.0;
+				const centerY = (gridSize - 1) * spacing / 2;
+				const distanceFromCenter = Math.sqrt((xPos - centerX) ** 2 + (yPos - centerY) ** 2);
+				const maxDistance = Math.sqrt((gridSize * spacing) ** 2 + (gridSize * spacing) ** 2);
+				const curveIntensity = 50; // Adjust this to control how concave the arc is
+				const zPos = -curveIntensity * (distanceFromCenter / maxDistance) ** 2;
+				
+				cube.position.set(xPos, yPos, zPos);
 				
 				cubeGrid[x][y] = cube;
 				mainGroup.add(cube);
@@ -230,7 +237,7 @@
 			});
 
 		// Page 3 animation: Change background clearColor and fog color to 0xd0d0d0
-		tweens['backgroundColorChange'] = new Tween({ r: 53, g: 126, b: 199 }) // Start with the original color 0x357EC7
+		tweens['backgroundColorChange'] = new Tween({ r: 53, g: 126, b: 199 }) // Start with the original color 0x0b0b0b
 			.to({ r: 208, g: 208, b: 208 }, 3000) // Transition to color 0xd0d0d0
 			.easing(Easing.Quadratic.InOut)
 			.onUpdate((color) => {
@@ -239,9 +246,9 @@
 				scene.fog.color.set(newColor);
 			});
 
-			// Page 3 animation: Change hemisphere light colors to 0x357EC7
+			// Page 3 animation: Change hemisphere light colors to 0x0b0b0b
 			// tweens['hemisphereLightChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 35, g2: 35, b2: 35 }) // Start with the original light colors
-			//     .to({ r1: 11, g1: 11, b1: 11, r2: 11, g2: 11, b2: 11 }, 2500) // Transition to 0x357EC7 for both sky and ground colors
+			//     .to({ r1: 11, g1: 11, b1: 11, r2: 11, g2: 11, b2: 11 }, 2500) // Transition to 0x0b0b0b for both sky and ground colors
 			//     .easing(Easing.Quadratic.InOut)
 			//     .onUpdate((colors) => {
 			//         const newSkyColor = new THREE.Color(`rgb(${Math.floor(colors.r1)}, ${Math.floor(colors.g1)}, ${Math.floor(colors.b1)})`);
@@ -251,9 +258,9 @@
 			//     });
 
 
-			// Page 3 animation: Change lighting to 0x357EC7
+			// Page 3 animation: Change lighting to 0x0b0b0b
 			tweens['lightingChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 53, g2: 126, b2: 199 }) // Start with the original light color (0xb0b0b0)
-				.to({ r1: 208, g1: 208, b1: 208, r2: 208, g2: 208, b2: 208 }, 3000) // Transition to color 0x357EC7
+				.to({ r1: 208, g1: 208, b1: 208, r2: 208, g2: 208, b2: 208 }, 3000) // Transition to color 0x0b0b0b
 				.easing(Easing.Quadratic.InOut)
 				.onUpdate((colors) => {
 					const newSkyColor = new THREE.Color(`rgb(${Math.floor(colors.r1)}, ${Math.floor(colors.g1)}, ${Math.floor(colors.b1)})`);
