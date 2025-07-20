@@ -175,7 +175,7 @@
 		const gltfLoader = new GLTFLoader();
 
 		// Create desktop surface (cuboid)
-		const desktopGeometry = new THREE.BoxGeometry(100, 2, 75);
+		const desktopGeometry = new THREE.BoxGeometry(100, 3, 75);
 		const desktopMaterial = new THREE.MeshToonMaterial({ 
 			color: 0xf0f0f0, // Brown wood color
 			wireframe: false 
