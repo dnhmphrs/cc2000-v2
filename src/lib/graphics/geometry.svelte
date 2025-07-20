@@ -35,7 +35,7 @@
 
 		// Set up renderer
 		renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-		renderer.setClearColor(0x357EC7, 1);
+		renderer.setClearColor(0xdd0000, 1);
 		renderer.setSize(window.innerWidth, window.innerHeight);
 
 		// Set up clock for smooth animations
@@ -47,8 +47,8 @@
 		scene.add(light);
 
 		// Add fog to the scene
-		const color = 0x357EC7;
-		const density = 0.01;
+		const color = 0xdd0000;
+		const density = 0.005;
 		scene.fog = new THREE.FogExp2(color, density);
 
 		// Append renderer to DOM
@@ -94,7 +94,7 @@
 	// 	// Create cube geometry and material (reuse for performance)
 	// 	const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 	// 	const material = new THREE.MeshToonMaterial({
-	// 		color: 0x357EC7,
+	// 		color: 0xdd0000,
 	// 		wireframe: false
 	// 	});
 		
@@ -143,11 +143,11 @@
 		);
 		mainGroup.add(outerSphere);
 
-		mainGroup.position.z = -100;
+		mainGroup.position.z = -150;
 		scene.add(mainGroup);
 
-		sphere.position.z = -150;
-		outerSphere.position.z = -150;
+		sphere.position.z = -250;
+		outerSphere.position.z = -250;
 	}
 
 	function setupSperm() {
@@ -312,14 +312,14 @@
 
 		// Page 3 animation: Camera moving forward
 		tweens['flyThrough'] = new Tween({ z: cameraGroup.position.z })
-			.to({ z: -125 }, 2000)
+			.to({ z: -250 }, 2000)
 			.easing(Easing.Quadratic.InOut)
 			.onUpdate((coords) => {
 				cameraGroup.position.z = coords.z;
 			});
 
 		// Page 3 animation: Change background clearColor and fog color to 0xd0d0d0
-		tweens['backgroundColorChange'] = new Tween({ r: 53, g: 126, b: 199 }) // Start with the original color 0x357EC7
+		tweens['backgroundColorChange'] = new Tween({ r: 221, g: 0, b: 0 }) // Start with the original color 0xdd0000
 			.to({ r: 208, g: 208, b: 208 }, 3000) // Transition to color 0xd0d0d0
 			.easing(Easing.Quadratic.InOut)
 			.onUpdate((color) => {
@@ -328,9 +328,9 @@
 				scene.fog.color.set(newColor);
 			});
 
-			// Page 3 animation: Change hemisphere light colors to 0x357EC7
+			// Page 3 animation: Change hemisphere light colors to 0xdd0000
 			// tweens['hemisphereLightChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 35, g2: 35, b2: 35 }) // Start with the original light colors
-			//     .to({ r1: 11, g1: 11, b1: 11, r2: 11, g2: 11, b2: 11 }, 2500) // Transition to 0x357EC7 for both sky and ground colors
+			//     .to({ r1: 11, g1: 11, b1: 11, r2: 11, g2: 11, b2: 11 }, 2500) // Transition to 0xdd0000 for both sky and ground colors
 			//     .easing(Easing.Quadratic.InOut)
 			//     .onUpdate((colors) => {
 			//         const newSkyColor = new THREE.Color(`rgb(${Math.floor(colors.r1)}, ${Math.floor(colors.g1)}, ${Math.floor(colors.b1)})`);
@@ -340,9 +340,9 @@
 			//     });
 
 
-			// Page 3 animation: Change lighting to 0x357EC7
-			tweens['lightingChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 53, g2: 126, b2: 199 }) // Start with the original light color (0xb0b0b0)
-				.to({ r1: 208, g1: 208, b1: 208, r2: 208, g2: 208, b2: 208 }, 3000) // Transition to color 0x357EC7
+			// Page 3 animation: Change lighting to 0xdd0000
+			tweens['lightingChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 221, g2: 0, b2: 0 }) // Start with the original light color (0xb0b0b0)
+				.to({ r1: 208, g1: 208, b1: 208, r2: 208, g2: 208, b2: 208 }, 3000) // Transition to color 0xdd0000
 				.easing(Easing.Quadratic.InOut)
 				.onUpdate((colors) => {
 					const newSkyColor = new THREE.Color(`rgb(${Math.floor(colors.r1)}, ${Math.floor(colors.g1)}, ${Math.floor(colors.b1)})`);

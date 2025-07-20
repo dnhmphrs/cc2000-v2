@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$lib/store/store';
 
-	let text = "In the earth year 2000, human technology advanced...\n\nallowing all of mankind to calculate the song playing at their exact moment of conception with the statistical accuracy that only the Internet can provide.";
+	let text = "In the earth year 2000, human technology advanced...\n\nallowing all of mankind to calculate the song playing at their exact moment of conception with the statistical accuracy that only the Internet can provide. \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n ... \n ...";
 	let words = text.split(' '); // Split the text into words
 	let displayedText = ""; // This will hold the text as it's being revealed
 	let wordIndex = 0;
@@ -39,7 +39,7 @@
 
 <div class="terminal-container">
 	<div class="terminal-header">
-		<span class="terminal-title">CC2000 - Conception Calculator 2000</span>
+		<span class="terminal-title">CC2000 : Conception Calculator 2000</span>
 		<!-- <div class="terminal-controls">
 			<span class="control minimize">_</span>
 			<span class="control maximize">□</span>
@@ -70,7 +70,7 @@
 		transform: translate(-50%, calc(-50% - 70px));
 		width: 90vw;
 		max-width: 525px;
-		height: 400px;
+		height: 462px;
 		background: transparent;
 		/* border: 2px solid #0b0b0b;
 		border-radius: 8px; */
@@ -143,7 +143,7 @@
 	.text p {
 		margin: 0;
 		padding: 0;
-		background: transparent;
+		background: var(--red);
 		white-space: pre-wrap;
 		cursor: pointer;
 		font-size: 16px;
@@ -162,7 +162,7 @@
 
 	section {
 		position: relative;
-		height: 40%;
+		height: 30%;
 		display: flex;
 		flex-flow: row wrap;
 		justify-content: center;
@@ -171,15 +171,15 @@
 		color: #f0f0f0;
 		padding: 2rem;
 		opacity: 0;
-		animation: fadein .5s 2s ease-out;
+		animation: fadein .5s 4s ease-out;
 		animation-fill-mode: forwards;
 	}
 
 	.calculate {
 		margin: 0;
 		padding: 0 1rem;
-		background: transparent;
-		color: #f0f0f0;
+		background: #f0f0f0;
+		color: #2b2b2b;
 		white-space: pre-wrap;
 		cursor: pointer;
 		border: 1px solid #f0f0f0;
@@ -188,14 +188,13 @@
 	}
 
 	.calculate:hover {
-		background: #f0f0f0;
-		color: #0b0b0b;
+		background: #0b0b0b;
+		color: #f0f0f0;
 	}
 
 	.calculate p {
 		margin: 0;
 		padding: 0.5rem;
-		background: transparent;
 		color: inherit;
 		white-space: pre-wrap;
 		cursor: pointer;

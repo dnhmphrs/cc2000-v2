@@ -9,13 +9,14 @@
 	--white-50: #fafafa80;
 	--pink: #d0d0d0;
 	--blue: #357EC7;
+	--red: #dd0000;
 }
 
 html,
 body {
 	position: relative;
 	width: 100%;
-	background: var(--blue);
+	background: var(--red);
 	color: var(--white);
 	z-index: 0;
 	overflow-x: hidden;
