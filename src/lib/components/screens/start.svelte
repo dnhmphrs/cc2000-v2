@@ -189,7 +189,7 @@
 
 	.calculate:hover {
 		background: #0b0b0b;
-		color: #f0f0f0;
+		color: #d0d0d0;
 	}
 
 	.calculate p {

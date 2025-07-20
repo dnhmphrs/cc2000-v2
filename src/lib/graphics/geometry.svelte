@@ -88,27 +88,20 @@
 		
 		// Create cube geometry and material (reuse for performance)
 		const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-		const material = new THREE.MeshToonMaterial({ color: 0x2b2b2b, wireframe: true });
+		const material = new THREE.MeshToonMaterial({ color: 0x2b2b2b });
 		
-		// Create concave arc grid of cubes
+		// Create grid of cubes on YZ plane (X is constant)
 		for (let x = 0; x < gridSize * 2.0; x++) { // twice as wide
 			cubeGrid[x] = [];
 			for (let y = 0; y < gridSize; y++) {
 				const cube = new THREE.Mesh(geometry, material);
 				
-				// Calculate position in a concave arc
-				const xPos = (startX - gridSize * 4.0) + x * spacing;
-				const yPos = startY + y * spacing;
-				
-				// Create concave curve by adjusting Z position based on distance from center
-				const centerX = (gridSize * 2.0 - 1) * spacing / 2 - gridSize * 4.0;
-				const centerY = (gridSize - 1) * spacing / 2;
-				const distanceFromCenter = Math.sqrt((xPos - centerX) ** 2 + (yPos - centerY) ** 2);
-				const maxDistance = Math.sqrt((gridSize * spacing) ** 2 + (gridSize * spacing) ** 2);
-				const curveIntensity = 100; // Adjust this to control how concave the arc is
-				const zPos = -curveIntensity * (distanceFromCenter / maxDistance) ** 2;
-				
-				cube.position.set(xPos, yPos, zPos);
+				// Position cubes on YZ plane, with X constant
+				cube.position.set(
+					(startX - gridSize * 4.0) + x * spacing,
+					startY + y * spacing,
+					-50, // Fixed Z position (in front of camera)
+				);
 				
 				cubeGrid[x][y] = cube;
 				mainGroup.add(cube);
@@ -182,7 +175,7 @@
 		const gltfLoader = new GLTFLoader();
 
 		// Create desktop surface (cuboid)
-		const desktopGeometry = new THREE.BoxGeometry(40, 2, 50);
+		const desktopGeometry = new THREE.BoxGeometry(100, 2, 50);
 		const desktopMaterial = new THREE.MeshToonMaterial({ 
 			color: 0xf0f0f0, // Brown wood color
 			wireframe: false 
