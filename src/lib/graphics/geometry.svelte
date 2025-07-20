@@ -33,18 +33,18 @@
 
 		// Set up renderer
 		renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-		renderer.setClearColor(0x1b1b1b, 1);
+		renderer.setClearColor(0x357EC7, 1);
 		renderer.setSize(window.innerWidth, window.innerHeight);
 
 		// Set up clock for smooth animations
 		clock = new THREE.Clock();
 
 		// Add basic lights
-		const light = new THREE.HemisphereLight(0xb0b0b0, 0x1b1b1b, 1.5);
+		const light = new THREE.HemisphereLight(0xb0b0b0, 0x357EC7, 1.5);
 		scene.add(light);
 
 		// Add fog to the scene
-		const color = 0x1b1b1b;
+		const color = 0x357EC7;
 		const density = 0.01;
 		scene.fog = new THREE.FogExp2(color, density);
 
@@ -88,7 +88,10 @@
 		
 		// Create cube geometry and material (reuse for performance)
 		const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-		const material = new THREE.MeshToonMaterial({ color: 0x2b2b2b });
+		const material = new THREE.MeshToonMaterial({
+			color: 0xf0f0f0,
+			wireframe: true
+		});
 		
 		// Create grid of cubes on YZ plane (X is constant)
 		for (let x = 0; x < gridSize * 2.0; x++) { // twice as wide
@@ -157,7 +160,7 @@
 			sperm.traverse(function (child) {
 				if (child.material) {
 					child.material = new THREE.MeshToonMaterial({
-						color: 0xf0f0f0,
+						color: 0xf0f0f0
 					});
 				}
 			});
@@ -190,13 +193,13 @@
 			mac.position.set(0, -5.5, 62.5); // Position it centrally in the group
 			mac.scale.set(0.2, 0.2, 0.2); // Uniform scaling to ensure visibility
 
-			mac.traverse(function (child) {
-				if (child.material) {
-					child.material = new THREE.MeshToonMaterial({
-						color: 0xf0f0f0
-					});
-				}
-			});
+			// mac.traverse(function (child) {
+			// 	if (child.material) {
+			// 		child.material = new THREE.MeshToonMaterial({
+			// 			color: 0xf0f0f0
+			// 		});
+			// 	}
+			// });
 
 			macGroup.add(mac);
 			// macGroup.position.set(0, 0, 50); // Position the Mac group in front of the camera
@@ -230,7 +233,7 @@
 			});
 
 		// Page 3 animation: Change background clearColor and fog color to 0xd0d0d0
-		tweens['backgroundColorChange'] = new Tween({ r: 27, g: 27, b: 27 }) // Start with the original color 0x1b1b1b
+		tweens['backgroundColorChange'] = new Tween({ r: 27, g: 27, b: 27 }) // Start with the original color 0x357EC7
 			.to({ r: 208, g: 208, b: 208 }, 3000) // Transition to color 0xd0d0d0
 			.easing(Easing.Quadratic.InOut)
 			.onUpdate((color) => {
@@ -239,9 +242,9 @@
 				scene.fog.color.set(newColor);
 			});
 
-			// Page 3 animation: Change hemisphere light colors to 0x1b1b1b
+			// Page 3 animation: Change hemisphere light colors to 0x357EC7
 			// tweens['hemisphereLightChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 35, g2: 35, b2: 35 }) // Start with the original light colors
-			//     .to({ r1: 11, g1: 11, b1: 11, r2: 11, g2: 11, b2: 11 }, 2500) // Transition to 0x1b1b1b for both sky and ground colors
+			//     .to({ r1: 11, g1: 11, b1: 11, r2: 11, g2: 11, b2: 11 }, 2500) // Transition to 0x357EC7 for both sky and ground colors
 			//     .easing(Easing.Quadratic.InOut)
 			//     .onUpdate((colors) => {
 			//         const newSkyColor = new THREE.Color(`rgb(${Math.floor(colors.r1)}, ${Math.floor(colors.g1)}, ${Math.floor(colors.b1)})`);
@@ -251,9 +254,9 @@
 			//     });
 
 
-			// Page 3 animation: Change lighting to 0x1b1b1b
+			// Page 3 animation: Change lighting to 0x357EC7
 			tweens['lightingChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 27, g2: 27, b2: 27 }) // Start with the original light color (0xb0b0b0)
-				.to({ r1: 208, g1: 208, b1: 208, r2: 208, g2: 208, b2: 208 }, 3000) // Transition to color 0x1b1b1b
+				.to({ r1: 208, g1: 208, b1: 208, r2: 208, g2: 208, b2: 208 }, 3000) // Transition to color 0x357EC7
 				.easing(Easing.Quadratic.InOut)
 				.onUpdate((colors) => {
 					const newSkyColor = new THREE.Color(`rgb(${Math.floor(colors.r1)}, ${Math.floor(colors.g1)}, ${Math.floor(colors.b1)})`);

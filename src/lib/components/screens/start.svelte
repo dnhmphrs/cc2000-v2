@@ -88,17 +88,16 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		font-weight: bold;
 		font-size: 14px;
-		border-bottom: 2px solid #0b0b0b;
+		border-bottom: 1px solid #f0f0f0;
 		border-radius: 8px;
 	}
 
 	.terminal-title {
 		/* font-family: 'Courier New', monospace; */
-		font-weight: 700;
+		/* font-weight: 700; */
 		text-transform: uppercase;
-		color: #0b0b0b;
+		color: #f0f0f0;
 	}
 
 	/* .terminal-controls {
@@ -126,7 +125,7 @@
 	.terminal-body {
 		height: calc(100% - 40px);
 		/* background: #0b0b0b; */
-		color: #0b0b0b;
+		color: #f0f0f0;
 		padding: 20px;
 		position: relative;
 		overflow: hidden;
@@ -148,7 +147,7 @@
 		white-space: pre-wrap;
 		cursor: pointer;
 		font-size: 16px;
-		font-weight: 700;
+		/* font-weight: 700; */
 		line-height: 1.4;
 	}
 
@@ -180,16 +179,17 @@
 		margin: 0;
 		padding: 0 1rem;
 		background: transparent;
-		color: #0b0b0b;
+		color: #f0f0f0;
 		white-space: pre-wrap;
 		cursor: pointer;
-		border: 2px solid #0b0b0b;
+		border: 1px solid #f0f0f0;
+		border-radius: 8px;
 		transition: all 0.3s ease;
 	}
 
 	.calculate:hover {
-		background: #1b1b1b;
-		color: #f0f0f0;
+		background: #f0f0f0;
+		color: #0b0b0b;
 	}
 
 	.calculate p {
@@ -200,7 +200,7 @@
 		white-space: pre-wrap;
 		cursor: pointer;
 		font-family: 'Courier New', monospace;
-		font-weight: bold;
+		/* font-weight: bold; */
 	}
 
 	@keyframes fadein {
