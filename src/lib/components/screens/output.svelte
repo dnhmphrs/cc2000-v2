@@ -74,4 +74,9 @@
 		border-color: var(--pink);
 		color: var(--pink);
 	}
+
+	@keyframes fadein {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
 </style>

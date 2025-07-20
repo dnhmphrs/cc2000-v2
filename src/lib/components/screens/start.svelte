@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$lib/store/store';
 
-	let text = "In the earth year 2000, human technology advanced...\n\nallowing all of mankind to calculate the song playing at their exact moment of conception with the statistical accuracy that only the Internet can provide. \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n\\\\ ... \n ... \n ...";
+	let text = "In the earth year 2000, human technology advanced...\n\nallowing all of mankind to calculate the song playing at their exact moment of conception with the statistical accuracy that only the Internet can provide.";
 	let words = text.split(' '); // Split the text into words
 	let displayedText = ""; // This will hold the text as it's being revealed
 	let wordIndex = 0;
@@ -37,118 +37,150 @@
 	});
 </script>
 
-<div class="terminal-container">
-	<div class="terminal-header">
-		<span class="terminal-title">CC2000 : Conception Calculator 2000</span>
-		<!-- <div class="terminal-controls">
-			<span class="control minimize">_</span>
-			<span class="control maximize">□</span>
-			<span class="control close">×</span>
-		</div> -->
-	</div>
+<section class="terminal-window">
+	<!-- <div class="terminal-header">
+		<div class="terminal-buttons">
+			<div class="button red"></div>
+			<div class="button yellow"></div>
+			<div class="button green"></div>
+		</div>
+		<div class="terminal-title">CONCEPTION CALCULATOR 2000 v2.0</div>
+	</div> -->
 	
-	<div class="terminal-body">
-		<div class="text">
-			<p on:click={() => handleProgress()} on:keydown={() => handleProgress()}>
+	<div class="terminal-content">
+		<!-- <div class="progress-bar">
+			<div class="progress-step active">1</div>
+			<div class="progress-line"></div>
+			<div class="progress-step">2</div>
+			<div class="progress-line"></div>
+			<div class="progress-step">3</div>
+		</div> -->
+		
+		<div class="text-container">
+			<div class="typing-text">
 				{displayedText}<span class="cursor">█</span>
-			</p>
+			</div>
 		</div>
 
-		<section>
-			<div class="calculate" on:click={() => handleProgress()}  on:keydown={() => handleProgress()}>
-				<p>Process Biometrics</p>
-			</div>
-		</section>
+		<div class="button-container">
+			<button class="terminal-btn start-btn" on:click={handleProgress}>
+				<span class="btn-text">[ENTER] PROCESS BIOMETRICS</span>
+			</button>
+		</div>
 	</div>
-</div>
+</section>
 
 <style>
-	.terminal-container {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, calc(-50% - 70px));
-		width: 90vw;
-		max-width: 525px;
-		height: 462px;
+	.terminal-window {
+		width: 100%;
+		height: 80%;
 		background: transparent;
-		/* border: 2px solid #0b0b0b;
-		border-radius: 8px; */
-		/* box-shadow: 
-			0 0 20px #2b2b2b,
-			inset 0 0 20px rgba(0, 255, 0, 0.1); */
+		/* border: 2px solid #00ff00; */
+		transform: translateY(-10px);
+		border-radius: 8px;
+
+		display: flex;
+		flex-direction: column;
 		font-family: 'Courier New', monospace;
 		overflow: hidden;
 	}
 
-	.terminal-header {
-		/* background: #0b0b0b; */
-		color: #f0f0f0;
+	/* .terminal-header {
+		background: #00ff00;
+		color: #000;
 		padding: 8px 12px;
 		display: flex;
-		justify-content: space-between;
 		align-items: center;
-		font-size: 14px;
-		border-bottom: 1px solid #f0f0f0;
-		border-radius: 8px;
+		justify-content: space-between;
+		font-weight: bold;
+		font-size: 12px;
 	}
+
+	.terminal-buttons {
+		display: flex;
+		gap: 6px;
+	}
+
+	.button {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		border: 1px solid #000;
+	}
+
+	.button.red { background: #ff5f56; }
+	.button.yellow { background: #ffbd2e; }
+	.button.green { background: #27ca3f; }
 
 	.terminal-title {
-		/* font-family: 'Courier New', monospace; */
-		/* font-weight: 700; */
-		text-transform: uppercase;
-		color: #f0f0f0;
-	}
+		font-size: 11px;
+		letter-spacing: 1px;
+	} */
 
-	/* .terminal-controls {
+	.terminal-content {
+		flex: 1;
+		padding: 20px;
 		display: flex;
-		gap: 8px;
+		flex-direction: column;
+		justify-content: space-between;
+		align-items: center;
 	}
 
-	.control {
-		width: 16px;
-		height: 16px;
+	.progress-bar {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin-bottom: 20px;
+	}
+
+	/* .progress-step {
+		width: 30px;
+		height: 30px;
+		border: 2px solid #00ff00;
+		border-radius: 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border: 1px solid #000;
-		border-radius: 2px;
-		font-size: 12px;
-		cursor: pointer;
-		background: #fff;
+		font-weight: bold;
+		font-size: 14px;
+		color: #00ff00;
+		background: transparent;
 	}
 
-	.control:hover {
-		background: #ddd;
+	.progress-step.active {
+		background: #00ff00;
+		color: #000;
+		animation: pulse 2s infinite;
+	}
+
+	.progress-line {
+		width: 40px;
+		height: 2px;
+		background: #00ff00;
 	} */
 
-	.terminal-body {
-		height: calc(100% - 40px);
-		/* background: #0b0b0b; */
-		color: #f0f0f0;
-		padding: 20px;
-		position: relative;
-		overflow: hidden;
+	@keyframes pulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.7; }
 	}
 
-	.text {
-		position: relative;
-		width: 100%;
-		height: 60%;
+	.text-container {
+		flex: 1;
 		display: flex;
 		align-items: flex-start;
 		justify-content: flex-start;
+		width: 100%;
+		max-width: 500px;
+		margin: 20px 0;
 	}
 
-	.text p {
-		margin: 0;
-		padding: 0;
-		background: var(--red);
-		white-space: pre-wrap;
-		cursor: pointer;
+	.typing-text {
+		color: #00ff00;
 		font-size: 16px;
-		/* font-weight: 700; */
-		line-height: 1.4;
+		line-height: 1;
+		white-space: pre-wrap;
+		text-shadow: 0 0 5px #00ff00;
+		letter-spacing: 1px;
 	}
 
 	.cursor {
@@ -160,50 +192,55 @@
 		51%, 100% { opacity: 0; }
 	}
 
-	section {
-		position: relative;
-		height: 30%;
-		display: flex;
-		flex-flow: row wrap;
-		justify-content: center;
-		align-items: center;
+	.button-container {
+		margin-top: 20px;
+	}
+
+	.terminal-btn {
 		background: transparent;
-		color: #f0f0f0;
-		padding: 2rem;
+		border: 2px solid #00ff00;
+		color: #00ff00;
+		padding: 15px 30px;
+		font-family: 'Courier New', monospace;
+		font-size: 16px;
+		font-weight: bold;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		text-transform: uppercase;
+		letter-spacing: 1px;
 		opacity: 0;
 		animation: fadein .5s 3s ease-out;
 		animation-fill-mode: forwards;
 	}
 
-	.calculate {
-		margin: 0;
-		padding: 0 1rem;
-		background: #f0f0f0;
-		color: #2b2b2b;
-		white-space: pre-wrap;
-		cursor: pointer;
-		border: 1px solid #f0f0f0;
-		border-radius: 8px;
-		transition: all 0.3s ease;
+	.terminal-btn:hover {
+		background: #00ff00;
+		color: #000;
+		box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+		transform: scale(1.05);
 	}
 
-	.calculate:hover {
-		background: #0b0b0b;
-		color: #f0f0f0;
-	}
-
-	.calculate p {
-		margin: 0;
-		padding: 0.5rem;
-		color: inherit;
-		white-space: pre-wrap;
-		cursor: pointer;
-		font-family: 'Courier New', monospace;
-		/* font-weight: bold; */
+	.btn-text {
+		display: block;
 	}
 
 	@keyframes fadein {
 		from { opacity: 0; }
 		to { opacity: 1; }
+	}
+
+	@media (max-width: 600px) {
+		.terminal-content {
+			padding: 15px;
+		}
+		
+		.typing-text {
+			font-size: 14px;
+		}
+		
+		.terminal-btn {
+			padding: 12px 20px;
+			font-size: 14px;
+		}
 	}
 </style>

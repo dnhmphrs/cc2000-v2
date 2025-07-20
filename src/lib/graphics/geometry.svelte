@@ -35,7 +35,7 @@
 
 		// Set up renderer
 		renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-		renderer.setClearColor(0xdd0000, 1);
+		renderer.setClearColor(0xd0d0d0, 1);
 		renderer.setSize(window.innerWidth, window.innerHeight);
 
 		// Set up clock for smooth animations
@@ -47,7 +47,7 @@
 		scene.add(light);
 
 		// Add fog to the scene
-		const color = 0xdd0000;
+		const color = 0xd0d0d0;
 		const density = 0.005;
 		scene.fog = new THREE.FogExp2(color, density);
 
@@ -94,7 +94,7 @@
 	// 	// Create cube geometry and material (reuse for performance)
 	// 	const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 	// 	const material = new THREE.MeshToonMaterial({
-	// 		color: 0xdd0000,
+	// 		color: 0xd0d0d0,
 	// 		wireframe: false
 	// 	});
 		
@@ -271,7 +271,8 @@
 			man.traverse(function (child) {
 				if (child.material) {
 					child.material = new THREE.MeshToonMaterial({
-						color: 0xf0f0f0
+						color: 0xd0d0d0,
+						wireframe: false
 					});
 				}
 			});
@@ -309,6 +310,16 @@
 				}
 			});
 
+		// Page 2 animation: Change background clearColor and fog color from red to #2b2b2b
+		tweens['page2BackgroundChange'] = new Tween({ r: 208, g: 208, b: 208 }) // Start with the original color 0xd0d0d0
+			.to({ r: 43, g: 43, b: 43 }, 1250) // Transition to color #2b2b2b
+			.easing(Easing.Quadratic.InOut)
+			.onUpdate((color) => {
+				const newColor = new THREE.Color(`rgb(${Math.floor(color.r)}, ${Math.floor(color.g)}, ${Math.floor(color.b)})`);
+				renderer.setClearColor(newColor);
+				// scene.fog.color.set(newColor);
+			});
+
 
 		// Page 3 animation: Camera moving forward
 		tweens['flyThrough'] = new Tween({ z: cameraGroup.position.z })
@@ -319,18 +330,18 @@
 			});
 
 		// Page 3 animation: Change background clearColor and fog color to 0xd0d0d0
-		tweens['backgroundColorChange'] = new Tween({ r: 221, g: 0, b: 0 }) // Start with the original color 0xdd0000
+		tweens['backgroundColorChange'] = new Tween({ r: 43, g: 43, b: 43 }) // Start with the original color 0xd0d0d0
 			.to({ r: 208, g: 208, b: 208 }, 3000) // Transition to color 0xd0d0d0
 			.easing(Easing.Quadratic.InOut)
 			.onUpdate((color) => {
 				const newColor = new THREE.Color(`rgb(${Math.floor(color.r)}, ${Math.floor(color.g)}, ${Math.floor(color.b)})`);
 				renderer.setClearColor(newColor);
-				scene.fog.color.set(newColor);
+				// scene.fog.color.set(newColor);
 			});
 
-			// Page 3 animation: Change hemisphere light colors to 0xdd0000
+			// Page 3 animation: Change hemisphere light colors to 0xd0d0d0
 			// tweens['hemisphereLightChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 35, g2: 35, b2: 35 }) // Start with the original light colors
-			//     .to({ r1: 11, g1: 11, b1: 11, r2: 11, g2: 11, b2: 11 }, 2500) // Transition to 0xdd0000 for both sky and ground colors
+			//     .to({ r1: 11, g1: 11, b1: 11, r2: 11, g2: 11, b2: 11 }, 2500) // Transition to 0xd0d0d0 for both sky and ground colors
 			//     .easing(Easing.Quadratic.InOut)
 			//     .onUpdate((colors) => {
 			//         const newSkyColor = new THREE.Color(`rgb(${Math.floor(colors.r1)}, ${Math.floor(colors.g1)}, ${Math.floor(colors.b1)})`);
@@ -340,9 +351,9 @@
 			//     });
 
 
-			// Page 3 animation: Change lighting to 0xdd0000
-			tweens['lightingChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 221, g2: 0, b2: 0 }) // Start with the original light color (0xb0b0b0)
-				.to({ r1: 208, g1: 208, b1: 208, r2: 208, g2: 208, b2: 208 }, 3000) // Transition to color 0xdd0000
+			// Page 3 animation: Change lighting to 0xd0d0d0
+			tweens['lightingChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 43, g2: 43, b2: 43 }) // Start with the original light color (0xb0b0b0)
+				.to({ r1: 208, g1: 208, b1: 208, r2: 208, g2: 208, b2: 208 }, 3000) // Transition to color 0xd0d0d0
 				.easing(Easing.Quadratic.InOut)
 				.onUpdate((colors) => {
 					const newSkyColor = new THREE.Color(`rgb(${Math.floor(colors.r1)}, ${Math.floor(colors.g1)}, ${Math.floor(colors.b1)})`);
@@ -447,6 +458,7 @@
 		tweens['spermIntoView'].start();
 		tweens['sceneIntoView'].start();
 		tweens['manIntoView'].start(); // Start the man animation for page 2
+		tweens['page2BackgroundChange'].start(); // Start the background color change for page 2
 		
 		// // Hide cube grid for page 2
 		// cubeGrid.forEach(row => {
