@@ -23,7 +23,7 @@
 		mainGroup = new THREE.Group();
 
 		// Set up camera and camera group
-		camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.01, 200);
+		camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 0.01, 200);
 		camera.position.z = 0;
 
 		cameraGroup = new THREE.Group();
@@ -175,19 +175,19 @@
 		const gltfLoader = new GLTFLoader();
 
 		// Create desktop surface (cuboid)
-		const desktopGeometry = new THREE.BoxGeometry(100, 2, 50);
+		const desktopGeometry = new THREE.BoxGeometry(100, 2, 75);
 		const desktopMaterial = new THREE.MeshToonMaterial({ 
 			color: 0xf0f0f0, // Brown wood color
 			wireframe: false 
 		});
 		const desktop = new THREE.Mesh(desktopGeometry, desktopMaterial);
-		desktop.position.set(0, -8, 75); // Position below the Mac
+		desktop.position.set(0, -8, 62.5); // Position below the Mac
 		macGroup.add(desktop);
 
 		gltfLoader.load('/mac.glb', (glb) => {
 			const mac = glb.scene.children[0];
 			// mac.rotation.x += Math.PI;
-			mac.position.set(0, -5.5, 75); // Position it centrally in the group
+			mac.position.set(0, -5.5, 62.5); // Position it centrally in the group
 			mac.scale.set(0.2, 0.2, 0.2); // Uniform scaling to ensure visibility
 
 			mac.traverse(function (child) {
