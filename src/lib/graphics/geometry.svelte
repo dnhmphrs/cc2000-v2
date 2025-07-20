@@ -233,7 +233,7 @@
 			});
 
 		// Page 3 animation: Change background clearColor and fog color to 0xd0d0d0
-		tweens['backgroundColorChange'] = new Tween({ r: 27, g: 27, b: 27 }) // Start with the original color 0x357EC7
+		tweens['backgroundColorChange'] = new Tween({ r: 53, g: 126, b: 199 }) // Start with the original color 0x357EC7
 			.to({ r: 208, g: 208, b: 208 }, 3000) // Transition to color 0xd0d0d0
 			.easing(Easing.Quadratic.InOut)
 			.onUpdate((color) => {
@@ -255,7 +255,7 @@
 
 
 			// Page 3 animation: Change lighting to 0x357EC7
-			tweens['lightingChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 27, g2: 27, b2: 27 }) // Start with the original light color (0xb0b0b0)
+			tweens['lightingChange'] = new Tween({ r1: 176, g1: 176, b1: 176, r2: 53, g2: 126, b2: 199 }) // Start with the original light color (0xb0b0b0)
 				.to({ r1: 208, g1: 208, b1: 208, r2: 208, g2: 208, b2: 208 }, 3000) // Transition to color 0x357EC7
 				.easing(Easing.Quadratic.InOut)
 				.onUpdate((colors) => {
