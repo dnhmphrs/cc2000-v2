@@ -3,6 +3,7 @@
 	import Calculate from '$lib/components/screens/calculate.svelte';
 	import Transition from '$lib/components/screens/transition.svelte';
 	import Output from '$lib/components/screens/output.svelte';
+	import Window from '$lib/components/window.svelte';
 
 	import { page } from '$lib/store/store';
 </script>
@@ -19,15 +20,17 @@
 </svelte:head>
 
 <main>
-	{#if $page == 1}
-		<Start />
-	{:else if $page == 2}
-		<Calculate />
-	{:else if $page == 3}
-		<Transition />
-	{:else if $page == 4}
-		<Output />
-	{/if}
+	<Window>
+		{#if $page == 1}
+			<Start />
+		{:else if $page == 2}
+			<Calculate />
+		{:else if $page == 3}
+			<Transition />
+		{:else if $page == 4}
+			<Output />
+		{/if}
+	</Window>
 </main>
 
 <style>

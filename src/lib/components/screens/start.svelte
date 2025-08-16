@@ -37,131 +37,28 @@
 	});
 </script>
 
-<section class="terminal-window">
-	<!-- <div class="terminal-header">
-		<div class="terminal-buttons">
-			<div class="button red"></div>
-			<div class="button yellow"></div>
-			<div class="button green"></div>
-		</div>
-		<div class="terminal-title">CONCEPTION CALCULATOR 2000 v2.0</div>
-	</div> -->
-	
-	<div class="terminal-content">
-		<!-- <div class="progress-bar">
-			<div class="progress-step active">1</div>
-			<div class="progress-line"></div>
-			<div class="progress-step">2</div>
-			<div class="progress-line"></div>
-			<div class="progress-step">3</div>
-		</div> -->
-		
-		<div class="text-container">
-			<div class="typing-text">
-				{displayedText}<span class="cursor">█</span>
-			</div>
-		</div>
+<div class="fullscreen-bg"></div>
 
-		<div class="button-container">
-			<button class="terminal-btn start-btn" on:click={handleProgress}>
-				<span class="btn-text">[ENTER] PROCESS BIOMETRICS</span>
-			</button>
-		</div>
+<div class="text-container">
+	<div class="typing-text">
+		{displayedText}<span class="cursor">█</span>
 	</div>
-</section>
+</div>
+
+<div class="button-container">
+	<button class="terminal-btn start-btn" on:click={handleProgress}>
+		<span class="btn-text">[ENTER] PROCESS BIOMETRICS</span>
+	</button>
+</div>
 
 <style>
-	.terminal-window {
-		width: 100%;
-		height: 80%;
-		background: var(--black);
-		/* border: 2px solid #00ff00; */
-		transform: translateY(-10px);
-		border-radius: 8px;
-
-		display: flex;
-		flex-direction: column;
-		font-family: 'Courier New', monospace;
-		overflow: hidden;
-	}
-
-	/* .terminal-header {
-		background: #00ff00;
-		color: #000;
-		padding: 8px 12px;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		font-weight: bold;
-		font-size: 12px;
-	}
-
-	.terminal-buttons {
-		display: flex;
-		gap: 6px;
-	}
-
-	.button {
-		width: 12px;
-		height: 12px;
-		border-radius: 50%;
-		border: 1px solid #000;
-	}
-
-	.button.red { background: #ff5f56; }
-	.button.yellow { background: #ffbd2e; }
-	.button.green { background: #27ca3f; }
-
-	.terminal-title {
-		font-size: 11px;
-		letter-spacing: 1px;
-	} */
-
-	.terminal-content {
-		flex: 1;
-		padding: 20px;
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	.progress-bar {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		margin-bottom: 20px;
-	}
-
-	/* .progress-step {
-		width: 30px;
-		height: 30px;
-		border: 2px solid #00ff00;
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-weight: bold;
-		font-size: 14px;
-		color: #00ff00;
-		background: transparent;
-	}
-
-	.progress-step.active {
-		background: #00ff00;
-		color: #000;
-		animation: pulse 2s infinite;
-	}
-
-	.progress-line {
-		width: 40px;
-		height: 2px;
-		background: #00ff00;
-	} */
-
-	@keyframes pulse {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.7; }
+	.fullscreen-bg {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100vw;
+		height: 100vh;
+		z-index: -1;
 	}
 
 	.text-container {
@@ -175,11 +72,11 @@
 	}
 
 	.typing-text {
-		color: #00ff00;
-		font-size: 16px;
-		line-height: 1;
+		color: #000080;
+		font-size: 18px;
+		font-weight: bold;
+		line-height: 1.2;
 		white-space: pre-wrap;
-		text-shadow: 0 0 5px #00ff00;
 		letter-spacing: 1px;
 	}
 
@@ -197,15 +94,17 @@
 	}
 
 	.terminal-btn {
-		background: transparent;
-		border: 2px solid #00ff00;
-		color: #00ff00;
+		background: #c0c0c0;
+		border: 2px outset #ffffff;
+		border-right-color: #808080;
+		border-bottom-color: #808080;
+		color: #000000;
 		padding: 15px 30px;
 		font-family: 'Courier New', monospace;
 		font-size: 16px;
 		font-weight: bold;
 		cursor: pointer;
-		transition: all 0.3s ease;
+		transition: all 0.1s ease;
 		text-transform: uppercase;
 		letter-spacing: 1px;
 		opacity: 0;
@@ -214,10 +113,17 @@
 	}
 
 	.terminal-btn:hover {
-		background: #00ff00;
-		color: #000;
-		box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-		transform: scale(1.05);
+		background: #d4d4d4;
+		border: 2px inset #ffffff;
+		border-right-color: #808080;
+		border-bottom-color: #808080;
+	}
+
+	.terminal-btn:active {
+		background: #a0a0a0;
+		border: 2px inset #808080;
+		border-right-color: #ffffff;
+		border-bottom-color: #ffffff;
 	}
 
 	.btn-text {
@@ -230,10 +136,6 @@
 	}
 
 	@media (max-width: 600px) {
-		.terminal-content {
-			padding: 15px;
-		}
-		
 		.typing-text {
 			font-size: 14px;
 		}
