@@ -1,5 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
+	import Background from './background.svelte';
 	
 	export let title = "CC2000 : CONCEPTION CALCULATOR 2000";
 	
@@ -7,6 +8,7 @@
 </script>
 
 <section class="terminal-window">
+	<Background />
 	<div class="terminal-header">
 		<div class="terminal-title">{title}</div>
 		<div class="window-controls">

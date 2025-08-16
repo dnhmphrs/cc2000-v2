@@ -23,8 +23,6 @@
 	});
 </script>
 
-<img class="background" src="90s_Illustration.jpg" alt="90s illustration" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; border-radius: 12px;"/>
-
 <div class="output-container {containerVisible ? 'visible' : ''}">
 	<div class="result-header">
 		<h2 class="result-title">🎵 CONCEPTION SONG FOUND! 🎵</h2>
@@ -53,12 +51,6 @@
 </div>
 
 <style>
-	.background {
-		opacity: 0;
-		animation: fadein 1s 1s ease-out;
-		animation-fill-mode: forwards;
-	}
-	
 	.output-container {
 		position: relative;
 		height: 100%;
@@ -183,11 +175,6 @@
 
 	.btn-text {
 		display: block;
-	}
-
-	@keyframes fadein {
-		from { opacity: 0; }
-		to { opacity: 1; }
 	}
 
 	@keyframes pulse {
