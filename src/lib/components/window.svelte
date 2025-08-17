@@ -1,7 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	
-	export let title = "CC2000 : CONCEPTION CALCULATOR 2000";
+	export let title = "CONCEPTION CALCULATOR 2000";
 	export let size = "400px"; // Default size, can be overridden
 	
 	const dispatch = createEventDispatcher();

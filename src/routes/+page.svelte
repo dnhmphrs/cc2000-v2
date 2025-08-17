@@ -24,7 +24,7 @@
 	{#if $page >= 2}
 		<div class="background-window">
 			<div class="background-header">
-				<div class="background-title">CONCEPTION CALCULATOR 2000</div>
+				<div class="background-title">CC2000 : CONCEPTION CALCULATOR 2000</div>
 				<div class="window-controls">
 					<div class="control-button minimize"></div>
 					<div class="control-button maximize"></div>
