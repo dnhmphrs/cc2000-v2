@@ -1,6 +1,5 @@
 <script>
 	import { page, track } from '$lib/store/store';
-	import { onMount } from 'svelte';
 
 	let uri = $track.spotify_uri.substring(14);
 	console.log(uri);
@@ -10,30 +9,19 @@
 		// page.set(1);#
 		window.location.reload();
 	};
-
-	let containerVisible = false;
-	let iframeVisible = false;
-	let buttonVisible = false;
-
-	onMount(() => {
-		// Stagger the animations
-		setTimeout(() => containerVisible = true, 500);
-		setTimeout(() => iframeVisible = true, 1000);
-		setTimeout(() => buttonVisible = true, 1500);
-	});
 </script>
 
-<div class="output-container {containerVisible ? 'visible' : ''}">
+<div class="output-container">
 	<div class="result-header">
 		<h2 class="result-title">🎵 CONCEPTION SONG FOUND! 🎵</h2>
-		<div class="loading-dots">
+		<!-- <div class="loading-dots">
 			<span class="dot">.</span>
 			<span class="dot">.</span>
 			<span class="dot">.</span>
-		</div>
+		</div> -->
 	</div>
 
-	<div class="iframe-container {iframeVisible ? 'visible' : ''}">
+	<div class="iframe-container">
 		<!-- svelte-ignore a11y-missing-attribute -->
 		<iframe
 			{src}
@@ -45,7 +33,7 @@
 		/>
 	</div>
 
-	<button class="restart-btn {buttonVisible ? 'visible' : ''}" on:click={() => handleProgress()} on:keydown={() => handleProgress()}>
+	<button class="restart-btn" on:click={() => handleProgress()} on:keydown={() => handleProgress()}>
 		<span class="btn-text">[RESTART]</span>
 	</button>
 </div>
@@ -61,15 +49,7 @@
 		background: none;
 		color: var(--black);
 		padding: 0rem;
-		transform: translateY(20px);
-		opacity: 0;
-		transition: all 0.8s ease-out;
-		gap: 1rem;
-	}
-
-	.output-container.visible {
-		transform: translateY(0);
-		opacity: 1;
+		gap: 2rem;
 	}
 
 	.result-header {
@@ -83,7 +63,7 @@
 		font-size: 14px;
 		font-weight: normal;
 		letter-spacing: 1px;
-		margin-bottom: 1rem;
+		margin-bottom: 0rem;
 		text-shadow: 1px 1px 0px #e6f3ff;
 		animation: pulse 2s infinite;
 	}
@@ -110,20 +90,12 @@
 	}
 
 	.iframe-container {
-		transform: scale(0.8);
 		height: 154px;
-		opacity: 0;
-		transition: all 0.6s ease-out;
 		border: 3px outset #ffffff;
 		border-right-color: #4a90e2;
 		border-bottom-color: #4a90e2;
 		padding: 8px;
 		background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
-	}
-
-	.iframe-container.visible {
-		transform: scale(1);
-		opacity: 1;
 	}
 
 	iframe {
@@ -147,16 +119,8 @@
 		text-transform: uppercase;
 		letter-spacing: 1px;
 		text-align: center;
-		transform: translateY(20px);
-		opacity: 0;
-		transition: all 0.5s ease-out;
 		border-radius: 3px;
 		box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-	}
-
-	.restart-btn.visible {
-		transform: translateY(0);
-		opacity: 1;
 	}
 
 	.restart-btn:hover {

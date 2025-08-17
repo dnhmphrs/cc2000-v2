@@ -88,9 +88,9 @@
 		right: 0px;
 		bottom: 0px;
 		background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 50%, #b3dbff 100%);
-		border: 2px outset #ffffff;
+		/* border: 2px outset #ffffff;
 		border-right-color: #4a90e2;
-		border-bottom-color: #4a90e2;
+		border-bottom-color: #4a90e2; */
 		display: flex;
 		flex-direction: column;
 		font-family: 'Courier New', monospace;
