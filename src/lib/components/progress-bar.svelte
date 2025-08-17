@@ -24,31 +24,32 @@
 		width: 30px;
 		height: 30px;
 		border: 2px outset #ffffff;
-		border-right-color: #808080;
-		border-bottom-color: #808080;
+		border-right-color: #4a90e2;
+		border-bottom-color: #4a90e2;
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-weight: bold;
 		font-size: 14px;
-		color: #000000;
-		background: #c0c0c0;
+		color: #2d5aa0;
+		background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
 	}
 
 	.progress-step.completed {
-		background: #000080;
+		background: linear-gradient(135deg, #4a90e2 0%, #2d5aa0 100%);
 		color: #ffffff;
-		border: 2px inset #808080;
+		border: 2px inset #2d5aa0;
 		border-right-color: #ffffff;
 		border-bottom-color: #ffffff;
+		text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 	}
 
 	.progress-line {
 		width: 40px;
 		height: 2px;
-		background: #808080;
-		border: 1px inset #808080;
+		background: linear-gradient(to right, #4a90e2, #6bb0ff);
+		border: 1px inset #4a90e2;
 		border-right-color: #ffffff;
 		border-bottom-color: #ffffff;
 	}

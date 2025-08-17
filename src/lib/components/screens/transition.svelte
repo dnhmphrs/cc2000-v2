@@ -82,33 +82,39 @@
 	}
 
 	.terminal-btn {
-		background: #c0c0c0;
-		border: 2px outset #ffffff;
-		border-right-color: #808080;
-		border-bottom-color: #808080;
-		color: #000000;
-		padding: 15px 30px;
+		background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
+		border: 1px outset #ffffff;
+		border-right-color: #4a90e2;
+		border-bottom-color: #4a90e2;
+		color: #2d5aa0;
+		padding: 12px 24px;
 		font-family: 'Courier New', monospace;
-		font-size: 16px;
+		font-size: 14px;
 		font-weight: bold;
 		cursor: pointer;
 		transition: all 0.1s ease;
 		text-transform: uppercase;
 		letter-spacing: 1px;
+		border-radius: 3px;
+		box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 	}
 
 	.terminal-btn:hover {
-		background: #d4d4d4;
-		border: 2px inset #ffffff;
-		border-right-color: #808080;
-		border-bottom-color: #808080;
+		background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+		border: 1px inset #ffffff;
+		border-right-color: #4a90e2;
+		border-bottom-color: #4a90e2;
+		transform: translateY(-1px);
+		box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
 	}
 
 	.terminal-btn:active {
-		background: #a0a0a0;
-		border: 2px inset #808080;
+		background: linear-gradient(135deg, #cce7ff 0%, #b3dbff 100%);
+		border: 1px inset #4a90e2;
 		border-right-color: #ffffff;
 		border-bottom-color: #ffffff;
+		transform: translateY(0);
+		box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 	}
 
 	.btn-text {

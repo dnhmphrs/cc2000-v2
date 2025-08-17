@@ -78,13 +78,13 @@
 	}
 
 	.result-title {
-		color: #000080;
+		color: #2d5aa0;
 		font-family: 'Courier New', monospace;
 		font-size: 16px;
 		font-weight: bold;
 		letter-spacing: 2px;
 		margin-bottom: 1rem;
-		text-shadow: 2px 2px 0px #c0c0c0;
+		text-shadow: 2px 2px 0px #e6f3ff;
 		animation: pulse 2s infinite;
 	}
 
@@ -95,7 +95,7 @@
 	}
 
 	.dot {
-		color: #000080;
+		color: #2d5aa0;
 		font-size: 24px;
 		font-weight: bold;
 		animation: bounce 1.5s infinite;
@@ -115,10 +115,10 @@
 		opacity: 0;
 		transition: all 0.6s ease-out;
 		border: 3px outset #ffffff;
-		border-right-color: #808080;
-		border-bottom-color: #808080;
+		border-right-color: #4a90e2;
+		border-bottom-color: #4a90e2;
 		padding: 8px;
-		background: #c0c0c0;
+		background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
 	}
 
 	.iframe-container.visible {
@@ -133,14 +133,14 @@
 	}
 
 	.restart-btn {
-		background: #c0c0c0;
-		border: 2px outset #ffffff;
-		border-right-color: #808080;
-		border-bottom-color: #808080;
-		color: #000000;
-		padding: 0.8rem 1.5rem;
+		background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
+		border: 1px outset #ffffff;
+		border-right-color: #4a90e2;
+		border-bottom-color: #4a90e2;
+		color: #2d5aa0;
+		padding: 10px 18px;
 		font-family: 'Courier New', monospace;
-		font-size: 14px;
+		font-size: 12px;
 		font-weight: bold;
 		cursor: pointer;
 		transition: all 0.1s ease;
@@ -150,6 +150,8 @@
 		transform: translateY(20px);
 		opacity: 0;
 		transition: all 0.5s ease-out;
+		border-radius: 3px;
+		box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 	}
 
 	.restart-btn.visible {
@@ -158,19 +160,21 @@
 	}
 
 	.restart-btn:hover {
-		background: #d4d4d4;
-		border: 2px inset #ffffff;
-		border-right-color: #808080;
-		border-bottom-color: #808080;
+		background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+		border: 1px inset #ffffff;
+		border-right-color: #4a90e2;
+		border-bottom-color: #4a90e2;
 		transform: translateY(-2px);
+		box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
 	}
 
 	.restart-btn:active {
-		background: #a0a0a0;
-		border: 2px inset #808080;
+		background: linear-gradient(135deg, #cce7ff 0%, #b3dbff 100%);
+		border: 1px inset #4a90e2;
 		border-right-color: #ffffff;
 		border-bottom-color: #ffffff;
 		transform: translateY(0);
+		box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 	}
 
 	.btn-text {
