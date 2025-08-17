@@ -423,7 +423,6 @@
 				// Only update if changed to avoid unnecessary updates
 				if (material.uniforms.uRevealDensity.value !== newDensity) {
 					material.uniforms.uRevealDensity.value = newDensity;
-					console.log(`Page ${currentPage}: Updated uRevealDensity to ${newDensity}`);
 				}
 
 				// Keep other params steady (tweak here if desired)
@@ -435,35 +434,20 @@
 			} else if (currentPage === 4) {
 				if (material.uniforms.uSettled.value !== 1.0) {
 					material.uniforms.uSettled.value = 1.0;
-					console.log('Page 4: Settled to full image');
 				}
 			} else {
 				if (material.uniforms.uSettled.value !== 0.0) {
 					material.uniforms.uSettled.value = 0.0;
-					console.log(`Page ${currentPage}: Reset to unsettled`);
 				}
 			}
 			
-			// Debug: log current uniform values every 5 seconds
-			if (Math.floor(elapsedTime) % 5 === 0 && Math.floor(elapsedTime) !== Math.floor((elapsedTime - 0.016) || 0)) {
-				console.log('Current uniforms:', {
-					uTime: material.uniforms.uTime.value.toFixed(2),
-					uSettled: material.uniforms.uSettled.value,
-					uRevealDensity: material.uniforms.uRevealDensity.value,
-					uFragmentScale: material.uniforms.uFragmentScale.value,
-					uSoftness: material.uniforms.uSoftness.value,
-					uDriftSpeed: material.uniforms.uDriftSpeed.value,
-					uGrainAmount: material.uniforms.uGrainAmount.value
-				});
-			}
+			// Removed debug logging to reduce console spam
 			
-			// Test: Make the effect very obvious for debugging
-			// This will make the fragments much larger and more visible
-			if (elapsedTime < 10) { // Only for first 10 seconds
-				material.uniforms.uRevealDensity.value = 0.2; // 50% revealed
-				material.uniforms.uFragmentScale.value = 0.5; // Very large fragments
-				material.uniforms.uSoftness.value = 0.1; // Very soft edges
-			}
+			// Keep the effect visible with proper density and fragment scale
+			// Make the fragments much larger and more visible
+			material.uniforms.uRevealDensity.value = 0.15; // 15% revealed - more visible
+			material.uniforms.uFragmentScale.value = 0.5; // Larger fragments
+			material.uniforms.uSoftness.value = 0.2; // Softer edges for better visibility
 		} else {
 			// Handle fallback material (MeshBasicMaterial)
 			console.log('Using fallback material - no shader effects available');

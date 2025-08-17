@@ -35,14 +35,14 @@
 	}
 
 	.notification-box {
-		/* background: linear-gradient(135deg, #f8fbff 0%, #e6f3ff 100%);
+		background: linear-gradient(135deg, #f8fbff 0%, #e6f3ff 100%);
 		border: 2px outset #ffffff;
 		border-right-color: #4a90e2;
-		border-bottom-color: #4a90e2; */
+		border-bottom-color: #4a90e2;
 		padding: 20px 20px 20px 10px;
 		border-radius: 8px;
-		/* box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1); */
-		/* max-width: 500px; */
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1);
+		max-width: 500px;
 		display: flex;
 		align-items: flex-start;
 		gap: 10px;

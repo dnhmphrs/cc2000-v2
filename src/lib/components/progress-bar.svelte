@@ -17,7 +17,7 @@
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		margin-bottom: 10px;
+		margin-top: 20px;
 		justify-content: center;
 	}
 
@@ -40,7 +40,7 @@
 	.progress-step.completed {
 		background: linear-gradient(135deg, #4a90e2 0%, #2d5aa0 100%);
 		color: #ffffff;
-		border: 2px inset #2d5aa0;
+		border: 2px outset #2d5aa0;
 		border-right-color: #ffffff;
 		border-bottom-color: #ffffff;
 		text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);

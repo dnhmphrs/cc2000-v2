@@ -112,6 +112,11 @@
 		border-right: 2px outset #ffffff;
 		border-left: 2px inset #2d5aa0;
 		border-top: 2px inset #2d5aa0;
+		box-shadow: 
+			inset 1px 1px 0px rgba(255, 255, 255, 0.2),
+			inset -1px -1px 0px rgba(0, 0, 0, 0.1),
+			0px 1px 2px rgba(0, 0, 0, 0.1);
+		position: relative;
 	}
 
 	.background-title {
