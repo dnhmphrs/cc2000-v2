@@ -31,6 +31,7 @@
 					<div class="control-button close"></div>
 				</div>
 			</div>
+			<div class="background-separator"></div>
 			<div class="background-content">
 				<Background />
 			</div>
@@ -119,6 +120,12 @@
 		letter-spacing: 1px;
 		font-weight: bold;
 		text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+	}
+
+	.background-separator {
+		height: 2px;
+		background: linear-gradient(to right, #2d5aa0, #4a90e2, #2d5aa0);
+		border-bottom: 1px solid #ffffff;
 	}
 
 	.window-controls {

@@ -17,6 +17,8 @@
 		</div>
 	</div>
 	
+	<div class="terminal-separator"></div>
+	
 	<div class="terminal-content">
 		<slot />
 	</div>
@@ -55,6 +57,12 @@
 		letter-spacing: 1px;
 		font-weight: bold;
 		text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+	}
+
+	.terminal-separator {
+		height: 2px;
+		background: linear-gradient(to right, #2d5aa0, #4a90e2, #2d5aa0);
+		border-bottom: 1px solid #ffffff;
 	}
 
 	.window-controls {

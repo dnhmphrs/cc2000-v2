@@ -289,6 +289,7 @@
 		align-items: center;
 		justify-content: center;
 		gap: 5px;
+		padding-bottom: 15px;
 	}
 
 	.spicy-value {
@@ -314,7 +315,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 15px;
+		gap: 10px;
 	}
 
 	.spicy-slider {
