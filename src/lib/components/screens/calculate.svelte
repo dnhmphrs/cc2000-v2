@@ -279,11 +279,6 @@
 	.spicy-display {
 		text-align: center;
 		padding: 15px 20px;
-		background: linear-gradient(135deg, #f8fbff 0%, #e6f3ff 100%);
-		border: 2px outset #ffffff;
-		border-right-color: #4a90e2;
-		border-bottom-color: #4a90e2;
-		border-radius: 8px;
 		min-width: 120px;
 		display: flex;
 		align-items: center;
