@@ -2,11 +2,12 @@
 	import { createEventDispatcher } from 'svelte';
 	
 	export let title = "CC2000 : CONCEPTION CALCULATOR 2000";
+	export let size = "400px"; // Default size, can be overridden
 	
 	const dispatch = createEventDispatcher();
 </script>
 
-<section class="terminal-window">
+<section class="terminal-window" style="width: {size}; height: {size};">
 	<div class="terminal-header">
 		<div class="terminal-title">{title}</div>
 		<div class="window-controls">
@@ -23,8 +24,6 @@
 
 <style>
 	.terminal-window {
-		width: 100%;
-		height: 100%;
 		background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 50%, #b3dbff 100%);
 		border: 2px outset #ffffff;
 		border-right-color: #4a90e2;
@@ -54,7 +53,7 @@
 	.terminal-title {
 		font-size: 11px;
 		letter-spacing: 1px;
-		font-weight: bold;
+		font-weight: normal;
 		text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 	}
 

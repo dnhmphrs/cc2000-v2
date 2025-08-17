@@ -17,7 +17,8 @@
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		margin-bottom: 20px;
+		margin-bottom: 10px;
+		justify-content: center;
 	}
 
 	.progress-step {
@@ -30,7 +31,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-weight: bold;
+		font-weight: normal;
 		font-size: 14px;
 		color: #2d5aa0;
 		background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);

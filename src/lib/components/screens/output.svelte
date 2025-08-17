@@ -80,11 +80,11 @@
 	.result-title {
 		color: #2d5aa0;
 		font-family: 'Courier New', monospace;
-		font-size: 16px;
-		font-weight: bold;
-		letter-spacing: 2px;
+		font-size: 14px;
+		font-weight: normal;
+		letter-spacing: 1px;
 		margin-bottom: 1rem;
-		text-shadow: 2px 2px 0px #e6f3ff;
+		text-shadow: 1px 1px 0px #e6f3ff;
 		animation: pulse 2s infinite;
 	}
 
@@ -140,8 +140,8 @@
 		color: #2d5aa0;
 		padding: 10px 18px;
 		font-family: 'Courier New', monospace;
-		font-size: 12px;
-		font-weight: bold;
+		font-size: 11px;
+		font-weight: normal;
 		cursor: pointer;
 		transition: all 0.1s ease;
 		text-transform: uppercase;

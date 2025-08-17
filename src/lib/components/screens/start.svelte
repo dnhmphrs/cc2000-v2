@@ -9,8 +9,6 @@
 	};
 </script>
 
-<div class="fullscreen-bg"></div>
-
 <div class="notification-container">
 	<div class="notification-box">
 		<div class="notification-icon">ℹ️</div>
@@ -27,15 +25,6 @@
 </div>
 
 <style>
-	.fullscreen-bg {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100vw;
-		height: 100vh;
-		z-index: -1;
-	}
-
 	.notification-container {
 		flex: 1;
 		display: flex;
@@ -68,7 +57,7 @@
 	.notification-text {
 		color: #2d5aa0;
 		font-size: 14px;
-		font-weight: bold;
+		font-weight: normal;
 		line-height: 1.5;
 		white-space: pre-wrap;
 		letter-spacing: 0.5px;
@@ -89,8 +78,8 @@
 		color: #2d5aa0;
 		padding: 12px 24px;
 		font-family: 'Courier New', monospace;
-		font-size: 14px;
-		font-weight: bold;
+		font-size: 13px;
+		font-weight: normal;
 		cursor: pointer;
 		transition: all 0.1s ease;
 		text-transform: uppercase;
@@ -119,11 +108,6 @@
 
 	.btn-text {
 		display: block;
-	}
-
-	@keyframes fadein {
-		from { opacity: 0; }
-		to { opacity: 1; }
 	}
 
 	@media (max-width: 600px) {

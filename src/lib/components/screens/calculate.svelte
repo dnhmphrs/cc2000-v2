@@ -91,77 +91,99 @@
 </script>
 
 {#if terminalVisible}
-	<ProgressBar currentStep={currentScreen} totalSteps={3} />
-	
-	{#if currentScreen === 1}
-		<div class="question-container">
-			<h2 class="terminal-text">SELECT GENDER:</h2>
-			<div class="gender-options">
-				<button class="gender-btn" on:click={() => handleGenderSelect('male')}>
-					<span class="btn-text">[1] MALE</span>
-				</button>
-				<button class="gender-btn" on:click={() => handleGenderSelect('female')}>
-					<span class="btn-text">[2] FEMALE</span>
-				</button>
-				<button class="gender-btn" on:click={() => handleGenderSelect('other')}>
-					<span class="btn-text">[3] OTHER</span>
-				</button>
-			</div>
-		</div>
-	{:else if currentScreen === 2}
-		<div class="question-container">
-			<h2 class="terminal-text">ENTER DATE OF BIRTH:</h2>
-			<div class="input-container">
-				<input 
-					type="date" 
-					bind:value={$date} 
-					class="terminal-input"
-					max="2023-03-05"
-					min="1958-06-01"
-				/>
-			</div>
-			<div class="button-container">
-				<button class="terminal-btn back-btn" on:click={handleBack}>
-					<span class="btn-text">[ESC] BACK</span>
-				</button>
-				<button class="terminal-btn next-btn" on:click={handleBirthdayNext} disabled={!$date}>
-					<span class="btn-text">[ENTER] NEXT</span>
-				</button>
-			</div>
-		</div>
-	{:else if currentScreen === 3}
-		<div class="question-container">
-			<h2 class="terminal-text">SELECT SPICY LEVEL:</h2>
-			<div class="spicy-container">
-				<div class="spicy-display">
-					<span class="spicy-value">{$spicy}</span>
-					<span class="spicy-label">/ 9</span>
+	<div class="screen-container">
+		<ProgressBar currentStep={currentScreen} totalSteps={3} />
+		
+		<div class="content-area">
+			{#if currentScreen === 1}
+				<div class="question-container">
+					<h2 class="terminal-text">SELECT GENDER:</h2>
+					<div class="gender-options">
+						<button class="gender-btn" on:click={() => handleGenderSelect('male')}>
+							<span class="btn-text">[1] MALE</span>
+						</button>
+						<button class="gender-btn" on:click={() => handleGenderSelect('female')}>
+							<span class="btn-text">[2] FEMALE</span>
+						</button>
+						<button class="gender-btn" on:click={() => handleGenderSelect('other')}>
+							<span class="btn-text">[3] OTHER</span>
+						</button>
+					</div>
 				</div>
-				<input 
-					type="range" 
-					bind:value={$spicy} 
-					min="0" 
-					max="9" 
-					class="spicy-slider"
-				/>
-				<div class="spicy-labels">
-					<span>MILD</span>
-					<span>HOT</span>
+			{:else if currentScreen === 2}
+				<div class="question-container">
+					<h2 class="terminal-text">ENTER DATE OF BIRTH:</h2>
+					<div class="input-container">
+						<input 
+							type="date" 
+							bind:value={$date} 
+							class="terminal-input"
+							max="2023-03-05"
+							min="1958-06-01"
+						/>
+					</div>
+					<div class="button-container">
+						<button class="terminal-btn back-btn" on:click={handleBack}>
+							<span class="btn-text">[ESC] BACK</span>
+						</button>
+						<button class="terminal-btn next-btn" on:click={handleBirthdayNext} disabled={!$date}>
+							<span class="btn-text">[ENTER] NEXT</span>
+						</button>
+					</div>
 				</div>
-			</div>
-			<div class="button-container">
-				<button class="terminal-btn back-btn" on:click={handleBack}>
-					<span class="btn-text">[ESC] BACK</span>
-				</button>
-				<button class="terminal-btn calculate-btn" on:click={handleSpicyNext}>
-					<span class="btn-text">[ENTER] CALCULATE</span>
-				</button>
-			</div>
+			{:else if currentScreen === 3}
+				<div class="question-container">
+					<h2 class="terminal-text">SELECT SPICY LEVEL:</h2>
+					<div class="spicy-container">
+						<div class="spicy-display">
+							<span class="spicy-value">{$spicy}</span>
+							<span class="spicy-label">/ 10</span>
+						</div>
+						<div class="slider-container">
+							<input 
+								type="range" 
+								bind:value={$spicy} 
+								min="1" 
+								max="10" 
+								class="spicy-slider"
+							/>
+							<div class="spicy-labels">
+								<span>MILD</span>
+								<span>HOT</span>
+							</div>
+						</div>
+					</div>
+					<div class="button-container">
+						<button class="terminal-btn back-btn" on:click={handleBack}>
+							<span class="btn-text">[ESC] BACK</span>
+						</button>
+						<button class="terminal-btn calculate-btn" on:click={handleSpicyNext}>
+							<span class="btn-text">[ENTER] CALCULATE</span>
+						</button>
+					</div>
+				</div>
+			{/if}
 		</div>
-	{/if}
+	</div>
 {/if}
 
 <style>
+	.screen-container {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		width: 100%;
+	}
+
+	.content-area {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		gap: 20px;
+	}
+
 	.question-container {
 		text-align: center;
 		width: 100%;
@@ -170,10 +192,11 @@
 
 	.terminal-text {
 		color: #000000;
-		font-size: 18px;
+		font-size: 16px;
 		margin-bottom: 30px;
 		text-shadow: none;
-		letter-spacing: 2px;
+		letter-spacing: 1px;
+		font-weight: normal;
 	}
 
 	.gender-options {
@@ -190,8 +213,8 @@
 		color: #2d5aa0;
 		padding: 12px 24px;
 		font-family: 'Courier New', monospace;
-		font-size: 14px;
-		font-weight: bold;
+		font-size: 13px;
+		font-weight: normal;
 		cursor: pointer;
 		transition: all 0.1s ease;
 		text-transform: uppercase;
@@ -231,7 +254,7 @@
 		padding: 15px;
 		font-family: 'Courier New', monospace;
 		font-size: 16px;
-		font-weight: bold;
+		font-weight: normal;
 		text-align: center;
 		width: 100%;
 		max-width: 250px;
@@ -247,55 +270,85 @@
 
 	.spicy-container {
 		margin-bottom: 30px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 25px;
 	}
 
 	.spicy-display {
-		margin-bottom: 20px;
+		text-align: center;
+		padding: 15px 20px;
+		background: linear-gradient(135deg, #f8fbff 0%, #e6f3ff 100%);
+		border: 2px outset #ffffff;
+		border-right-color: #4a90e2;
+		border-bottom-color: #4a90e2;
+		border-radius: 8px;
+		min-width: 120px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 5px;
 	}
 
 	.spicy-value {
-		color: #000080;
-		font-size: 48px;
-		font-weight: bold;
-		text-shadow: none;
+		color: #2d5aa0;
+		font-size: 36px;
+		font-weight: normal;
+		text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+		line-height: 1;
 	}
 
 	.spicy-label {
-		color: #000000;
-		font-size: 24px;
-		font-weight: bold;
+		color: #4a90e2;
+		font-size: 36px;
+		font-weight: normal;
+		line-height: 1;
+		letter-spacing: 1px;
+	}
+
+	.slider-container {
+		position: relative;
+		width: 100%;
+		max-width: 300px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 15px;
 	}
 
 	.spicy-slider {
 		width: 100%;
-		max-width: 300px;
-		height: 8px;
+		height: 12px;
 		background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
 		border: 2px inset #4a90e2;
 		border-right-color: #ffffff;
 		border-bottom-color: #ffffff;
 		border-radius: 0;
 		outline: none;
-		margin-bottom: 10px;
 		-webkit-appearance: none;
 		appearance: none;
+		box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.1);
 	}
 
 	.spicy-slider::-webkit-slider-thumb {
 		-webkit-appearance: none;
 		appearance: none;
-		width: 15px;
-		height: 20px;
+		width: 20px;
+		height: 25px;
 		background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
 		border: 2px outset #ffffff;
 		border-right-color: #4a90e2;
 		border-bottom-color: #4a90e2;
 		cursor: pointer;
 		border-radius: 0;
+		box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 	}
 
 	.spicy-slider::-webkit-slider-thumb:hover {
 		background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+		transform: translateY(-1px);
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.25);
 	}
 
 	.spicy-slider::-webkit-slider-thumb:active {
@@ -303,21 +356,26 @@
 		border: 2px inset #4a90e2;
 		border-right-color: #ffffff;
 		border-bottom-color: #ffffff;
+		transform: translateY(0);
+		box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 	}
 
 	.spicy-slider::-moz-range-thumb {
-		width: 15px;
-		height: 20px;
+		width: 20px;
+		height: 25px;
 		background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
 		border: 2px outset #ffffff;
 		border-right-color: #4a90e2;
 		border-bottom-color: #4a90e2;
 		cursor: pointer;
 		border-radius: 0;
+		box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 	}
 
 	.spicy-slider::-moz-range-thumb:hover {
 		background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+		transform: translateY(-1px);
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.25);
 	}
 
 	.spicy-slider::-moz-range-thumb:active {
@@ -325,15 +383,19 @@
 		border: 2px inset #4a90e2;
 		border-right-color: #ffffff;
 		border-bottom-color: #ffffff;
+		transform: translateY(0);
+		box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 	}
 
 	.spicy-labels {
 		display: flex;
 		justify-content: space-between;
-		color: #000000;
-		font-size: 12px;
-		font-weight: bold;
+		width: 100%;
+		color: #2d5aa0;
+		font-size: 14px;
+		font-weight: normal;
 		letter-spacing: 1px;
+		text-transform: uppercase;
 	}
 
 	.button-container {
@@ -350,8 +412,8 @@
 		color: #2d5aa0;
 		padding: 10px 18px;
 		font-family: 'Courier New', monospace;
-		font-size: 12px;
-		font-weight: bold;
+		font-size: 11px;
+		font-weight: normal;
 		cursor: pointer;
 		transition: all 0.1s ease;
 		text-transform: uppercase;

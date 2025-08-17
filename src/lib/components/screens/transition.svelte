@@ -15,25 +15,45 @@
 	});
 </script>
 
-<ProgressBar currentStep={3} totalSteps={3} />
+<div class="screen-container">
+	<ProgressBar currentStep={3} totalSteps={3} />
+	
+	<div class="content-area">
+		<div class="transition-container">
+			<div class="loading-text">
+				<span class="loading-dot">.</span>
+				<span class="loading-dot">.</span>
+				<span class="loading-dot">.</span>
+			</div>
+			<h2 class="terminal-text">PROCESSING BIOMETRIC DATA</h2>
+			<p class="status-text">Calculating conception coordinates...</p>
+		</div>
 
-<div class="transition-container">
-	<div class="loading-text">
-		<span class="loading-dot">.</span>
-		<span class="loading-dot">.</span>
-		<span class="loading-dot">.</span>
+		<div class="button-container">
+			<button class="terminal-btn continue-btn" on:click={handleProgress}>
+				<span class="btn-text">[ENTER] CONTINUE</span>
+			</button>
+		</div>
 	</div>
-	<h2 class="terminal-text">PROCESSING BIOMETRIC DATA</h2>
-	<p class="status-text">Calculating conception coordinates...</p>
-</div>
-
-<div class="button-container">
-	<button class="terminal-btn continue-btn" on:click={handleProgress}>
-		<span class="btn-text">[ENTER] CONTINUE</span>
-	</button>
 </div>
 
 <style>
+	.screen-container {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		width: 100%;
+	}
+
+	.content-area {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		gap: 20px;
+	}
+
 	.transition-container {
 		text-align: center;
 	}
@@ -64,10 +84,11 @@
 
 	.terminal-text {
 		color: #000000;
-		font-size: 18px;
+		font-size: 16px;
 		margin-bottom: 15px;
 		text-shadow: none;
-		letter-spacing: 2px;
+		letter-spacing: 1px;
+		font-weight: normal;
 	}
 
 	.status-text {
@@ -75,10 +96,11 @@
 		font-size: 14px;
 		opacity: 0.8;
 		letter-spacing: 1px;
+		font-weight: normal;
 	}
 
 	.button-container {
-		margin-top: 20px;
+		margin-top: 0;
 	}
 
 	.terminal-btn {
@@ -89,8 +111,8 @@
 		color: #2d5aa0;
 		padding: 12px 24px;
 		font-family: 'Courier New', monospace;
-		font-size: 14px;
-		font-weight: bold;
+		font-size: 13px;
+		font-weight: normal;
 		cursor: pointer;
 		transition: all 0.1s ease;
 		text-transform: uppercase;
