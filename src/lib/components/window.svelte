@@ -53,7 +53,7 @@
 	.terminal-title {
 		font-size: 11px;
 		letter-spacing: 1px;
-		font-weight: normal;
+		font-weight: bold;
 		text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 	}
 
