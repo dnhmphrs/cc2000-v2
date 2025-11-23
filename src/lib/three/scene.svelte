@@ -18,12 +18,13 @@
 	let rotating = true;
 	let colorMode = "direction";
 	let animationSpeed = 0.5;
+	let latticeScale = 5.0;
 	let phaseX = 0;
 	let phaseY = 0;
 	let phaseZ = 0;
 	let rotateX = false;
 	let rotateY = false;
-	let rotateZ = true;
+	let rotateZ = false;
 	let currentOpacity = 1.0;
 	let cameraAnim = { 
 	  active: false, 
@@ -33,11 +34,12 @@
 	};
   
 	// UI bindings
-	let gridSize = 6;
+	let gridSize = 5;
 	let speedValue = 0.5;
 	let phaseXValue = 0;
 	let phaseYValue = 0;
 	let phaseZValue = 0;
+	let latticeScaleValue = 5.0;
   
 	// Display values
 	let pointCount = '';
@@ -47,22 +49,22 @@
 	const MAX_GRID = 10;
 	const MAX_POINTS = MAX_GRID ** 3;
 	const MAX_EDGES = (MAX_POINTS * (MAX_POINTS - 1)) / 2;
-  
+
 	// Worker code
 	const workerCode = `
-	  self.onmessage = (msg) => {
-		const { grid, colorMode, maxEdges } = msg.data;
-	
+	self.onmessage = (msg) => {
+		const { grid, colorMode, maxEdges, scale } = msg.data;
+
 		const points = [];
-		const step = 2 / (grid - 1);
-	
+		const step = (2 * scale) / (grid - 1);  // Apply scale here
+
 		for (let i = 0; i < grid; i++)
-		  for (let j = 0; j < grid; j++)
+		for (let j = 0; j < grid; j++)
 			for (let k = 0; k < grid; k++) {
-			  const x = -1 + i * step;
-			  const y = -1 + j * step;
-			  const z = -1 + k * step;
-			  points.push([x, y, z]);
+			const x = -scale + i * step;  // Use scale for bounds
+			const y = -scale + j * step;
+			const z = -scale + k * step;
+			points.push([x, y, z]);
 			}
 	
 		const positions = [];
@@ -124,7 +126,7 @@
 	}
   
 	function requestGraphBuild(grid) {
-	  worker.postMessage({ grid, colorMode, maxEdges: MAX_EDGES });
+		worker.postMessage({ grid, colorMode, maxEdges: MAX_EDGES, scale: latticeScale });
 	}
   
 	function setupCamera() {
@@ -140,7 +142,7 @@
 		0.1, 
 		10000
 	  );
-	  camera.position.set(5, 5, 5);
+	  camera.position.set(20, 20, 20);
 	  camera.lookAt(0, 0, 0);
 	}
   
@@ -167,45 +169,206 @@
 	  });
 	}
   
+	// async function setupBackgroundShader() {
+	// try {
+	// 	// Load shaders
+	// 	const vertexResponse = await fetch('/shaders/vertex.glsl');
+	// 	const fragmentResponse = await fetch('/shaders/fragment.glsl');
+		
+	// 	const vertexShader = await vertexResponse.text();
+	// 	const fragmentShader = await fragmentResponse.text();
+		
+	// 	// Distance from center (same as your current z=-10)
+	// 	const distance = 5;
+		
+	// 	// Create 6 planes for cube faces
+	// 	const planes = [
+	// 	// Front (positive Z)
+	// 	{ 
+	// 		position: new THREE.Vector3(0, 0, distance),
+	// 		rotation: new THREE.Euler(0, 0, 0),
+	// 		timeOffset: 0
+	// 	},
+	// 	// Back (negative Z)
+	// 	{ 
+	// 		position: new THREE.Vector3(0, 0, -distance),
+	// 		rotation: new THREE.Euler(0, Math.PI, 0),
+	// 		timeOffset: 1
+	// 	},
+	// 	// Right (positive X)
+	// 	{ 
+	// 		position: new THREE.Vector3(distance, 0, 0),
+	// 		rotation: new THREE.Euler(0, Math.PI / 2, 0),
+	// 		timeOffset: 2
+	// 	},
+	// 	// Left (negative X)
+	// 	{ 
+	// 		position: new THREE.Vector3(-distance, 0, 0),
+	// 		rotation: new THREE.Euler(0, -Math.PI / 2, 0),
+	// 		timeOffset: 3
+	// 	},
+	// 	// Top (positive Y)
+	// 	{ 
+	// 		position: new THREE.Vector3(0, distance, 0),
+	// 		rotation: new THREE.Euler(-Math.PI / 2, 0, 0),
+	// 		timeOffset: 4
+	// 	},
+	// 	// Bottom (negative Y)
+	// 	{ 
+	// 		position: new THREE.Vector3(0, -distance, 0),
+	// 		rotation: new THREE.Euler(Math.PI / 2, 0, 0),
+	// 		timeOffset: 5
+	// 	}
+	// 	];
+		
+	// 	// Create array to store all background meshes
+	// 	backgroundMesh = [];
+		
+	// 	planes.forEach((plane) => {
+	// 	const geometry = new THREE.PlaneGeometry(10, 10);
+		
+	// 	// Create unique material for each face
+	// 	const material = new THREE.ShaderMaterial({
+	// 		uniforms: {
+	// 		time: { value: plane.timeOffset }, // Different starting time for variation
+	// 		resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+	// 		},
+	// 		vertexShader: vertexShader,
+	// 		fragmentShader: fragmentShader,
+	// 		depthTest: false,
+	// 		depthWrite: false,
+	// 		side: THREE.DoubleSide
+	// 	});
+		
+	// 	const mesh = new THREE.Mesh(geometry, material);
+	// 	mesh.position.copy(plane.position);
+	// 	mesh.rotation.copy(plane.rotation);
+		
+	// 	scene.add(mesh);
+	// 	backgroundMesh.push(mesh);
+	// 	});
+		
+	// } catch (error) {
+	// 	console.error('Error loading shaders:', error);
+	// 	// Fallback to solid color background
+	// 	scene.background = new THREE.Color(0x000000);
+	// }
+	// }
+
 	async function setupBackgroundShader() {
-	  try {
-		// Load shaders
-		const vertexResponse = await fetch('/shaders/vertex.glsl');
-		const fragmentResponse = await fetch('/shaders/fragment.glsl');
-		
-		const vertexShader = await vertexResponse.text();
-		const fragmentShader = await fragmentResponse.text();
-		
-		// Create fullscreen quad geometry
-		const geometry = new THREE.PlaneGeometry(10, 10);
-		
-		// Create shader material
-		const material = new THREE.ShaderMaterial({
-		  uniforms: {
-			time: { value: 0.0 },
-			resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-		  },
-		  vertexShader: vertexShader,
-		  fragmentShader: fragmentShader,
-		  depthTest: false,
-		  depthWrite: false,
-		  side: THREE.DoubleSide
-		});
-		
-		// Create mesh and add to scene
-		backgroundMesh = new THREE.Mesh(geometry, material);
-		// backgroundMesh.renderOrder = -1; // Render behind everything
-		scene.add(backgroundMesh);
-		
-		// Position the background mesh
-		backgroundMesh.position.z = -10;
-		
-	  } catch (error) {
-		console.error('Error loading shaders:', error);
-		// Fallback to solid color background
-		scene.background = new THREE.Color(0x000000);
-	  }
-	}
+  try {
+    // Load shaders
+    const vertexResponse = await fetch('/shaders/vertex.glsl');
+    const fragmentResponse = await fetch('/shaders/fragment.glsl');
+    
+    const vertexShader = await vertexResponse.text();
+    const fragmentShader = await fragmentResponse.text();
+    
+    // Load the texture
+    const textureLoader = new THREE.TextureLoader();
+    const texture = await new Promise((resolve, reject) => {
+      textureLoader.load(
+        '/90s_Illustration.jpg',
+        resolve,
+        undefined,
+        reject
+      );
+    });
+    
+    // Distance from center (same as your current z=-10)
+    const distance = 10;
+    
+    // Create 6 planes for cube faces
+    const planes = [
+      // Front (positive Z) - will use the image texture
+      { 
+        position: new THREE.Vector3(0, 0, distance),
+        rotation: new THREE.Euler(0, 0, 0),
+        timeOffset: 0,
+        useTexture: true
+      },
+      // Back (negative Z)
+      { 
+        position: new THREE.Vector3(0, 0, -distance),
+        rotation: new THREE.Euler(0, Math.PI, 0),
+        timeOffset: 1,
+        useTexture: false
+      },
+      // Right (positive X)
+      { 
+        position: new THREE.Vector3(distance, 0, 0),
+        rotation: new THREE.Euler(0, Math.PI / 2, 0),
+        timeOffset: 2,
+        useTexture: false
+      },
+      // Left (negative X)
+      { 
+        position: new THREE.Vector3(-distance, 0, 0),
+        rotation: new THREE.Euler(0, -Math.PI / 2, 0),
+        timeOffset: 3,
+        useTexture: false
+      },
+      // Top (positive Y)
+      { 
+        position: new THREE.Vector3(0, distance, 0),
+        rotation: new THREE.Euler(-Math.PI / 2, 0, 0),
+        timeOffset: 4,
+        useTexture: false
+      },
+      // Bottom (negative Y)
+      { 
+        position: new THREE.Vector3(0, -distance, 0),
+        rotation: new THREE.Euler(Math.PI / 2, 0, 0),
+        timeOffset: 5,
+        useTexture: false
+      }
+    ];
+    
+    // Create array to store all background meshes
+    backgroundMesh = [];
+    
+    planes.forEach((plane) => {
+      const geometry = new THREE.PlaneGeometry(20, 20);
+      
+      let material;
+      
+      if (plane.useTexture) {
+        // Use basic material with the image texture
+        material = new THREE.MeshBasicMaterial({
+          map: texture,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.8  // Adjust opacity as needed
+        });
+      } else {
+        // Use shader material for other faces
+        material = new THREE.ShaderMaterial({
+          uniforms: {
+            time: { value: plane.timeOffset },
+            resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+          },
+          vertexShader: vertexShader,
+          fragmentShader: fragmentShader,
+          depthTest: false,
+          depthWrite: false,
+        //   side: THREE.DoubleSide
+        });
+      }
+      
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.copy(plane.position);
+      mesh.rotation.copy(plane.rotation);
+      
+      scene.add(mesh);
+      backgroundMesh.push(mesh);
+    });
+    
+  } catch (error) {
+    console.error('Error loading shaders or texture:', error);
+    // Fallback to solid color background
+    scene.background = new THREE.Color(0x000000);
+  }
+}
   
 	function animateCameraTo(target) {
 	  cameraAnim.start.copy(camera.position);
@@ -268,23 +431,12 @@
 		  phaseZValue = phaseZ / Math.PI;
 		}
 	  }
-	  
-	  // Update shader time uniform
-	  if (backgroundMesh && backgroundMesh.material.uniforms) {
-		backgroundMesh.material.uniforms.time.value += 0.016;
-	  }
-  
+	
 	  controls.update();
 	  
 	  // Clear and render
 	  renderer.clear();
 	  
-	  // Render background
-	  if (backgroundMesh) {
-		const oldCamera = camera;
-		const bgCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-		renderer.render(new THREE.Scene().add(backgroundMesh.clone()), bgCamera);
-	  }
 	  
 	  // Render main scene
 	  renderer.render(scene, camera);
@@ -299,10 +451,14 @@
 	  camera.updateProjectionMatrix();
 	  renderer.setSize(window.innerWidth, window.innerHeight);
 	  
-	  // Update shader resolution
-	  if (backgroundMesh && backgroundMesh.material.uniforms) {
-		backgroundMesh.material.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
-	  }
+		// Update shader resolution
+		if (backgroundMesh && Array.isArray(backgroundMesh)) {
+		backgroundMesh.forEach(mesh => {
+			if (mesh.material.uniforms) {
+			mesh.material.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
+			}
+		});
+		}
 	}
   
 	// UI handlers
@@ -312,6 +468,11 @@
   
 	function handleSpeedChange() {
 	  animationSpeed = speedValue;
+	}
+
+	function handleScaleChange() {
+		latticeScale = latticeScaleValue;
+		requestGraphBuild(gridSize);
 	}
   
 	function handlePhaseXChange() {
@@ -415,9 +576,17 @@
 		  lineSegments.material.dispose();
 		}
 		if (backgroundMesh) {
-		  scene.remove(backgroundMesh);
-		  backgroundMesh.geometry.dispose();
-		  backgroundMesh.material.dispose();
+		if (Array.isArray(backgroundMesh)) {
+			backgroundMesh.forEach(mesh => {
+			scene.remove(mesh);
+			mesh.geometry.dispose();
+			mesh.material.dispose();
+			});
+		} else {
+			scene.remove(backgroundMesh);
+			backgroundMesh.geometry.dispose();
+			backgroundMesh.material.dispose();
+		}
 		}
 		if (renderer) renderer.dispose();
 		if (controls) controls.dispose();
@@ -461,6 +630,19 @@
 	  <span>{speedValue.toFixed(1)}</span>
 	</div>
   
+	<div class="row">
+		Scale:
+		<input 
+		  type="range" 
+		  bind:value={latticeScaleValue} 
+		  on:input={handleScaleChange}
+		  min="0.1" 
+		  max="10" 
+		  step="0.1"
+		/>
+		<span>{latticeScaleValue.toFixed(1)}</span>
+	  </div>
+
 	<div class="row">
 	  Phase X:
 	  <input 
