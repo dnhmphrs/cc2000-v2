@@ -18,7 +18,7 @@
 	let rotating = true;
 	let colorMode = "direction";
 	let animationSpeed = 0.5;
-	let latticeScale = 5.0;
+	let latticeScale = 10.0;
 	let phaseX = 0;
 	let phaseY = 0;
 	let phaseZ = 0;
@@ -39,7 +39,7 @@
 	let phaseXValue = 0;
 	let phaseYValue = 0;
 	let phaseZValue = 0;
-	let latticeScaleValue = 5.0;
+	let latticeScaleValue = 10.0;
   
 	// Display values
 	let pointCount = '';
@@ -89,13 +89,13 @@
 			  const ny = Math.abs(dy / len);
 			  const nz = Math.abs(dz / len);
 		  
-			  r = nx;
-			  g = ny * 1.0;
-			  b = nz * 1.4;
+			  r = nx * ny;
+			  g = ny;
+			  b = nz;
 			} else {
 			  r = 0.0;
 			  g = 0.0;
-			  b = 1.0;
+			  b = 0.0;
 			}
 	
 			colors.push(r, g, b);
@@ -129,21 +129,36 @@
 		worker.postMessage({ grid, colorMode, maxEdges: MAX_EDGES, scale: latticeScale });
 	}
   
-	function setupCamera() {
-	  const width = window.innerWidth;
-	  const height = window.innerHeight;
-	  const aspect = width / height;
+	// function setupCamera() {
+	//   const width = window.innerWidth;
+	//   const height = window.innerHeight;
+	//   const aspect = width / height;
 	  
-	  camera = new THREE.OrthographicCamera(
-		-frustumSize * aspect, 
-		frustumSize * aspect,
-		frustumSize, 
-		-frustumSize,
-		0.1, 
-		10000
-	  );
-	  camera.position.set(20, 20, 20);
-	  camera.lookAt(0, 0, 0);
+	//   camera = new THREE.OrthographicCamera(
+	// 	-frustumSize * aspect, 
+	// 	frustumSize * aspect,
+	// 	frustumSize, 
+	// 	-frustumSize,
+	// 	0.1, 
+	// 	1000
+	//   );
+	//   camera.position.set(1, 1, 1);
+	//   camera.lookAt(0, 0, 0);
+	// }
+
+	function setupCamera() {
+		const width = window.innerWidth;
+		const height = window.innerHeight;
+		const aspect = width / height;
+		
+		camera = new THREE.PerspectiveCamera(
+			75,        // Field of view in degrees
+			aspect,    // Aspect ratio
+			0.1,       // Near clipping plane
+			1000       // Far clipping plane
+		);
+		camera.position.set(15, 15, 15);  // Move camera further back for perspective view
+		camera.lookAt(0, 0, 0);
 	}
   
 	function setupRenderer() {
@@ -256,120 +271,129 @@
 	// }
 
 	async function setupBackgroundShader() {
-  try {
-    // Load shaders
-    const vertexResponse = await fetch('/shaders/vertex.glsl');
-    const fragmentResponse = await fetch('/shaders/fragment.glsl');
-    
-    const vertexShader = await vertexResponse.text();
-    const fragmentShader = await fragmentResponse.text();
-    
-    // Load the texture
-    const textureLoader = new THREE.TextureLoader();
-    const texture = await new Promise((resolve, reject) => {
-      textureLoader.load(
-        '/90s_Illustration.jpg',
-        resolve,
-        undefined,
-        reject
-      );
-    });
-    
-    // Distance from center (same as your current z=-10)
-    const distance = 10;
-    
-    // Create 6 planes for cube faces
-    const planes = [
-      // Front (positive Z) - will use the image texture
-      { 
-        position: new THREE.Vector3(0, 0, distance),
-        rotation: new THREE.Euler(0, 0, 0),
-        timeOffset: 0,
-        useTexture: true
-      },
-      // Back (negative Z)
-      { 
-        position: new THREE.Vector3(0, 0, -distance),
-        rotation: new THREE.Euler(0, Math.PI, 0),
-        timeOffset: 1,
-        useTexture: false
-      },
-      // Right (positive X)
-      { 
-        position: new THREE.Vector3(distance, 0, 0),
-        rotation: new THREE.Euler(0, Math.PI / 2, 0),
-        timeOffset: 2,
-        useTexture: false
-      },
-      // Left (negative X)
-      { 
-        position: new THREE.Vector3(-distance, 0, 0),
-        rotation: new THREE.Euler(0, -Math.PI / 2, 0),
-        timeOffset: 3,
-        useTexture: false
-      },
-      // Top (positive Y)
-      { 
-        position: new THREE.Vector3(0, distance, 0),
-        rotation: new THREE.Euler(-Math.PI / 2, 0, 0),
-        timeOffset: 4,
-        useTexture: false
-      },
-      // Bottom (negative Y)
-      { 
-        position: new THREE.Vector3(0, -distance, 0),
-        rotation: new THREE.Euler(Math.PI / 2, 0, 0),
-        timeOffset: 5,
-        useTexture: false
-      }
-    ];
-    
-    // Create array to store all background meshes
-    backgroundMesh = [];
-    
-    planes.forEach((plane) => {
-      const geometry = new THREE.PlaneGeometry(20, 20);
-      
-      let material;
-      
-      if (plane.useTexture) {
-        // Use basic material with the image texture
-        material = new THREE.MeshBasicMaterial({
-          map: texture,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.8  // Adjust opacity as needed
-        });
-      } else {
-        // Use shader material for other faces
-        material = new THREE.ShaderMaterial({
-          uniforms: {
-            time: { value: plane.timeOffset },
-            resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-          },
-          vertexShader: vertexShader,
-          fragmentShader: fragmentShader,
-          depthTest: false,
-          depthWrite: false,
-        //   side: THREE.DoubleSide
-        });
-      }
-      
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.copy(plane.position);
-      mesh.rotation.copy(plane.rotation);
-      
-      scene.add(mesh);
-      backgroundMesh.push(mesh);
-    });
-    
-  } catch (error) {
-    console.error('Error loading shaders or texture:', error);
-    // Fallback to solid color background
-    scene.background = new THREE.Color(0x000000);
-  }
-}
-  
+	try {
+		// Load shaders
+		const vertexResponse = await fetch('/shaders/vertex.glsl');
+		const fragmentResponse = await fetch('/shaders/fragment.glsl');
+		
+		const vertexShader = await vertexResponse.text();
+		const fragmentShader = await fragmentResponse.text();
+		
+		// Load both textures
+		const textureLoader = new THREE.TextureLoader();
+		const texture90s = await new Promise((resolve, reject) => {
+		textureLoader.load(
+			'/90s_Illustration.jpg',
+			resolve,
+			undefined,
+			reject
+		);
+		});
+		
+		const texture60s = await new Promise((resolve, reject) => {
+		textureLoader.load(
+			'/60s_Illustration.jpg',
+			resolve,
+			undefined,
+			reject
+		);
+		});
+		
+		// Distance from center (same as your current z=-10)
+		const distance = 10;
+		
+		// Create 6 planes for cube faces
+		const planes = [
+		// Front (positive Z) - 90s illustration
+		{ 
+			position: new THREE.Vector3(0, 0, distance),
+			rotation: new THREE.Euler(0, 0, 0),
+			timeOffset: 0,
+			texture: texture90s
+		},
+		// Back (negative Z) - 60s illustration
+		{ 
+			position: new THREE.Vector3(0, 0, -distance),
+			rotation: new THREE.Euler(0, Math.PI, 0),
+			timeOffset: 1,
+			texture: texture60s
+		},
+		// Right (positive X) - shader
+		{ 
+			position: new THREE.Vector3(distance, 0, 0),
+			rotation: new THREE.Euler(0, Math.PI / 2, 0),
+			timeOffset: 2,
+			texture: texture90s
+		},
+		// Left (negative X) - shader
+		{ 
+			position: new THREE.Vector3(-distance, 0, 0),
+			rotation: new THREE.Euler(0, -Math.PI / 2, 0),
+			timeOffset: 3,
+			texture: texture60s
+		},
+		// Top (positive Y) - shader
+		{ 
+			position: new THREE.Vector3(0, distance, 0),
+			rotation: new THREE.Euler(-Math.PI / 2, 0, 0),
+			timeOffset: 4,
+			texture: texture90s
+		},
+		// Bottom (negative Y) - shader
+		{ 
+			position: new THREE.Vector3(0, -distance, 0),
+			rotation: new THREE.Euler(Math.PI / 2, 0, 0),
+			timeOffset: 5,
+			texture: texture60s
+		}
+		];
+		
+		// Create array to store all background meshes
+		backgroundMesh = [];
+		
+		planes.forEach((plane) => {
+		const geometry = new THREE.PlaneGeometry(20, 20);
+		
+		let material;
+		
+		if (plane.texture) {
+			// Use basic material with the image texture
+			material = new THREE.MeshBasicMaterial({
+			map: plane.texture,
+			side: THREE.DoubleSide,
+			transparent: true,
+			opacity: 0.8  // Adjust opacity as needed
+			});
+		} else {
+			// Use shader material for other faces
+			material = new THREE.ShaderMaterial({
+			uniforms: {
+				time: { value: plane.timeOffset },
+				resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+			},
+			vertexShader: vertexShader,
+			fragmentShader: fragmentShader,
+			depthTest: false,
+			depthWrite: false,
+			side: THREE.DoubleSide
+			});
+		}
+		
+		const mesh = new THREE.Mesh(geometry, material);
+		mesh.position.copy(plane.position);
+		mesh.rotation.copy(plane.rotation);
+		
+		scene.add(mesh);
+		backgroundMesh.push(mesh);
+		});
+		
+	} catch (error) {
+		console.error('Error loading shaders or textures:', error);
+		// Fallback to solid color background
+		scene.background = new THREE.Color(0x000000);
+	}
+	}
+
 	function animateCameraTo(target) {
 	  cameraAnim.start.copy(camera.position);
 	  cameraAnim.end.copy(target);
@@ -442,22 +466,38 @@
 	  renderer.render(scene, camera);
 	}
   
-	function handleResize() {
-	  const aspect = window.innerWidth / window.innerHeight;
-	  camera.left = -frustumSize * aspect;
-	  camera.right = frustumSize * aspect;
-	  camera.top = frustumSize;
-	  camera.bottom = -frustumSize;
-	  camera.updateProjectionMatrix();
-	  renderer.setSize(window.innerWidth, window.innerHeight);
+	// function handleResize() {
+	//   const aspect = window.innerWidth / window.innerHeight;
+	//   camera.left = -frustumSize * aspect;
+	//   camera.right = frustumSize * aspect;
+	//   camera.top = frustumSize;
+	//   camera.bottom = -frustumSize;
+	//   camera.updateProjectionMatrix();
+	//   renderer.setSize(window.innerWidth, window.innerHeight);
 	  
+	// 	// Update shader resolution
+	// 	if (backgroundMesh && Array.isArray(backgroundMesh)) {
+	// 	backgroundMesh.forEach(mesh => {
+	// 		if (mesh.material.uniforms) {
+	// 		mesh.material.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
+	// 		}
+	// 	});
+	// 	}
+	// }
+
+	function handleResize() {
+		const aspect = window.innerWidth / window.innerHeight;
+		camera.aspect = aspect;
+		camera.updateProjectionMatrix();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		
 		// Update shader resolution
 		if (backgroundMesh && Array.isArray(backgroundMesh)) {
-		backgroundMesh.forEach(mesh => {
+			backgroundMesh.forEach(mesh => {
 			if (mesh.material.uniforms) {
-			mesh.material.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
+				mesh.material.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
 			}
-		});
+			});
 		}
 	}
   
@@ -500,7 +540,7 @@
 	}
   
 	function toggleOpacity() {
-	  currentOpacity = currentOpacity === 0.25 ? 1.0 : 0.25;
+	  currentOpacity = currentOpacity === 0.5 ? 1.0 : 0.5;
 	  if (lineSegments) lineSegments.material.opacity = currentOpacity;
 	}
   
@@ -596,11 +636,16 @@
   
   <canvas bind:this={canvasElement} class="webgl-canvas"></canvas>
   
-  <div class="info-box">
+  <!-- <div class="info-box">
 	<p><strong>Spec(ℤ)</strong>: The spectrum of a point {'{•}'}</p>
 	<p>An nD affine Non-Noetherian scheme; the view from the archimedean place.</p>
 	<p>{pointCount}</p>
 	<p>{lineCount}</p>
+  </div> -->
+
+  <div class="info-box">
+	<p><strong>CONCEPTION CALCULATOR 2000</strong></p>
+	<p>TEXT GOES HERE.</p>
   </div>
   
   <div class="ui-panel">
