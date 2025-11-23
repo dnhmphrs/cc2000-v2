@@ -10,7 +10,7 @@
 	import { getDeviceType, getScreenSize } from '$lib/functions/utils';
 
 	export let data;
-	let Geometry;
+	let Scene;
 
 	$: if (browser && data?.analyticsId) {
 		webVitals({
@@ -31,8 +31,8 @@
 
 	onMount(async () => {
 		// webgl
-		const module = await import('$lib/graphics/geometry.svelte');
-		Geometry = module.default;
+		const module = await import('$lib/three/scene.svelte');
+		Scene = module.default;
 
 		handleScreen();
 		window.addEventListener('resize', () => handleScreen());
@@ -54,13 +54,13 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </svelte:head>
 
-{#if Geometry}
-	<svelte:component this={Geometry} />
+{#if Scene}
+	<svelte:component this={Scene} />
 {:else}
 	<div class="loading">gestating...</div>
 {/if}
 
-<svelte:component this={Geometry} />
+<svelte:component this={Scene} />
 
 <main>
 	<slot />
