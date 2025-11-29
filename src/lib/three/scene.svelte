@@ -33,10 +33,10 @@
 	let densityThreshold = 0.1;
 	let colorIntensity = 1.0;
 	let showWireframe = false;
-	let cubeSize = 80.0;
+	let cubeSize = 100.0;
 
 	// New controls
-	let panelDistance = 20;
+	let panelDistance = 30;
 	let panelOpacity = 0.8;
 
 	// Effects controls
