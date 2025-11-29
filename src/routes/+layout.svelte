@@ -3,22 +3,12 @@
 
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
-	import { webVitals } from '$lib/vitals';
 
 	import { onMount } from 'svelte';
 	import { screenType, isIframe, screenSize } from '$lib/store/store';
 	import { getDeviceType, getScreenSize } from '$lib/functions/utils';
 
-	export let data;
 	let Scene;
-
-	$: if (browser && data?.analyticsId) {
-		webVitals({
-			path: $page.url.pathname,
-			params: $page.params,
-			analyticsId: data.analyticsId
-		});
-	}
 
 	function handleScreen() {
 		// screen size
@@ -37,8 +27,9 @@
 		handleScreen();
 		window.addEventListener('resize', () => handleScreen());
 
-		// releasr opacity block once geometry is loaded
-		document.querySelector('main').style.opacity = 1;
+		// release opacity block once geometry is loaded
+		const main = document.querySelector('main');
+		if (main) main.style.opacity = 1;
 
 		return () => {
 			window.removeEventListener('resize', () => handleScreen());
@@ -59,8 +50,6 @@
 {:else}
 	<div class="loading">gestating...</div>
 {/if}
-
-<svelte:component this={Scene} />
 
 <main>
 	<slot />
@@ -86,5 +75,6 @@
 		transform: translate(-50%, -50%);
 		padding: 10px;
 		font-size: 12px;
+		color: white;
 	}
 </style>
