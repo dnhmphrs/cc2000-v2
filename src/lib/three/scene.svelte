@@ -645,8 +645,7 @@
 
 <div class="info-box">
 	<p><strong>CONCEPTION CALCULATOR 2000</strong></p>
-	<p>Volumetric Ray Marching</p>
-	<p>Effect: {effectMode}</p>
+	<p>work in progress build</p>
 </div>
 
 <div class="ui-panel">
