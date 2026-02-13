@@ -73,6 +73,7 @@
 		});
 
 		const geometry = new THREE.BufferGeometry().setFromPoints(points3D);
+
 		return new THREE.Line(
 			geometry,
 			new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })
