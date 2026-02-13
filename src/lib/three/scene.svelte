@@ -2,813 +2,541 @@
 	import { onMount } from 'svelte';
 	import * as THREE from 'three';
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-  
-	// Single initialization guard
-	let isInitialized = false;
-  
-	// Component state
+
 	let canvasElement;
 	let scene, camera, renderer, controls;
-	let backgroundMeshes = [];
-	let volumeMesh;
 	let animationFrameId;
-	let textures = {};
-	let loadedTextures = { tex90s: null, tex60s: null };
-	let clock;
-  
-	// Configuration state
-	let animationSpeed = 0.5;
-	let cameraAnim = { 
-		active: false, 
-		start: new THREE.Vector3(), 
-		end: new THREE.Vector3(), 
-		t: 0 
-	};
-  
-	// UI bindings - Volume controls
-	let voxelResolution = 64;
-	let volumeOpacity = 0.01;
-	let blendMode = 'multiply';
-	let raySteps = 64;
-	let densityThreshold = 0.1;
-	let colorIntensity = 1.0;
-	let showWireframe = false;
-	let cubeSize = 100.0;
+	let rectangleGroups = [];
+	let traceLines = [];
+	let schematicGroup;
 
-	// New controls
-	let panelDistance = 30;
-	let panelOpacity = 0.8;
+	const PHI = (1 + Math.sqrt(5)) / 2;
 
-	// Effects controls
-	let effectMode = 'none'; // none, pulse, rotate, breathe, warp, spiral
-	let effectSpeed = 1.0;
-	let effectIntensity = 0.5;
+	let projection = 0;
+	let showSchematics = false;
 
-	const effectModes = ['none', 'pulse', 'rotate', 'breathe', 'warp', 'spiral', 'kaleidoscope'];
-	const blendModes = ['multiply', 'average', 'min', 'max', 'additive'];
-
-	// Face names for rotation
-	const faces = [
-		{ name: '+X', position: () => new THREE.Vector3(panelDistance * 2, 0, 0) },
-		{ name: '-X', position: () => new THREE.Vector3(-panelDistance * 2, 0, 0) },
-		{ name: '+Y', position: () => new THREE.Vector3(0, panelDistance * 2, 0) },
-		{ name: '-Y', position: () => new THREE.Vector3(0, -panelDistance * 2, 0) },
-		{ name: '+Z', position: () => new THREE.Vector3(0, 0, panelDistance * 2) },
-		{ name: '-Z', position: () => new THREE.Vector3(0, 0, -panelDistance * 2) },
-		{ name: 'Iso', position: () => new THREE.Vector3(1, 1, 1).normalize().multiplyScalar(panelDistance * 2.5) }
+	const vertices = [
+		[-1, PHI, 0], [1, PHI, 0], [-1, -PHI, 0], [1, -PHI, 0],
+		[0, -1, PHI], [0, 1, PHI], [0, -1, -PHI], [0, 1, -PHI],
+		[PHI, 0, -1], [PHI, 0, 1], [-PHI, 0, -1], [-PHI, 0, 1]
 	];
 
-	function setupCamera() {
-		const width = window.innerWidth;
-		const height = window.innerHeight;
-		const aspect = width / height;
+	const faces = [
+		[0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
+		[1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+		[3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
+		[4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]
+	];
+
+	const edges = [
+		[0, 1], [0, 5], [0, 7], [0, 10], [0, 11],
+		[1, 5], [1, 7], [1, 8], [1, 9],
+		[2, 3], [2, 4], [2, 6], [2, 10], [2, 11],
+		[3, 4], [3, 6], [3, 8], [3, 9],
+		[4, 5], [4, 9], [4, 11],
+		[5, 9], [5, 11],
+		[6, 7], [6, 8], [6, 10],
+		[7, 8], [7, 10],
+		[8, 9],
+		[10, 11]
+	];
+
+	const rectangles = [
+		{ indices: [0, 1, 3, 2], color: 0xf0f0f0, axis: new THREE.Vector3(0, 0, 1), plane: 'XY' },
+		{ indices: [4, 5, 7, 6], color: 0xf0f0f0, axis: new THREE.Vector3(1, 0, 0), plane: 'YZ' },
+		{ indices: [8, 9, 11, 10], color: 0xf0f0f0, axis: new THREE.Vector3(0, 1, 0), plane: 'XZ' }
+	];
+
+	// Generate golden spiral points
+	function goldenSpiralPoints(turns = 4, pointsPerTurn = 32) {
+		const points = [];
+		const totalPoints = turns * pointsPerTurn;
+		const b = Math.log(PHI) / (Math.PI / 2);
 		
-		camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-		camera.position.set(75, 0, 0);
-		camera.lookAt(0, 0, 0);
+		for (let i = 0; i <= totalPoints; i++) {
+			const theta = (i / pointsPerTurn) * Math.PI / 2;
+			const r = Math.pow(Math.E, b * theta) * 0.1;
+			points.push(new THREE.Vector2(
+				r * Math.cos(theta),
+				r * Math.sin(theta)
+			));
+		}
+		return points;
 	}
-  
-	function setupRenderer() {
-		renderer = new THREE.WebGLRenderer({ 
-			canvas: canvasElement,
-			antialias: true 
+
+	function createGoldenSpiral(plane) {
+		const points2D = goldenSpiralPoints(6, 48); // play with making these bigger.
+		const points3D = points2D.map(p => {
+			if (plane === 'XY') return new THREE.Vector3(p.x, p.y, 0);
+			if (plane === 'YZ') return new THREE.Vector3(0, p.x, p.y);
+			if (plane === 'XZ') return new THREE.Vector3(p.x, 0, p.y);
 		});
-		renderer.setSize(window.innerWidth, window.innerHeight);
-		renderer.setPixelRatio(window.devicePixelRatio);
-		renderer.autoClear = false;
+
+		const geometry = new THREE.BufferGeometry().setFromPoints(points3D);
+		return new THREE.Line(
+			geometry,
+			new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })
+		);
 	}
-  
-	function setupControls() {
-		controls = new OrbitControls(camera, canvasElement);
-		controls.enableDamping = true;
-		controls.dampingFactor = 0.05;
-		controls.screenSpacePanning = false;
-		controls.minDistance = 1;
-		controls.maxDistance = 150;
-  
-		controls.addEventListener('start', () => {
-			cameraAnim.active = false;
+
+	function createIcosahedron() {
+		const geometry = new THREE.BufferGeometry();
+		const positions = [];
+
+		faces.forEach((face) => {
+			const [a, b, c] = face;
+			positions.push(...vertices[a], ...vertices[b], ...vertices[c]);
 		});
-	}
 
-	// Volumetric ray marching shader with effects
-	const volumetricVertexShader = `
-		varying vec3 vOrigin;
-		varying vec3 vDirection;
-		varying vec3 vWorldPosition;
-		
-		void main() {
-			vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-			vOrigin = vec3(inverse(modelMatrix) * vec4(cameraPosition, 1.0));
-			vDirection = position - vOrigin;
-			vWorldPosition = position;
-			gl_Position = projectionMatrix * mvPosition;
-		}
-	`;
+		geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+		geometry.computeVertexNormals();
 
-	const volumetricFragmentShader = `
-		precision highp float;
-		
-		uniform sampler2D texPosX;
-		uniform sampler2D texNegX;
-		uniform sampler2D texPosY;
-		uniform sampler2D texNegY;
-		uniform sampler2D texPosZ;
-		uniform sampler2D texNegZ;
-		
-		uniform float opacity;
-		uniform int blendMode;
-		uniform int raySteps;
-		uniform float densityThreshold;
-		uniform float colorIntensity;
-		uniform float cubeSize;
-		
-		// Effect uniforms
-		uniform float time;
-		uniform int effectMode;
-		uniform float effectSpeed;
-		uniform float effectIntensity;
-		
-		varying vec3 vOrigin;
-		varying vec3 vDirection;
-		varying vec3 vWorldPosition;
-		
-		#define PI 3.14159265359
-		
-		vec3 sampleFace(sampler2D tex, vec2 uv) {
-			return texture2D(tex, uv).rgb;
-		}
-		
-		// Rotate 2D coordinates
-		vec2 rotate2D(vec2 p, float angle) {
-			float s = sin(angle);
-			float c = cos(angle);
-			return vec2(p.x * c - p.y * s, p.x * s + p.y * c);
-		}
-		
-		// Apply effect transformations to position
-		vec3 applyEffect(vec3 pos, float t) {
-			vec3 result = pos;
-			float intensity = effectIntensity;
-			float speed = effectSpeed;
-			
-			if (effectMode == 1) {
-				// Pulse - radial scaling
-				float pulse = 1.0 + sin(t * speed * 2.0) * intensity * 0.3;
-				result *= pulse;
-			} else if (effectMode == 2) {
-				// Rotate - continuous rotation around Y axis
-				float angle = t * speed * 0.5;
-				result.xz = rotate2D(result.xz, angle);
-			} else if (effectMode == 3) {
-				// Breathe - sinusoidal displacement
-				float breathe = sin(t * speed) * intensity;
-				float dist = length(pos) / cubeSize;
-				result += normalize(pos + 0.001) * breathe * dist * 5.0;
-			} else if (effectMode == 4) {
-				// Warp - wave distortion
-				result.x += sin(pos.y * 0.1 + t * speed) * intensity * 3.0;
-				result.y += sin(pos.z * 0.1 + t * speed * 1.1) * intensity * 3.0;
-				result.z += sin(pos.x * 0.1 + t * speed * 0.9) * intensity * 3.0;
-			} else if (effectMode == 5) {
-				// Spiral - helical motion
-				float dist = length(pos.xz);
-				float angle = t * speed + dist * 0.05 * intensity;
-				result.xz = rotate2D(result.xz, angle * 0.3);
-				result.y += sin(dist * 0.1 - t * speed) * intensity * 2.0;
-			} else if (effectMode == 6) {
-				// Kaleidoscope - angular repetition
-				float angle = atan(pos.z, pos.x);
-				float segments = 6.0;
-				float segmentAngle = PI * 2.0 / segments;
-				angle = mod(angle + t * speed * 0.2, segmentAngle);
-				if (mod(floor((atan(pos.z, pos.x) + t * speed * 0.2) / segmentAngle), 2.0) > 0.5) {
-					angle = segmentAngle - angle;
-				}
-				float dist = length(pos.xz);
-				result.x = cos(angle) * dist;
-				result.z = sin(angle) * dist;
-			}
-			
-			return result;
-		}
-		
-		vec3 getVoxelColor(vec3 pos, float t) {
-			// Apply effect to position
-			vec3 effectPos = applyEffect(pos, t);
-			
-			// Normalize position to 0-1 range within cube
-			vec3 normalizedPos = (effectPos / cubeSize) * 0.5 + 0.5;
-			normalizedPos = clamp(normalizedPos, 0.0, 1.0);
-			
-			vec2 uvXFaces = normalizedPos.zy;
-			vec2 uvYFaces = normalizedPos.xz;
-			vec2 uvZFaces = normalizedPos.xy;
-			
-			vec3 colorPosX = sampleFace(texPosX, uvXFaces);
-			vec3 colorNegX = sampleFace(texNegX, vec2(1.0 - uvXFaces.x, uvXFaces.y));
-			vec3 colorPosY = sampleFace(texPosY, uvYFaces);
-			vec3 colorNegY = sampleFace(texNegY, vec2(uvYFaces.x, 1.0 - uvYFaces.y));
-			vec3 colorPosZ = sampleFace(texPosZ, uvZFaces);
-			vec3 colorNegZ = sampleFace(texNegZ, vec2(1.0 - uvZFaces.x, uvZFaces.y));
-			
-			float weightPosX = normalizedPos.x;
-			float weightNegX = 1.0 - normalizedPos.x;
-			float weightPosY = normalizedPos.y;
-			float weightNegY = 1.0 - normalizedPos.y;
-			float weightPosZ = normalizedPos.z;
-			float weightNegZ = 1.0 - normalizedPos.z;
-			
-			vec3 result;
-			
-			if (blendMode == 0) {
-				vec3 xContrib = mix(colorNegX, colorPosX, normalizedPos.x);
-				vec3 yContrib = mix(colorNegY, colorPosY, normalizedPos.y);
-				vec3 zContrib = mix(colorNegZ, colorPosZ, normalizedPos.z);
-				result = xContrib * yContrib * zContrib * 4.0;
-			} else if (blendMode == 1) {
-				float totalWeight = weightPosX + weightNegX + weightPosY + weightNegY + weightPosZ + weightNegZ;
-				result = (colorPosX * weightPosX + colorNegX * weightNegX +
-						  colorPosY * weightPosY + colorNegY * weightNegY +
-						  colorPosZ * weightPosZ + colorNegZ * weightNegZ) / totalWeight;
-			} else if (blendMode == 2) {
-				vec3 xContrib = mix(colorNegX, colorPosX, normalizedPos.x);
-				vec3 yContrib = mix(colorNegY, colorPosY, normalizedPos.y);
-				vec3 zContrib = mix(colorNegZ, colorPosZ, normalizedPos.z);
-				result = min(min(xContrib, yContrib), zContrib);
-			} else if (blendMode == 3) {
-				vec3 xContrib = mix(colorNegX, colorPosX, normalizedPos.x);
-				vec3 yContrib = mix(colorNegY, colorPosY, normalizedPos.y);
-				vec3 zContrib = mix(colorNegZ, colorPosZ, normalizedPos.z);
-				result = max(max(xContrib, yContrib), zContrib);
-			} else {
-				vec3 xContrib = mix(colorNegX, colorPosX, normalizedPos.x);
-				vec3 yContrib = mix(colorNegY, colorPosY, normalizedPos.y);
-				vec3 zContrib = mix(colorNegZ, colorPosZ, normalizedPos.z);
-				result = (xContrib + yContrib + zContrib) / 3.0;
-			}
-			
-			// Add time-based color shift for pulse effect
-			if (effectMode == 1) {
-				float hueShift = sin(t * effectSpeed) * effectIntensity * 0.1;
-				result = result + vec3(hueShift, -hueShift * 0.5, hueShift * 0.3);
-			}
-			
-			return result * colorIntensity;
-		}
-		
-		vec2 intersectBox(vec3 origin, vec3 dir, vec3 boxMin, vec3 boxMax) {
-			vec3 tMin = (boxMin - origin) / dir;
-			vec3 tMax = (boxMax - origin) / dir;
-			vec3 t1 = min(tMin, tMax);
-			vec3 t2 = max(tMin, tMax);
-			float tNear = max(max(t1.x, t1.y), t1.z);
-			float tFar = min(min(t2.x, t2.y), t2.z);
-			return vec2(tNear, tFar);
-		}
-		
-		void main() {
-			vec3 rayDir = normalize(vDirection);
-			vec3 boxMin = vec3(-cubeSize * 0.5);
-			vec3 boxMax = vec3(cubeSize * 0.5);
-			
-			vec2 bounds = intersectBox(vOrigin, rayDir, boxMin, boxMax);
-			
-			if (bounds.x > bounds.y) {
-				discard;
-			}
-			
-			bounds.x = max(bounds.x, 0.0);
-			
-			vec3 accumulatedColor = vec3(0.0);
-			float accumulatedAlpha = 0.0;
-			
-			float stepSize = (bounds.y - bounds.x) / float(raySteps);
-			
-			for (int i = 0; i < 256; i++) {
-				if (i >= raySteps) break;
-				
-				float t = bounds.x + float(i) * stepSize;
-				if (t > bounds.y) break;
-				
-				vec3 pos = vOrigin + rayDir * t;
-				vec3 color = getVoxelColor(pos, time);
-				
-				float density = (color.r + color.g + color.b) / 3.0;
-				
-				if (density > densityThreshold) {
-					float alpha = density * opacity * stepSize * 2.0;
-					accumulatedColor += color * alpha * (1.0 - accumulatedAlpha);
-					accumulatedAlpha += alpha * (1.0 - accumulatedAlpha);
-					
-					if (accumulatedAlpha > 0.95) break;
-				}
-			}
-			
-			gl_FragColor = vec4(accumulatedColor, accumulatedAlpha);
-		}
-	`;
-
-	async function setupScene() {
-		try {
-			const textureLoader = new THREE.TextureLoader();
-			
-			const texture90s = await new Promise((resolve, reject) => {
-				textureLoader.load('/90s_Illustration.jpg', resolve, undefined, reject);
-			});
-			
-			const texture60s = await new Promise((resolve, reject) => {
-				textureLoader.load('/60s_Illustration.jpg', resolve, undefined, reject);
-			});
-
-			// Store for later use
-			loadedTextures.tex90s = texture90s;
-			loadedTextures.tex60s = texture60s;
-
-			textures = {
-				posX: texture90s.clone(),
-				negX: texture60s.clone(),
-				posY: texture90s.clone(),
-				negY: texture60s.clone(),
-				posZ: texture90s.clone(),
-				negZ: texture60s.clone()
-			};
-
-			Object.values(textures).forEach(tex => {
-				tex.wrapS = THREE.ClampToEdgeWrapping;
-				tex.wrapT = THREE.ClampToEdgeWrapping;
-			});
-
-			createBackgroundPanels();
-			createVolumeMesh();
-			
-		} catch (error) {
-			console.error('Error setting up scene:', error);
-			scene.background = new THREE.Color(0x000000);
-		}
-	}
-
-	// Fixed panel size - they just move apart
-	const PANEL_SIZE = 40;
-
-	function createBackgroundPanels() {
-		// Clear existing panels
-		backgroundMeshes.forEach(mesh => {
-			scene.remove(mesh);
-			mesh.geometry.dispose();
-			mesh.material.dispose();
-		});
-		backgroundMeshes = [];
-
-		if (!loadedTextures.tex90s || !loadedTextures.tex60s) return;
-
-		const planes = [
-			{ 
-				position: new THREE.Vector3(panelDistance, 0, 0),
-				rotation: new THREE.Euler(0, -Math.PI / 2, 0),
-				texture: loadedTextures.tex90s
-			},
-			{ 
-				position: new THREE.Vector3(-panelDistance, 0, 0),
-				rotation: new THREE.Euler(0, Math.PI / 2, 0),
-				texture: loadedTextures.tex60s
-			},
-			{ 
-				position: new THREE.Vector3(0, panelDistance, 0),
-				rotation: new THREE.Euler(Math.PI / 2, 0, 0),
-				texture: loadedTextures.tex90s
-			},
-			{ 
-				position: new THREE.Vector3(0, -panelDistance, 0),
-				rotation: new THREE.Euler(-Math.PI / 2, 0, 0),
-				texture: loadedTextures.tex60s
-			},
-			{ 
-				position: new THREE.Vector3(0, 0, panelDistance),
-				rotation: new THREE.Euler(0, 0, 0),
-				texture: loadedTextures.tex90s
-			},
-			{ 
-				position: new THREE.Vector3(0, 0, -panelDistance),
-				rotation: new THREE.Euler(0, Math.PI, 0),
-				texture: loadedTextures.tex60s
-			}
-		];
-		
-		planes.forEach((plane) => {
-			const geometry = new THREE.PlaneGeometry(PANEL_SIZE, PANEL_SIZE);
-			const material = new THREE.MeshBasicMaterial({
-				map: plane.texture,
-				side: THREE.DoubleSide,
+		return new THREE.Mesh(
+			geometry,
+			new THREE.MeshBasicMaterial({
+				color: 0xf0f0f0,
 				transparent: true,
-				opacity: panelOpacity
-			});
-			
-			const mesh = new THREE.Mesh(geometry, material);
-			mesh.position.copy(plane.position);
-			mesh.rotation.copy(plane.rotation);
-			
-			scene.add(mesh);
-			backgroundMeshes.push(mesh);
-		});
+				opacity: 0.5,
+				side: THREE.DoubleSide,
+				depthWrite: false
+			})
+		);
 	}
 
-	function updatePanels() {
-		if (backgroundMeshes.length === 0) {
-			createBackgroundPanels();
-			return;
-		}
-
-		const positions = [
-			new THREE.Vector3(panelDistance, 0, 0),
-			new THREE.Vector3(-panelDistance, 0, 0),
-			new THREE.Vector3(0, panelDistance, 0),
-			new THREE.Vector3(0, -panelDistance, 0),
-			new THREE.Vector3(0, 0, panelDistance),
-			new THREE.Vector3(0, 0, -panelDistance)
-		];
-
-		backgroundMeshes.forEach((mesh, i) => {
-			mesh.position.copy(positions[i]);
-			mesh.material.opacity = panelOpacity;
-			mesh.material.transparent = true;
+	function createWireframe() {
+		const positions = [];
+		edges.forEach(([a, b]) => {
+			positions.push(...vertices[a], ...vertices[b]);
 		});
+
+		const geometry = new THREE.BufferGeometry();
+		geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+		return new THREE.LineSegments(
+			geometry,
+			new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 })
+		);
 	}
 
-	function createVolumeMesh() {
-		if (volumeMesh) {
-			scene.remove(volumeMesh);
-			volumeMesh.geometry.dispose();
-			volumeMesh.material.dispose();
-		}
+	function createRectangle(indices, color, plane) {
+		const group = new THREE.Group();
+		const points = indices.map(i => new THREE.Vector3(...vertices[i]));
 
-		if (!textures.posX) return;
+		const shape = new THREE.BufferGeometry().setFromPoints([
+			points[0], points[1], points[2],
+			points[0], points[2], points[3]
+		]);
 
-		const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-		
-		const material = new THREE.ShaderMaterial({
-			vertexShader: volumetricVertexShader,
-			fragmentShader: volumetricFragmentShader,
-			uniforms: {
-				texPosX: { value: textures.posX },
-				texNegX: { value: textures.negX },
-				texPosY: { value: textures.posY },
-				texNegY: { value: textures.negY },
-				texPosZ: { value: textures.posZ },
-				texNegZ: { value: textures.negZ },
-				opacity: { value: volumeOpacity },
-				blendMode: { value: blendModes.indexOf(blendMode) },
-				raySteps: { value: raySteps },
-				densityThreshold: { value: densityThreshold },
-				colorIntensity: { value: colorIntensity },
-				cubeSize: { value: cubeSize },
-				time: { value: 0.0 },
-				effectMode: { value: effectModes.indexOf(effectMode) },
-				effectSpeed: { value: effectSpeed },
-				effectIntensity: { value: effectIntensity }
-			},
+		const fill = new THREE.Mesh(
+			shape,
+			new THREE.MeshBasicMaterial({
+				color,
+				transparent: true,
+				opacity: 0.25,
+				side: THREE.DoubleSide,
+				depthWrite: false
+			})
+		);
+		group.add(fill);
+
+		const outline = new THREE.BufferGeometry().setFromPoints([
+			points[0], points[1], points[1], points[2],
+			points[2], points[3], points[3], points[0]
+		]);
+
+		const line = new THREE.LineSegments(
+			outline,
+			new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.8 })
+		);
+		group.add(line);
+
+		// Add golden spiral
+		group.add(createGoldenSpiral(plane));
+
+		// Store vertex positions for trace lines
+		group.userData.baseVertices = points.map(p => p.clone());
+
+		return group;
+	}
+
+	function createTraceLine(startPos) {
+		const geometry = new THREE.BufferGeometry();
+		geometry.setAttribute('position', new THREE.Float32BufferAttribute([
+			startPos.x, startPos.y, startPos.z,
+			startPos.x, startPos.y, startPos.z
+		], 3));
+
+		const material = new THREE.LineDashedMaterial({
+			color: 0xffffff,
 			transparent: true,
-			side: THREE.BackSide,
-			depthWrite: false
+			opacity: 0.3,
+			dashSize: 0.1,
+			gapSize: 0.05
 		});
 
-		volumeMesh = new THREE.Mesh(geometry, material);
-		scene.add(volumeMesh);
+		const line = new THREE.Line(geometry, material);
+		line.computeLineDistances();
+		line.userData.startPos = startPos.clone();
+		return line;
+	}
 
-		if (showWireframe) {
-			const wireframeGeom = new THREE.WireframeGeometry(geometry);
-			const wireframeMat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
-			const wireframe = new THREE.LineSegments(wireframeGeom, wireframeMat);
-			wireframe.name = 'wireframe';
-			volumeMesh.add(wireframe);
+	function createAllRectangles() {
+		const group = new THREE.Group();
+
+		rectangles.forEach(({ indices, color, axis, plane }) => {
+			// Positive direction
+			const pos = createRectangle(indices, color, plane);
+			pos.userData.axis = axis.clone();
+			pos.userData.direction = 1;
+			pos.userData.indices = indices;
+			group.add(pos);
+			rectangleGroups.push(pos);
+
+			// Create trace lines for each vertex
+			indices.forEach(i => {
+				const traceLine = createTraceLine(new THREE.Vector3(...vertices[i]));
+				traceLine.userData.vertexIndex = i;
+				traceLine.userData.axis = axis.clone();
+				traceLine.userData.direction = 1;
+				scene.add(traceLine);
+				traceLines.push(traceLine);
+			});
+
+			// Negative direction
+			const neg = createRectangle(indices, color, plane);
+			neg.userData.axis = axis.clone();
+			neg.userData.direction = -1;
+			neg.userData.indices = indices;
+			group.add(neg);
+			rectangleGroups.push(neg);
+
+			// Create trace lines for negative direction
+			indices.forEach(i => {
+				const traceLine = createTraceLine(new THREE.Vector3(...vertices[i]));
+				traceLine.userData.vertexIndex = i;
+				traceLine.userData.axis = axis.clone();
+				traceLine.userData.direction = -1;
+				scene.add(traceLine);
+				traceLines.push(traceLine);
+			});
+		});
+
+		return group;
+	}
+
+	function createSchematic(plane, axis, direction) {
+		const group = new THREE.Group();
+		const offset = axis.clone().multiplyScalar(5 * direction);
+		
+		const w = 2; // short side (1 * 2)
+		const h = 2 * PHI; // long side (PHI * 2)
+		
+		// Rectangle outline
+		let corners;
+		if (plane === 'XY') {
+			corners = [
+				new THREE.Vector3(-1, -PHI, 0),
+				new THREE.Vector3(1, -PHI, 0),
+				new THREE.Vector3(1, PHI, 0),
+				new THREE.Vector3(-1, PHI, 0)
+			];
+		} else if (plane === 'YZ') {
+			corners = [
+				new THREE.Vector3(0, -1, -PHI),
+				new THREE.Vector3(0, -1, PHI),
+				new THREE.Vector3(0, 1, PHI),
+				new THREE.Vector3(0, 1, -PHI)
+			];
+		} else {
+			corners = [
+				new THREE.Vector3(-PHI, 0, -1),
+				new THREE.Vector3(-PHI, 0, 1),
+				new THREE.Vector3(PHI, 0, 1),
+				new THREE.Vector3(PHI, 0, -1)
+			];
+		}
+
+		// Main outline
+		const outlineGeo = new THREE.BufferGeometry().setFromPoints([
+			corners[0], corners[1], corners[1], corners[2],
+			corners[2], corners[3], corners[3], corners[0]
+		]);
+		const outline = new THREE.LineSegments(
+			outlineGeo,
+			new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 })
+		);
+		group.add(outline);
+
+		// Dimension lines and labels
+		const dimOffset = 0.4;
+		
+		// Create dimension line helper
+		function createDimLine(start, end, labelText, perpDir) {
+			const dimGroup = new THREE.Group();
+			
+			const s = start.clone().add(perpDir.clone().multiplyScalar(dimOffset));
+			const e = end.clone().add(perpDir.clone().multiplyScalar(dimOffset));
+			
+			// Line
+			const lineGeo = new THREE.BufferGeometry().setFromPoints([s, e]);
+			const line = new THREE.Line(
+				lineGeo,
+				new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4 })
+			);
+			dimGroup.add(line);
+
+			// End ticks
+			const tickSize = 0.1;
+			const tickDir = end.clone().sub(start).normalize();
+			
+			[s, e].forEach(p => {
+				const tickGeo = new THREE.BufferGeometry().setFromPoints([
+					p.clone().add(tickDir.clone().multiplyScalar(-tickSize)),
+					p.clone().add(tickDir.clone().multiplyScalar(tickSize))
+				]);
+				dimGroup.add(new THREE.Line(tickGeo, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.4, transparent: true })));
+			});
+
+			// Extension lines
+			[start, end].forEach((p, i) => {
+				const ext = [s, e][i];
+				const extGeo = new THREE.BufferGeometry().setFromPoints([p, ext]);
+				dimGroup.add(new THREE.Line(extGeo, new THREE.LineDashedMaterial({ 
+					color: 0xffffff, 
+					opacity: 0.2, 
+					transparent: true,
+					dashSize: 0.05,
+					gapSize: 0.03
+				})));
+				dimGroup.children[dimGroup.children.length - 1].computeLineDistances();
+			});
+
+			return dimGroup;
+		}
+
+		// Determine perpendicular directions based on plane
+		let perpShort, perpLong;
+		if (plane === 'XY') {
+			perpShort = new THREE.Vector3(0, 0, 1);
+			perpLong = new THREE.Vector3(0, 0, 1);
+		} else if (plane === 'YZ') {
+			perpShort = new THREE.Vector3(1, 0, 0);
+			perpLong = new THREE.Vector3(1, 0, 0);
+		} else {
+			perpShort = new THREE.Vector3(0, 1, 0);
+			perpLong = new THREE.Vector3(0, 1, 0);
+		}
+
+		// Short side dimension (= 2 = 2·1)
+		group.add(createDimLine(corners[0], corners[1], '2', perpShort.clone().multiplyScalar(-1)));
+		
+		// Long side dimension (= 2φ)
+		group.add(createDimLine(corners[1], corners[2], '2φ', perpLong));
+
+		// Ratio annotation - small square showing 1:φ
+		const sqSize = 0.3;
+		const sqOffset = perpShort.clone().multiplyScalar(dimOffset * 2.5);
+		const sqCenter = corners[0].clone().lerp(corners[1], 0.5).add(sqOffset);
+		
+		// 1×1 square
+		let sq1, sq2;
+		if (plane === 'XY') {
+			sq1 = [
+				sqCenter.clone().add(new THREE.Vector3(-sqSize/2, -sqSize/2, 0)),
+				sqCenter.clone().add(new THREE.Vector3(sqSize/2, -sqSize/2, 0)),
+				sqCenter.clone().add(new THREE.Vector3(sqSize/2, sqSize/2, 0)),
+				sqCenter.clone().add(new THREE.Vector3(-sqSize/2, sqSize/2, 0))
+			];
+			sq2 = [
+				sq1[1].clone(),
+				sq1[1].clone().add(new THREE.Vector3(sqSize * (PHI - 1), 0, 0)),
+				sq1[2].clone().add(new THREE.Vector3(sqSize * (PHI - 1), 0, 0)),
+				sq1[2].clone()
+			];
+		} else if (plane === 'YZ') {
+			sq1 = [
+				sqCenter.clone().add(new THREE.Vector3(0, -sqSize/2, -sqSize/2)),
+				sqCenter.clone().add(new THREE.Vector3(0, -sqSize/2, sqSize/2)),
+				sqCenter.clone().add(new THREE.Vector3(0, sqSize/2, sqSize/2)),
+				sqCenter.clone().add(new THREE.Vector3(0, sqSize/2, -sqSize/2))
+			];
+			sq2 = [
+				sq1[1].clone(),
+				sq1[1].clone().add(new THREE.Vector3(0, 0, sqSize * (PHI - 1))),
+				sq1[2].clone().add(new THREE.Vector3(0, 0, sqSize * (PHI - 1))),
+				sq1[2].clone()
+			];
+		} else {
+			sq1 = [
+				sqCenter.clone().add(new THREE.Vector3(-sqSize/2, 0, -sqSize/2)),
+				sqCenter.clone().add(new THREE.Vector3(sqSize/2, 0, -sqSize/2)),
+				sqCenter.clone().add(new THREE.Vector3(sqSize/2, 0, sqSize/2)),
+				sqCenter.clone().add(new THREE.Vector3(-sqSize/2, 0, sqSize/2))
+			];
+			sq2 = [
+				sq1[1].clone(),
+				sq1[1].clone().add(new THREE.Vector3(sqSize * (PHI - 1), 0, 0)),
+				sq1[2].clone().add(new THREE.Vector3(sqSize * (PHI - 1), 0, 0)),
+				sq1[2].clone()
+			];
+		}
+
+		// Draw 1:1 square
+		const sq1Geo = new THREE.BufferGeometry().setFromPoints([
+			sq1[0], sq1[1], sq1[1], sq1[2], sq1[2], sq1[3], sq1[3], sq1[0]
+		]);
+		group.add(new THREE.LineSegments(sq1Geo, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.6, transparent: true })));
+
+		// Draw φ-1 extension
+		const sq2Geo = new THREE.BufferGeometry().setFromPoints([
+			sq2[0], sq2[1], sq2[1], sq2[2], sq2[2], sq2[3]
+		]);
+		group.add(new THREE.LineSegments(sq2Geo, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.4, transparent: true })));
+
+		group.position.copy(offset);
+		return group;
+	}
+
+	function createAllSchematics() {
+		const group = new THREE.Group();
+		
+		rectangles.forEach(({ axis, plane }) => {
+			group.add(createSchematic(plane, axis, 1));
+			group.add(createSchematic(plane, axis, -1));
+		});
+
+		group.visible = showSchematics;
+		return group;
+	}
+
+	function updateProjection() {
+		rectangleGroups.forEach(rect => {
+			const { axis, direction } = rect.userData;
+			const offset = axis.clone().multiplyScalar(projection * 3.14 * direction);
+			rect.position.copy(offset);
+		});
+
+		// Update trace lines
+		traceLines.forEach(line => {
+			const { startPos, axis, direction } = line.userData;
+			const endPos = startPos.clone().add(axis.clone().multiplyScalar(projection * 3.14 * direction));
+			
+			const positions = line.geometry.attributes.position.array;
+			positions[3] = endPos.x;
+			positions[4] = endPos.y;
+			positions[5] = endPos.z;
+			line.geometry.attributes.position.needsUpdate = true;
+			line.computeLineDistances();
+			
+			line.visible = projection > 0.01;
+		});
+
+		// Update schematic positions
+		if (schematicGroup) {
+			let i = 0;
+			rectangles.forEach(({ axis }) => {
+				[1, -1].forEach(dir => {
+					const baseOffset = 5;
+					const projOffset = projection * 3.14;
+					schematicGroup.children[i].position.copy(
+						axis.clone().multiplyScalar((baseOffset + projOffset) * dir)
+					);
+					i++;
+				});
+			});
 		}
 	}
 
-	function updateVolumeUniforms() {
-		if (volumeMesh && volumeMesh.material.uniforms) {
-			volumeMesh.material.uniforms.opacity.value = volumeOpacity;
-			volumeMesh.material.uniforms.blendMode.value = blendModes.indexOf(blendMode);
-			volumeMesh.material.uniforms.raySteps.value = raySteps;
-			volumeMesh.material.uniforms.densityThreshold.value = densityThreshold;
-			volumeMesh.material.uniforms.colorIntensity.value = colorIntensity;
-			volumeMesh.material.uniforms.cubeSize.value = cubeSize;
-			volumeMesh.material.uniforms.effectMode.value = effectModes.indexOf(effectMode);
-			volumeMesh.material.uniforms.effectSpeed.value = effectSpeed;
-			volumeMesh.material.uniforms.effectIntensity.value = effectIntensity;
+	function toggleSchematics() {
+		showSchematics = !showSchematics;
+		if (schematicGroup) {
+			schematicGroup.visible = showSchematics;
 		}
 	}
 
-	function animateCameraTo(target) {
-		cameraAnim.start.copy(camera.position);
-		cameraAnim.end.copy(target);
-		cameraAnim.t = 0;
-		cameraAnim.active = true;
-	}
-
-	function rotateToFace(faceIndex) {
-		const face = faces[faceIndex];
-		animateCameraTo(face.position());
-	}
-  
 	function animate() {
 		animationFrameId = requestAnimationFrame(animate);
-		
-		const elapsedTime = clock.getElapsedTime();
-  
-		if (cameraAnim.active) {
-			cameraAnim.t += 0.02 * animationSpeed;
-			camera.position.lerpVectors(cameraAnim.start, cameraAnim.end, Math.min(cameraAnim.t, 1));
-			camera.lookAt(0, 0, 0);
-			if (cameraAnim.t >= 1) cameraAnim.active = false;
-		}
-
-		// Update time uniform for effects
-		if (volumeMesh && volumeMesh.material.uniforms) {
-			volumeMesh.material.uniforms.time.value = elapsedTime;
-		}
-	
 		controls.update();
-		renderer.clear();
 		renderer.render(scene, camera);
 	}
 
+	const frustumSize = 12;
 	function handleResize() {
 		const aspect = window.innerWidth / window.innerHeight;
-		camera.aspect = aspect;
+		camera.left = -frustumSize * aspect / 2;
+		camera.right = frustumSize * aspect / 2;
+		camera.top = frustumSize / 2;
+		camera.bottom = -frustumSize / 2;
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	}
-  
-	// UI handlers
-	function handleResolutionChange() {
-		raySteps = voxelResolution * 2;
-		updateVolumeUniforms();
-	}
 
-	function handleOpacityChange() {
-		updateVolumeUniforms();
-	}
-
-	function handleRayStepsChange() {
-		updateVolumeUniforms();
-	}
-
-	function handleDensityChange() {
-		updateVolumeUniforms();
-	}
-
-	function handleIntensityChange() {
-		updateVolumeUniforms();
-	}
-
-	function handleCubeSizeChange() {
-		createVolumeMesh();
-	}
-
-	function handlePanelDistanceChange() {
-		updatePanels();
-	}
-
-	function handlePanelOpacityChange() {
-		updatePanels();
-	}
-
-	function handleEffectChange() {
-		updateVolumeUniforms();
-	}
-
-	function toggleWireframe() {
-		showWireframe = !showWireframe;
-		createVolumeMesh();
-	}
-
-	function cycleBlendMode() {
-		const currentIndex = blendModes.indexOf(blendMode);
-		blendMode = blendModes[(currentIndex + 1) % blendModes.length];
-		updateVolumeUniforms();
-	}
-
-	function cycleEffectMode() {
-		const currentIndex = effectModes.indexOf(effectMode);
-		effectMode = effectModes[(currentIndex + 1) % effectModes.length];
-		updateVolumeUniforms();
-	}
-  
-	onMount(async () => {
-		if (isInitialized) {
-			console.error('Component already initialized!');
-			return;
-		}
-		
-		if (!canvasElement) {
-			console.error('Canvas element not available');
-			return;
-		}
-  
-		isInitialized = true;
+	onMount(() => {
 		scene = new THREE.Scene();
-		clock = new THREE.Clock();
-  
-		setupCamera();
-		setupRenderer();
-		setupControls();
-		await setupScene();
+
+		const aspect = window.innerWidth / window.innerHeight;
+		camera = new THREE.OrthographicCamera(
+			-frustumSize * aspect / 2,
+			frustumSize * aspect / 2,
+			frustumSize / 2,
+			-frustumSize / 2,
+			0.1,
+			100
+		);
+		camera.position.set(5, 4, 5);
+		camera.lookAt(0, 0, 0);
+
+		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true });
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.setClearColor(0x0078D7, 1);
+
+		controls = new OrbitControls(camera, canvasElement);
+		controls.enableDamping = true;
+
+		scene.add(createIcosahedron());
+		scene.add(createWireframe());
+		scene.add(createAllRectangles());
+		
+		schematicGroup = createAllSchematics();
+		scene.add(schematicGroup);
+
 		animate();
-  
+
 		window.addEventListener('resize', handleResize);
-  
+
 		return () => {
-			isInitialized = false;
 			window.removeEventListener('resize', handleResize);
-			
-			if (animationFrameId) cancelAnimationFrame(animationFrameId);
-			
-			backgroundMeshes.forEach(mesh => {
-				scene.remove(mesh);
-				mesh.geometry.dispose();
-				mesh.material.dispose();
-			});
-			
-			if (volumeMesh) {
-				scene.remove(volumeMesh);
-				volumeMesh.geometry.dispose();
-				volumeMesh.material.dispose();
-			}
-			
-			if (renderer) renderer.dispose();
-			if (controls) controls.dispose();
+			cancelAnimationFrame(animationFrameId);
+			renderer.dispose();
+			controls.dispose();
 		};
 	});
 </script>
-  
-<canvas bind:this={canvasElement} class="webgl-canvas"></canvas>
 
-<div class="info-box">
-	<p><strong>CONCEPTION CALCULATOR 2000</strong></p>
-	<p>work in progress build</p>
-</div>
+<canvas bind:this={canvasElement}></canvas>
 
-<div class="ui-panel">
-	<div class="section-label">VOLUME</div>
-	
-	<div class="row">
-		Resolution:
+<div class="controls">
+	<label>
+		Projection
 		<input 
 			type="range" 
-			bind:value={voxelResolution} 
-			on:input={handleResolutionChange}
-			min="8" 
-			max="128" 
-			step="8"
-		/>
-		<span>{voxelResolution}</span>
-	</div>
-
-	<div class="row">
-		Ray Steps:
-		<input 
-			type="range" 
-			bind:value={raySteps} 
-			on:input={handleRayStepsChange}
-			min="16" 
-			max="256" 
-			step="16"
-		/>
-		<span>{raySteps}</span>
-	</div>
-
-	<!-- <div class="row">
-		Opacity:
-		<input 
-			type="range" 
-			bind:value={volumeOpacity} 
-			on:input={handleOpacityChange}
-			min="0.001" 
-			max="0.1" 
-			step="0.001"
-		/>
-		<span>{volumeOpacity.toFixed(3)}</span>
-	</div> -->
-
-	<!-- <div class="row">
-		Density:
-		<input 
-			type="range" 
-			bind:value={densityThreshold} 
-			on:input={handleDensityChange}
-			min="0.0" 
-			max="0.5" 
-			step="0.01"
-		/>
-		<span>{densityThreshold.toFixed(2)}</span>
-	</div> -->
-
-	<!-- <div class="row">
-		Intensity:
-		<input 
-			type="range" 
-			bind:value={colorIntensity} 
-			on:input={handleIntensityChange}
-			min="0.1" 
-			max="3.0" 
-			step="0.1"
-		/>
-		<span>{colorIntensity.toFixed(1)}</span>
-	</div> -->
-
-	<div class="row">
-		Cube Size:
-		<input 
-			type="range" 
-			bind:value={cubeSize} 
-			on:input={handleCubeSizeChange}
-			min="1" 
-			max="100" 
-			step="1"
-		/>
-		<span>{cubeSize.toFixed(0)}</span>
-	</div>
-
-	<div class="row">
-		<button on:click={cycleBlendMode}>
-			Blend: {blendMode}
-		</button>
-		<button on:click={toggleWireframe}>
-			{showWireframe ? '■' : '□'} Wire
-		</button>
-	</div>
-
-	<div class="section-label">PANELS</div>
-
-	<div class="row">
-		Distance:
-		<input 
-			type="range" 
-			bind:value={panelDistance} 
-			on:input={handlePanelDistanceChange}
-			min="10" 
-			max="100" 
-			step="1"
-		/>
-		<span>{panelDistance}</span>
-	</div>
-
-	<div class="row">
-		Opacity:
-		<input 
-			type="range" 
-			bind:value={panelOpacity} 
-			on:input={handlePanelOpacityChange}
+			bind:value={projection} 
+			on:input={updateProjection}
 			min="0" 
 			max="1" 
-			step="0.05"
+			step="0.01"
 		/>
-		<span>{panelOpacity.toFixed(2)}</span>
-	</div>
+		<span>{projection.toFixed(2)}</span>
+	</label>
+	<button on:click={toggleSchematics}>
+		{showSchematics ? '▣' : '▢'} Schematics
+	</button>
+</div>
 
-	<div class="section-label">EFFECTS</div>
-
-	<div class="row">
-		<button on:click={cycleEffectMode} class="wide-button">
-			FX: {effectMode}
-		</button>
-	</div>
-
-	<div class="row">
-		Speed:
-		<input 
-			type="range" 
-			bind:value={effectSpeed} 
-			on:input={handleEffectChange}
-			min="0.1" 
-			max="5.0" 
-			step="0.1"
-		/>
-		<span>{effectSpeed.toFixed(1)}</span>
-	</div>
-
-	<div class="row">
-		Intensity:
-		<input 
-			type="range" 
-			bind:value={effectIntensity} 
-			on:input={handleEffectChange}
-			min="0" 
-			max="2.0" 
-			step="0.05"
-		/>
-		<span>{effectIntensity.toFixed(2)}</span>
-	</div>
-
-	<div class="section-label">VIEW</div>
-
-	<div class="row faces-row">
-		{#each faces as face, i}
-			<button on:click={() => rotateToFace(i)} class="face-button">
-				{face.name}
-			</button>
-		{/each}
-	</div>
+<div class="info">
+	<div>φ = (1+√5)/2 ≈ {PHI.toFixed(6)}</div>
+	<div>φ² = φ+1 | 1/φ = φ-1</div>
 </div>
 
 <style>
@@ -816,153 +544,71 @@
 		margin: 0;
 		overflow: hidden;
 		background: black;
-		font-family: "Courier New", monospace;
-		font-size: 12px;
+		font-family: monospace;
 	}
 
-	.webgl-canvas {
+	canvas {
 		position: fixed;
 		top: 0;
 		left: 0;
 		width: 100vw;
 		height: 100vh;
-		display: block;
 	}
 
-	.info-box {
-		position: fixed;
-		top: 20px;
-		left: 20px;
-		background: rgba(0, 0, 0, 0.65);
-		color: white;
-		font-size: 12px;
-		padding: 10px 12px;
-		border-radius: 6px;
-		max-width: 260px;
-		pointer-events: none;
-		line-height: 1.35em;
-		z-index: 100;
-	}
-
-	.info-box p {
-		margin: 0 0 0.5em 0;
-	}
-
-	.info-box p:last-child {
-		margin-bottom: 0;
-	}
-
-	.ui-panel {
+	.controls {
 		position: fixed;
 		top: 20px;
 		right: 20px;
+		background: rgba(0, 0, 0, 0.7);
+		padding: 12px 16px;
+		border-radius: 6px;
+		color: white;
+		font-size: 12px;
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
-		z-index: 100;
-		max-height: calc(100vh - 40px);
-		overflow-y: auto;
+		gap: 10px;
 	}
 
-	.section-label {
-		color: rgba(255, 255, 255, 0.5);
-		font-size: 10px;
-		letter-spacing: 2px;
-		margin-top: 8px;
-		margin-bottom: 2px;
-		padding-left: 4px;
-	}
-
-	.row {
-		background: rgba(0, 0, 0, 0.7);
-		padding: 8px 10px;
-		border-radius: 4px;
-		color: white;
+	label {
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		font-size: 11px;
-	}
-
-	.faces-row {
-		flex-wrap: wrap;
-		gap: 4px;
-	}
-
-	button {
-		padding: 5px 8px;
-		background: rgba(40, 40, 40, 0.9);
-		border: 1px solid rgba(255, 255, 255, 0.25);
-		color: white;
-		border-radius: 4px;
-		cursor: pointer;
-		transition: 0.2s;
-		font-size: 10px;
-	}
-
-	button:hover {
-		background: rgba(70, 70, 70, 0.9);
-		border-color: rgba(255, 255, 255, 0.5);
-	}
-
-	.wide-button {
-		flex: 1;
-	}
-
-	.face-button {
-		padding: 4px 6px;
-		min-width: 32px;
+		gap: 10px;
 	}
 
 	input[type="range"] {
-		-webkit-appearance: none;
-		appearance: none;
 		width: 100px;
-		background: transparent;
-		flex-shrink: 0;
-	}
-
-	input[type="range"]::-webkit-slider-runnable-track {
-		height: 2px;
-		background: rgba(255, 255, 255, 0.35);
-		border-radius: 2px;
-	}
-
-	input[type="range"]::-webkit-slider-thumb {
-		-webkit-appearance: none;
-		height: 10px;
-		width: 10px;
-		border-radius: 50%;
-		background: white;
-		cursor: pointer;
-		margin-top: -4px;
-		box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
-	}
-
-	input[type="range"]::-moz-range-track {
-		height: 2px;
-		background: rgba(255, 255, 255, 0.35);
-		border-radius: 2px;
-	}
-
-	input[type="range"]::-moz-range-thumb {
-		height: 10px;
-		width: 10px;
-		border-radius: 50%;
-		background: white;
-		cursor: pointer;
-		border: none;
-		box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
-	}
-
-	input[type="range"]:focus {
-		outline: none;
 	}
 
 	span {
-		min-width: 40px;
+		min-width: 35px;
 		text-align: right;
-		font-size: 10px;
+	}
+
+	button {
+		background: rgba(255, 255, 255, 0.1);
+		border: 1px solid rgba(255, 255, 255, 0.3);
+		color: white;
+		padding: 6px 10px;
+		border-radius: 4px;
+		cursor: pointer;
+		font-family: monospace;
+		font-size: 12px;
+	}
+
+	button:hover {
+		background: rgba(255, 255, 255, 0.2);
+	}
+
+	.info {
+		position: fixed;
+		bottom: 20px;
+		left: 20px;
+		background: rgba(0, 0, 0, 0.7);
+		padding: 12px 16px;
+		border-radius: 6px;
+		color: white;
+		font-size: 11px;
+		line-height: 1.6;
 		opacity: 0.8;
 	}
 </style>
