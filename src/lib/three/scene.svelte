@@ -65,7 +65,7 @@
 		return new THREE.Mesh(
 			geometry,
 			new THREE.MeshBasicMaterial({
-				color: 0x232323,
+				color: 0x0078D7,
 				transparent: false,
 				opacity: 1.0,
 				side: THREE.DoubleSide,
@@ -130,7 +130,7 @@
 		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true });
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(window.devicePixelRatio);
-		renderer.setClearColor(0x232323, 1);
+		renderer.setClearColor(0x0078D7, 1);
 
 		controls = new OrbitControls(camera, canvasElement);
 		controls.enableDamping = true;

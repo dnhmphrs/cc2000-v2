@@ -15,6 +15,7 @@
 	let traceLines = [];
 	let schematicComponent;
 	let basis = null;
+	let baseOpacity = 0.25; 
 	let schematicBaseOpacity = 0.5; 
 
 	let fillMaterial;
@@ -255,15 +256,15 @@
 		const opacity = 1;
 		
 		if (fillMaterial) fillMaterial.opacity = opacity * 0.0;
-		if (outlineMaterial) outlineMaterial.opacity = opacity * 0.2;
-		if (spiralMaterial) spiralMaterial.opacity = opacity * 0.2;
+		if (outlineMaterial) outlineMaterial.opacity = opacity * baseOpacity;
+		if (spiralMaterial) spiralMaterial.opacity = opacity * baseOpacity;
 		
 		subdivisionMaterials.forEach(({ mat }) => {
-			mat.opacity = opacity * 0.1;
+			mat.opacity = opacity * baseOpacity * 0.5;
 		});
 		
 		traceLineMaterials.forEach(mat => {
-			mat.opacity = opacity * 0.1;
+			mat.opacity = opacity * baseOpacity * 0.5;
 		});
 	}
 
