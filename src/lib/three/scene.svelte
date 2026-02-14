@@ -1,19 +1,20 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import * as THREE from 'three';
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+	import GoldenRectangle from './objects/GoldenRectangle.svelte';
 
 	let canvasElement;
 	let scene, camera, renderer, controls;
 	let animationFrameId;
-	let rectangleGroups = [];
-	let traceLines = [];
-	let schematicGroup;
 
 	const PHI = (1 + Math.sqrt(5)) / 2;
 
 	let projection = 0;
 	let showSchematics = false;
+	let sceneReady = false;
+
+	let rectangleComponents = [];
 
 	const vertices = [
 		[-1, PHI, 0], [1, PHI, 0], [-1, -PHI, 0], [1, -PHI, 0],
@@ -41,44 +42,14 @@
 		[10, 11]
 	];
 
-	const rectangles = [
-		{ indices: [0, 1, 3, 2], color: 0xf0f0f0, axis: new THREE.Vector3(0, 0, 1), plane: 'XY' },
-		{ indices: [4, 5, 7, 6], color: 0xf0f0f0, axis: new THREE.Vector3(1, 0, 0), plane: 'YZ' },
-		{ indices: [8, 9, 11, 10], color: 0xf0f0f0, axis: new THREE.Vector3(0, 1, 0), plane: 'XZ' }
+	const rectangleConfigs = [
+		{ indices: [0, 1, 3, 2], axis: new THREE.Vector3(0, 0, 1), plane: 'XY', direction: 1 },
+		{ indices: [0, 1, 3, 2], axis: new THREE.Vector3(0, 0, 1), plane: 'XY', direction: -1 },
+		{ indices: [4, 5, 7, 6], axis: new THREE.Vector3(1, 0, 0), plane: 'YZ', direction: 1 },
+		{ indices: [4, 5, 7, 6], axis: new THREE.Vector3(1, 0, 0), plane: 'YZ', direction: -1 },
+		{ indices: [8, 9, 11, 10], axis: new THREE.Vector3(0, 1, 0), plane: 'XZ', direction: 1 },
+		{ indices: [8, 9, 11, 10], axis: new THREE.Vector3(0, 1, 0), plane: 'XZ', direction: -1 }
 	];
-
-	// Generate golden spiral points
-	function goldenSpiralPoints(turns = 4, pointsPerTurn = 32) {
-		const points = [];
-		const totalPoints = turns * pointsPerTurn;
-		const b = Math.log(PHI) / (Math.PI / 2);
-		
-		for (let i = 0; i <= totalPoints; i++) {
-			const theta = (i / pointsPerTurn) * Math.PI / 2;
-			const r = Math.pow(Math.E, b * theta) * 0.1;
-			points.push(new THREE.Vector2(
-				r * Math.cos(theta),
-				r * Math.sin(theta)
-			));
-		}
-		return points;
-	}
-
-	function createGoldenSpiral(plane) {
-		const points2D = goldenSpiralPoints(6, 48); // play with making these bigger.
-		const points3D = points2D.map(p => {
-			if (plane === 'XY') return new THREE.Vector3(p.x, p.y, 0);
-			if (plane === 'YZ') return new THREE.Vector3(0, p.x, p.y);
-			if (plane === 'XZ') return new THREE.Vector3(p.x, 0, p.y);
-		});
-
-		const geometry = new THREE.BufferGeometry().setFromPoints(points3D);
-
-		return new THREE.Line(
-			geometry,
-			new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })
-		);
-	}
 
 	function createIcosahedron() {
 		const geometry = new THREE.BufferGeometry();
@@ -119,340 +90,17 @@
 		);
 	}
 
-	function createRectangle(indices, color, plane) {
-		const group = new THREE.Group();
-		const points = indices.map(i => new THREE.Vector3(...vertices[i]));
-
-		const shape = new THREE.BufferGeometry().setFromPoints([
-			points[0], points[1], points[2],
-			points[0], points[2], points[3]
-		]);
-
-		const fill = new THREE.Mesh(
-			shape,
-			new THREE.MeshBasicMaterial({
-				color,
-				transparent: true,
-				opacity: 0.25,
-				side: THREE.DoubleSide,
-				depthWrite: false
-			})
-		);
-		group.add(fill);
-
-		const outline = new THREE.BufferGeometry().setFromPoints([
-			points[0], points[1], points[1], points[2],
-			points[2], points[3], points[3], points[0]
-		]);
-
-		const line = new THREE.LineSegments(
-			outline,
-			new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.8 })
-		);
-		group.add(line);
-
-		// Add golden spiral
-		group.add(createGoldenSpiral(plane));
-
-		// Store vertex positions for trace lines
-		group.userData.baseVertices = points.map(p => p.clone());
-
-		return group;
-	}
-
-	function createTraceLine(startPos) {
-		const geometry = new THREE.BufferGeometry();
-		geometry.setAttribute('position', new THREE.Float32BufferAttribute([
-			startPos.x, startPos.y, startPos.z,
-			startPos.x, startPos.y, startPos.z
-		], 3));
-
-		const material = new THREE.LineDashedMaterial({
-			color: 0xffffff,
-			transparent: true,
-			opacity: 0.3,
-			dashSize: 0.1,
-			gapSize: 0.05
-		});
-
-		const line = new THREE.Line(geometry, material);
-		line.computeLineDistances();
-		line.userData.startPos = startPos.clone();
-		return line;
-	}
-
-	function createAllRectangles() {
-		const group = new THREE.Group();
-
-		rectangles.forEach(({ indices, color, axis, plane }) => {
-			// Positive direction
-			const pos = createRectangle(indices, color, plane);
-			pos.userData.axis = axis.clone();
-			pos.userData.direction = 1;
-			pos.userData.indices = indices;
-			group.add(pos);
-			rectangleGroups.push(pos);
-
-			// Create trace lines for each vertex
-			indices.forEach(i => {
-				const traceLine = createTraceLine(new THREE.Vector3(...vertices[i]));
-				traceLine.userData.vertexIndex = i;
-				traceLine.userData.axis = axis.clone();
-				traceLine.userData.direction = 1;
-				scene.add(traceLine);
-				traceLines.push(traceLine);
-			});
-
-			// Negative direction
-			const neg = createRectangle(indices, color, plane);
-			neg.userData.axis = axis.clone();
-			neg.userData.direction = -1;
-			neg.userData.indices = indices;
-			group.add(neg);
-			rectangleGroups.push(neg);
-
-			// Create trace lines for negative direction
-			indices.forEach(i => {
-				const traceLine = createTraceLine(new THREE.Vector3(...vertices[i]));
-				traceLine.userData.vertexIndex = i;
-				traceLine.userData.axis = axis.clone();
-				traceLine.userData.direction = -1;
-				scene.add(traceLine);
-				traceLines.push(traceLine);
-			});
-		});
-
-		return group;
-	}
-
-	function createSchematic(plane, axis, direction) {
-		const group = new THREE.Group();
-		const offset = axis.clone().multiplyScalar(5 * direction);
-		
-		const w = 2; // short side (1 * 2)
-		const h = 2 * PHI; // long side (PHI * 2)
-		
-		// Rectangle outline
-		let corners;
-		if (plane === 'XY') {
-			corners = [
-				new THREE.Vector3(-1, -PHI, 0),
-				new THREE.Vector3(1, -PHI, 0),
-				new THREE.Vector3(1, PHI, 0),
-				new THREE.Vector3(-1, PHI, 0)
-			];
-		} else if (plane === 'YZ') {
-			corners = [
-				new THREE.Vector3(0, -1, -PHI),
-				new THREE.Vector3(0, -1, PHI),
-				new THREE.Vector3(0, 1, PHI),
-				new THREE.Vector3(0, 1, -PHI)
-			];
-		} else {
-			corners = [
-				new THREE.Vector3(-PHI, 0, -1),
-				new THREE.Vector3(-PHI, 0, 1),
-				new THREE.Vector3(PHI, 0, 1),
-				new THREE.Vector3(PHI, 0, -1)
-			];
-		}
-
-		// Main outline
-		const outlineGeo = new THREE.BufferGeometry().setFromPoints([
-			corners[0], corners[1], corners[1], corners[2],
-			corners[2], corners[3], corners[3], corners[0]
-		]);
-		const outline = new THREE.LineSegments(
-			outlineGeo,
-			new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 })
-		);
-		group.add(outline);
-
-		// Dimension lines and labels
-		const dimOffset = 0.4;
-		
-		// Create dimension line helper
-		function createDimLine(start, end, labelText, perpDir) {
-			const dimGroup = new THREE.Group();
-			
-			const s = start.clone().add(perpDir.clone().multiplyScalar(dimOffset));
-			const e = end.clone().add(perpDir.clone().multiplyScalar(dimOffset));
-			
-			// Line
-			const lineGeo = new THREE.BufferGeometry().setFromPoints([s, e]);
-			const line = new THREE.Line(
-				lineGeo,
-				new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4 })
-			);
-			dimGroup.add(line);
-
-			// End ticks
-			const tickSize = 0.1;
-			const tickDir = end.clone().sub(start).normalize();
-			
-			[s, e].forEach(p => {
-				const tickGeo = new THREE.BufferGeometry().setFromPoints([
-					p.clone().add(tickDir.clone().multiplyScalar(-tickSize)),
-					p.clone().add(tickDir.clone().multiplyScalar(tickSize))
-				]);
-				dimGroup.add(new THREE.Line(tickGeo, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.4, transparent: true })));
-			});
-
-			// Extension lines
-			[start, end].forEach((p, i) => {
-				const ext = [s, e][i];
-				const extGeo = new THREE.BufferGeometry().setFromPoints([p, ext]);
-				dimGroup.add(new THREE.Line(extGeo, new THREE.LineDashedMaterial({ 
-					color: 0xffffff, 
-					opacity: 0.2, 
-					transparent: true,
-					dashSize: 0.05,
-					gapSize: 0.03
-				})));
-				dimGroup.children[dimGroup.children.length - 1].computeLineDistances();
-			});
-
-			return dimGroup;
-		}
-
-		// Determine perpendicular directions based on plane
-		let perpShort, perpLong;
-		if (plane === 'XY') {
-			perpShort = new THREE.Vector3(0, 0, 1);
-			perpLong = new THREE.Vector3(0, 0, 1);
-		} else if (plane === 'YZ') {
-			perpShort = new THREE.Vector3(1, 0, 0);
-			perpLong = new THREE.Vector3(1, 0, 0);
-		} else {
-			perpShort = new THREE.Vector3(0, 1, 0);
-			perpLong = new THREE.Vector3(0, 1, 0);
-		}
-
-		// Short side dimension (= 2 = 2·1)
-		group.add(createDimLine(corners[0], corners[1], '2', perpShort.clone().multiplyScalar(-1)));
-		
-		// Long side dimension (= 2φ)
-		group.add(createDimLine(corners[1], corners[2], '2φ', perpLong));
-
-		// Ratio annotation - small square showing 1:φ
-		const sqSize = 0.3;
-		const sqOffset = perpShort.clone().multiplyScalar(dimOffset * 2.5);
-		const sqCenter = corners[0].clone().lerp(corners[1], 0.5).add(sqOffset);
-		
-		// 1×1 square
-		let sq1, sq2;
-		if (plane === 'XY') {
-			sq1 = [
-				sqCenter.clone().add(new THREE.Vector3(-sqSize/2, -sqSize/2, 0)),
-				sqCenter.clone().add(new THREE.Vector3(sqSize/2, -sqSize/2, 0)),
-				sqCenter.clone().add(new THREE.Vector3(sqSize/2, sqSize/2, 0)),
-				sqCenter.clone().add(new THREE.Vector3(-sqSize/2, sqSize/2, 0))
-			];
-			sq2 = [
-				sq1[1].clone(),
-				sq1[1].clone().add(new THREE.Vector3(sqSize * (PHI - 1), 0, 0)),
-				sq1[2].clone().add(new THREE.Vector3(sqSize * (PHI - 1), 0, 0)),
-				sq1[2].clone()
-			];
-		} else if (plane === 'YZ') {
-			sq1 = [
-				sqCenter.clone().add(new THREE.Vector3(0, -sqSize/2, -sqSize/2)),
-				sqCenter.clone().add(new THREE.Vector3(0, -sqSize/2, sqSize/2)),
-				sqCenter.clone().add(new THREE.Vector3(0, sqSize/2, sqSize/2)),
-				sqCenter.clone().add(new THREE.Vector3(0, sqSize/2, -sqSize/2))
-			];
-			sq2 = [
-				sq1[1].clone(),
-				sq1[1].clone().add(new THREE.Vector3(0, 0, sqSize * (PHI - 1))),
-				sq1[2].clone().add(new THREE.Vector3(0, 0, sqSize * (PHI - 1))),
-				sq1[2].clone()
-			];
-		} else {
-			sq1 = [
-				sqCenter.clone().add(new THREE.Vector3(-sqSize/2, 0, -sqSize/2)),
-				sqCenter.clone().add(new THREE.Vector3(sqSize/2, 0, -sqSize/2)),
-				sqCenter.clone().add(new THREE.Vector3(sqSize/2, 0, sqSize/2)),
-				sqCenter.clone().add(new THREE.Vector3(-sqSize/2, 0, sqSize/2))
-			];
-			sq2 = [
-				sq1[1].clone(),
-				sq1[1].clone().add(new THREE.Vector3(sqSize * (PHI - 1), 0, 0)),
-				sq1[2].clone().add(new THREE.Vector3(sqSize * (PHI - 1), 0, 0)),
-				sq1[2].clone()
-			];
-		}
-
-		// Draw 1:1 square
-		const sq1Geo = new THREE.BufferGeometry().setFromPoints([
-			sq1[0], sq1[1], sq1[1], sq1[2], sq1[2], sq1[3], sq1[3], sq1[0]
-		]);
-		group.add(new THREE.LineSegments(sq1Geo, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.6, transparent: true })));
-
-		// Draw φ-1 extension
-		const sq2Geo = new THREE.BufferGeometry().setFromPoints([
-			sq2[0], sq2[1], sq2[1], sq2[2], sq2[2], sq2[3]
-		]);
-		group.add(new THREE.LineSegments(sq2Geo, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.4, transparent: true })));
-
-		group.position.copy(offset);
-		return group;
-	}
-
-	function createAllSchematics() {
-		const group = new THREE.Group();
-		
-		rectangles.forEach(({ axis, plane }) => {
-			group.add(createSchematic(plane, axis, 1));
-			group.add(createSchematic(plane, axis, -1));
-		});
-
-		group.visible = showSchematics;
-		return group;
-	}
-
 	function updateProjection() {
-		rectangleGroups.forEach(rect => {
-			const { axis, direction } = rect.userData;
-			const offset = axis.clone().multiplyScalar(projection * 3.14 * direction);
-			rect.position.copy(offset);
+		rectangleComponents.forEach(comp => {
+			if (comp) comp.updateProjection(projection);
 		});
-
-		// Update trace lines
-		traceLines.forEach(line => {
-			const { startPos, axis, direction } = line.userData;
-			const endPos = startPos.clone().add(axis.clone().multiplyScalar(projection * 3.14 * direction));
-			
-			const positions = line.geometry.attributes.position.array;
-			positions[3] = endPos.x;
-			positions[4] = endPos.y;
-			positions[5] = endPos.z;
-			line.geometry.attributes.position.needsUpdate = true;
-			line.computeLineDistances();
-			
-			line.visible = projection > 0.01;
-		});
-
-		// Update schematic positions
-		if (schematicGroup) {
-			let i = 0;
-			rectangles.forEach(({ axis }) => {
-				[1, -1].forEach(dir => {
-					const baseOffset = 5;
-					const projOffset = projection * 3.14;
-					schematicGroup.children[i].position.copy(
-						axis.clone().multiplyScalar((baseOffset + projOffset) * dir)
-					);
-					i++;
-				});
-			});
-		}
 	}
 
 	function toggleSchematics() {
 		showSchematics = !showSchematics;
-		if (schematicGroup) {
-			schematicGroup.visible = showSchematics;
-		}
+		rectangleComponents.forEach(comp => {
+			if (comp) comp.setSchematicVisible(showSchematics);
+		});
 	}
 
 	function animate() {
@@ -472,7 +120,7 @@
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 
-	onMount(() => {
+	onMount(async () => {
 		scene = new THREE.Scene();
 
 		const aspect = window.innerWidth / window.innerHeight;
@@ -497,10 +145,15 @@
 
 		scene.add(createIcosahedron());
 		scene.add(createWireframe());
-		scene.add(createAllRectangles());
-		
-		schematicGroup = createAllSchematics();
-		scene.add(schematicGroup);
+
+		// Set flag and wait for components to bind
+		sceneReady = true;
+		await tick();
+
+		// Now init all rectangle components
+		rectangleComponents.forEach(comp => {
+			if (comp) comp.init();
+		});
 
 		animate();
 
@@ -509,11 +162,28 @@
 		return () => {
 			window.removeEventListener('resize', handleResize);
 			cancelAnimationFrame(animationFrameId);
+			rectangleComponents.forEach(comp => {
+				if (comp) comp.dispose();
+			});
 			renderer.dispose();
 			controls.dispose();
 		};
 	});
 </script>
+
+{#if sceneReady}
+	{#each rectangleConfigs as config, i}
+		<GoldenRectangle
+			bind:this={rectangleComponents[i]}
+			{scene}
+			plane={config.plane}
+			axis={config.axis}
+			direction={config.direction}
+			{vertices}
+			indices={config.indices}
+		/>
+	{/each}
+{/if}
 
 <canvas bind:this={canvasElement}></canvas>
 
