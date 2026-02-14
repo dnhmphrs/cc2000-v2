@@ -206,69 +206,110 @@
 		background: black;
 		font-family: monospace;
 	}
-
+	
 	canvas {
 		position: fixed;
-		top: 0;
-		left: 0;
+		inset: 0;
 		width: 100vw;
 		height: 100vh;
 	}
-
+	
+	/* container */
 	.controls {
 		position: fixed;
-		top: 20px;
-		right: 20px;
-		background: rgba(0, 0, 0, 0.7);
-		padding: 12px 16px;
-		border-radius: 6px;
-		color: white;
-		font-size: 12px;
+		top: 14px;
+		right: 14px;
+	
+		padding: 6px 8px;
+		border-radius: 4px;
+	
+		background: rgba(255,255,255,0.04);
+		backdrop-filter: blur(6px);
+	
+		color: rgba(255,255,255,0.85);
+		font-size: 11px;
+		letter-spacing: .04em;
+	
 		display: flex;
 		flex-direction: column;
-		gap: 10px;
+		gap: 4px;
+	
+		border: 1px solid rgba(255,255,255,0.08);
 	}
-
+	
+	/* row */
 	label {
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: 6px;
 	}
-
+	
+	/* slider */
 	input[type="range"] {
-		width: 100px;
+		width: 90px;
+		height: 2px;
+		appearance: none;
+		background: rgba(255,255,255,0.15);
+		border-radius: 2px;
+		outline: none;
 	}
-
+	
+	/* slider thumb */
+	input[type="range"]::-webkit-slider-thumb {
+		appearance: none;
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: white;
+		border: none;
+	}
+	
+	input[type="range"]::-moz-range-thumb {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: white;
+		border: none;
+	}
+	
+	/* number */
 	span {
-		min-width: 35px;
+		min-width: 28px;
 		text-align: right;
+		opacity: .7;
 	}
-
+	
+	/* optional buttons */
 	button {
-		background: rgba(255, 255, 255, 0.1);
-		border: 1px solid rgba(255, 255, 255, 0.3);
-		color: white;
-		padding: 6px 10px;
-		border-radius: 4px;
+		background: transparent;
+		border: 1px solid rgba(255,255,255,0.15);
+		color: rgba(255,255,255,0.8);
+		padding: 2px 6px;
+		border-radius: 3px;
 		cursor: pointer;
 		font-family: monospace;
-		font-size: 12px;
+		font-size: 11px;
 	}
-
+	
 	button:hover {
-		background: rgba(255, 255, 255, 0.2);
+		border-color: rgba(255,255,255,0.35);
 	}
-
+	
+	/* info panel */
 	.info {
 		position: fixed;
-		bottom: 20px;
-		left: 20px;
-		background: rgba(0, 0, 0, 0.7);
-		padding: 12px 16px;
-		border-radius: 6px;
-		color: white;
-		font-size: 11px;
-		line-height: 1.6;
-		opacity: 0.8;
+		bottom: 14px;
+		left: 14px;
+	
+		padding: 6px 8px;
+		border-radius: 4px;
+	
+		background: rgba(255,255,255,0.04);
+		border: 1px solid rgba(255,255,255,0.08);
+	
+		color: rgba(255,255,255,0.7);
+		font-size: 10px;
+		line-height: 1.5;
 	}
-</style>
+	</style>
+	
