@@ -11,7 +11,6 @@
 	const PHI = (1 + Math.sqrt(5)) / 2;
 
 	let projection = 0;
-	let showSchematics = false;
 	let sceneReady = false;
 
 	let rectangleComponents = [];
@@ -66,11 +65,11 @@
 		return new THREE.Mesh(
 			geometry,
 			new THREE.MeshBasicMaterial({
-				color: 0xf0f0f0,
-				transparent: true,
-				opacity: 0.5,
+				color: 0x232323,
+				transparent: false,
+				opacity: 1.0,
 				side: THREE.DoubleSide,
-				depthWrite: false
+				depthWrite: true
 			})
 		);
 	}
@@ -86,20 +85,13 @@
 
 		return new THREE.LineSegments(
 			geometry,
-			new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 })
+			new THREE.LineBasicMaterial({ color: 0xf0f0f0, transparent: true, opacity: 0.5 })
 		);
 	}
 
 	function updateProjection() {
 		rectangleComponents.forEach(comp => {
 			if (comp) comp.updateProjection(projection);
-		});
-	}
-
-	function toggleSchematics() {
-		showSchematics = !showSchematics;
-		rectangleComponents.forEach(comp => {
-			if (comp) comp.setSchematicVisible(showSchematics);
 		});
 	}
 
@@ -138,7 +130,7 @@
 		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true });
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(window.devicePixelRatio);
-		renderer.setClearColor(0x0078D7, 1);
+		renderer.setClearColor(0x232323, 1);
 
 		controls = new OrbitControls(camera, canvasElement);
 		controls.enableDamping = true;
@@ -200,15 +192,12 @@
 		/>
 		<span>{projection.toFixed(2)}</span>
 	</label>
-	<button on:click={toggleSchematics}>
-		{showSchematics ? '▣' : '▢'} Schematics
-	</button>
 </div>
 
-<div class="info">
+<!-- <div class="info">
 	<div>φ = (1+√5)/2 ≈ {PHI.toFixed(6)}</div>
 	<div>φ² = φ+1 | 1/φ = φ-1</div>
-</div>
+</div> -->
 
 <style>
 	:global(body) {

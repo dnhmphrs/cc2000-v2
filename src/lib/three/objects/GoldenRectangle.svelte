@@ -4,12 +4,10 @@
 	import GoldenRectangleSchematic from './GoldenRectangleSchematic.svelte';
 
 	export let scene;
-	export let plane;
 	export let axis;
 	export let direction;
 	export let vertices;
 	export let indices;
-	export let color = 0xf0f0f0;
 
 	const PHI = (1 + Math.sqrt(5)) / 2;
 
@@ -17,6 +15,13 @@
 	let traceLines = [];
 	let schematicComponent;
 	let basis = null;
+	let schematicBaseOpacity = 0.5; 
+
+	let fillMaterial;
+	let outlineMaterial;
+	let spiralMaterial;
+	let subdivisionMaterials = [];
+	let traceLineMaterials = [];
 
 	function getRectCorners() {
 		return indices.map(i => new THREE.Vector3(...vertices[i]));
@@ -52,91 +57,120 @@
 
 	function localToWorld(u, v) {
 		return basis.center.clone()
-			.add(basis.uAxis.clone().multiplyScalar(u))
+			.add(basis.uAxis.clone().multiplyScalar(-u)) // note, flipped y
 			.add(basis.vAxis.clone().multiplyScalar(v));
 	}
 
-	function createGoldenSpiral() {
-		const points = [];
-		const b = Math.log(PHI) / (Math.PI / 2);
-		const turns = 8;
-		const pointsPerTurn = 64;
-		const totalPoints = turns * pointsPerTurn;
+	function computeGoldenRectangleData() {
+		const squares = [];
+		const arcCenters = [];
 		
-		const halfShort = basis.uLen / 2;
-		const halfLong = basis.vLen / 2;
-		const cornerDist = Math.sqrt(halfShort * halfShort + halfLong * halfLong);
-		const maxTheta = turns * Math.PI / 2;
-		const maxR = Math.pow(Math.E, b * maxTheta);
-		const scale = cornerDist / maxR;
+		// Start with the full bounds in local space
+		let rect = {
+			left: -basis.uLen / 2,
+			right: basis.uLen / 2,
+			bottom: -basis.vLen / 2,
+			top: basis.vLen / 2
+		};
 		
-		for (let i = 0; i <= totalPoints; i++) {
-			const theta = (i / pointsPerTurn) * Math.PI / 2;
-			const r = Math.pow(Math.E, b * theta) * scale;
-			const localU = r * Math.cos(theta);
-			const localV = r * Math.sin(theta);
-			points.push(localToWorld(localU, localV));
-		}
+		for (let i = 0; i < 10; i++) {
+			const w = rect.right - rect.left;
+			const h = rect.top - rect.bottom;
+			if (w < 0.001 || h < 0.001) break;
 
-		const geometry = new THREE.BufferGeometry().setFromPoints(points);
-		return new THREE.Line(
-			geometry,
-			new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 })
-		);
+			const side = Math.min(w, h);
+			let square, arc;
+
+			// The "side" index (i % 4) determines which corner the square occupies
+			// and where the arc is centered.
+			switch (i % 4) {
+				case 0: // Cut from Bottom
+					square = { left: rect.left, right: rect.left + side, bottom: rect.bottom, top: rect.bottom + side };
+					arc = { u: rect.left + side, v: rect.bottom + side, startAngle: Math.PI, dir: 0 };
+					rect.bottom += side; 
+					break;
+				case 1: // Cut from Left
+					square = { left: rect.left, right: rect.left + side, bottom: rect.top - side, top: rect.top };
+					arc = { u: rect.left + side, v: rect.top - side, startAngle: Math.PI * 0.5, dir: 1 };
+					rect.left += side;
+					break;
+				case 2: // Cut from Top
+					square = { left: rect.right - side, right: rect.right, bottom: rect.top - side, top: rect.top };
+					arc = { u: rect.right - side, v: rect.top - side, startAngle: 0, dir: 2 };
+					rect.top -= side;
+					break;
+				case 3: // Cut from Right
+					square = { left: rect.right - side, right: rect.right, bottom: rect.bottom, top: rect.bottom + side };
+					arc = { u: rect.right - side, v: rect.bottom + side, startAngle: Math.PI * 1.5, dir: 3 };
+					rect.right -= side;
+					break;
+			}
+
+			squares.push(square);
+			arcCenters.push({ ...arc, radius: side });
+		}
+		
+		return { squares, arcCenters };
 	}
 
-	function createSubdivisions() {
+	function createGoldenSpiral(arcCenters) {
 		const group = new THREE.Group();
-		
-		let minU = -basis.uLen / 2;
-		let maxU = basis.uLen / 2;
-		let minV = -basis.vLen / 2;
-		let maxV = basis.vLen / 2;
-		
-		for (let i = 0; i < 8; i++) {
-			const w = maxU - minU;
-			const h = maxV - minV;
-			
-			let cutCorners;
-			
-			if (h > w) {
-				const squareTop = minV + w;
-				cutCorners = [
-					[minU, minV],
-					[maxU, minV],
-					[maxU, squareTop],
-					[minU, squareTop]
-				];
-				minV = squareTop;
-			} else {
-				const squareRight = minU + h;
-				cutCorners = [
-					[minU, minV],
-					[squareRight, minV],
-					[squareRight, maxV],
-					[minU, maxV]
-				];
-				minU = squareRight;
+		const pointsPerArc = 32;
+
+		spiralMaterial = new THREE.LineBasicMaterial({
+			color: 0xf0f0f0,
+			transparent: true,
+			opacity: 0
+		});
+
+		for (let i = 0; i < arcCenters.length; i++) {
+			const arc = arcCenters[i];
+			const arcPoints = [];
+
+			for (let j = 0; j <= pointsPerArc; j++) {
+			const t = j / pointsPerArc;
+			const angle = arc.startAngle + t * (Math.PI / 2);
+
+			const u = arc.u + arc.radius * Math.cos(angle);
+			const v = arc.v + arc.radius * Math.sin(angle);
+			arcPoints.push(localToWorld(u, v));
 			}
-			
-			const corners3D = cutCorners.map(([u, v]) => localToWorld(u, v));
+
+			const geo = new THREE.BufferGeometry().setFromPoints(arcPoints);
+			group.add(new THREE.Line(geo, spiralMaterial));
+		}
+
+		return group;
+	}
+
+
+	function createSubdivisionLines(squares) {
+		const group = new THREE.Group();
+		subdivisionMaterials = [];
+		
+		for (let i = 0; i < Math.min(8, squares.length); i++) {
+			const sq = squares[i];
+			const corners = [
+				localToWorld(sq.left, sq.bottom),
+				localToWorld(sq.right, sq.bottom),
+				localToWorld(sq.right, sq.top),
+				localToWorld(sq.left, sq.top)
+			];
 			
 			const geo = new THREE.BufferGeometry().setFromPoints([
-				corners3D[0], corners3D[1],
-				corners3D[1], corners3D[2],
-				corners3D[2], corners3D[3],
-				corners3D[3], corners3D[0]
+				corners[0], corners[1],
+				corners[1], corners[2],
+				corners[2], corners[3],
+				corners[3], corners[0]
 			]);
 			
-			const opacity = 0.5 - i * 0.05;
-			group.add(new THREE.LineSegments(
-				geo,
-				new THREE.LineBasicMaterial({ 
-					color: 0xffffff, 
-					transparent: true, 
-					opacity: Math.max(0.1, opacity)
-				})
-			));
+			const mat = new THREE.LineBasicMaterial({ 
+				color: 0xf0f0f0, 
+				transparent: true, 
+				opacity: 0
+			});
+			subdivisionMaterials.push({ mat });
+			group.add(new THREE.LineSegments(geo, mat));
 		}
 
 		return group;
@@ -146,75 +180,91 @@
 		const group = new THREE.Group();
 		const corners = getRectCorners();
 
+		// Fill
+		fillMaterial = new THREE.MeshBasicMaterial({
+			color: 0x232323,
+			transparent: true,
+			opacity: 0,
+			side: THREE.DoubleSide,
+			depthWrite: false
+		});
+		
 		const shape = new THREE.BufferGeometry().setFromPoints([
 			corners[0], corners[1], corners[2],
 			corners[0], corners[2], corners[3]
 		]);
+		group.add(new THREE.Mesh(shape, fillMaterial));
 
-		const fill = new THREE.Mesh(
-			shape,
-			new THREE.MeshBasicMaterial({
-				color,
-				transparent: true,
-				opacity: 0.15,
-				side: THREE.DoubleSide,
-				depthWrite: false
-			})
-		);
-		group.add(fill);
-
+		// Outline
+		outlineMaterial = new THREE.LineBasicMaterial({ 
+			color: 0xf0f0f0, 
+			transparent: true, 
+			opacity: 0 
+		});
+		
 		const outline = new THREE.BufferGeometry().setFromPoints([
 			corners[0], corners[1],
 			corners[1], corners[2],
 			corners[2], corners[3],
 			corners[3], corners[0]
 		]);
+		group.add(new THREE.LineSegments(outline, outlineMaterial));
 
-		const line = new THREE.LineSegments(
-			outline,
-			new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.8 })
-		);
-		group.add(line);
+		// Compute the golden rectangle subdivision data
+		const { squares, arcCenters } = computeGoldenRectangleData();
+		
+		group.add(createGoldenSpiral(arcCenters));
+		group.add(createSubdivisionLines(squares));
 
-		group.add(createGoldenSpiral());
-		group.add(createSubdivisions());
-
-		group.userData = { axis: axis.clone(), direction };
 		return group;
-	}
-
-	function createTraceLine(startPos) {
-		const geometry = new THREE.BufferGeometry();
-		geometry.setAttribute('position', new THREE.Float32BufferAttribute([
-			startPos.x, startPos.y, startPos.z,
-			startPos.x, startPos.y, startPos.z
-		], 3));
-
-		const material = new THREE.LineDashedMaterial({
-			color: 0xffffff,
-			transparent: true,
-			opacity: 0.25,
-			dashSize: 0.08,
-			gapSize: 0.04
-		});
-
-		const line = new THREE.Line(geometry, material);
-		line.computeLineDistances();
-		line.userData.startPos = startPos.clone();
-		line.visible = false;
-		return line;
 	}
 
 	function createTraceLines() {
 		const lines = [];
+		traceLineMaterials = [];
+		
 		indices.forEach(i => {
-			const line = createTraceLine(new THREE.Vector3(...vertices[i]));
-			line.userData.axis = axis.clone();
-			line.userData.direction = direction;
+			const startPos = new THREE.Vector3(...vertices[i]);
+			const geometry = new THREE.BufferGeometry();
+			geometry.setAttribute('position', new THREE.Float32BufferAttribute([
+				startPos.x, startPos.y, startPos.z,
+				startPos.x, startPos.y, startPos.z
+			], 3));
+
+			const material = new THREE.LineDashedMaterial({
+				color: 0xf0f0f0,
+				transparent: true,
+				opacity: 0,
+				dashSize: 0.1,
+				gapSize: 0.05
+			});
+			traceLineMaterials.push(material);
+
+			const line = new THREE.Line(geometry, material);
+			line.computeLineDistances();
+			line.userData.startPos = startPos.clone();
 			scene.add(line);
 			lines.push(line);
 		});
+		
 		return lines;
+	}
+
+	function updateOpacities(t) {
+		// const opacity = t;
+		const opacity = 1;
+		
+		if (fillMaterial) fillMaterial.opacity = opacity * 0.0;
+		if (outlineMaterial) outlineMaterial.opacity = opacity * 0.2;
+		if (spiralMaterial) spiralMaterial.opacity = opacity * 0.2;
+		
+		subdivisionMaterials.forEach(({ mat }) => {
+			mat.opacity = opacity * 0.1;
+		});
+		
+		traceLineMaterials.forEach(mat => {
+			mat.opacity = opacity * 0.1;
+		});
 	}
 
 	export async function init() {
@@ -225,7 +275,6 @@
 
 		traceLines = createTraceLines();
 
-		// Wait for component to mount with new basis
 		await tick();
 		
 		if (schematicComponent) {
@@ -242,7 +291,8 @@
 		const offset = axis.clone().multiplyScalar(paneDist * direction);
 		rectangleGroup.position.copy(offset);
 
-		// Update trace lines
+		updateOpacities(projection);
+
 		traceLines.forEach(line => {
 			const { startPos } = line.userData;
 			const endPos = startPos.clone().add(axis.clone().multiplyScalar(schematicDist * direction));
@@ -253,19 +303,10 @@
 			positions[5] = endPos.z;
 			line.geometry.attributes.position.needsUpdate = true;
 			line.computeLineDistances();
-			
-			line.visible = projection > 0.01;
 		});
 
-		// Update schematic
 		if (schematicComponent && schematicComponent.updateProjection) {
 			schematicComponent.updateProjection(projection, schematicDist);
-		}
-	}
-
-	export function setSchematicVisible(visible) {
-		if (schematicComponent && schematicComponent.setVisible) {
-			schematicComponent.setVisible(visible);
 		}
 	}
 
@@ -295,5 +336,6 @@
 		{basis}
 		{axis}
 		{direction}
+		baseOpacity={schematicBaseOpacity}
 	/>
 {/if}
