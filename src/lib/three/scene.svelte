@@ -67,7 +67,7 @@
 			new THREE.MeshBasicMaterial({
 				color: 0x232323,
 				transparent: false,
-				opacity: 1.0,
+				opacity: 0.0,
 				side: THREE.DoubleSide,
 				depthWrite: true
 			})
@@ -203,7 +203,6 @@
 	:global(body) {
 		margin: 0;
 		overflow: hidden;
-		background: black;
 		font-family: monospace;
 	}
 	
@@ -279,24 +278,8 @@
 		opacity: .7;
 	}
 	
-	/* optional buttons */
-	button {
-		background: transparent;
-		border: 1px solid rgba(255,255,255,0.15);
-		color: rgba(255,255,255,0.8);
-		padding: 2px 6px;
-		border-radius: 3px;
-		cursor: pointer;
-		font-family: monospace;
-		font-size: 11px;
-	}
-	
-	button:hover {
-		border-color: rgba(255,255,255,0.35);
-	}
-	
 	/* info panel */
-	.info {
+	/* .info {
 		position: fixed;
 		bottom: 14px;
 		left: 14px;
@@ -310,6 +293,6 @@
 		color: rgba(255,255,255,0.7);
 		font-size: 10px;
 		line-height: 1.5;
-	}
+	} */
 	</style>
 	
