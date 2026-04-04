@@ -4,7 +4,7 @@
 	import { screenSize, deviceType, isPortrait } from '$lib/store/store';
 	import { getDeviceType, getScreenSize, getIsPortrait } from '$lib/functions/utils';
 
-	import Scene from '$lib/three/Scene.svelte';
+	import Scene from '$lib/three/scene.svelte';
 	import DevPanel from '$lib/components/DevPanel.svelte';
 
 	let mounted = false;
