@@ -1,20 +1,39 @@
 <script>
-	import { onMount, tick } from 'svelte';
+	import { onMount, onDestroy, tick } from 'svelte';
 	import * as THREE from 'three';
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+	import { sceneState, decade, isPortrait } from '$lib/store/store';
+	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
 	import GoldenRectangle from './objects/GoldenRectangle.svelte';
 
 	let canvasElement;
 	let scene, camera, renderer, controls;
 	let animationFrameId;
-
-	const PHI = (1 + Math.sqrt(5)) / 2;
-
-	let projection = 0;
+	let clock;
 	let sceneReady = false;
-
 	let rectangleComponents = [];
 
+	const PHI = (1 + Math.sqrt(5)) / 2;
+	const FRUSTUM = 12;
+
+	// Animation
+	let currentProjection = 0;
+	let targetProjection = 0;
+	let animTime = 0;
+	let localAnimPhase = 0;
+
+	// Quaternion rotation
+	let rotationStart = new THREE.Quaternion();
+	let rotationTarget = new THREE.Quaternion();
+	let rotationProgress = 0;
+	let icosahedronGroup; // everything (wireframe + golden rects) lives here
+
+	// Spiral (visible from start — the "sperm" approaching the "egg")
+	let spiralGroup;
+	let spiralMaterials = [];
+	let spiralScale = 3.0; // starts large, shrinks to 1 during collapse
+
+	// Icosahedron data
 	const vertices = [
 		[-1, PHI, 0], [1, PHI, 0], [-1, -PHI, 0], [1, -PHI, 0],
 		[0, -1, PHI], [0, 1, PHI], [0, -1, -PHI], [0, 1, -PHI],
@@ -41,125 +60,262 @@
 		[10, 11]
 	];
 
+	// 6 golden rectangle faces — assign decades (doubled since only 4 decades)
+	const decadeAssignments = ['50s', '60s', '90s', '10s', '50s', '60s'];
+
 	const rectangleConfigs = [
 		{ indices: [0, 1, 3, 2], axis: new THREE.Vector3(0, 0, 1), plane: 'XY', direction: 1 },
 		{ indices: [0, 1, 3, 2], axis: new THREE.Vector3(0, 0, 1), plane: 'XY', direction: -1 },
 		{ indices: [4, 5, 7, 6], axis: new THREE.Vector3(1, 0, 0), plane: 'YZ', direction: 1 },
 		{ indices: [4, 5, 7, 6], axis: new THREE.Vector3(1, 0, 0), plane: 'YZ', direction: -1 },
 		{ indices: [8, 9, 11, 10], axis: new THREE.Vector3(0, 1, 0), plane: 'XZ', direction: 1 },
-		{ indices: [8, 9, 11, 10], axis: new THREE.Vector3(0, 1, 0), plane: 'XZ', direction: -1 }
+		{ indices: [8, 9, 11, 10], axis: new THREE.Vector3(0, 1, 0), plane: 'XZ', direction: -1 },
 	];
 
-	function createIcosahedron() {
-		const geometry = new THREE.BufferGeometry();
+	// Target quaternions: orient so the decade's rectangle faces the camera
+	// Camera is at (5,4,5) looking at origin. We compute rotations that bring
+	// each plane's normal toward the camera direction.
+	function getDecadeRotation(decadeKey) {
+		// Map decade to which rectangle plane faces the camera
+		const camDir = new THREE.Vector3(5, 4, 5).normalize();
+		const rotations = {
+			'50s': new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0),
+			'60s': new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
+			'90s': new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2),
+			'10s': new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 2),
+		};
+		return rotations[decadeKey] || rotations['90s'];
+	}
+
+	function createIcosahedronGroup() {
+		const group = new THREE.Group();
+
+		// Solid (for depth)
 		const positions = [];
+		faces.forEach(([a, b, c]) => { positions.push(...vertices[a], ...vertices[b], ...vertices[c]); });
+		const solidGeo = new THREE.BufferGeometry();
+		solidGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+		solidGeo.computeVertexNormals();
+		group.add(new THREE.Mesh(solidGeo, new THREE.MeshBasicMaterial({
+			color: 0x232323, transparent: true, opacity: 0.0, side: THREE.DoubleSide, depthWrite: true
+		})));
 
-		faces.forEach((face) => {
-			const [a, b, c] = face;
-			positions.push(...vertices[a], ...vertices[b], ...vertices[c]);
+		// Wireframe
+		const edgePositions = [];
+		edges.forEach(([a, b]) => { edgePositions.push(...vertices[a], ...vertices[b]); });
+		const wireGeo = new THREE.BufferGeometry();
+		wireGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
+		group.add(new THREE.LineSegments(wireGeo, new THREE.LineBasicMaterial({
+			color: 0xf0f0f0, transparent: true, opacity: 0.5
+		})));
+
+		return group;
+	}
+
+	// Create an external golden spiral that starts large and "approaches" the icosahedron
+	function createExternalSpiral() {
+		const group = new THREE.Group();
+		spiralMaterials = [];
+
+		const totalTurns = 4;
+		const pointCount = 200;
+		const pts = [];
+
+		for (let i = 0; i <= pointCount; i++) {
+			const t = i / pointCount;
+			const angle = t * totalTurns * Math.PI * 2;
+			// Golden spiral: r = a * phi^(2*theta/pi)
+			const r = 0.1 * Math.pow(PHI, (2 * angle) / Math.PI);
+			pts.push(new THREE.Vector3(
+				r * Math.cos(angle),
+				r * Math.sin(angle),
+				0
+			));
+		}
+
+		const mat = new THREE.LineBasicMaterial({
+			color: 0xf0f0f0, transparent: true, opacity: 0.3
 		});
+		spiralMaterials.push(mat);
+		const geo = new THREE.BufferGeometry().setFromPoints(pts);
+		group.add(new THREE.Line(geo, mat));
 
-		geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-		geometry.computeVertexNormals();
-
-		return new THREE.Mesh(
-			geometry,
-			new THREE.MeshBasicMaterial({
-				color: 0x232323,
-				transparent: false,
-				opacity: 0.0,
-				side: THREE.DoubleSide,
-				depthWrite: true
-			})
-		);
+		return group;
 	}
 
-	function createWireframe() {
-		const positions = [];
-		edges.forEach(([a, b]) => {
-			positions.push(...vertices[a], ...vertices[b]);
-		});
+	// React to sceneState changes
+	let unsubState;
 
-		const geometry = new THREE.BufferGeometry();
-		geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-
-		return new THREE.LineSegments(
-			geometry,
-			new THREE.LineBasicMaterial({ color: 0xf0f0f0, transparent: true, opacity: 0.5 })
-		);
-	}
-
-	function updateProjection() {
-		rectangleComponents.forEach(comp => {
-			if (comp) comp.updateProjection(projection);
-		});
-	}
-
-	function animate() {
-		animationFrameId = requestAnimationFrame(animate);
-		controls.update();
-		renderer.render(scene, camera);
-	}
-
-	const frustumSize = 12;
 	function handleResize() {
+		if (!camera || !renderer) return;
 		const aspect = window.innerWidth / window.innerHeight;
-		camera.left = -frustumSize * aspect / 2;
-		camera.right = frustumSize * aspect / 2;
-		camera.top = frustumSize / 2;
-		camera.bottom = -frustumSize / 2;
+		isPortrait.set(window.innerHeight > window.innerWidth);
+		camera.left = -FRUSTUM * aspect / 2;
+		camera.right = FRUSTUM * aspect / 2;
+		camera.top = FRUSTUM / 2;
+		camera.bottom = -FRUSTUM / 2;
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 
+	function animate() {
+		animationFrameId = requestAnimationFrame(animate);
+		if (!clock) return;
+
+		const dt = clock.getDelta();
+		animTime += dt;
+
+		// Smooth projection
+		currentProjection = lerp(currentProjection, targetProjection, dt * 3);
+
+		// Update golden rectangle projections
+		rectangleComponents.forEach(comp => {
+			if (comp) comp.updateProjection(currentProjection);
+		});
+
+		// --- State machine ---
+
+		if (localAnimPhase === 0) {
+			// Idle: slow rotation, spiral visible and pulsing
+			if (icosahedronGroup) {
+				icosahedronGroup.rotation.y += dt * 0.15;
+				icosahedronGroup.rotation.x += dt * 0.07;
+			}
+			if (spiralGroup) {
+				spiralGroup.rotation.z += dt * 0.3;
+				// Gentle scale pulse
+				const pulse = 2.5 + Math.sin(animTime * 0.5) * 0.5;
+				spiralGroup.scale.setScalar(pulse);
+				spiralMaterials.forEach(m => { m.opacity = 0.25; });
+			}
+		}
+
+		if (localAnimPhase === 1) {
+			// Collapse spiral into icosahedron
+			spiralScale = lerp(spiralScale, 0, dt * 2.5);
+			if (spiralGroup) {
+				spiralGroup.scale.setScalar(Math.max(spiralScale, 0.01));
+				spiralGroup.rotation.z += dt * 2; // spin faster as it collapses
+				spiralMaterials.forEach(m => { m.opacity = lerp(m.opacity, 0, dt * 3); });
+			}
+
+			if (spiralScale < 0.05) {
+				// Hide spiral, move to rotation
+				if (spiralGroup) spiralGroup.visible = false;
+				sceneState.set(2);
+			}
+		}
+
+		if (localAnimPhase === 2) {
+			// Rotate to target decade
+			rotationProgress = clamp(rotationProgress + dt * 0.6, 0, 1);
+			if (icosahedronGroup) {
+				const t = easeInOutCubic(rotationProgress);
+				icosahedronGroup.quaternion.slerpQuaternions(rotationStart, rotationTarget, t);
+			}
+
+			if (rotationProgress >= 1) {
+				sceneState.set(3);
+			}
+		}
+
+		if (localAnimPhase === 3) {
+			// Project out golden rectangles
+			targetProjection = 1;
+			if (currentProjection > 0.9) {
+				sceneState.set(4);
+			}
+		}
+
+		if (localAnimPhase === 4) {
+			// Settled — no further animation
+		}
+
+		controls.update();
+		renderer.render(scene, camera);
+	}
+
 	onMount(async () => {
 		scene = new THREE.Scene();
+		clock = new THREE.Clock();
 
 		const aspect = window.innerWidth / window.innerHeight;
+		isPortrait.set(window.innerHeight > window.innerWidth);
+
 		camera = new THREE.OrthographicCamera(
-			-frustumSize * aspect / 2,
-			frustumSize * aspect / 2,
-			frustumSize / 2,
-			-frustumSize / 2,
-			0.1,
-			100
+			-FRUSTUM * aspect / 2, FRUSTUM * aspect / 2,
+			FRUSTUM / 2, -FRUSTUM / 2, 0.1, 100
 		);
 		camera.position.set(5, 4, 5);
 		camera.lookAt(0, 0, 0);
 
 		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true });
 		renderer.setSize(window.innerWidth, window.innerHeight);
-		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 		renderer.setClearColor(0x232323, 1);
 
 		controls = new OrbitControls(camera, canvasElement);
 		controls.enableDamping = true;
+		controls.dampingFactor = 0.05;
+		controls.enableZoom = true;
+		controls.enablePan = false;
 
-		scene.add(createIcosahedron());
-		scene.add(createWireframe());
+		// Icosahedron group — everything rotates together
+		icosahedronGroup = createIcosahedronGroup();
+		scene.add(icosahedronGroup);
 
-		// Set flag and wait for components to bind
+		// External spiral — lives in scene (not icosahedron group) so it can animate independently
+		spiralGroup = createExternalSpiral();
+		scene.add(spiralGroup);
+
+		// Subscribe to state changes
+		unsubState = sceneState.subscribe(v => {
+			localAnimPhase = v;
+			animTime = 0;
+
+			if (v === 0) {
+				// Reset
+				targetProjection = 0;
+				spiralScale = 3.0;
+				if (spiralGroup) {
+					spiralGroup.visible = true;
+					spiralGroup.scale.setScalar(spiralScale);
+				}
+			}
+
+			if (v === 1) {
+				// Start collapsing spiral
+				targetProjection = 0;
+			}
+
+			if (v === 2) {
+				// Capture current rotation, compute target
+				if (icosahedronGroup) {
+					rotationStart.copy(icosahedronGroup.quaternion);
+					const targetDecade = $decade || '90s';
+					rotationTarget.copy(getDecadeRotation(targetDecade));
+					rotationProgress = 0;
+				}
+			}
+		});
+
 		sceneReady = true;
 		await tick();
 
-		// Now init all rectangle components
-		rectangleComponents.forEach(comp => {
-			if (comp) comp.init();
-		});
+		// Init golden rectangles (they add themselves to icosahedronGroup)
+		rectangleComponents.forEach(comp => { if (comp) comp.init(); });
 
 		animate();
-
 		window.addEventListener('resize', handleResize);
+	});
 
-		return () => {
-			window.removeEventListener('resize', handleResize);
-			cancelAnimationFrame(animationFrameId);
-			rectangleComponents.forEach(comp => {
-				if (comp) comp.dispose();
-			});
-			renderer.dispose();
-			controls.dispose();
-		};
+	onDestroy(() => {
+		if (unsubState) unsubState();
+		if (animationFrameId) cancelAnimationFrame(animationFrameId);
+		window.removeEventListener('resize', handleResize);
+		rectangleComponents.forEach(comp => { if (comp) comp.dispose(); });
+		if (renderer) renderer.dispose();
+		if (controls) controls.dispose();
 	});
 </script>
 
@@ -168,131 +324,25 @@
 		<GoldenRectangle
 			bind:this={rectangleComponents[i]}
 			{scene}
-			plane={config.plane}
+			parentGroup={icosahedronGroup}
 			axis={config.axis}
 			direction={config.direction}
 			{vertices}
 			indices={config.indices}
+			decadeKey={decadeAssignments[i]}
 		/>
 	{/each}
 {/if}
 
-<canvas bind:this={canvasElement}></canvas>
-
-<div class="controls">
-	<label>
-		Projection
-		<input 
-			type="range" 
-			bind:value={projection} 
-			on:input={updateProjection}
-			min="0" 
-			max="1" 
-			step="0.01"
-		/>
-		<span>{projection.toFixed(2)}</span>
-	</label>
-</div>
-
-<!-- <div class="info">
-	<div>φ = (1+√5)/2 ≈ {PHI.toFixed(6)}</div>
-	<div>φ² = φ+1 | 1/φ = φ-1</div>
-</div> -->
+<canvas bind:this={canvasElement} />
 
 <style>
-	:global(body) {
-		margin: 0;
-		overflow: hidden;
-		font-family: monospace;
-	}
-	
 	canvas {
 		position: fixed;
 		inset: 0;
 		width: 100vw;
 		height: 100vh;
+		display: block;
+		z-index: 0;
 	}
-	
-	/* container */
-	.controls {
-		position: fixed;
-		top: 14px;
-		right: 14px;
-	
-		padding: 6px 8px;
-		border-radius: 4px;
-	
-		background: rgba(255,255,255,0.04);
-		backdrop-filter: blur(6px);
-	
-		color: rgba(255,255,255,0.85);
-		font-size: 11px;
-		letter-spacing: .04em;
-	
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	
-		border: 1px solid rgba(255,255,255,0.08);
-	}
-	
-	/* row */
-	label {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-	}
-	
-	/* slider */
-	input[type="range"] {
-		width: 90px;
-		height: 2px;
-		appearance: none;
-		background: rgba(255,255,255,0.15);
-		border-radius: 2px;
-		outline: none;
-	}
-	
-	/* slider thumb */
-	input[type="range"]::-webkit-slider-thumb {
-		appearance: none;
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		background: white;
-		border: none;
-	}
-	
-	input[type="range"]::-moz-range-thumb {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		background: white;
-		border: none;
-	}
-	
-	/* number */
-	span {
-		min-width: 28px;
-		text-align: right;
-		opacity: .7;
-	}
-	
-	/* info panel */
-	/* .info {
-		position: fixed;
-		bottom: 14px;
-		left: 14px;
-	
-		padding: 6px 8px;
-		border-radius: 4px;
-	
-		background: rgba(255,255,255,0.04);
-		border: 1px solid rgba(255,255,255,0.08);
-	
-		color: rgba(255,255,255,0.7);
-		font-size: 10px;
-		line-height: 1.5;
-	} */
-	</style>
-	
+</style>

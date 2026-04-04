@@ -1,58 +1,44 @@
 <script>
-	export let error = {};
-	export let status;
+	export let status = 500;
+	export let message = '';
 
-	import { page } from '$lib/store/store';
+	import { phase } from '$lib/store/store';
 	import { goto } from '$app/navigation';
 
-	let handleProgress = () => {
-		page.set(1);
+	function goHome() {
+		phase.set('intro');
 		goto('/', { replaceState: true });
-	};
+	}
 </script>
 
-<svelte:head>
-	<title>CC2000 | {status}</title>
-	<link rel="preload" href="/gifs/500.gif" as="image/gif" />
-</svelte:head>
-<section>
-	<img src="/gifs/500.gif" alt="404 error" />
-	<div class="message" on:click={() => handleProgress()}>
-		<h1>
-			Our servers overheated. The algorithm found your moment of conception too hot for calculation.
-			Your parents FUCK.
-		</h1>
-		<br />
-		<h2>Error {status}</h2>
-		<h6>{error.message}</h6>
+<div class="error-screen">
+	<div class="error-box">
+		{#if status === 404}
+			<p class="code">404</p>
+			<p class="msg">you shouldn't be here. run.</p>
+		{:else}
+			<p class="code">{status}</p>
+			<p class="msg">
+				our servers overheated. the algorithm found your moment of conception
+				too hot for calculation.
+			</p>
+			{#if message}<p class="detail">{message}</p>{/if}
+		{/if}
+		<button on:click={goHome}>return</button>
 	</div>
-</section>
+</div>
 
 <style>
-	section {
-		width: 100%;
-		height: 100%;
-		display: flex;
+	.error-screen {
+		position: fixed; inset: 0;
+		display: flex; align-items: center; justify-content: center;
+		background: var(--bg); z-index: 100; padding: 2rem;
 	}
-
-	.message {
-		text-align: center;
-
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		background: black;
-		padding: 0.5rem 1rem;
-
-		border: solid 1px var(--white-50);
-		color: var(--white-50);
-
-		cursor: pointer;
+	.error-box {
+		text-align: center; max-width: 360px;
+		display: flex; flex-direction: column; align-items: center; gap: 1rem;
 	}
-
-	.message:hover {
-		border-color: var(--white);
-		color: var(--white);
-	}
+	.code { font-size: 48px; font-weight: 300; color: var(--fg-faint); margin: 0; }
+	.msg { font-size: 11px; line-height: 1.7; color: var(--fg-dim); margin: 0; }
+	.detail { font-size: 9px; color: var(--fg-faint); margin: 0; }
 </style>
