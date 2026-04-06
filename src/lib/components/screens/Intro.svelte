@@ -4,7 +4,7 @@
 
 <div class="screen">
 	<p class="tagline">
-		In the earth year 2000, human technology advanced
+		In the earth year 2000, human technology advanced,
 		<br /><br />
 		[ .. sperm graphic .. ]
 		<br /><br />
