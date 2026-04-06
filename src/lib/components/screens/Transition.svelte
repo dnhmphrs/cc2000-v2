@@ -12,6 +12,8 @@
 
 <style>
 	.screen {
+		background: var(--bg);
+		border: solid 1px var(--fg-faint);
 		display: flex;
 		align-items: center;
 		justify-content: center;
