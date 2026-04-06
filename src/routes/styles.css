@@ -5,8 +5,8 @@
 	--bg: #1b1b1b;
 	--bg-t: #1b1b1bc0;
 	--fg: rgba(240, 240, 160, 1);
-	--fg-dim: rgba(240, 240, 160, 0.8);
-	--fg-faint: rgba(240, 240, 160, 0.4);
+	--fg-dim: rgba(240, 240, 160, 0.85);
+	--fg-faint: rgba(240, 240, 160, 0.5);
 	--accent: #357ec7;
 	--mono: 'nb-architekt';
 }
