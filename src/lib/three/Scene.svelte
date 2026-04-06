@@ -165,7 +165,7 @@ const animate = (t) => {
 
         mat.opacity = fade * 0.25;
         const brightness = fade * 0.75;
-        mat.color.setRGB(brightness * 0.76, brightness * 0.76, brightness * 0.2);
+        mat.color.setRGB(brightness * 0.76, brightness * 0.76, brightness * 0.76);
     }
 
     renderer.render(scene, camera);
