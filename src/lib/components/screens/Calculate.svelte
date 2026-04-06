@@ -98,7 +98,7 @@
 		gap: 2rem;
 		padding: 2rem;
 		width: 100%;
-		max-width: 360px;
+		max-width: 420px;	
 	}
 
 	.steps {

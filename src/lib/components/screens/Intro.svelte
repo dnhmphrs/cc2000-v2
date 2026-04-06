@@ -4,7 +4,9 @@
 
 <div class="screen">
 	<p class="tagline">
-		In the earth year 2000, human technology advanced —
+		In the earth year 2000, human technology advanced
+		<br /><br />
+		...
 		<br /><br />
 		allowing all of mankind to calculate the song playing
 		at their exact moment of conception.
@@ -23,7 +25,7 @@
 		gap: 2rem;
 		text-align: center;
 		width: 100%;
-		max-width: 360px;
+		max-width: 420px;	
 		padding: 2rem;
 	}
 

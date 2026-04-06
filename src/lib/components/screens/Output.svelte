@@ -33,7 +33,7 @@
 		align-items: center;
 		gap: 1.5rem;
 		width: 100%;
-		max-width: 360px;
+		max-width: 420px;	
 		padding: 1rem;
 	}
 
