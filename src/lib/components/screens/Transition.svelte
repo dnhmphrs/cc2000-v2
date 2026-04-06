@@ -23,7 +23,7 @@
 	}
 
 	.status {
-		font-size: 10px;
+		font-size: 11px;
 		color: var(--fg-dim);
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
