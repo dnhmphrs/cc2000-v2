@@ -107,15 +107,29 @@
 		gap: 8px;
 	}
 
-	.dot {
-		width: 20px; height: 20px;
-		border-radius: 50%;
-		border: 1px solid var(--fg-faint);
-		display: flex; align-items: center; justify-content: center;
-		font-size: 9px;
-		color: var(--fg-faint);
-		transition: all 0.3s;
-	}
+.dot {
+    /* 1. Define a fixed, equal size */
+    width: 24px; 
+    height: 24px;
+    
+    /* 2. Remove padding (it interferes with flex centering) */
+    padding: 0;
+    
+    /* 3. Make it a circle */
+    border-radius: 50%;
+    border: 1px solid var(--fg-faint);
+    
+    /* 4. Perfect centering */
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    
+    /* 5. Clean up typography */
+    font-size: 9px;
+    line-height: 1; /* Reset to normal */
+    color: var(--fg-faint);
+    transition: all 0.3s;
+  }
 
 	.dot.active { border-color: var(--fg-dim); color: var(--fg); }
 
