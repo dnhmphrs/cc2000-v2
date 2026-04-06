@@ -6,7 +6,7 @@
 	<p class="tagline">
 		In the earth year 2000, human technology advanced
 		<br /><br />
-		...
+		[ .. sperm graphic .. ]
 		<br /><br />
 		allowing all of mankind to calculate the song playing
 		at their exact moment of conception.
