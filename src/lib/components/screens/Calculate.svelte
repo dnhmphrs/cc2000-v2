@@ -90,7 +90,7 @@
 
 <style>
 	.screen {
-		background: var(--bg-t);
+	background: var(--bg-t);
 		border: solid 1px var(--fg-faint);
 		backdrop-filter: blur(5px);
 		display: flex;

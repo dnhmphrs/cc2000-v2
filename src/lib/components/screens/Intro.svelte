@@ -6,7 +6,7 @@
 	<p class="tagline">
 		In the earth year 2000, human technology advanced,
 		<br /><br />
-		[ .. sperm graphic .. ]
+		<span class="graphic">[ .. sperm graphic .. ]</span>
 		<br /><br />
 		allowing all of mankind to calculate the song playing
 		at their exact moment of conception.
@@ -33,6 +33,10 @@
 	.tagline {
 		font-size: 11px;
 		line-height: 1.8;
+		color: var(--fg-dim);
+	}
+
+	.graphic {
 		color: var(--fg-dim);
 	}
 </style>
