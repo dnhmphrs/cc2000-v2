@@ -22,8 +22,8 @@
 
 	const PHI4 = PHI ** 4;
 	const CYCLE = 24;
-	const NUM_LAYERS = 24; 
-	const SQUARES_PER_LAYER = 12;
+	const NUM_LAYERS = 48; 
+	const SQUARES_PER_LAYER = 24;
 
 	function buildGeometry() {
 		const positions = [];
@@ -138,7 +138,7 @@ const animate = (t) => {
         // life goes from 0 to 1
         const life = (baseT + n / NUM_LAYERS) % 1;
         const zoom = PHI4 ** life;
-        const fade = Math.min(life / 0.25, (1 - life) / 0.25, 1);
+        const fade = Math.min(life / 0.15, (1 - life) / 0.75, 1);
 
         const { mesh, mat } = layers[n];
         

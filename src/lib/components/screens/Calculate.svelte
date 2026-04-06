@@ -90,7 +90,7 @@
 
 <style>
 	.screen {
-		background: var(--bg);
+		background: var(--bg-t);
 		border: solid 1px var(--fg-faint);
 		display: flex;
 		flex-direction: column;
