@@ -1,15 +1,17 @@
 @import 'normalize.css';
 
 :root {
-	--bg: #232323;
-	--fg: #f0f0f0;
-	--fg-dim: rgba(240, 240, 240, 0.5);
-	--fg-faint: rgba(240, 240, 240, 0.15);
-	--accent: #357EC7;
+	--bg: #1b1b1b;
+	--bg-trans: #1b1b1bcc;
+	--fg: rgba(240, 240, 120, 1);
+	--fg-dim: rgba(240, 240, 120, 0.67);
+	--fg-faint: rgba(240, 240, 120, 0.33);
+	--accent: #357ec7;
 	--mono: 'Courier New', 'Consolas', monospace;
 }
 
-html, body {
+html,
+body {
 	margin: 0;
 	padding: 0;
 	width: 100%;
@@ -23,13 +25,15 @@ html, body {
 	-webkit-font-smoothing: antialiased;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
 	box-sizing: border-box;
 }
 
 button {
 	font-family: var(--mono);
-	font-size: 11px;
+	font-size: 12px;
 	letter-spacing: 0.08em;
 	cursor: pointer;
 	border: 1px solid var(--fg-faint);
@@ -39,11 +43,21 @@ button {
 	transition: color 0.2s, border-color 0.2s;
 }
 
-button:hover { color: var(--fg); border-color: var(--fg-dim); }
-button:active { color: var(--fg); border-color: var(--fg); }
-button:disabled { opacity: 0.3; cursor: default; }
+button:hover {
+	color: var(--fg);
+	border-color: var(--fg-dim);
+}
+button:active {
+	color: var(--fg);
+	border-color: var(--fg);
+}
+button:disabled {
+	opacity: 0.3;
+	cursor: default;
+}
 
-input[type="date"], input[type="text"] {
+input[type='date'],
+input[type='text'] {
 	font-family: var(--mono);
 	font-size: 12px;
 	letter-spacing: 0.05em;
@@ -55,11 +69,12 @@ input[type="date"], input[type="text"] {
 	transition: border-color 0.2s;
 }
 
-input[type="date"]:focus, input[type="text"]:focus {
+input[type='date']:focus,
+input[type='text']:focus {
 	border-color: var(--fg-dim);
 }
 
-input[type="range"] {
+input[type='range'] {
 	-webkit-appearance: none;
 	appearance: none;
 	width: 100%;
@@ -68,20 +83,25 @@ input[type="range"] {
 	outline: none;
 }
 
-input[type="range"]::-webkit-slider-thumb {
+input[type='range']::-webkit-slider-thumb {
 	-webkit-appearance: none;
-	width: 8px; height: 8px;
+	width: 8px;
+	height: 8px;
 	border-radius: 50%;
 	background: var(--fg);
 	cursor: pointer;
 }
 
-input[type="range"]::-moz-range-thumb {
-	width: 8px; height: 8px;
+input[type='range']::-moz-range-thumb {
+	width: 8px;
+	height: 8px;
 	border-radius: 50%;
 	background: var(--fg);
 	cursor: pointer;
 	border: none;
 }
 
-::-webkit-scrollbar { width: 0; height: 0; }
+::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}

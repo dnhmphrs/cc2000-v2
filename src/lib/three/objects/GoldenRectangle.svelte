@@ -3,11 +3,13 @@
 	import * as THREE from 'three';
 	import GoldenRectangleSchematic from './GoldenRectangleSchematic.svelte';
 
-	export let scene;
+	// Single group — everything lives here and rotates together
+	export let group;
 	export let axis;
 	export let direction;
 	export let vertices;
 	export let indices;
+	export let decadeKey = null;
 
 	const PHI = (1 + Math.sqrt(5)) / 2;
 
@@ -15,8 +17,8 @@
 	let traceLines = [];
 	let schematicComponent;
 	let basis = null;
-	let baseOpacity = 0.25; 
-	let schematicBaseOpacity = 0.5; 
+	let baseOpacity = 0.25;
+	let schematicBaseOpacity = 0.5;
 
 	let fillMaterial;
 	let outlineMaterial;
@@ -32,10 +34,10 @@
 		const corners = getRectCorners();
 		const edge1 = new THREE.Vector3().subVectors(corners[1], corners[0]);
 		const edge2 = new THREE.Vector3().subVectors(corners[3], corners[0]);
-		
+
 		const len1 = edge1.length();
 		const len2 = edge2.length();
-		
+
 		let uAxis, vAxis, uLen, vLen;
 		if (len1 < len2) {
 			uAxis = edge1.clone().normalize();
@@ -48,32 +50,31 @@
 			uLen = len2;
 			vLen = len1;
 		}
-		
+
 		const center = new THREE.Vector3()
 			.add(corners[0]).add(corners[1]).add(corners[2]).add(corners[3])
 			.multiplyScalar(0.25);
-		
+
 		return { center, uAxis, vAxis, uLen, vLen, corners };
 	}
 
 	function localToWorld(u, v) {
 		return basis.center.clone()
-			.add(basis.uAxis.clone().multiplyScalar(-u)) // note, flipped y
+			.add(basis.uAxis.clone().multiplyScalar(-u))
 			.add(basis.vAxis.clone().multiplyScalar(v));
 	}
 
 	function computeGoldenRectangleData() {
 		const squares = [];
 		const arcCenters = [];
-		
-		// Start with the full bounds in local space
+
 		let rect = {
 			left: -basis.uLen / 2,
 			right: basis.uLen / 2,
 			bottom: -basis.vLen / 2,
 			top: basis.vLen / 2
 		};
-		
+
 		for (let i = 0; i < 10; i++) {
 			const w = rect.right - rect.left;
 			const h = rect.top - rect.bottom;
@@ -82,25 +83,23 @@
 			const side = Math.min(w, h);
 			let square, arc;
 
-			// The "side" index (i % 4) determines which corner the square occupies
-			// and where the arc is centered.
 			switch (i % 4) {
-				case 0: // Cut from Bottom
+				case 0:
 					square = { left: rect.left, right: rect.left + side, bottom: rect.bottom, top: rect.bottom + side };
 					arc = { u: rect.left + side, v: rect.bottom + side, startAngle: Math.PI, dir: 0 };
-					rect.bottom += side; 
+					rect.bottom += side;
 					break;
-				case 1: // Cut from Left
+				case 1:
 					square = { left: rect.left, right: rect.left + side, bottom: rect.top - side, top: rect.top };
 					arc = { u: rect.left + side, v: rect.top - side, startAngle: Math.PI * 0.5, dir: 1 };
 					rect.left += side;
 					break;
-				case 2: // Cut from Top
+				case 2:
 					square = { left: rect.right - side, right: rect.right, bottom: rect.top - side, top: rect.top };
 					arc = { u: rect.right - side, v: rect.top - side, startAngle: 0, dir: 2 };
 					rect.top -= side;
 					break;
-				case 3: // Cut from Right
+				case 3:
 					square = { left: rect.right - side, right: rect.right, bottom: rect.bottom, top: rect.bottom + side };
 					arc = { u: rect.right - side, v: rect.bottom + side, startAngle: Math.PI * 1.5, dir: 3 };
 					rect.right -= side;
@@ -110,12 +109,12 @@
 			squares.push(square);
 			arcCenters.push({ ...arc, radius: side });
 		}
-		
+
 		return { squares, arcCenters };
 	}
 
 	function createGoldenSpiral(arcCenters) {
-		const group = new THREE.Group();
+		const spiralGroup = new THREE.Group();
 		const pointsPerArc = 32;
 
 		spiralMaterial = new THREE.LineBasicMaterial({
@@ -124,31 +123,29 @@
 			opacity: 0
 		});
 
-		for (let i = 0; i < arcCenters.length; i++) {
-			const arc = arcCenters[i];
+		for (const arc of arcCenters) {
 			const arcPoints = [];
-
 			for (let j = 0; j <= pointsPerArc; j++) {
-			const t = j / pointsPerArc;
-			const angle = arc.startAngle + t * (Math.PI / 2);
-
-			const u = arc.u + arc.radius * Math.cos(angle);
-			const v = arc.v + arc.radius * Math.sin(angle);
-			arcPoints.push(localToWorld(u, v));
+				const t = j / pointsPerArc;
+				const angle = arc.startAngle + t * (Math.PI / 2);
+				arcPoints.push(localToWorld(
+					arc.u + arc.radius * Math.cos(angle),
+					arc.v + arc.radius * Math.sin(angle)
+				));
 			}
-
-			const geo = new THREE.BufferGeometry().setFromPoints(arcPoints);
-			group.add(new THREE.Line(geo, spiralMaterial));
+			spiralGroup.add(new THREE.Line(
+				new THREE.BufferGeometry().setFromPoints(arcPoints),
+				spiralMaterial
+			));
 		}
 
-		return group;
+		return spiralGroup;
 	}
 
-
 	function createSubdivisionLines(squares) {
-		const group = new THREE.Group();
+		const subGroup = new THREE.Group();
 		subdivisionMaterials = [];
-		
+
 		for (let i = 0; i < Math.min(8, squares.length); i++) {
 			const sq = squares[i];
 			const corners = [
@@ -157,31 +154,30 @@
 				localToWorld(sq.right, sq.top),
 				localToWorld(sq.left, sq.top)
 			];
-			
+
 			const geo = new THREE.BufferGeometry().setFromPoints([
 				corners[0], corners[1],
 				corners[1], corners[2],
 				corners[2], corners[3],
 				corners[3], corners[0]
 			]);
-			
-			const mat = new THREE.LineBasicMaterial({ 
-				color: 0xf0f0f0, 
-				transparent: true, 
+
+			const mat = new THREE.LineBasicMaterial({
+				color: 0xf0f0f0,
+				transparent: true,
 				opacity: 0
 			});
 			subdivisionMaterials.push({ mat });
-			group.add(new THREE.LineSegments(geo, mat));
+			subGroup.add(new THREE.LineSegments(geo, mat));
 		}
 
-		return group;
+		return subGroup;
 	}
 
 	function createRectangle() {
-		const group = new THREE.Group();
+		const rectGroup = new THREE.Group();
 		const corners = getRectCorners();
 
-		// Fill
 		fillMaterial = new THREE.MeshBasicMaterial({
 			color: 0x232323,
 			transparent: true,
@@ -189,41 +185,38 @@
 			side: THREE.DoubleSide,
 			depthWrite: false
 		});
-		
+
 		const shape = new THREE.BufferGeometry().setFromPoints([
 			corners[0], corners[1], corners[2],
 			corners[0], corners[2], corners[3]
 		]);
-		group.add(new THREE.Mesh(shape, fillMaterial));
+		rectGroup.add(new THREE.Mesh(shape, fillMaterial));
 
-		// Outline
-		outlineMaterial = new THREE.LineBasicMaterial({ 
-			color: 0xf0f0f0, 
-			transparent: true, 
-			opacity: 0 
+		outlineMaterial = new THREE.LineBasicMaterial({
+			color: 0xf0f0f0,
+			transparent: true,
+			opacity: 0
 		});
-		
+
 		const outline = new THREE.BufferGeometry().setFromPoints([
 			corners[0], corners[1],
 			corners[1], corners[2],
 			corners[2], corners[3],
 			corners[3], corners[0]
 		]);
-		group.add(new THREE.LineSegments(outline, outlineMaterial));
+		rectGroup.add(new THREE.LineSegments(outline, outlineMaterial));
 
-		// Compute the golden rectangle subdivision data
 		const { squares, arcCenters } = computeGoldenRectangleData();
-		
-		group.add(createGoldenSpiral(arcCenters));
-		group.add(createSubdivisionLines(squares));
+		rectGroup.add(createGoldenSpiral(arcCenters));
+		rectGroup.add(createSubdivisionLines(squares));
 
-		return group;
+		return rectGroup;
 	}
 
 	function createTraceLines() {
 		const lines = [];
 		traceLineMaterials = [];
-		
+
 		indices.forEach(i => {
 			const startPos = new THREE.Vector3(...vertices[i]);
 			const geometry = new THREE.BufferGeometry();
@@ -244,40 +237,37 @@
 			const line = new THREE.Line(geometry, material);
 			line.computeLineDistances();
 			line.userData.startPos = startPos.clone();
-			scene.add(line);
+			group.add(line);
 			lines.push(line);
 		});
-		
+
 		return lines;
 	}
 
 	function updateOpacities(t) {
-		// const opacity = t;
-		const opacity = 1;
-		
-		if (fillMaterial) fillMaterial.opacity = opacity * 0.0;
-		if (outlineMaterial) outlineMaterial.opacity = opacity * baseOpacity;
-		if (spiralMaterial) spiralMaterial.opacity = opacity * baseOpacity;
-		
+		if (fillMaterial) fillMaterial.opacity = 0;
+		if (outlineMaterial) outlineMaterial.opacity = t * baseOpacity;
+		if (spiralMaterial) spiralMaterial.opacity = t * baseOpacity;
+
 		subdivisionMaterials.forEach(({ mat }) => {
-			mat.opacity = opacity * baseOpacity * 0.5;
+			mat.opacity = t * baseOpacity * 0.5;
 		});
-		
+
 		traceLineMaterials.forEach(mat => {
-			mat.opacity = opacity * baseOpacity * 0.5;
+			mat.opacity = t * baseOpacity * 0.5;
 		});
 	}
 
 	export async function init() {
 		basis = getRectBasis();
-		
+
 		rectangleGroup = createRectangle();
-		scene.add(rectangleGroup);
+		group.add(rectangleGroup);
 
 		traceLines = createTraceLines();
 
 		await tick();
-		
+
 		if (schematicComponent) {
 			schematicComponent.init();
 		}
@@ -289,15 +279,14 @@
 		const paneDist = projection * 3.14;
 		const schematicDist = projection * 7;
 
-		const offset = axis.clone().multiplyScalar(paneDist * direction);
-		rectangleGroup.position.copy(offset);
+		rectangleGroup.position.copy(axis.clone().multiplyScalar(paneDist * direction));
 
 		updateOpacities(projection);
 
 		traceLines.forEach(line => {
 			const { startPos } = line.userData;
 			const endPos = startPos.clone().add(axis.clone().multiplyScalar(schematicDist * direction));
-			
+
 			const positions = line.geometry.attributes.position.array;
 			positions[3] = endPos.x;
 			positions[4] = endPos.y;
@@ -313,14 +302,14 @@
 
 	export function dispose() {
 		if (rectangleGroup) {
-			scene.remove(rectangleGroup);
+			group.remove(rectangleGroup);
 			rectangleGroup.traverse(obj => {
 				if (obj.geometry) obj.geometry.dispose();
 				if (obj.material) obj.material.dispose();
 			});
 		}
 		traceLines.forEach(line => {
-			scene.remove(line);
+			group.remove(line);
 			line.geometry.dispose();
 			line.material.dispose();
 		});
@@ -333,7 +322,7 @@
 {#if basis}
 	<GoldenRectangleSchematic
 		bind:this={schematicComponent}
-		{scene}
+		{group}
 		{basis}
 		{axis}
 		{direction}

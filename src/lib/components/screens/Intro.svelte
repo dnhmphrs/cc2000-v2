@@ -14,6 +14,8 @@
 
 <style>
 	.screen {
+		background: var(--bg);
+		border: solid 1px var(--fg-faint);
 		display: flex;
 		flex-direction: column;
 		align-items: center;

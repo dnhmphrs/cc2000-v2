@@ -1,340 +1,189 @@
 <script>
-	import { onMount, onDestroy, tick } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import * as THREE from 'three';
-	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-	import { sceneState, decade, isPortrait } from '$lib/store/store';
-	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
-	import GoldenRectangle from './objects/GoldenRectangle.svelte';
 
-	let canvasElement;
-	let scene, camera, renderer, controls;
-	let animationFrameId;
-	let clock;
-	let sceneReady = false;
-	let rectangleComponents = [];
+	let canvas;
+	let renderer, scene, camera;
+	let frame;
 
-	const PHI = (1 + Math.sqrt(5)) / 2;
-	const FRUSTUM = 12;
+	const PHI = 1.618339887;
+	const IPHI = 1 / PHI;
+	const IP2 = IPHI * IPHI;
+	const IP3 = IP2 * IPHI;
+	const IP4 = IP2 * IP2;
+	
+	// These are now our base offsets
+	let CX = IP2 / (1 - IP4);
+	let CY = IP3 / (1 - IP4);
+	
+	// Reactive mouse coordinates
+	let mouseX = 0;
+	let mouseY = 0;
 
-	// Animation
-	let currentProjection = 0;
-	let targetProjection = 0;
-	let animTime = 0;
-	let localAnimPhase = 0;
+	const PHI4 = PHI ** 4;
+	const CYCLE = 24;
+	const NUM_LAYERS = 24; 
+	const SQUARES_PER_LAYER = 12;
 
-	// Quaternion rotation
-	let rotationStart = new THREE.Quaternion();
-	let rotationTarget = new THREE.Quaternion();
-	let rotationProgress = 0;
-	let icosahedronGroup; // everything (wireframe + golden rects) lives here
-
-	// Spiral (visible from start — the "sperm" approaching the "egg")
-	let spiralGroup;
-	let spiralMaterials = [];
-	let spiralScale = 3.0; // starts large, shrinks to 1 during collapse
-
-	// Icosahedron data
-	const vertices = [
-		[-1, PHI, 0], [1, PHI, 0], [-1, -PHI, 0], [1, -PHI, 0],
-		[0, -1, PHI], [0, 1, PHI], [0, -1, -PHI], [0, 1, -PHI],
-		[PHI, 0, -1], [PHI, 0, 1], [-PHI, 0, -1], [-PHI, 0, 1]
-	];
-
-	const faces = [
-		[0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
-		[1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
-		[3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
-		[4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]
-	];
-
-	const edges = [
-		[0, 1], [0, 5], [0, 7], [0, 10], [0, 11],
-		[1, 5], [1, 7], [1, 8], [1, 9],
-		[2, 3], [2, 4], [2, 6], [2, 10], [2, 11],
-		[3, 4], [3, 6], [3, 8], [3, 9],
-		[4, 5], [4, 9], [4, 11],
-		[5, 9], [5, 11],
-		[6, 7], [6, 8], [6, 10],
-		[7, 8], [7, 10],
-		[8, 9],
-		[10, 11]
-	];
-
-	// 6 golden rectangle faces — assign decades (doubled since only 4 decades)
-	const decadeAssignments = ['50s', '60s', '90s', '10s', '50s', '60s'];
-
-	const rectangleConfigs = [
-		{ indices: [0, 1, 3, 2], axis: new THREE.Vector3(0, 0, 1), plane: 'XY', direction: 1 },
-		{ indices: [0, 1, 3, 2], axis: new THREE.Vector3(0, 0, 1), plane: 'XY', direction: -1 },
-		{ indices: [4, 5, 7, 6], axis: new THREE.Vector3(1, 0, 0), plane: 'YZ', direction: 1 },
-		{ indices: [4, 5, 7, 6], axis: new THREE.Vector3(1, 0, 0), plane: 'YZ', direction: -1 },
-		{ indices: [8, 9, 11, 10], axis: new THREE.Vector3(0, 1, 0), plane: 'XZ', direction: 1 },
-		{ indices: [8, 9, 11, 10], axis: new THREE.Vector3(0, 1, 0), plane: 'XZ', direction: -1 },
-	];
-
-	// Target quaternions: orient so the decade's rectangle faces the camera
-	// Camera is at (5,4,5) looking at origin. We compute rotations that bring
-	// each plane's normal toward the camera direction.
-	function getDecadeRotation(decadeKey) {
-		// Map decade to which rectangle plane faces the camera
-		const camDir = new THREE.Vector3(5, 4, 5).normalize();
-		const rotations = {
-			'50s': new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0),
-			'60s': new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
-			'90s': new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2),
-			'10s': new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 2),
-		};
-		return rotations[decadeKey] || rotations['90s'];
-	}
-
-	function createIcosahedronGroup() {
-		const group = new THREE.Group();
-
-		// Solid (for depth)
+	function buildGeometry() {
 		const positions = [];
-		faces.forEach(([a, b, c]) => { positions.push(...vertices[a], ...vertices[b], ...vertices[c]); });
-		const solidGeo = new THREE.BufferGeometry();
-		solidGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-		solidGeo.computeVertexNormals();
-		group.add(new THREE.Mesh(solidGeo, new THREE.MeshBasicMaterial({
-			color: 0x232323, transparent: true, opacity: 0.0, side: THREE.DoubleSide, depthWrite: true
-		})));
+		// We no longer subtract CX/CY here so we can move the group dynamically
+		function line(x1, y1, x2, y2) {
+			positions.push(x1, y1, 0, x2, y2, 0);
+		}
 
-		// Wireframe
-		const edgePositions = [];
-		edges.forEach(([a, b]) => { edgePositions.push(...vertices[a], ...vertices[b]); });
-		const wireGeo = new THREE.BufferGeometry();
-		wireGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
-		group.add(new THREE.LineSegments(wireGeo, new THREE.LineBasicMaterial({
-			color: 0xf0f0f0, transparent: true, opacity: 0.5
-		})));
+		function rect(L, B, R, T) {
+			line(L, B, R, B);
+			line(R, B, R, T);
+			line(R, T, L, T);
+			line(L, T, L, B);
+		}
 
-		return group;
+		function arc(cx, cy, r, startAngle, segments = 32) {
+			const step = (Math.PI / 2) / segments;
+			for (let i = 0; i < segments; i++) {
+				const a0 = startAngle + step * i;
+				const a1 = startAngle + step * (i + 1);
+				positions.push(
+					cx + Math.cos(a0) * r, cy + Math.sin(a0) * r, 0,
+					cx + Math.cos(a1) * r, cy + Math.sin(a1) * r, 0
+				);
+			}
+		}
+
+		let L = 0, B = 0, R = PHI, T = 1;
+		rect(L, B, R, T);
+
+		for (let i = 0; i < SQUARES_PER_LAYER; i++) {
+			const w = R - L, h = T - B;
+			let s, acx, acy, startAngle;
+			const side = i % 4;
+
+			if (side === 0) {
+				s = h; R -= s;
+				acx = R; acy = B; startAngle = 0;
+			} else if (side === 1) {
+				s = w; T -= s;
+				acx = R; acy = T; startAngle = Math.PI / 2;
+			} else if (side === 2) {
+				s = h; L += s;
+				acx = L; acy = T; startAngle = Math.PI;
+			} else {
+				s = w; B += s;
+				acx = L; acy = B; startAngle = Math.PI * 1.5;
+			}
+
+			rect(L, B, R, T);
+			arc(acx, acy, s, startAngle);
+		}
+
+		const geo = new THREE.BufferGeometry();
+		geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+		return geo;
 	}
 
-	// Create an external golden spiral that starts large and "approaches" the icosahedron
-	function createExternalSpiral() {
-		const group = new THREE.Group();
-		spiralMaterials = [];
-
-		const totalTurns = 4;
-		const pointCount = 200;
-		const pts = [];
-
-		for (let i = 0; i <= pointCount; i++) {
-			const t = i / pointCount;
-			const angle = t * totalTurns * Math.PI * 2;
-			// Golden spiral: r = a * phi^(2*theta/pi)
-			const r = 0.1 * Math.pow(PHI, (2 * angle) / Math.PI);
-			pts.push(new THREE.Vector3(
-				r * Math.cos(angle),
-				r * Math.sin(angle),
-				0
-			));
-		}
-
-		const mat = new THREE.LineBasicMaterial({
-			color: 0xf0f0f0, transparent: true, opacity: 0.3
-		});
-		spiralMaterials.push(mat);
-		const geo = new THREE.BufferGeometry().setFromPoints(pts);
-		group.add(new THREE.Line(geo, mat));
-
-		return group;
+	function handleMouseMove(e) {
+		// Map mouse to -0.5 to 0.5 range
+		mouseX = (e.clientX / window.innerWidth) - 0.5;
+		mouseY = (e.clientY / window.innerHeight) - 0.5;
 	}
 
-	// React to sceneState changes
-	let unsubState;
-
-	function handleResize() {
-		if (!camera || !renderer) return;
-		const aspect = window.innerWidth / window.innerHeight;
-		isPortrait.set(window.innerHeight > window.innerWidth);
-		camera.left = -FRUSTUM * aspect / 2;
-		camera.right = FRUSTUM * aspect / 2;
-		camera.top = FRUSTUM / 2;
-		camera.bottom = -FRUSTUM / 2;
-		camera.updateProjectionMatrix();
-		renderer.setSize(window.innerWidth, window.innerHeight);
-	}
-
-	function animate() {
-		animationFrameId = requestAnimationFrame(animate);
-		if (!clock) return;
-
-		const dt = clock.getDelta();
-		animTime += dt;
-
-		// Smooth projection
-		currentProjection = lerp(currentProjection, targetProjection, dt * 3);
-
-		// Update golden rectangle projections
-		rectangleComponents.forEach(comp => {
-			if (comp) comp.updateProjection(currentProjection);
-		});
-
-		// --- State machine ---
-
-		if (localAnimPhase === 0) {
-			// Idle: slow rotation, spiral visible and pulsing
-			if (icosahedronGroup) {
-				icosahedronGroup.rotation.y += dt * 0.15;
-				icosahedronGroup.rotation.x += dt * 0.07;
-			}
-			if (spiralGroup) {
-				spiralGroup.rotation.z += dt * 0.3;
-				// Gentle scale pulse
-				const pulse = 2.5 + Math.sin(animTime * 0.5) * 0.5;
-				spiralGroup.scale.setScalar(pulse);
-				spiralMaterials.forEach(m => { m.opacity = 0.25; });
-			}
-		}
-
-		if (localAnimPhase === 1) {
-			// Collapse spiral into icosahedron
-			spiralScale = lerp(spiralScale, 0, dt * 2.5);
-			if (spiralGroup) {
-				spiralGroup.scale.setScalar(Math.max(spiralScale, 0.01));
-				spiralGroup.rotation.z += dt * 2; // spin faster as it collapses
-				spiralMaterials.forEach(m => { m.opacity = lerp(m.opacity, 0, dt * 3); });
-			}
-
-			if (spiralScale < 0.05) {
-				// Hide spiral, move to rotation
-				if (spiralGroup) spiralGroup.visible = false;
-				sceneState.set(2);
-			}
-		}
-
-		if (localAnimPhase === 2) {
-			// Rotate to target decade
-			rotationProgress = clamp(rotationProgress + dt * 0.6, 0, 1);
-			if (icosahedronGroup) {
-				const t = easeInOutCubic(rotationProgress);
-				icosahedronGroup.quaternion.slerpQuaternions(rotationStart, rotationTarget, t);
-			}
-
-			if (rotationProgress >= 1) {
-				sceneState.set(3);
-			}
-		}
-
-		if (localAnimPhase === 3) {
-			// Project out golden rectangles
-			targetProjection = 1;
-			if (currentProjection > 0.9) {
-				sceneState.set(4);
-			}
-		}
-
-		if (localAnimPhase === 4) {
-			// Settled — no further animation
-		}
-
-		controls.update();
-		renderer.render(scene, camera);
-	}
-
-	onMount(async () => {
-		scene = new THREE.Scene();
-		clock = new THREE.Clock();
-
-		const aspect = window.innerWidth / window.innerHeight;
-		isPortrait.set(window.innerHeight > window.innerWidth);
-
-		camera = new THREE.OrthographicCamera(
-			-FRUSTUM * aspect / 2, FRUSTUM * aspect / 2,
-			FRUSTUM / 2, -FRUSTUM / 2, 0.1, 100
-		);
-		camera.position.set(5, 4, 5);
-		camera.lookAt(0, 0, 0);
-
-		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true });
+	onMount(() => {
+		renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+    renderer.setClearColor(0x1b1b1b, 1);
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-		renderer.setClearColor(0x232323, 1);
 
-		controls = new OrbitControls(camera, canvasElement);
-		controls.enableDamping = true;
-		controls.dampingFactor = 0.05;
-		controls.enableZoom = true;
-		controls.enablePan = false;
+		scene = new THREE.Scene();
+		camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-		// Icosahedron group — everything rotates together
-		icosahedronGroup = createIcosahedronGroup();
-		scene.add(icosahedronGroup);
+		const geo = buildGeometry();
+		const layers = [];
+		for (let i = 0; i < NUM_LAYERS; i++) {
+			const mat = new THREE.LineBasicMaterial({
+				color: new THREE.Color(1, 0.76, 0.2),
+				transparent: true,
+				opacity: 0,
+				depthTest: false
+			});
+			const mesh = new THREE.LineSegments(geo, mat);
+			scene.add(mesh);
+			layers.push({ mesh, mat });
+		}
 
-		// External spiral — lives in scene (not icosahedron group) so it can animate independently
-		spiralGroup = createExternalSpiral();
-		scene.add(spiralGroup);
+		function resize() {
+			const w = window.innerWidth;
+			const h = window.innerHeight;
+			renderer.setSize(w, h);
+			const aspect = w / h;
+			camera.left = -aspect / 2;
+			camera.right = aspect / 2;
+			camera.top = 0.5;
+			camera.bottom = -0.5;
+			camera.updateProjectionMatrix();
+		}
 
-		// Subscribe to state changes
-		unsubState = sceneState.subscribe(v => {
-			localAnimPhase = v;
-			animTime = 0;
+		window.addEventListener('resize', resize);
+		window.addEventListener('mousemove', handleMouseMove);
+		resize();
 
-			if (v === 0) {
-				// Reset
-				targetProjection = 0;
-				spiralScale = 3.0;
-				if (spiralGroup) {
-					spiralGroup.visible = true;
-					spiralGroup.scale.setScalar(spiralScale);
-				}
-			}
+const animate = (t) => {
+    const time = t * 0.001;
+    const baseT = ((time % CYCLE) / CYCLE);
 
-			if (v === 1) {
-				// Start collapsing spiral
-				targetProjection = 0;
-			}
+    const activeCX = CX + (mouseX * 0.01); 
+    const activeCY = CY - (mouseY * 0.01); 
 
-			if (v === 2) {
-				// Capture current rotation, compute target
-				if (icosahedronGroup) {
-					rotationStart.copy(icosahedronGroup.quaternion);
-					const targetDecade = $decade || '90s';
-					rotationTarget.copy(getDecadeRotation(targetDecade));
-					rotationProgress = 0;
-				}
-			}
-		});
+    for (let n = 0; n < NUM_LAYERS; n++) {
+        // life goes from 0 to 1
+        const life = (baseT + n / NUM_LAYERS) % 1;
+        const zoom = PHI4 ** life;
+        const fade = Math.min(life / 0.25, (1 - life) / 0.25, 1);
 
-		sceneReady = true;
-		await tick();
+        const { mesh, mat } = layers[n];
+        
+        // 1. Apply Scale
+        mesh.scale.set(zoom, zoom, 1);
 
-		// Init golden rectangles (they add themselves to icosahedronGroup)
-		rectangleComponents.forEach(comp => { if (comp) comp.init(); });
+        // 2. Apply Rotation
+        // Math.PI * 2 would be one full rotation over the lifecycle of the zoom
+        const rotationFactor = Math.PI * 1 / PHI; 
+        mesh.rotation.z = life * rotationFactor;
+        
+        // 3. Position Adjustment
+        // Because the mesh is rotating, we need to rotate the "pivot offset" 
+        // as well, otherwise the spiral won't stay centered on your mouse.
+        const cos = Math.cos(mesh.rotation.z);
+        const sin = Math.sin(mesh.rotation.z);
+        
+        // Rotate the CX/CY offset point by the same amount as the mesh
+        const rotatedCX = activeCX * cos - activeCY * sin;
+        const rotatedCY = activeCX * sin + activeCY * cos;
 
-		animate();
-		window.addEventListener('resize', handleResize);
+        mesh.position.x = -rotatedCX * zoom;
+        mesh.position.y = -rotatedCY * zoom;
+
+        mat.opacity = fade * 0.25;
+        const brightness = fade * 0.75;
+        mat.color.setRGB(brightness * 0.76, brightness * 0.76, brightness * 0.2);
+    }
+
+    renderer.render(scene, camera);
+    frame = requestAnimationFrame(animate);
+};
+
+		frame = requestAnimationFrame(animate);
 	});
 
 	onDestroy(() => {
-		if (unsubState) unsubState();
-		if (animationFrameId) cancelAnimationFrame(animationFrameId);
-		window.removeEventListener('resize', handleResize);
-		rectangleComponents.forEach(comp => { if (comp) comp.dispose(); });
-		if (renderer) renderer.dispose();
-		if (controls) controls.dispose();
+		cancelAnimationFrame(frame);
+		window.removeEventListener('resize', resize);
+		window.removeEventListener('mousemove', handleMouseMove);
+		renderer?.dispose();
 	});
 </script>
 
-{#if sceneReady}
-	{#each rectangleConfigs as config, i}
-		<GoldenRectangle
-			bind:this={rectangleComponents[i]}
-			{scene}
-			parentGroup={icosahedronGroup}
-			axis={config.axis}
-			direction={config.direction}
-			{vertices}
-			indices={config.indices}
-			decadeKey={decadeAssignments[i]}
-		/>
-	{/each}
-{/if}
-
-<canvas bind:this={canvasElement} />
+<canvas bind:this={canvas}></canvas>
 
 <style>
 	canvas {
@@ -343,6 +192,5 @@
 		width: 100vw;
 		height: 100vh;
 		display: block;
-		z-index: 0;
 	}
 </style>
