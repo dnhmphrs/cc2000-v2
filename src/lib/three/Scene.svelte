@@ -15,10 +15,6 @@
 	// These are now our base offsets
 	let CX = IP2 / (1 - IP4);
 	let CY = IP3 / (1 - IP4);
-	
-	// Reactive mouse coordinates
-	let mouseX = 0;
-	let mouseY = 0;
 
 	const PHI4 = PHI ** 4;
 	const CYCLE = 24;
@@ -124,15 +120,14 @@
 		}
 
 		window.addEventListener('resize', resize);
-		window.addEventListener('mousemove', handleMouseMove);
 		resize();
 
 const animate = (t) => {
     const time = t * 0.001;
     const baseT = ((time % CYCLE) / CYCLE);
 
-    const activeCX = CX + (mouseX * 0.01); 
-    const activeCY = CY - (mouseY * 0.01); 
+    const activeCX = CX;
+    const activeCY = CY;
 
     for (let n = 0; n < NUM_LAYERS; n++) {
         // life goes from 0 to 1
@@ -152,7 +147,6 @@ const animate = (t) => {
         
         // 3. Position Adjustment
         // Because the mesh is rotating, we need to rotate the "pivot offset" 
-        // as well, otherwise the spiral won't stay centered on your mouse.
         const cos = Math.cos(mesh.rotation.z);
         const sin = Math.sin(mesh.rotation.z);
         
@@ -178,7 +172,6 @@ const animate = (t) => {
 	onDestroy(() => {
 		cancelAnimationFrame(frame);
 		window.removeEventListener('resize', resize);
-		window.removeEventListener('mousemove', handleMouseMove);
 		renderer?.dispose();
 	});
 </script>
