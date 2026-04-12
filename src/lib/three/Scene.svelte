@@ -1,41 +1,41 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import * as THREE from 'three';
+	import { phase, spiralDone } from '$lib/store/store';
 
 	let canvas;
 	let renderer, scene, camera;
 	let frame;
 
-	const PHI = 1.618339887;
+	const PHI = 1.618033988749895;
 	const IPHI = 1 / PHI;
 	const IP2 = IPHI * IPHI;
 	const IP3 = IP2 * IPHI;
 	const IP4 = IP2 * IP2;
-	
-	// These are now our base offsets
+
 	let CX = IP2 / (1 - IP4);
 	let CY = IP3 / (1 - IP4);
 
 	const PHI4 = PHI ** 4;
 	const CYCLE = 24;
-	const NUM_LAYERS = 48; 
+	const NUM_LAYERS = 48;
 	const SQUARES_PER_LAYER = 24;
+
+	// 0 = normal, 1 = condensing + fading, 2 = done
+	let condenseState = 0;
+	let condenseStartTime = null;
+	const CONDENSE_DURATION = 5.0;
+
+	let unsubPhase;
 
 	function buildGeometry() {
 		const positions = [];
-		// We no longer subtract CX/CY here so we can move the group dynamically
-		function line(x1, y1, x2, y2) {
-			positions.push(x1, y1, 0, x2, y2, 0);
-		}
-
+		function line(x1, y1, x2, y2) { positions.push(x1, y1, 0, x2, y2, 0); }
 		function rect(L, B, R, T) {
-			line(L, B, R, B);
-			line(R, B, R, T);
-			line(R, T, L, T);
-			line(L, T, L, B);
+			line(L, B, R, B); line(R, B, R, T);
+			line(R, T, L, T); line(L, T, L, B);
 		}
-
-		function arc(cx, cy, r, startAngle, segments = 32) {
+		function arc(cx, cy, r, startAngle, segments = 64) {
 			const step = (Math.PI / 2) / segments;
 			for (let i = 0; i < segments; i++) {
 				const a0 = startAngle + step * i;
@@ -46,47 +46,30 @@
 				);
 			}
 		}
-
 		let L = 0, B = 0, R = PHI, T = 1;
 		rect(L, B, R, T);
-
 		for (let i = 0; i < SQUARES_PER_LAYER; i++) {
-			const w = R - L, h = T - B;
-			let s, acx, acy, startAngle;
 			const side = i % 4;
-
-			if (side === 0) {
-				s = h; R -= s;
-				acx = R; acy = B; startAngle = 0;
-			} else if (side === 1) {
-				s = w; T -= s;
-				acx = R; acy = T; startAngle = Math.PI / 2;
-			} else if (side === 2) {
-				s = h; L += s;
-				acx = L; acy = T; startAngle = Math.PI;
-			} else {
-				s = w; B += s;
-				acx = L; acy = B; startAngle = Math.PI * 1.5;
-			}
-
+			let s, acx, acy, startAngle;
+			if (side === 0)      { s = T - B; R -= s; acx = R; acy = B; startAngle = 0; }
+			else if (side === 1) { s = R - L; T -= s; acx = R; acy = T; startAngle = Math.PI / 2; }
+			else if (side === 2) { s = T - B; L += s; acx = L; acy = T; startAngle = Math.PI; }
+			else                 { s = R - L; B += s; acx = L; acy = B; startAngle = Math.PI * 1.5; }
 			rect(L, B, R, T);
 			arc(acx, acy, s, startAngle);
 		}
-
 		const geo = new THREE.BufferGeometry();
 		geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
 		return geo;
 	}
 
-	function handleMouseMove(e) {
-		// Map mouse to -0.5 to 0.5 range
-		mouseX = (e.clientX / window.innerWidth) - 0.5;
-		mouseY = (e.clientY / window.innerHeight) - 0.5;
+	function easeInOutCubic(t) {
+		return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 	}
 
 	onMount(() => {
-		renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
-    renderer.setClearColor(0x1b1b1b, 1);
+		renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+		renderer.setClearColor(0x1b1b1b, 0);
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
@@ -107,71 +90,120 @@
 			layers.push({ mesh, mat });
 		}
 
-		function resize() {
-			const w = window.innerWidth;
-			const h = window.innerHeight;
-			renderer.setSize(w, h);
-			const aspect = w / h;
-			camera.left = -aspect / 2;
-			camera.right = aspect / 2;
-			camera.top = 0.5;
-			camera.bottom = -0.5;
+		function applyFrustum(h) {
+			const aspect = window.innerWidth / window.innerHeight;
+			const fw = h * aspect;
+			camera.left = -fw / 2; camera.right = fw / 2;
+			camera.top  =  h / 2;  camera.bottom = -h / 2;
 			camera.updateProjectionMatrix();
 		}
-
+		function resize() {
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			applyFrustum(0.18);
+		}
 		window.addEventListener('resize', resize);
-		resize();
+		applyFrustum(0.18);
 
-const animate = (t) => {
-    const time = t * 0.001;
-    const baseT = ((time % CYCLE) / CYCLE);
+		unsubPhase = phase.subscribe((p) => {
+			if (p === 'transition' && condenseState === 0) {
+				condenseState = 1;
+				condenseStartTime = null;
+				spiralDone.set(true);
+			}
+		});
 
-    const activeCX = CX;
-    const activeCY = CY;
+		const animate = (t) => {
+			const time = t * 0.001;
+			const baseT = (time % CYCLE) / CYCLE;
 
-    for (let n = 0; n < NUM_LAYERS; n++) {
-        // life goes from 0 to 1
-        const life = (baseT + n / NUM_LAYERS) % 1;
-        const zoom = PHI4 ** life;
-        const fade = Math.min(life / 0.15, (1 - life) / 0.75, 1);
+			if (condenseState === 1 && condenseStartTime === null) {
+				condenseStartTime = time;
+			}
 
-        const { mesh, mat } = layers[n];
-        
-        // 1. Apply Scale
-        mesh.scale.set(zoom, zoom, 1);
+			let cp = 0;
+			if (condenseState === 1 && condenseStartTime !== null) {
+				cp = Math.min((time - condenseStartTime) / CONDENSE_DURATION, 1);
+				if (cp >= 1) {
+					condenseState = 2;
+					canvas.style.display = 'none';
+				}
+			}
 
-        // 2. Apply Rotation
-        // Math.PI * 2 would be one full rotation over the lifecycle of the zoom
-        const rotationFactor = Math.PI * 1 / PHI; 
-        mesh.rotation.z = life * rotationFactor;
-        
-        // 3. Position Adjustment
-        // Because the mesh is rotating, we need to rotate the "pivot offset" 
-        const cos = Math.cos(mesh.rotation.z);
-        const sin = Math.sin(mesh.rotation.z);
-        
-        // Rotate the CX/CY offset point by the same amount as the mesh
-        const rotatedCX = activeCX * cos - activeCY * sin;
-        const rotatedCY = activeCX * sin + activeCY * cos;
+			if (condenseState === 2) {
+				frame = requestAnimationFrame(animate);
+				return;
+			}
 
-        mesh.position.x = -rotatedCX * zoom;
-        mesh.position.y = -rotatedCY * zoom;
+			// Global fade: kicks in at 60% through condensation, gone by 100%
+			const globalFade = condenseState === 0
+				? 0.5
+				: Math.max(0, 1 - Math.max(0, (cp - 0.6) / 0.4));
 
-        mat.opacity = fade * 0.25;
-        const brightness = fade * 0.75;
-        mat.color.setRGB(brightness * 0.76 , brightness * 0.76 , brightness * 0.76 * mesh.rotation.z);
-    }
+			// Convergence target: life=0 means zoom=1, rot=0, position at raw convergence point
+			// At life=0: zoom=1, rot=0, so position = -(CX*1 - CY*0, CX*0 + CY*1) = (-CX, -CY)
+			const targetZoom = 1;
+			const targetRot  = 0;
+			const targetPX   = -CX;
+			const targetPY   = -CY;
 
-    renderer.render(scene, camera);
-    frame = requestAnimationFrame(animate);
-};
+			for (let n = 0; n < NUM_LAYERS; n++) {
+				const { mesh, mat } = layers[n];
+				const life = (baseT + n / NUM_LAYERS) % 1;
+				const zoom = PHI4 ** life;
+				const fade = Math.min(life / 0.15, (1 - life) / 0.5, 1);
+				const rot  = life * (Math.PI / PHI);
+				const cos  = Math.cos(rot);
+				const sin  = Math.sin(rot);
+				const ownPX = -(CX * cos - CY * sin) * zoom;
+				const ownPY = -(CX * sin + CY * cos) * zoom;
+
+				if (condenseState === 0) {
+					mesh.scale.set(zoom, zoom, 1);
+					mesh.rotation.z = rot;
+					mesh.position.x = ownPX;
+					mesh.position.y = ownPY;
+					mat.opacity = fade * 0.5;
+					const b = fade * 0.5;
+					mat.color.setRGB(b, b * 0.76, b * 0.20);
+				} else {
+					// All layers converge inward toward the spiral's own limit point (life→0).
+					// Stagger: layers with larger life values (further out) start moving first,
+					// inner layers follow — everything folds inward naturally.
+					const staggerStart = (1 - life) * 0.3; // outer layers (high life) start sooner
+					const rawP  = Math.max(0, Math.min((cp - staggerStart) / (1 - staggerStart), 1));
+					const tMove = easeInOutCubic(rawP);
+
+					const lerpZoom = zoom + (targetZoom - zoom) * tMove;
+					const lerpRot  = rot  + (targetRot  - rot)  * tMove;
+					const lerpCos  = Math.cos(lerpRot);
+					const lerpSin  = Math.sin(lerpRot);
+					const lerpPX   = -(CX * lerpCos - CY * lerpSin) * lerpZoom;
+					const lerpPY   = -(CX * lerpSin + CY * lerpCos) * lerpZoom;
+
+					mesh.scale.set(lerpZoom, lerpZoom, 1);
+					mesh.rotation.z = lerpRot;
+					mesh.position.x = lerpPX;
+					mesh.position.y = lerpPY;
+
+					// Opacity: preserve own natural fade envelope, then globalFade takes it out
+					mat.opacity = fade * 0.5 * globalFade;
+					const b = fade * 0.5;
+					mat.color.setRGB(b, b * 0.76, b * 0.20);
+				}
+			}
+
+			renderer.render(scene, camera);
+			frame = requestAnimationFrame(animate);
+		};
 
 		frame = requestAnimationFrame(animate);
 	});
 
 	onDestroy(() => {
+		if (typeof window === 'undefined') return;
 		cancelAnimationFrame(frame);
 		window.removeEventListener('resize', resize);
+		unsubPhase?.();
 		renderer?.dispose();
 	});
 </script>
@@ -185,5 +217,6 @@ const animate = (t) => {
 		width: 100vw;
 		height: 100vh;
 		display: block;
+		z-index: 2;
 	}
 </style>

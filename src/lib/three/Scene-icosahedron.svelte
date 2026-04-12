@@ -2,7 +2,7 @@
 	import { onMount, onDestroy, tick } from 'svelte';
 	import * as THREE from 'three';
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-	import { sceneState, decade, isPortrait } from '$lib/store/store';
+	import { sceneState, decade, isPortrait, spiralDone } from '$lib/store/store';
 	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
 	import GoldenRectangle from './objects/GoldenRectangle.svelte';
 
@@ -13,25 +13,32 @@
 	let sceneReady = false;
 	let rectangleComponents = [];
 
+	// Fade-in: starts when spiralDone fires, runs over FADE_IN_DURATION
+	let canvasVisible = false;
+	let fadeStartTime = null;
+	const FADE_IN_DURATION = 5.0; // same as spiral CONDENSE_DURATION — overlap fully
+
 	const PHI = (1 + Math.sqrt(5)) / 2;
 	const FRUSTUM = 12;
 
-	// Animation
 	let currentProjection = 0;
 	let targetProjection = 0;
 	let animTime = 0;
 	let localAnimPhase = 0;
 
-	// Quaternion rotation
+	// Quaternion spin state
 	let rotationStart = new THREE.Quaternion();
 	let rotationTarget = new THREE.Quaternion();
 	let rotationProgress = 0;
 
-	// Single group for everything that rotates together:
-	// icosahedron, golden rectangles, schematics, trace lines, and later the lattice.
+	// Auto-animation: driven entirely by spiralDone, no phase changes needed externally
+	// Sequence: fade in (state 0) → project out rectangles (state 1) → quaternion spin (state 2) → done (state 3)
+	let autoPhase = 0;       // 0=idle spinning, 1=project out, 2=quat spin, 3=done
+	let autoTimer  = 0;
+	const PROJECT_DURATION = 5.0; // seconds for rectangles to project out
+
 	export let worldGroup;
 
-	// Icosahedron data
 	const vertices = [
 		[-1, PHI, 0], [1, PHI, 0], [-1, -PHI, 0], [1, -PHI, 0],
 		[0, -1, PHI], [0, 1, PHI], [0, -1, -PHI], [0, 1, -PHI],
@@ -61,11 +68,11 @@
 	const decadeAssignments = ['50s', '60s', '90s', '10s', '50s', '60s'];
 
 	const rectangleConfigs = [
-		{ indices: [0, 1, 3, 2], axis: new THREE.Vector3(0, 0, 1), plane: 'XY', direction: 1 },
+		{ indices: [0, 1, 3, 2], axis: new THREE.Vector3(0, 0, 1), plane: 'XY', direction:  1 },
 		{ indices: [0, 1, 3, 2], axis: new THREE.Vector3(0, 0, 1), plane: 'XY', direction: -1 },
-		{ indices: [4, 5, 7, 6], axis: new THREE.Vector3(1, 0, 0), plane: 'YZ', direction: 1 },
+		{ indices: [4, 5, 7, 6], axis: new THREE.Vector3(1, 0, 0), plane: 'YZ', direction:  1 },
 		{ indices: [4, 5, 7, 6], axis: new THREE.Vector3(1, 0, 0), plane: 'YZ', direction: -1 },
-		{ indices: [8, 9, 11, 10], axis: new THREE.Vector3(0, 1, 0), plane: 'XZ', direction: 1 },
+		{ indices: [8, 9, 11, 10], axis: new THREE.Vector3(0, 1, 0), plane: 'XZ', direction:  1 },
 		{ indices: [8, 9, 11, 10], axis: new THREE.Vector3(0, 1, 0), plane: 'XZ', direction: -1 },
 	];
 
@@ -86,7 +93,8 @@
 		solidGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
 		solidGeo.computeVertexNormals();
 		group.add(new THREE.Mesh(solidGeo, new THREE.MeshBasicMaterial({
-			color: 0x232323, transparent: true, opacity: 0.0, side: THREE.DoubleSide, depthWrite: true
+			color: 0xc2a133, transparent: true, opacity: 0.5,
+			side: THREE.DoubleSide, depthWrite: false
 		})));
 
 		const edgePositions = [];
@@ -94,19 +102,19 @@
 		const wireGeo = new THREE.BufferGeometry();
 		wireGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
 		group.add(new THREE.LineSegments(wireGeo, new THREE.LineBasicMaterial({
-			color: 0xf0f0f0, transparent: true, opacity: 0.5
+			color: 0x1b1b1b, transparent: true, opacity: 1.0
 		})));
 	}
 
-	let unsubState;
+	let unsubSpiralDone;
 
 	function handleResize() {
 		if (!camera || !renderer) return;
 		const aspect = window.innerWidth / window.innerHeight;
 		isPortrait.set(window.innerHeight > window.innerWidth);
-		camera.left = -FRUSTUM * aspect / 2;
-		camera.right = FRUSTUM * aspect / 2;
-		camera.top = FRUSTUM / 2;
+		camera.left   = -FRUSTUM * aspect / 2;
+		camera.right  =  FRUSTUM * aspect / 2;
+		camera.top    =  FRUSTUM / 2;
 		camera.bottom = -FRUSTUM / 2;
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
@@ -119,38 +127,48 @@
 		const dt = clock.getDelta();
 		animTime += dt;
 
-		currentProjection = lerp(currentProjection, targetProjection, dt * 3);
+		// ── Canvas fade-in ──────────────────────────────────────────────────
+		if (canvasVisible) {
+			if (fadeStartTime === null) fadeStartTime = (performance.now() / 1000) + 1.0;
+			const elapsed = performance.now() / 1000 - fadeStartTime;
+			const opacity = Math.min(elapsed / FADE_IN_DURATION, 1);
+			canvasElement.style.opacity = opacity.toFixed(4);
+		}
 
-		rectangleComponents.forEach(comp => {
-			if (comp) comp.updateProjection(currentProjection);
-		});
+		// ── Idle slow spin (always while autoPhase === 0) ───────────────────
+		if (autoPhase === 0 && worldGroup) {
+			worldGroup.rotation.y += dt * 0.15;
+			worldGroup.rotation.x += dt * 0.07;
+		}
 
-		if (localAnimPhase === 0) {
-			if (worldGroup) {
-				worldGroup.rotation.y += dt * 0.15;
-				worldGroup.rotation.x += dt * 0.07;
+		// ── Auto-sequence triggered by spiralDone ───────────────────────────
+		// Phase 1: project rectangles out from 0 → 1 over PROJECT_DURATION
+		if (autoPhase === 1) {
+			autoTimer += dt;
+			const t = Math.min(autoTimer / PROJECT_DURATION, 2.5);
+			currentProjection = easeInOutCubic(t);
+			rectangleComponents.forEach(comp => {
+				if (comp) comp.updateProjection(currentProjection);
+			});
+			if (t >= 1) {
+				// Move to quaternion spin phase
+				autoPhase = 2;
+				autoTimer = 0;
+				rotationStart.copy(worldGroup.quaternion);
+				const targetDecade = $decade || '90s';
+				rotationTarget.copy(getDecadeRotation(targetDecade));
+				rotationProgress = 0;
 			}
 		}
 
-		if (localAnimPhase === 1) {
-			sceneState.set(2);
-		}
-
-		if (localAnimPhase === 2) {
-			rotationProgress = clamp(rotationProgress + dt * 0.6, 0, 1);
-			if (worldGroup) {
-				const t = easeInOutCubic(rotationProgress);
-				worldGroup.quaternion.slerpQuaternions(rotationStart, rotationTarget, t);
-			}
+		// Phase 2: quaternion slerp to decade-aligned rotation
+		if (autoPhase === 2 && worldGroup) {
+			rotationProgress = clamp(rotationProgress + dt * 0.5, 0, 1);
+			const t = easeInOutCubic(rotationProgress);
+			worldGroup.quaternion.slerpQuaternions(rotationStart, rotationTarget, t);
 			if (rotationProgress >= 1) {
-				sceneState.set(3);
-			}
-		}
-
-		if (localAnimPhase === 3) {
-			targetProjection = 1;
-			if (currentProjection > 0.9) {
-				sceneState.set(4);
+				autoPhase = 3;
+				sceneState.set(4); // signal downstream that icosahedron is settled
 			}
 		}
 
@@ -172,10 +190,10 @@
 		camera.position.set(5, 4, 5);
 		camera.lookAt(0, 0, 0);
 
-		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true });
+		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true, alpha: true });
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-		renderer.setClearColor(0x232323, 1);
+		renderer.setClearColor(0x1b1b1b, 0);
 
 		controls = new OrbitControls(camera, canvasElement);
 		controls.enableDamping = true;
@@ -185,42 +203,36 @@
 
 		worldGroup = new THREE.Group();
 		scene.add(worldGroup);
-
 		buildIcosahedronMeshes(worldGroup);
 
-		unsubState = sceneState.subscribe(v => {
-			localAnimPhase = v;
-			animTime = 0;
+		// Rectangles start fully collapsed (projection = 0)
+		currentProjection = 0;
+		targetProjection  = 0;
 
-			if (v === 0) {
-				targetProjection = 0;
-			}
-
-			if (v === 1) {
-				targetProjection = 0;
-			}
-
-			if (v === 2) {
-				if (worldGroup) {
-					rotationStart.copy(worldGroup.quaternion);
-					const targetDecade = $decade || '90s';
-					rotationTarget.copy(getDecadeRotation(targetDecade));
-					rotationProgress = 0;
-				}
+		// Start invisible; begin fade-in and animation when spiralDone fires
+		canvasElement.style.opacity = '0';
+		unsubSpiralDone = spiralDone.subscribe(done => {
+			if (done && !canvasVisible) {
+				canvasVisible = true;
+				// Wait a beat (half a second) then start projecting rectangles
+				setTimeout(() => { autoPhase = 1; autoTimer = 0; }, 500);
 			}
 		});
 
 		sceneReady = true;
 		await tick();
 
+		// Init all rectangle components with projection=0
 		rectangleComponents.forEach(comp => { if (comp) comp.init(); });
+		rectangleComponents.forEach(comp => { if (comp) comp.updateProjection(0); });
 
 		animate();
 		window.addEventListener('resize', handleResize);
 	});
 
 	onDestroy(() => {
-		if (unsubState) unsubState();
+		if (typeof window === 'undefined') return;
+		if (unsubSpiralDone) unsubSpiralDone();
 		if (animationFrameId) cancelAnimationFrame(animationFrameId);
 		window.removeEventListener('resize', handleResize);
 		rectangleComponents.forEach(comp => { if (comp) comp.dispose(); });
@@ -252,6 +264,6 @@
 		width: 100vw;
 		height: 100vh;
 		display: block;
-		z-index: 0;
+		z-index: 1;
 	}
 </style>

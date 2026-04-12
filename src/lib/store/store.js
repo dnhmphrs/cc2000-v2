@@ -22,3 +22,7 @@ export const isPortrait = writable(false);
 // Scene state — drives the icosahedron animation
 // 0 = idle/spiral, 1 = collapse spiral, 2 = rotate to decade, 3 = project out, 4 = settled
 export const sceneState = writable(0);
+
+// Set to true when the golden spiral has finished condensing and is fading out,
+// signalling the icosahedron scene to begin rendering.
+export const spiralDone = writable(false);

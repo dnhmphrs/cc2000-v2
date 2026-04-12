@@ -17,8 +17,8 @@
 	let traceLines = [];
 	let schematicComponent;
 	let basis = null;
-	let baseOpacity = 0.25;
-	let schematicBaseOpacity = 0.5;
+	let baseOpacity = 1.0;
+	let schematicBaseOpacity = 1.0;
 
 	let fillMaterial;
 	let outlineMaterial;
@@ -118,7 +118,7 @@
 		const pointsPerArc = 32;
 
 		spiralMaterial = new THREE.LineBasicMaterial({
-			color: 0xf0f0f0,
+			color: 0xc2a133,
 			transparent: true,
 			opacity: 0
 		});
@@ -163,7 +163,7 @@
 			]);
 
 			const mat = new THREE.LineBasicMaterial({
-				color: 0xf0f0f0,
+				color: 0xc2a133,
 				transparent: true,
 				opacity: 0
 			});
@@ -179,11 +179,11 @@
 		const corners = getRectCorners();
 
 		fillMaterial = new THREE.MeshBasicMaterial({
-			color: 0x232323,
+			color: 0xc2a133,
 			transparent: true,
-			opacity: 0,
+			opacity: 1,
 			side: THREE.DoubleSide,
-			depthWrite: false
+			depthWrite: true
 		});
 
 		const shape = new THREE.BufferGeometry().setFromPoints([
@@ -193,7 +193,7 @@
 		rectGroup.add(new THREE.Mesh(shape, fillMaterial));
 
 		outlineMaterial = new THREE.LineBasicMaterial({
-			color: 0xf0f0f0,
+			color: 0xc2a133,
 			transparent: true,
 			opacity: 0
 		});
@@ -226,7 +226,7 @@
 			], 3));
 
 			const material = new THREE.LineDashedMaterial({
-				color: 0xf0f0f0,
+				color: 0xc2a133,
 				transparent: true,
 				opacity: 0,
 				dashSize: 0.1,
