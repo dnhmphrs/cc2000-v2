@@ -19,7 +19,7 @@
 	const FADE_IN_DURATION = 5.0; // same as spiral CONDENSE_DURATION — overlap fully
 
 	const PHI = (1 + Math.sqrt(5)) / 2;
-	const FRUSTUM = 12;
+	const FRUSTUM = 10;
 
 	let currentProjection = 0;
 	let targetProjection = 0;
