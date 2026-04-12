@@ -93,7 +93,7 @@
 		solidGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
 		solidGeo.computeVertexNormals();
 		group.add(new THREE.Mesh(solidGeo, new THREE.MeshBasicMaterial({
-			color: 0xc2a133, transparent: true, opacity: 0.5,
+			color: 0x1b1b1b, transparent: true, opacity: 0.5,
 			side: THREE.DoubleSide, depthWrite: false
 		})));
 
@@ -102,7 +102,7 @@
 		const wireGeo = new THREE.BufferGeometry();
 		wireGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
 		group.add(new THREE.LineSegments(wireGeo, new THREE.LineBasicMaterial({
-			color: 0x1b1b1b, transparent: true, opacity: 1.0
+			color: 0xc2a133, transparent: true, opacity: 1.0
 		})));
 	}
 
