@@ -2,7 +2,7 @@
 	import { onMount, onDestroy, tick } from 'svelte';
 	import * as THREE from 'three';
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-	import { sceneState, decade, isPortrait, spiralDone } from '$lib/store/store';
+	import { sceneState, decade, isPortrait } from '$lib/store/store';
 	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
 	import { assignDecades } from '$lib/data/roomElements';
 	import { accentHex } from '$lib/theme';
@@ -21,14 +21,14 @@
 	let icoSolidMat, icoWireMat;
 	let portrait = false;
 
-	// Canvas fades in at mount (so the floating elements read from the start);
-	// the icosahedron wireframe itself reveals later, when spiralDone fires.
+	// Canvas + wireframe fade in from mount — the icosahedron is the whole intro.
 	let canvasFadeStart = null;
 	const CANVAS_FADE = 1.6;
-	let icoReveal = 0;          // 0 → 1 as the wireframe fades in on spiralDone
+	let icoReveal = 0;
 	let icoRevealing = false;
 
 	const PHI = (1 + Math.sqrt(5)) / 2;
+	const IDLE_FRUSTUM = 13;
 	let frustum = 13;
 
 	let currentProjection = 0;
@@ -36,13 +36,17 @@
 	let animTime = 0;
 	let localAnimPhase = 0;
 
-	// Auto-animation: driven entirely by spiralDone, no phase changes needed externally
-	// Sequence: idle (0) → project out rectangles (1)
-	//           → orbit-and-zoom the camera onto the decade room (2) → done (3)
+	// Sequence: project panes out on load (1) → mouse-interactive idle (2)
+	//           → twist + zoom onto the decade room (3) → settled (4).
 	let autoPhase = 0;
 	let autoTimer  = 0;
 	let started = false;
-	const PROJECT_DURATION = 5.0; // seconds for rectangles to project out
+	const PROJECT_DURATION = 4.0; // seconds for panes to spin out
+
+	// Mouse-look during the intro/input flow.
+	let mouseNX = 0, mouseNY = 0;   // normalised pointer (-1..1)
+	let rotX = 0, rotY = 0;         // current eased rotation offsets
+	const MOUSE_AMP_Y = 0.6, MOUSE_AMP_X = 0.4;
 
 	// Camera fly-to-room state (one smooth orbital zoom onto the decade's room)
 	const FLY_DURATION = 3.4;
@@ -134,7 +138,6 @@
 		group.add(new THREE.LineSegments(wireGeo, icoWireMat));
 	}
 
-	let unsubSpiralDone;
 	let unsubSceneState;
 
 	function applyFrustum(fr) {
@@ -160,12 +163,13 @@
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 
-	function beginReveal(delay) {
-		icoRevealing = true; // fade the wireframe in (aligned with the spiral)
-		setTimeout(startSequence, delay);
+	function handlePointer(e) {
+		mouseNX = (e.clientX / window.innerWidth) * 2 - 1;
+		mouseNY = (e.clientY / window.innerHeight) * 2 - 1;
 	}
 
-	function startSequence() {
+	// Kick off the intro: reveal the wireframe and spin the panes out.
+	function startProject() {
 		if (started) return;
 		started = true;
 		icoRevealing = true;
@@ -197,10 +201,16 @@
 	}
 
 	function startFly() {
+		// If the panes are still spinning out, snap them fully out first.
+		if (currentProjection < 1) {
+			currentProjection = 1;
+			rectangleComponents.forEach(comp => { if (comp) comp.updateProjection(1); });
+		}
+		icoReveal = 1; icoRevealing = true;
 		const picked = pickDecadeRoom();
 		targetRoomIndex = picked.index;
 		flyFocus = picked.focus;
-		if (!flyFocus) { autoPhase = 3; sceneState.set(4); return; }
+		if (!flyFocus) { autoPhase = 4; sceneState.set(4); return; }
 
 		const aspect = window.innerWidth / window.innerHeight;
 		flyProgress = 0;
@@ -211,13 +221,14 @@
 		flyEndDir.copy(flyFocus.normal).normalize();       // camera lands on the +normal side
 		flyEndRadius = 12;
 		flyStartFrustum = frustum;
-		flyEndFrustum = Math.max(flyFocus.height, flyFocus.width / aspect) * 1.12;
+		// End "covered": the room's 2D background fills the whole screen (crop, no letterbox).
+		flyEndFrustum = Math.min(flyFocus.height, flyFocus.width / aspect) * 0.98;
 		flyEndUp.copy(flyFocus.up);
 		flyEndLook.copy(flyFocus.center).addScaledVector(flyFocus.normal, -flyFocus.depth * 0.35);
 		flyRot.setFromUnitVectors(flyStartDir, flyEndDir); // orbital sweep of the view direction
 
 		controls.enabled = false;
-		autoPhase = 2;
+		autoPhase = 3;
 		autoTimer = 0;
 	}
 
@@ -229,9 +240,10 @@
 		flyProgress = 0;
 		flyFocus = null;
 		targetRoomIndex = -1;
-		frustum = 13;
+		frustum = IDLE_FRUSTUM;
 		icoReveal = 0;
 		icoRevealing = false;
+		rotX = rotY = mouseNX = mouseNY = 0;
 		if (worldGroup) {
 			worldGroup.quaternion.identity();
 			worldGroup.rotation.z = portrait ? 0 : Math.PI / 2;
@@ -251,6 +263,8 @@
 			comp.setLineDim(1);
 			comp.updateProjection(0);
 		});
+		// (Re)start the intro: spin the panes out once components are ready.
+		setTimeout(startProject, 500);
 	}
 
 	function animate() {
@@ -265,31 +279,34 @@
 		const canvasRamp = clamp(sinceMount / CANVAS_FADE, 0, 1);
 		canvasElement.style.opacity = canvasRamp.toFixed(4);
 
-		// ── Icosahedron wireframe reveal (on spiralDone) ────────────────────
+		// ── Icosahedron wireframe reveal (from load) ────────────────────────
 		if (icoRevealing) icoReveal = clamp(icoReveal + dt / 2.0, 0, 1);
 		if (icoWireMat) icoWireMat.opacity = icoReveal;
 		if (icoSolidMat) icoSolidMat.opacity = 0.5 * icoReveal;
 
-		// ── Phase 1: project rectangles out + orbit the camera off face-on ──
+		// ── Phase 1: spin the panes out + orbit the camera off face-on ──────
 		if (autoPhase === 1) {
 			autoTimer += dt;
-			const t = Math.min(autoTimer / PROJECT_DURATION, 2.5);
+			const t = Math.min(autoTimer / PROJECT_DURATION, 1);
 			currentProjection = easeInOutCubic(t);
-			rectangleComponents.forEach(comp => {
-				if (comp) comp.updateProjection(currentProjection);
-			});
-			// Swing from the flat face-on view to a 3D angle as the panes emerge.
-			const camT = easeInOutCubic(clamp(autoTimer / PROJECT_DURATION, 0, 1));
+			rectangleComponents.forEach(comp => { if (comp) comp.updateProjection(currentProjection); });
+			const camT = easeInOutCubic(t);
 			camera.position.lerpVectors(FACE_ON, ISO_POS, camT);
 			camera.up.set(0, 1, 0);
 			camera.lookAt(0, 0, 0);
-			if (t >= 1) startFly(); // → phase 2 (single orbital zoom onto the decade room)
+			if (t >= 1) { autoPhase = 2; } // → mouse-interactive idle
 		}
 
-		// Phase 2: one smooth orbital zoom — sweep the camera's view direction from
-		// wherever it is round to the decade room's normal while dollying + fitting
-		// the frustum, then spotlight that room.
-		if (autoPhase === 2 && flyFocus) {
+		// ── Phase 2: mouse-interactive idle (during the intro/input flow) ───
+		if (autoPhase === 2 && worldGroup) {
+			rotY += (mouseNX * MOUSE_AMP_Y - rotY) * Math.min(1, dt * 3);
+			rotX += (-mouseNY * MOUSE_AMP_X - rotX) * Math.min(1, dt * 3);
+			worldGroup.rotation.x = rotX;
+			worldGroup.rotation.y = rotY;
+		}
+
+		// ── Phase 3: the twist — orbit + zoom (out then in) onto the decade room ──
+		if (autoPhase === 3 && flyFocus) {
 			flyProgress = clamp(flyProgress + dt / FLY_DURATION, 0, 1);
 			const t = easeInOutCubic(flyProgress);
 
@@ -298,23 +315,23 @@
 			const radius = lerp(flyStartRadius, flyEndRadius, t);
 			camera.position.copy(dir.multiplyScalar(radius));
 			camera.up.copy(flyStartUp).lerp(flyEndUp, t).normalize();
-			frustum = lerp(flyStartFrustum, flyEndFrustum, t);
+			// zoom OUT through the middle of the move, then IN to fill — the "twist".
+			frustum = lerp(flyStartFrustum, flyEndFrustum, t) + Math.sin(t * Math.PI) * 5;
 			applyFrustum(frustum);
 			camera.lookAt(new THREE.Vector3().lerp(flyEndLook, t));
 
-			// Keep the whole scene up through the early sweep, fade as we close in.
-			const fade = 1 - smoothstep(0.25, 0.95, t);
+			const fade = 1 - smoothstep(0.3, 0.96, t);
 			if (icoWireMat) icoWireMat.opacity = fade;
 			if (icoSolidMat) icoSolidMat.opacity = 0.5 * fade;
 			rectangleComponents.forEach((comp, i) => {
 				if (!comp) return;
-				if (i === targetRoomIndex) comp.setLineDim(lerp(1, 0.35, t)); // faint golden frame
+				if (i === targetRoomIndex) comp.setLineDim(lerp(1, 0.0, smoothstep(0.6, 1, t)));
 				else comp.setDim(fade);
 			});
 
 			if (flyProgress >= 1) {
-				autoPhase = 3;
-				sceneState.set(4); // settled → output screen shows
+				autoPhase = 4;
+				sceneState.set(4); // settled → output screen shows, bg filling the screen
 			}
 		}
 
@@ -367,19 +384,17 @@
 		currentProjection = 0;
 		targetProjection  = 0;
 
-		// Canvas fades in from mount (floating elements read immediately); the
-		// wireframe + sequence reveal when spiralDone fires.
+		// Canvas + icosahedron come up from mount — no spiral intro anymore.
 		canvasElement.style.opacity = '0';
 		canvasFadeStart = performance.now() / 1000;
 
-		unsubSpiralDone = spiralDone.subscribe(done => {
-			if (done) beginReveal(500);
-		});
+		// Mouse-look during the intro/input flow.
+		window.addEventListener('pointermove', handlePointer);
 
-		// Reset on restart; re-run the sequence on subsequent calculations.
+		// On calculate (sceneState → 1) do the twist onto the decade room; reset on restart.
 		unsubSceneState = sceneState.subscribe(s => {
 			if (s === 0) resetScene();
-			else if (s >= 1 && !started) beginReveal(300);
+			else if (s === 1 && autoPhase < 3) startFly();
 		});
 
 		sceneReady = true;
@@ -395,10 +410,10 @@
 
 	onDestroy(() => {
 		if (typeof window === 'undefined') return;
-		if (unsubSpiralDone) unsubSpiralDone();
 		if (unsubSceneState) unsubSceneState();
 		if (animationFrameId) cancelAnimationFrame(animationFrameId);
 		window.removeEventListener('resize', handleResize);
+		window.removeEventListener('pointermove', handlePointer);
 		rectangleComponents.forEach(comp => { if (comp) comp.dispose(); });
 		if (renderer) renderer.dispose();
 		if (controls) controls.dispose();

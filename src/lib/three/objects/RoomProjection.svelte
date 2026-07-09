@@ -15,6 +15,7 @@
 
 	let roomGroup;
 	let layers = [];           // { mesh, mat, cfg, aspect }
+	let backing, backMat;      // solid off-black card behind the room
 	let dimFactor = 1;
 	let lastProjection = 0;
 
@@ -43,6 +44,17 @@
 		roomGroup = new THREE.Group();
 		group.add(roomGroup);
 		layers = [];
+
+		// Solid off-black substrate so the pane reads as a dark card (the site bg),
+		// not a washed-out translucent plane while the room fades in.
+		backMat = new THREE.MeshBasicMaterial({
+			color: 0x1b1b1b, transparent: true, opacity: 0,
+			side: THREE.DoubleSide, depthTest: true, depthWrite: true
+		});
+		backing = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), backMat);
+		backing.renderOrder = -1;
+		backing.visible = false;
+		roomGroup.add(backing);
 
 		const loader = new THREE.TextureLoader();
 		LAYERS.forEach((cfg) => {
@@ -110,7 +122,8 @@
 	function apply(projection) {
 		lastProjection = projection;
 		if (!roomGroup) return;
-		const n = normal();
+		const f = frame();
+		const n = f.n;
 
 		// Fade the room in as it projects out (keeps the collapsed centre uncluttered).
 		const reveal = smoothstep(0.04, 0.55, projection);
@@ -119,6 +132,20 @@
 
 		// Ride outward with the pane.
 		roomGroup.position.copy(n.clone().multiplyScalar(projection * paneReach));
+
+		// Off-black backing: appears quickly as the pane spins out, so the pane is a
+		// solid dark card the room composites onto.
+		if (backing) {
+			if (!backing.userData.oriented) {
+				const bm = new THREE.Matrix4().makeBasis(f.right, f.up, n);
+				backing.quaternion.setFromRotationMatrix(bm);
+				backing.userData.oriented = true;
+			}
+			backing.scale.set(f.W * 1.16, f.H * 1.16, 1);
+			backing.position.copy(basis.center.clone().addScaledVector(n, -1.06 * maxDepth * projection));
+			backMat.opacity = smoothstep(0.02, 0.18, projection) * dimFactor;
+			backing.visible = projection > 0.02 && dimFactor > 0.02;
+		}
 
 		layers.forEach((entry) => {
 			const back = n.clone().multiplyScalar(-entry.cfg.depth * maxDepth * projection);
@@ -157,6 +184,7 @@
 	export function setPortrait(p) {
 		if (p === portrait) return;
 		portrait = p;
+		if (backing) backing.userData.oriented = false; // re-orient to new frame axes
 		layers.forEach(layout);
 		apply(lastProjection);
 	}
