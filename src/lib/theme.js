@@ -12,7 +12,7 @@ export const PALETTES = {
 	clay:  { label: 'clay',   line: 0xcd7f5a, ui: [232, 205, 190] }  // warm terracotta
 };
 
-export const DEFAULT_PALETTE = 'bone';
+export const DEFAULT_PALETTE = 'slate';
 
 // ── Silk background palettes ─────────────────────────────────────────────────
 // Three roles map onto the silk shader: `a` and `b` are the two silk hues it
@@ -26,7 +26,7 @@ export const SILK_PALETTES = {
 	lilac:  { label: 'lilac',  a: '#6a4cc4', b: '#d8809d', sheen: '#faf8f0' }  // original silk
 };
 
-export const DEFAULT_SILK = 'taupe';
+export const DEFAULT_SILK = 'lilac';
 
 // ── Stores ───────────────────────────────────────────────────────────────────
 export const paletteKey = writable(DEFAULT_PALETTE);
