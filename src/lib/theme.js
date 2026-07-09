@@ -12,7 +12,7 @@ export const PALETTES = {
 	clay:  { label: 'clay',   line: 0xcd7f5a, ui: [232, 205, 190] }  // warm terracotta
 };
 
-export const DEFAULT_PALETTE = 'slate';
+export const DEFAULT_PALETTE = 'gold';
 
 // ── Silk background palettes ─────────────────────────────────────────────────
 // Three roles map onto the silk shader: `a` and `b` are the two silk hues it
@@ -36,7 +36,7 @@ export const palette = derived(paletteKey, (k) => PALETTES[k] || PALETTES[DEFAUL
 export const accentHex = derived(palette, (p) => p.line);
 
 // Silk on/off + which silk palette.
-export const silkOn = writable(true);
+export const silkOn = writable(false);
 export const silkKey = writable(DEFAULT_SILK);
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
