@@ -4,7 +4,7 @@
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 	import { sceneState, decade, isPortrait, spiralDone } from '$lib/store/store';
 	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
-	import { assignDecades, elementUrl } from '$lib/data/roomElements';
+	import { assignDecades } from '$lib/data/roomElements';
 	import { accentHex } from '$lib/theme';
 	import { get } from 'svelte/store';
 	import GoldenRectangle from './objects/GoldenRectangle.svelte';
@@ -66,10 +66,6 @@
 	// orbits to a 3D angle as the panes project, then flies to the decade room.
 	const FACE_ON = new THREE.Vector3(0, 0, 12);
 	const ISO_POS = new THREE.Vector3(5, 4, 8);
-
-	// Ambient elements drifting from the very start (the "floating in the vibe" feel).
-	let floatSprites = [];
-	let floatOpacity = 0;
 
 	const smoothstep = (a, b, x) => {
 		const t = clamp((x - a) / (b - a), 0, 1);
@@ -136,70 +132,6 @@
 			color: get(accentHex), transparent: true, opacity: 0
 		});
 		group.add(new THREE.LineSegments(wireGeo, icoWireMat));
-	}
-
-	// Room-element sprites gently bobbing in view space (ambient "float" vibe).
-	// Each drifts on slow sine waves around a fixed home point — no teleporting.
-	function buildFloatingElements() {
-		const loader = new THREE.TextureLoader();
-		const pool = [];
-		['50s', '60s', '90s', '10s'].forEach(d => {
-			['clock', 'poster', 'screen'].forEach(k => pool.push([d, k]));
-		});
-		const N = 9;
-		for (let i = 0; i < N; i++) {
-			const [d, k] = pool[Math.floor(Math.random() * pool.length)];
-			const mat = new THREE.MeshBasicMaterial({
-				transparent: true, opacity: 0, depthTest: false, depthWrite: false, side: THREE.DoubleSide
-			});
-			const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
-			mesh.renderOrder = -5; // behind the icosahedron/rooms
-			// Homes spread evenly around a ring, away from the busy centre.
-			const ang = (i / N) * Math.PI * 2 + Math.random() * 0.5;
-			const rad = 5.5 + Math.random() * 3.5;
-			const home = new THREE.Vector3(Math.cos(ang) * rad, Math.sin(ang) * rad * 0.7, -3 - Math.random() * 5);
-			mesh.position.copy(home);
-			mesh.userData = {
-				home,
-				ax: 0.5 + Math.random() * 0.9, ay: 0.5 + Math.random() * 0.9,
-				fx: 0.05 + Math.random() * 0.12, fy: 0.05 + Math.random() * 0.12,
-				px: Math.random() * 6.28, py: Math.random() * 6.28,
-				tilt: (Math.random() - 0.5) * 0.4,   // gentle fixed tilt
-				spin: (Math.random() - 0.5) * 0.06,  // very slow rotation
-				base: 0.24 + Math.random() * 0.16,
-				fp: 0.08 + Math.random() * 0.1, pp: Math.random() * 6.28
-			};
-			mesh.rotation.z = mesh.userData.tilt;
-			scene.add(mesh);
-			floatSprites.push({ mesh, mat });
-			loader.load(elementUrl(d, k), (tex) => {
-				tex.encoding = THREE.sRGBEncoding;
-				tex.generateMipmaps = false;
-				tex.minFilter = THREE.LinearFilter;
-				const a = (tex.image?.width || 1) / (tex.image?.height || 1);
-				const s = 1.5 + Math.random() * 1.0;
-				mesh.scale.set(s * a, s, 1);
-				mat.map = tex; mat.needsUpdate = true;
-				if (renderer) { try { renderer.initTexture(tex); } catch (e) { /* ignore */ } }
-			});
-		}
-	}
-
-	function updateFloating() {
-		if (!floatSprites.length) return;
-		const t = animTime;
-		floatSprites.forEach(({ mesh, mat }) => {
-			const u = mesh.userData;
-			mesh.position.set(
-				u.home.x + Math.sin(t * u.fx * 6.28 + u.px) * u.ax,
-				u.home.y + Math.sin(t * u.fy * 6.28 + u.py) * u.ay,
-				u.home.z
-			);
-			mesh.rotation.z = u.tilt + Math.sin(t * u.spin * 6.28) * 0.15;
-			const pulse = 0.75 + 0.25 * Math.sin(t * u.fp * 6.28 + u.pp);
-			mat.opacity = u.base * pulse * floatOpacity;
-			mesh.visible = mat.map != null && floatOpacity > 0.01;
-		});
 	}
 
 	let unsubSpiralDone;
@@ -338,13 +270,6 @@
 		if (icoWireMat) icoWireMat.opacity = icoReveal;
 		if (icoSolidMat) icoSolidMat.opacity = 0.5 * icoReveal;
 
-		// ── Floating ambient elements ───────────────────────────────────────
-		let fOut = 1;
-		if (autoPhase >= 2) fOut = 0;
-		else if (autoPhase === 1) fOut = 1 - smoothstep(0, 0.5, currentProjection);
-		floatOpacity = canvasRamp * fOut;
-		updateFloating();
-
 		// ── Phase 1: project rectangles out + orbit the camera off face-on ──
 		if (autoPhase === 1) {
 			autoTimer += dt;
@@ -437,7 +362,6 @@
 		// on wide screens / portrait on tall screens — matching the spiral.
 		worldGroup.rotation.z = portrait ? 0 : Math.PI / 2;
 		buildIcosahedronMeshes(worldGroup);
-		buildFloatingElements();
 
 		// Rectangles start fully collapsed (projection = 0)
 		currentProjection = 0;
@@ -476,12 +400,6 @@
 		if (animationFrameId) cancelAnimationFrame(animationFrameId);
 		window.removeEventListener('resize', handleResize);
 		rectangleComponents.forEach(comp => { if (comp) comp.dispose(); });
-		floatSprites.forEach(({ mesh, mat }) => {
-			scene.remove(mesh);
-			mesh.geometry.dispose();
-			if (mat.map) mat.map.dispose();
-			mat.dispose();
-		});
 		if (renderer) renderer.dispose();
 		if (controls) controls.dispose();
 	});

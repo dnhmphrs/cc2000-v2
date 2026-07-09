@@ -3,16 +3,7 @@
 	import * as THREE from 'three';
 	import { phase, spiralDone } from '$lib/store/store';
 	import { accentHex } from '$lib/theme';
-
-	// Normalised accent direction (max channel = 1) so the per-frame brightness
-	// envelope is preserved across palettes.
-	let aR = 1, aG = 0.76, aB = 0.2;
-	$: {
-		const h = $accentHex;
-		const r = ((h >> 16) & 255) / 255, g = ((h >> 8) & 255) / 255, b = (h & 255) / 255;
-		const m = Math.max(r, g, b) || 1;
-		aR = r / m; aG = g / m; aB = b / m;
-	}
+	import { elementUrl } from '$lib/data/roomElements';
 
 	let canvas;
 	let renderer, scene, camera;
@@ -24,60 +15,149 @@
 	const IP3 = IP2 * IPHI;
 	const IP4 = IP2 * IP2;
 
-	let CX = IP2 / (1 - IP4);
-	let CY = IP3 / (1 - IP4);
+	// Convergence (pole) of the golden-rectangle square spiral, in tiling coords.
+	const CX = IP2 / (1 - IP4);
+	const CY = IP3 / (1 - IP4);
 
 	const PHI4 = PHI ** 4;
-	const CYCLE = 7;          // seconds for one φ⁴ zoom step — fast enough to read as zooming
-	const NUM_LAYERS = 12;    // few enough that the nested squares stay distinct
-	const SQUARES_PER_LAYER = 24;
+	const CYCLE = 9;            // seconds per φ⁴ zoom step
+	const NUM_LAYERS = 4;       // overlapping tilings → seamless infinite zoom
+	const SQUARES = 15;         // nested squares drawn per tiling
 
-	// Constant-zoom golden spiral: each layer is the same golden-rectangle square
-	// tiling, scaled by φ⁴ across its life; staggered layers give a seamless,
-	// self-similar zoom into the pole. No extra spin — the squares' own 90°-per-
-	// step spiral traces the geometry as it zooms.
-	const SPIRAL_TURN = 0;
-
-	// 0 = normal, 1 = condensing + fading, 2 = done
-	let condenseState = 0;
-	let condenseStartTime = null;
+	const FILL_OPACITY = 0.26;  // colored square panels (kept subtle to avoid washout)
+	const FRUSTUM_H = 0.19;     // view height in world units (smaller = more zoomed / vibrant)
 	const CONDENSE_DURATION = 5.0;
 
+	// Floating room-element objects, woven between the square layers by render order.
+	const NUM_FLOATERS = 9;
+
+	let condenseState = 0;      // 0 = normal, 1 = condensing + fading, 2 = done
+	let condenseStartTime = null;
 	let unsubPhase;
 
-	function buildGeometry() {
-		const positions = [];
-		function line(x1, y1, x2, y2) { positions.push(x1, y1, 0, x2, y2, 0); }
-		function rect(L, B, R, T) {
-			line(L, B, R, B); line(R, B, R, T);
-			line(R, T, L, T); line(L, T, L, B);
-		}
-		function arc(cx, cy, r, startAngle, segments = 64) {
-			const step = (Math.PI / 2) / segments;
-			for (let i = 0; i < segments; i++) {
-				const a0 = startAngle + step * i;
-				const a1 = startAngle + step * (i + 1);
-				positions.push(
-					cx + Math.cos(a0) * r, cy + Math.sin(a0) * r, 0,
-					cx + Math.cos(a1) * r, cy + Math.sin(a1) * r, 0
-				);
-			}
-		}
+	let layers = [];            // { fill, fillMat, arc, arcMat, group }
+	let floaters = [];          // { mesh, mat, ... }
+	let accentColor = new THREE.Color(0xc2a133);
+	$: accentColor.setHex($accentHex);
+
+	// ── Golden-rectangle square subdivision ────────────────────────────────────
+	function buildSquares() {
+		const squares = [];
 		let L = 0, B = 0, R = PHI, T = 1;
-		rect(L, B, R, T);
-		for (let i = 0; i < SQUARES_PER_LAYER; i++) {
+		for (let i = 0; i < SQUARES; i++) {
 			const side = i % 4;
-			let s, acx, acy, startAngle;
-			if (side === 0)      { s = T - B; R -= s; acx = R; acy = B; startAngle = 0; }
-			else if (side === 1) { s = R - L; T -= s; acx = R; acy = T; startAngle = Math.PI / 2; }
-			else if (side === 2) { s = T - B; L += s; acx = L; acy = T; startAngle = Math.PI; }
-			else                 { s = R - L; B += s; acx = L; acy = B; startAngle = Math.PI * 1.5; }
-			rect(L, B, R, T);
-			arc(acx, acy, s, startAngle);
+			let sq;
+			if (side === 0)      { const s = T - B; R -= s; sq = { L: R, B, R: R + s, T }; }
+			else if (side === 1) { const s = R - L; T -= s; sq = { L, B: T, R, T: T + s }; }
+			else if (side === 2) { const s = T - B; L += s; sq = { L: L - s, B, R: L, T }; }
+			else                 { const s = R - L; B += s; sq = { L, B: B - s, R, T: B }; }
+			squares.push(sq);
 		}
+		return squares;
+	}
+
+	function tilingColor(k) {
+		// Rainbow-ish hue cycle across the nesting (jewel tones) — the "color" GIF.
+		const c = new THREE.Color();
+		c.setHSL((0.07 + k * 0.085) % 1, 0.58, 0.55);
+		return c;
+	}
+
+	function buildFillGeometry(squares) {
+		const pos = [];
+		const col = [];
+		squares.forEach((s, k) => {
+			const c = tilingColor(k);
+			// two triangles
+			const quad = [
+				[s.L, s.B], [s.R, s.B], [s.R, s.T],
+				[s.L, s.B], [s.R, s.T], [s.L, s.T]
+			];
+			quad.forEach(([x, y]) => { pos.push(x, y, 0); col.push(c.r, c.g, c.b); });
+		});
 		const geo = new THREE.BufferGeometry();
-		geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+		geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+		geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
 		return geo;
+	}
+
+	function buildEdgeGeometry(squares) {
+		const pos = [];
+		squares.forEach((s) => {
+			const c = [[s.L, s.B], [s.R, s.B], [s.R, s.T], [s.L, s.T]];
+			for (let e = 0; e < 4; e++) {
+				const a = c[e], b = c[(e + 1) % 4];
+				pos.push(a[0], a[1], 0, b[0], b[1], 0);
+			}
+		});
+		const geo = new THREE.BufferGeometry();
+		geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+		return geo;
+	}
+
+	function buildArcGeometry(squares) {
+		const pos = [];
+		// A quarter-circle arc in each square, chained into the log spiral.
+		squares.forEach((s, i) => {
+			const side = i % 4;
+			const w = s.R - s.L;
+			let cx, cy, a0;
+			if (side === 0)      { cx = s.L; cy = s.B; a0 = 0; }
+			else if (side === 1) { cx = s.R; cy = s.B; a0 = Math.PI / 2; }
+			else if (side === 2) { cx = s.R; cy = s.T; a0 = Math.PI; }
+			else                 { cx = s.L; cy = s.T; a0 = Math.PI * 1.5; }
+			const seg = 24;
+			for (let j = 0; j < seg; j++) {
+				const b0 = a0 + (Math.PI / 2) * (j / seg);
+				const b1 = a0 + (Math.PI / 2) * ((j + 1) / seg);
+				pos.push(cx + Math.cos(b0) * w, cy + Math.sin(b0) * w, 0);
+				pos.push(cx + Math.cos(b1) * w, cy + Math.sin(b1) * w, 0);
+			}
+		});
+		const geo = new THREE.BufferGeometry();
+		geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+		return geo;
+	}
+
+	function buildFloaters() {
+		const loader = new THREE.TextureLoader();
+		const pool = [];
+		['50s', '60s', '90s', '10s'].forEach(d => ['clock', 'poster', 'screen'].forEach(k => pool.push([d, k])));
+		for (let i = 0; i < NUM_FLOATERS; i++) {
+			const [d, k] = pool[Math.floor(Math.random() * pool.length)];
+			const mat = new THREE.MeshBasicMaterial({
+				transparent: true, opacity: 0, depthTest: false, depthWrite: false, side: THREE.DoubleSide
+			});
+			const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+			// Interleave render order among the layer fills (0 .. NUM_LAYERS*10),
+			// so each object is veiled by some square layers and floats over others.
+			mesh.renderOrder = 1 + Math.random() * (NUM_LAYERS * 10 - 2);
+			// View is only ~0.18 units tall, so keep homes/sizes small.
+			const ang = (i / NUM_FLOATERS) * Math.PI * 2 + Math.random() * 0.5;
+			const rad = 0.03 + Math.random() * 0.06;
+			mesh.userData = {
+				home: new THREE.Vector2(Math.cos(ang) * rad, Math.sin(ang) * rad * 0.85),
+				ax: 0.006 + Math.random() * 0.012, ay: 0.006 + Math.random() * 0.012,
+				fx: 0.05 + Math.random() * 0.1, fy: 0.05 + Math.random() * 0.1,
+				px: Math.random() * 6.28, py: Math.random() * 6.28,
+				tilt: (Math.random() - 0.5) * 0.4, spin: (Math.random() - 0.5) * 0.05,
+				base: 0.55 + Math.random() * 0.35, fp: 0.08 + Math.random() * 0.1, pp: Math.random() * 6.28,
+				size: 0.022 + Math.random() * 0.026
+			};
+			mesh.rotation.z = mesh.userData.tilt;
+			scene.add(mesh);
+			const entry = { mesh, mat };
+			floaters.push(entry);
+			loader.load(elementUrl(d, k), (tex) => {
+				tex.encoding = THREE.sRGBEncoding;
+				tex.generateMipmaps = false; tex.minFilter = THREE.LinearFilter;
+				const a = (tex.image?.width || 1) / (tex.image?.height || 1);
+				const s = mesh.userData.size;
+				mesh.scale.set(s * a, s, 1);
+				mat.map = tex; mat.needsUpdate = true;
+				try { renderer.initTexture(tex); } catch (e) { /* ignore */ }
+			});
+		}
 	}
 
 	function easeInOutCubic(t) {
@@ -85,41 +165,48 @@
 	}
 
 	onMount(() => {
-		renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+		renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 		renderer.setClearColor(0x1b1b1b, 0);
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+		renderer.outputEncoding = THREE.sRGBEncoding;
 
 		scene = new THREE.Scene();
-		camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+		camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 10);
+		camera.position.z = 5;
 
-		const geo = buildGeometry();
-		const layers = [];
+		const squares = buildSquares();
+		const fillGeo = buildFillGeometry(squares);
+		const edgeGeo = buildEdgeGeometry(squares);
+		const arcGeo = buildArcGeometry(squares);
+
 		for (let i = 0; i < NUM_LAYERS; i++) {
-			const mat = new THREE.LineBasicMaterial({
-				color: new THREE.Color(1, 0.76, 0.2),
-				transparent: true,
-				opacity: 0,
-				depthTest: false
+			const fillMat = new THREE.MeshBasicMaterial({
+				vertexColors: true, transparent: true, opacity: 0, depthTest: false, depthWrite: false, side: THREE.DoubleSide
 			});
-			const mesh = new THREE.LineSegments(geo, mat);
-			scene.add(mesh);
-			layers.push({ mesh, mat });
+			const fill = new THREE.Mesh(fillGeo, fillMat);
+			const edgeMat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0, depthTest: false });
+			const edge = new THREE.LineSegments(edgeGeo, edgeMat);
+			const arcMat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0, depthTest: false });
+			const arc = new THREE.LineSegments(arcGeo, arcMat);
+			const group = new THREE.Group();
+			group.add(fill); group.add(edge); group.add(arc);
+			scene.add(group);
+			layers.push({ fill, fillMat, edge, edgeMat, arc, arcMat, group });
 		}
+
+		buildFloaters();
 
 		function applyFrustum(h) {
 			const aspect = window.innerWidth / window.innerHeight;
 			const fw = h * aspect;
 			camera.left = -fw / 2; camera.right = fw / 2;
-			camera.top  =  h / 2;  camera.bottom = -h / 2;
+			camera.top = h / 2; camera.bottom = -h / 2;
 			camera.updateProjectionMatrix();
 		}
-		function resize() {
-			renderer.setSize(window.innerWidth, window.innerHeight);
-			applyFrustum(0.18);
-		}
+		function resize() { renderer.setSize(window.innerWidth, window.innerHeight); applyFrustum(FRUSTUM_H); }
 		window.addEventListener('resize', resize);
-		applyFrustum(0.18);
+		applyFrustum(FRUSTUM_H);
 
 		unsubPhase = phase.subscribe((p) => {
 			if (p === 'transition' && condenseState === 0) {
@@ -129,98 +216,78 @@
 			}
 		});
 
+		const start = performance.now();
 		const animate = (t) => {
 			const time = t * 0.001;
 			const baseT = (time % CYCLE) / CYCLE;
 
-			if (condenseState === 1 && condenseStartTime === null) {
-				condenseStartTime = time;
-			}
-
+			if (condenseState === 1 && condenseStartTime === null) condenseStartTime = time;
 			let cp = 0;
-			if (condenseState === 1 && condenseStartTime !== null) {
+			if (condenseState === 1) {
 				cp = Math.min((time - condenseStartTime) / CONDENSE_DURATION, 1);
-				if (cp >= 1) {
-					condenseState = 2;
-					canvas.style.display = 'none';
-				}
+				if (cp >= 1) { condenseState = 2; canvas.style.display = 'none'; }
 			}
+			if (condenseState === 2) { frame = requestAnimationFrame(animate); return; }
 
-			if (condenseState === 2) {
-				frame = requestAnimationFrame(animate);
-				return;
-			}
-
-			// Global fade: kicks in at 60% through condensation, gone by 100%
-			const globalFade = condenseState === 0
-				? 0.5
-				: Math.max(0, 1 - Math.max(0, (cp - 0.6) / 0.4));
-
-			// Convergence target: life=0 means zoom=1, rot=0, position at raw convergence point
-			// At life=0: zoom=1, rot=0, so position = -(CX*1 - CY*0, CX*0 + CY*1) = (-CX, -CY)
-			const targetZoom = 1;
-			const targetRot  = 0;
-			const targetPX   = -CX;
-			const targetPY   = -CY;
+			const globalFade = condenseState === 0 ? 1 : Math.max(0, 1 - Math.max(0, (cp - 0.55) / 0.45));
+			// intro fade-in over the first ~1.5s from mount
+			const fadeIn = Math.min((time - start / 1000) / 1.5, 1);
 
 			for (let n = 0; n < NUM_LAYERS; n++) {
-				const { mesh, mat } = layers[n];
+				const { fillMat, edgeMat, arcMat, group } = layers[n];
 				const life = (baseT + n / NUM_LAYERS) % 1;
 				const zoom = PHI4 ** life;
-				const fade = Math.min(life / 0.15, (1 - life) / 0.5, 1);
-				const rot  = life * SPIRAL_TURN;
-				const cos  = Math.cos(rot);
-				const sin  = Math.sin(rot);
-				const ownPX = -(CX * cos - CY * sin) * zoom;
-				const ownPY = -(CX * sin + CY * cos) * zoom;
+				const env = Math.min(life / 0.14, (1 - life) / 0.5, 1); // fade in at pole, out at edge
 
-				if (condenseState === 0) {
-					mesh.scale.set(zoom, zoom, 1);
-					mesh.rotation.z = rot;
-					mesh.position.x = ownPX;
-					mesh.position.y = ownPY;
-					mat.opacity = fade * 0.5;
-					const b = fade * 0.5;
-					mat.color.setRGB(b * aR, b * aG, b * aB);
-				} else {
-					// All layers converge inward toward the spiral's own limit point (life→0).
-					// Stagger: layers with larger life values (further out) start moving first,
-					// inner layers follow — everything folds inward naturally.
-					const staggerStart = (1 - life) * 0.3; // outer layers (high life) start sooner
-					const rawP  = Math.max(0, Math.min((cp - staggerStart) / (1 - staggerStart), 1));
-					const tMove = easeInOutCubic(rawP);
-
-					const lerpZoom = zoom + (targetZoom - zoom) * tMove;
-					const lerpRot  = rot  + (targetRot  - rot)  * tMove;
-					const lerpCos  = Math.cos(lerpRot);
-					const lerpSin  = Math.sin(lerpRot);
-					const lerpPX   = -(CX * lerpCos - CY * lerpSin) * lerpZoom;
-					const lerpPY   = -(CX * lerpSin + CY * lerpCos) * lerpZoom;
-
-					mesh.scale.set(lerpZoom, lerpZoom, 1);
-					mesh.rotation.z = lerpRot;
-					mesh.position.x = lerpPX;
-					mesh.position.y = lerpPY;
-
-					// Opacity: preserve own natural fade envelope, then globalFade takes it out
-					mat.opacity = fade * 0.5 * globalFade;
-					const b = fade * 0.5;
-					mat.color.setRGB(b * aR, b * aG, b * aB);
+				let lz = zoom, rot = 0;
+				if (condenseState === 1) {
+					const stagger = (1 - life) * 0.3;
+					const tm = easeInOutCubic(Math.max(0, Math.min((cp - stagger) / (1 - stagger), 1)));
+					lz = zoom + (1 - zoom) * tm; // converge to zoom 1 (pole)
 				}
+				const cos = Math.cos(rot), sin = Math.sin(rot);
+				group.scale.set(lz, lz, 1);
+				group.position.x = -(CX * cos - CY * sin) * lz;
+				group.position.y = -(CX * sin + CY * cos) * lz;
+
+				const a = env * globalFade * fadeIn;
+				fillMat.opacity = a * FILL_OPACITY;
+				edgeMat.opacity = a * 0.7;
+				edgeMat.color.copy(accentColor);
+				arcMat.opacity = a * 0.95;
+				arcMat.color.copy(accentColor);
+				// Bigger (nearer, higher life) layers draw later → over the pole ones;
+				// floating objects interleave by their own render order.
+				const ro = life * NUM_LAYERS * 10;
+				layers[n].fill.renderOrder = ro;
+				layers[n].edge.renderOrder = ro + 0.3;
+				layers[n].arc.renderOrder = ro + 0.5;
 			}
+
+			// floating objects bob and fade with the intro
+			floaters.forEach(({ mesh, mat }) => {
+				const u = mesh.userData;
+				mesh.position.set(
+					u.home.x + Math.sin(time * u.fx * 6.28 + u.px) * u.ax,
+					u.home.y + Math.sin(time * u.fy * 6.28 + u.py) * u.ay,
+					0
+				);
+				mesh.rotation.z = u.tilt + Math.sin(time * u.spin * 6.28) * 0.15;
+				const pulse = 0.75 + 0.25 * Math.sin(time * u.fp * 6.28 + u.pp);
+				mat.opacity = (mat.map ? 1 : 0) * u.base * pulse * globalFade * fadeIn;
+			});
 
 			renderer.render(scene, camera);
 			frame = requestAnimationFrame(animate);
 		};
-
 		frame = requestAnimationFrame(animate);
 	});
 
 	onDestroy(() => {
 		if (typeof window === 'undefined') return;
 		cancelAnimationFrame(frame);
-		window.removeEventListener('resize', resize);
 		unsubPhase?.();
+		floaters.forEach(({ mesh, mat }) => { mesh.geometry.dispose(); if (mat.map) mat.map.dispose(); mat.dispose(); });
 		renderer?.dispose();
 	});
 </script>

@@ -5,7 +5,6 @@
 	import { getDeviceType, getScreenSize, getIsPortrait } from '$lib/functions/utils';
 	import { palette, applyCssVars } from '$lib/theme';
 
-	import Scene from '$lib/three/Scene.svelte';
 	import DevPanel from '$lib/components/DevPanel.svelte';
 
 	// Keep the UI accent (CSS custom properties) in sync with the active palette.
@@ -31,10 +30,6 @@
 	<title>Conception Calculator 2000</title>
 	<meta name="description" content="Calculate the song playing at your exact moment of conception." />
 </svelte:head>
-
-{#if mounted}
-	<Scene />
-{/if}
 
 <DevPanel />
 
