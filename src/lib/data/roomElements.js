@@ -55,16 +55,25 @@ const FILES = {
 //
 // x/y anchor the CENTRE of each element. Numbers are intentionally easy to
 // tweak — they are the main knobs for how each room reads.
+// Each element carries a landscape placement (x/y/width) and a `port` override
+// for portrait: the frame goes tall, so elements are re-arranged to fill the
+// vertical screen (this re-placement is the whole point of separate elements).
+// x: -1 left … +1 right · y: -1 floor … +1 ceiling · width: fraction of frame width.
 export const LAYERS = [
-	{ key: 'bg',     depth: 1.00, cover: true,                     opacity: 1.0 },
+	{ key: 'bg',     depth: 1.00, cover: true, opacity: 1.0 },
 	// clock hangs left, poster/window right (matches the bg placement marks).
-	{ key: 'poster', depth: 0.92, x:  0.50, y:  0.42, width: 0.26, opacity: 1.0 },
-	{ key: 'clock',  depth: 0.90, x: -0.40, y:  0.52, width: 0.13, opacity: 1.0 },
+	{ key: 'poster', depth: 0.92, x:  0.50, y:  0.42, width: 0.26, opacity: 1.0,
+		port: { x:  0.30, y:  0.66, width: 0.46 } },
+	{ key: 'clock',  depth: 0.90, x: -0.40, y:  0.52, width: 0.13, opacity: 1.0,
+		port: { x: -0.32, y:  0.82, width: 0.24 } },
 	// screen sits ON the desk → slightly BEHIND the desk plane so the desk's
 	// front edge occludes its base (correct "TV on a desk" read).
-	{ key: 'screen', depth: 0.60, x:  0.03, y: -0.02, width: 0.34, opacity: 1.0 },
-	{ key: 'desk',   depth: 0.48, x:  0.00, y: -0.34, width: 1.02, opacity: 1.0 },
-	{ key: 'bed',    depth: 0.16, x:  0.00, y: -0.74, width: 1.10, opacity: 1.0 }
+	{ key: 'screen', depth: 0.60, x:  0.03, y: -0.02, width: 0.34, opacity: 1.0,
+		port: { x:  0.00, y:  0.16, width: 0.58 } },
+	{ key: 'desk',   depth: 0.48, x:  0.00, y: -0.34, width: 1.02, opacity: 1.0,
+		port: { x:  0.00, y: -0.34, width: 1.08 } },
+	{ key: 'bed',    depth: 0.16, x:  0.00, y: -0.74, width: 1.10, opacity: 1.0,
+		port: { x:  0.00, y: -0.74, width: 1.20 } }
 ];
 
 export function elementUrl(decade, key) {

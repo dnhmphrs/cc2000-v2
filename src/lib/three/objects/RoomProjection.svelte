@@ -85,6 +85,8 @@
 	function layout(entry) {
 		const { cfg, aspect } = entry;
 		const { right, up, n, W, H } = frame();
+		// Portrait re-places elements to fill the tall frame.
+		const pos = (portrait && cfg.port) ? cfg.port : cfg;
 
 		let w, h;
 		if (cfg.cover) {
@@ -92,7 +94,7 @@
 			if (W / H > aspect) { w = W; h = W / aspect; }
 			else { h = H; w = H * aspect; }
 		} else {
-			w = cfg.width * W;
+			w = pos.width * W;
 			h = w / aspect;
 		}
 		entry.mesh.scale.set(w, h, 1);
@@ -101,8 +103,8 @@
 		const m = new THREE.Matrix4().makeBasis(right, up, n);
 		entry.mesh.quaternion.setFromRotationMatrix(m);
 
-		entry.inPlane = right.clone().multiplyScalar((cfg.x || 0) * W / 2)
-			.add(up.clone().multiplyScalar((cfg.y || 0) * H / 2));
+		entry.inPlane = right.clone().multiplyScalar((pos.x || 0) * W / 2)
+			.add(up.clone().multiplyScalar((pos.y || 0) * H / 2));
 	}
 
 	function apply(projection) {
