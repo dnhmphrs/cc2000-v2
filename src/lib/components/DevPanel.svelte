@@ -1,10 +1,13 @@
 <script>
 	import { phase, sceneState, decade, isPortrait } from '$lib/store/store';
+	import { paletteKey, silkOn, silkKey, PALETTES, SILK_PALETTES } from '$lib/theme';
 
 	let open = false;
 
 	const phases = ['intro', 'calculate', 'transition', 'output'];
 	const decades = ['50s', '60s', '90s', '10s'];
+	const paletteKeys = Object.keys(PALETTES);
+	const silkKeys = Object.keys(SILK_PALETTES);
 </script>
 
 <div class="dev" class:open>
@@ -37,6 +40,29 @@
 				<div class="row">
 					{#each decades as d}
 						<button class:active={$decade === d} on:click={() => decade.set(d)}>{d}</button>
+					{/each}
+				</div>
+			</div>
+
+			<div class="section">
+				<span class="lbl">accent</span>
+				<div class="row">
+					{#each paletteKeys as k}
+						<button class:active={$paletteKey === k} on:click={() => paletteKey.set(k)}>
+							<span class="sw" style="background:#{PALETTES[k].line.toString(16).padStart(6, '0')}" />{k}
+						</button>
+					{/each}
+				</div>
+			</div>
+
+			<div class="section">
+				<span class="lbl">silk bg: {$silkOn ? 'on' : 'off'}</span>
+				<div class="row">
+					<button class:active={$silkOn} on:click={() => silkOn.set(!$silkOn)}>toggle</button>
+					{#each silkKeys as k}
+						<button class:active={$silkKey === k} on:click={() => silkKey.set(k)}>
+							<span class="sw" style="background:{SILK_PALETTES[k].sheen}" />{k}
+						</button>
 					{/each}
 				</div>
 			</div>
@@ -76,4 +102,11 @@
 		background: transparent; color: var(--fg-faint);
 	}
 	.row button.active { border-color: var(--fg-dim); color: var(--fg); }
+	.sw {
+		display: inline-block;
+		width: 8px; height: 8px;
+		margin-right: 4px;
+		vertical-align: middle;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+	}
 </style>

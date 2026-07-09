@@ -5,7 +5,12 @@
 	import { sceneState, decade, isPortrait, spiralDone } from '$lib/store/store';
 	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
 	import { assignDecades } from '$lib/data/roomElements';
+	import { accentHex } from '$lib/theme';
+	import { get } from 'svelte/store';
 	import GoldenRectangle from './objects/GoldenRectangle.svelte';
+
+	// Live accent recolour of the wireframe.
+	$: if (icoWireMat) icoWireMat.color.setHex($accentHex);
 
 	let canvasElement;
 	let scene, camera, renderer, controls;
@@ -29,32 +34,36 @@
 	let animTime = 0;
 	let localAnimPhase = 0;
 
-	// Quaternion spin state
-	let rotationStart = new THREE.Quaternion();
-	let rotationTarget = new THREE.Quaternion();
-	let rotationProgress = 0;
-
 	// Auto-animation: driven entirely by spiralDone, no phase changes needed externally
-	// Sequence: idle (0) → project out rectangles (1) → quaternion spin (2)
-	//           → zoom into the target room (3) → done (4)
+	// Sequence: idle (0) → project out rectangles (1)
+	//           → orbit-and-zoom the camera onto the decade room (2) → done (3)
 	let autoPhase = 0;
 	let autoTimer  = 0;
 	let started = false;
 	const PROJECT_DURATION = 5.0; // seconds for rectangles to project out
 
-	// Zoom-into-room state
-	const ZOOM_DURATION = 2.4;
-	let zoomProgress = 0;
-	let zoomFocus = null;
-	let zoomStartPos = new THREE.Vector3();
-	let zoomTargetPos = new THREE.Vector3();
-	let zoomStartUp = new THREE.Vector3();
-	let zoomTargetUp = new THREE.Vector3();
-	let zoomStartLook = new THREE.Vector3();
-	let zoomTargetLook = new THREE.Vector3();
-	let zoomStartFrustum = 10;
-	let zoomTargetFrustum = 10;
+	// Camera fly-to-room state (one smooth orbital zoom onto the decade's room)
+	const FLY_DURATION = 3.4;
+	const IDENTITY_Q = new THREE.Quaternion();
+	let flyProgress = 0;
+	let flyFocus = null;
+	let flyStartPos = new THREE.Vector3();
+	let flyStartUp = new THREE.Vector3();
+	let flyEndUp = new THREE.Vector3();
+	let flyEndLook = new THREE.Vector3();
+	let flyStartDir = new THREE.Vector3();
+	let flyEndDir = new THREE.Vector3();
+	let flyRot = new THREE.Quaternion();
+	let flyStartRadius = 8;
+	let flyEndRadius = 12;
+	let flyStartFrustum = 10;
+	let flyEndFrustum = 10;
 	let targetRoomIndex = -1;
+
+	const smoothstep = (a, b, x) => {
+		const t = clamp((x - a) / (b - a), 0, 1);
+		return t * t * (3 - 2 * t);
+	};
 
 	export let worldGroup;
 
@@ -96,16 +105,6 @@
 		{ indices: [8, 9, 11, 10], axis: new THREE.Vector3(0, 1, 0), plane: 'XZ', direction: -1 },
 	];
 
-	function getDecadeRotation(decadeKey) {
-		const rotations = {
-			'50s': new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0),
-			'60s': new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
-			'90s': new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2),
-			'10s': new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 2),
-		};
-		return rotations[decadeKey] || rotations['90s'];
-	}
-
 	function buildIcosahedronMeshes(group) {
 		const positions = [];
 		faces.forEach(([a, b, c]) => { positions.push(...vertices[a], ...vertices[b], ...vertices[c]); });
@@ -123,7 +122,7 @@
 		const wireGeo = new THREE.BufferGeometry();
 		wireGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
 		icoWireMat = new THREE.LineBasicMaterial({
-			color: 0xc2a133, transparent: true, opacity: 1.0
+			color: get(accentHex), transparent: true, opacity: 1.0
 		});
 		group.add(new THREE.LineSegments(wireGeo, icoWireMat));
 	}
@@ -159,43 +158,52 @@
 		autoTimer = 0;
 	}
 
-	// Pick the room whose (rotated) normal points most toward the camera.
-	function pickTargetRoom() {
-		let best = -1, bestDot = -Infinity, bestFocus = null;
+	// Choose the room to land on: prefer a face assigned the resolved decade,
+	// and among those the one nearest the current camera (shortest, cleanest arc).
+	function pickDecadeRoom() {
+		const want = $decade;
+		const candidates = [];
 		rectangleComponents.forEach((comp, i) => {
 			const room = comp && comp.getRoom && comp.getRoom();
-			if (!room) return;
-			const f = room.focusTarget();
+			if (room) candidates.push({ i, room, decade: decadeAssignments[i] });
+		});
+		if (!candidates.length) return { index: -1, focus: null };
+		const preferred = candidates.filter(c => c.decade === want);
+		const pool = preferred.length ? preferred : candidates;
+
+		let best = pool[0], bestDot = -Infinity, bestFocus = null;
+		pool.forEach((c) => {
+			const f = c.room.focusTarget();
 			const toCam = camera.position.clone().sub(f.center).normalize();
 			const d = f.normal.dot(toCam);
-			if (d > bestDot) { bestDot = d; best = i; bestFocus = f; }
+			if (d > bestDot) { bestDot = d; best = c; bestFocus = f; }
 		});
-		return { index: best, focus: bestFocus };
+		return { index: best.i, focus: bestFocus };
 	}
 
-	function startZoom() {
-		const picked = pickTargetRoom();
+	function startFly() {
+		const picked = pickDecadeRoom();
 		targetRoomIndex = picked.index;
-		zoomFocus = picked.focus;
-		if (!zoomFocus) { autoPhase = 4; sceneState.set(4); return; }
+		flyFocus = picked.focus;
+		if (!flyFocus) { autoPhase = 3; sceneState.set(4); return; }
 
 		const aspect = window.innerWidth / window.innerHeight;
-		zoomProgress = 0;
-		zoomStartFrustum = frustum;
-		// Fit the room: vertical extent >= height, horizontal >= width.
-		zoomTargetFrustum = Math.max(zoomFocus.height, zoomFocus.width / aspect) * 1.12;
-
-		zoomStartPos.copy(camera.position);
-		// Sit on the room's outward normal, looking straight in.
-		zoomTargetPos.copy(zoomFocus.center).addScaledVector(zoomFocus.normal, 12);
-		zoomStartUp.copy(camera.up);
-		zoomTargetUp.copy(zoomFocus.up);
-		zoomStartLook.set(0, 0, 0);
-		// Look a little way into the room so the parallax reads.
-		zoomTargetLook.copy(zoomFocus.center).addScaledVector(zoomFocus.normal, -zoomFocus.depth * 0.35);
+		flyProgress = 0;
+		flyStartPos.copy(camera.position);
+		flyStartUp.copy(camera.up);
+		flyStartRadius = camera.position.length() || 8;
+		flyStartDir.copy(camera.position).normalize();
+		flyEndDir.copy(flyFocus.normal).normalize();       // camera lands on the +normal side
+		flyEndRadius = 12;
+		flyStartFrustum = frustum;
+		flyEndFrustum = Math.max(flyFocus.height, flyFocus.width / aspect) * 1.12;
+		flyEndUp.copy(flyFocus.up);
+		flyEndLook.copy(flyFocus.center).addScaledVector(flyFocus.normal, -flyFocus.depth * 0.35);
+		flyRot.setFromUnitVectors(flyStartDir, flyEndDir); // orbital sweep of the view direction
 
 		controls.enabled = false;
-		autoPhase = 3;
+		autoPhase = 2;
+		autoTimer = 0;
 	}
 
 	function resetScene() {
@@ -203,9 +211,8 @@
 		autoPhase = 0;
 		autoTimer = 0;
 		currentProjection = 0;
-		rotationProgress = 0;
-		zoomProgress = 0;
-		zoomFocus = null;
+		flyProgress = 0;
+		flyFocus = null;
 		targetRoomIndex = -1;
 		frustum = 10;
 		if (worldGroup) worldGroup.quaternion.identity();
@@ -256,55 +263,42 @@
 			rectangleComponents.forEach(comp => {
 				if (comp) comp.updateProjection(currentProjection);
 			});
-			if (t >= 1) {
-				// Move to quaternion spin phase
-				autoPhase = 2;
-				autoTimer = 0;
-				rotationStart.copy(worldGroup.quaternion);
-				const targetDecade = $decade || '90s';
-				rotationTarget.copy(getDecadeRotation(targetDecade));
-				rotationProgress = 0;
-			}
+			if (t >= 1) startFly(); // → phase 2 (single orbital zoom onto the decade room)
 		}
 
-		// Phase 2: quaternion slerp to decade-aligned rotation
-		if (autoPhase === 2 && worldGroup) {
-			rotationProgress = clamp(rotationProgress + dt * 0.5, 0, 1);
-			const t = easeInOutCubic(rotationProgress);
-			worldGroup.quaternion.slerpQuaternions(rotationStart, rotationTarget, t);
-			if (rotationProgress >= 1) {
-				startZoom(); // → phase 3
-			}
-		}
+		// Phase 2: one smooth orbital zoom — sweep the camera's view direction from
+		// wherever it is round to the decade room's normal while dollying + fitting
+		// the frustum, then spotlight that room.
+		if (autoPhase === 2 && flyFocus) {
+			flyProgress = clamp(flyProgress + dt / FLY_DURATION, 0, 1);
+			const t = easeInOutCubic(flyProgress);
 
-		// Phase 3: dolly the camera into the target room, spotlighting it.
-		if (autoPhase === 3 && zoomFocus) {
-			zoomProgress = clamp(zoomProgress + dt / ZOOM_DURATION, 0, 1);
-			const t = easeInOutCubic(zoomProgress);
-
-			camera.position.lerpVectors(zoomStartPos, zoomTargetPos, t);
-			camera.up.copy(zoomStartUp).lerp(zoomTargetUp, t).normalize();
-			const look = zoomStartLook.clone().lerp(zoomTargetLook, t);
-			frustum = lerp(zoomStartFrustum, zoomTargetFrustum, t);
+			const q = new THREE.Quaternion().slerpQuaternions(IDENTITY_Q, flyRot, t);
+			const dir = flyStartDir.clone().applyQuaternion(q);
+			const radius = lerp(flyStartRadius, flyEndRadius, t);
+			camera.position.copy(dir.multiplyScalar(radius));
+			camera.up.copy(flyStartUp).lerp(flyEndUp, t).normalize();
+			frustum = lerp(flyStartFrustum, flyEndFrustum, t);
 			applyFrustum(frustum);
-			camera.lookAt(look);
+			camera.lookAt(new THREE.Vector3().lerp(flyEndLook, t));
 
-			const fade = 1 - t;
+			// Keep the whole scene up through the early sweep, fade as we close in.
+			const fade = 1 - smoothstep(0.25, 0.95, t);
 			if (icoWireMat) icoWireMat.opacity = fade;
 			if (icoSolidMat) icoSolidMat.opacity = 0.5 * fade;
 			rectangleComponents.forEach((comp, i) => {
 				if (!comp) return;
-				if (i === targetRoomIndex) comp.setLineDim(lerp(1, 0.4, t)); // keep a faint golden frame
+				if (i === targetRoomIndex) comp.setLineDim(lerp(1, 0.35, t)); // faint golden frame
 				else comp.setDim(fade);
 			});
 
-			if (zoomProgress >= 1) {
-				autoPhase = 4;
-				sceneState.set(4); // icosahedron settled → output screen shows
+			if (flyProgress >= 1) {
+				autoPhase = 3;
+				sceneState.set(4); // settled → output screen shows
 			}
 		}
 
-		if (autoPhase < 3) controls.update();
+		if (autoPhase < 2) controls.update();
 		renderer.render(scene, camera);
 	}
 

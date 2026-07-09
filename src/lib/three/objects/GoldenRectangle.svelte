@@ -1,8 +1,18 @@
 <script>
 	import { tick } from 'svelte';
+	import { get } from 'svelte/store';
 	import * as THREE from 'three';
+	import { accentHex } from '$lib/theme';
 	import GoldenRectangleSchematic from './GoldenRectangleSchematic.svelte';
 	import RoomProjection from './RoomProjection.svelte';
+
+	// Live accent recolour of all this pane's line-work.
+	$: recolorAccent($accentHex);
+	function recolorAccent(hex) {
+		[fillMaterial, outlineMaterial, spiralMaterial].forEach(m => m && m.color.setHex(hex));
+		subdivisionMaterials.forEach(({ mat }) => mat && mat.color.setHex(hex));
+		traceLineMaterials.forEach(m => m && m.color.setHex(hex));
+	}
 
 	// Single group — everything lives here and rotates together
 	export let group;
@@ -124,7 +134,7 @@
 		const pointsPerArc = 32;
 
 		spiralMaterial = new THREE.LineBasicMaterial({
-			color: 0xc2a133,
+			color: get(accentHex),
 			transparent: true,
 			opacity: 0
 		});
@@ -169,7 +179,7 @@
 			]);
 
 			const mat = new THREE.LineBasicMaterial({
-				color: 0xc2a133,
+				color: get(accentHex),
 				transparent: true,
 				opacity: 0
 			});
@@ -185,11 +195,11 @@
 		const corners = getRectCorners();
 
 		fillMaterial = new THREE.MeshBasicMaterial({
-			color: 0xc2a133,
+			color: get(accentHex),
 			transparent: true,
-			opacity: 1,
+			opacity: 0,
 			side: THREE.DoubleSide,
-			depthWrite: true
+			depthWrite: false
 		});
 
 		const shape = new THREE.BufferGeometry().setFromPoints([
@@ -199,7 +209,7 @@
 		rectGroup.add(new THREE.Mesh(shape, fillMaterial));
 
 		outlineMaterial = new THREE.LineBasicMaterial({
-			color: 0xc2a133,
+			color: get(accentHex),
 			transparent: true,
 			opacity: 0
 		});
@@ -232,7 +242,7 @@
 			], 3));
 
 			const material = new THREE.LineDashedMaterial({
-				color: 0xc2a133,
+				color: get(accentHex),
 				transparent: true,
 				opacity: 0,
 				dashSize: 0.1,
