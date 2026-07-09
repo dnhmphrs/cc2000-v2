@@ -17,35 +17,12 @@ export const PALETTES = {
 
 export const DEFAULT_PALETTE = 'gold';
 
-// ── Silk background palettes ─────────────────────────────────────────────────
-// Three roles map onto the silk shader: `a` and `b` are the two silk hues it
-// folds between, `sheen` is the drifting highlight. Tuned to read subtly over
-// the #1b1b1b page. Alternates live here — add your own freely.
-export const SILK_PALETTES = {
-	lilac:  { label: 'lilac',  a: '#6a4cc4', b: '#d8809d', sheen: '#faf8f0' }, // original silk
-	// Bold retro-cartoon / web1 picks — strong, saturated, a bit of magic:
-	web1:   { label: 'web1',   a: '#1d3fd6', b: '#ffcf1a', sheen: '#ffffff' }, // electric blue ⇄ yellow
-	comic:  { label: 'comic',  a: '#2a5cff', b: '#ffe14d', sheen: '#ff4d6d' }, // cartoon blue/yellow + pop
-	magic:  { label: 'magic',  a: '#4922b0', b: '#ffd447', sheen: '#57e0ff' }, // violet ⇄ gold, cyan spark
-	sunset: { label: 'sunset', a: '#2438a8', b: '#ff8a3d', sheen: '#ffe36b' }, // deep blue ⇄ orange
-	// Neutral / muted:
-	taupe:  { label: 'taupe',  a: '#262428', b: '#3a3630', sheen: '#6b6152' },
-	slate:  { label: 'slate',  a: '#1d232a', b: '#2c3a44', sheen: '#93b1c6' },
-	sage:   { label: 'sage',   a: '#232a24', b: '#35422f', sheen: '#8fae7f' }
-};
-
-export const DEFAULT_SILK = 'lilac';
-
 // ── Stores ───────────────────────────────────────────────────────────────────
 export const paletteKey = writable(DEFAULT_PALETTE);
 export const palette = derived(paletteKey, (k) => PALETTES[k] || PALETTES[DEFAULT_PALETTE]);
 
 // Accent as a THREE-friendly hex number for the 3D line-work.
 export const accentHex = derived(palette, (p) => p.line);
-
-// Silk on/off + which silk palette. Off by default.
-export const silkOn = writable(false);
-export const silkKey = writable(DEFAULT_SILK);
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 // Accent as normalised rgb floats (for shader / per-frame colour work).
