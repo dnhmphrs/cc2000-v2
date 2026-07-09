@@ -4,6 +4,7 @@
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 	import { sceneState, decade, isPortrait, spiralDone } from '$lib/store/store';
 	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
+	import { assignDecades } from '$lib/data/roomElements';
 	import GoldenRectangle from './objects/GoldenRectangle.svelte';
 
 	let canvasElement;
@@ -12,6 +13,8 @@
 	let clock;
 	let sceneReady = false;
 	let rectangleComponents = [];
+	let icoSolidMat, icoWireMat;
+	let portrait = false;
 
 	// Fade-in: starts when spiralDone fires, runs over FADE_IN_DURATION
 	let canvasVisible = false;
@@ -19,7 +22,7 @@
 	const FADE_IN_DURATION = 5.0; // same as spiral CONDENSE_DURATION — overlap fully
 
 	const PHI = (1 + Math.sqrt(5)) / 2;
-	const FRUSTUM = 10;
+	let frustum = 10;
 
 	let currentProjection = 0;
 	let targetProjection = 0;
@@ -32,10 +35,26 @@
 	let rotationProgress = 0;
 
 	// Auto-animation: driven entirely by spiralDone, no phase changes needed externally
-	// Sequence: fade in (state 0) → project out rectangles (state 1) → quaternion spin (state 2) → done (state 3)
-	let autoPhase = 0;       // 0=idle spinning, 1=project out, 2=quat spin, 3=done
+	// Sequence: idle (0) → project out rectangles (1) → quaternion spin (2)
+	//           → zoom into the target room (3) → done (4)
+	let autoPhase = 0;
 	let autoTimer  = 0;
+	let started = false;
 	const PROJECT_DURATION = 5.0; // seconds for rectangles to project out
+
+	// Zoom-into-room state
+	const ZOOM_DURATION = 2.4;
+	let zoomProgress = 0;
+	let zoomFocus = null;
+	let zoomStartPos = new THREE.Vector3();
+	let zoomTargetPos = new THREE.Vector3();
+	let zoomStartUp = new THREE.Vector3();
+	let zoomTargetUp = new THREE.Vector3();
+	let zoomStartLook = new THREE.Vector3();
+	let zoomTargetLook = new THREE.Vector3();
+	let zoomStartFrustum = 10;
+	let zoomTargetFrustum = 10;
+	let targetRoomIndex = -1;
 
 	export let worldGroup;
 
@@ -65,7 +84,8 @@
 		[10, 11]
 	];
 
-	const decadeAssignments = ['50s', '60s', '90s', '10s', '50s', '60s'];
+	// The four decades assigned randomly across the six faces (filled in onMount).
+	let decadeAssignments = ['50s', '60s', '90s', '10s', '50s', '60s'];
 
 	const rectangleConfigs = [
 		{ indices: [0, 1, 3, 2], axis: new THREE.Vector3(0, 0, 1), plane: 'XY', direction:  1 },
@@ -92,32 +112,118 @@
 		const solidGeo = new THREE.BufferGeometry();
 		solidGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
 		solidGeo.computeVertexNormals();
-		group.add(new THREE.Mesh(solidGeo, new THREE.MeshBasicMaterial({
+		icoSolidMat = new THREE.MeshBasicMaterial({
 			color: 0x1b1b1b, transparent: true, opacity: 0.5,
 			side: THREE.DoubleSide, depthWrite: false
-		})));
+		});
+		group.add(new THREE.Mesh(solidGeo, icoSolidMat));
 
 		const edgePositions = [];
 		edges.forEach(([a, b]) => { edgePositions.push(...vertices[a], ...vertices[b]); });
 		const wireGeo = new THREE.BufferGeometry();
 		wireGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
-		group.add(new THREE.LineSegments(wireGeo, new THREE.LineBasicMaterial({
+		icoWireMat = new THREE.LineBasicMaterial({
 			color: 0xc2a133, transparent: true, opacity: 1.0
-		})));
+		});
+		group.add(new THREE.LineSegments(wireGeo, icoWireMat));
 	}
 
 	let unsubSpiralDone;
+	let unsubSceneState;
+
+	function applyFrustum(fr) {
+		const aspect = window.innerWidth / window.innerHeight;
+		camera.left   = -fr * aspect / 2;
+		camera.right  =  fr * aspect / 2;
+		camera.top    =  fr / 2;
+		camera.bottom = -fr / 2;
+		camera.updateProjectionMatrix();
+	}
 
 	function handleResize() {
 		if (!camera || !renderer) return;
-		const aspect = window.innerWidth / window.innerHeight;
-		isPortrait.set(window.innerHeight > window.innerWidth);
-		camera.left   = -FRUSTUM * aspect / 2;
-		camera.right  =  FRUSTUM * aspect / 2;
-		camera.top    =  FRUSTUM / 2;
-		camera.bottom = -FRUSTUM / 2;
-		camera.updateProjectionMatrix();
+		const p = window.innerHeight > window.innerWidth;
+		isPortrait.set(p);
+		if (p !== portrait) {
+			portrait = p;
+			rectangleComponents.forEach(comp => { if (comp) comp.setPortrait(p); });
+		}
+		applyFrustum(frustum);
 		renderer.setSize(window.innerWidth, window.innerHeight);
+	}
+
+	function startSequence() {
+		if (started) return;
+		started = true;
+		autoPhase = 1;
+		autoTimer = 0;
+	}
+
+	// Pick the room whose (rotated) normal points most toward the camera.
+	function pickTargetRoom() {
+		let best = -1, bestDot = -Infinity, bestFocus = null;
+		rectangleComponents.forEach((comp, i) => {
+			const room = comp && comp.getRoom && comp.getRoom();
+			if (!room) return;
+			const f = room.focusTarget();
+			const toCam = camera.position.clone().sub(f.center).normalize();
+			const d = f.normal.dot(toCam);
+			if (d > bestDot) { bestDot = d; best = i; bestFocus = f; }
+		});
+		return { index: best, focus: bestFocus };
+	}
+
+	function startZoom() {
+		const picked = pickTargetRoom();
+		targetRoomIndex = picked.index;
+		zoomFocus = picked.focus;
+		if (!zoomFocus) { autoPhase = 4; sceneState.set(4); return; }
+
+		const aspect = window.innerWidth / window.innerHeight;
+		zoomProgress = 0;
+		zoomStartFrustum = frustum;
+		// Fit the room: vertical extent >= height, horizontal >= width.
+		zoomTargetFrustum = Math.max(zoomFocus.height, zoomFocus.width / aspect) * 1.12;
+
+		zoomStartPos.copy(camera.position);
+		// Sit on the room's outward normal, looking straight in.
+		zoomTargetPos.copy(zoomFocus.center).addScaledVector(zoomFocus.normal, 12);
+		zoomStartUp.copy(camera.up);
+		zoomTargetUp.copy(zoomFocus.up);
+		zoomStartLook.set(0, 0, 0);
+		// Look a little way into the room so the parallax reads.
+		zoomTargetLook.copy(zoomFocus.center).addScaledVector(zoomFocus.normal, -zoomFocus.depth * 0.35);
+
+		controls.enabled = false;
+		autoPhase = 3;
+	}
+
+	function resetScene() {
+		started = false;
+		autoPhase = 0;
+		autoTimer = 0;
+		currentProjection = 0;
+		rotationProgress = 0;
+		zoomProgress = 0;
+		zoomFocus = null;
+		targetRoomIndex = -1;
+		frustum = 10;
+		if (worldGroup) worldGroup.quaternion.identity();
+		if (camera) {
+			camera.position.set(5, 4, 5);
+			camera.up.set(0, 1, 0);
+			camera.lookAt(0, 0, 0);
+			applyFrustum(frustum);
+		}
+		if (controls) { controls.enabled = true; controls.target.set(0, 0, 0); }
+		if (icoWireMat) icoWireMat.opacity = 1.0;
+		if (icoSolidMat) icoSolidMat.opacity = 0.5;
+		rectangleComponents.forEach(comp => {
+			if (!comp) return;
+			comp.setDim(1);
+			comp.setLineDim(1);
+			comp.updateProjection(0);
+		});
 	}
 
 	function animate() {
@@ -167,12 +273,38 @@
 			const t = easeInOutCubic(rotationProgress);
 			worldGroup.quaternion.slerpQuaternions(rotationStart, rotationTarget, t);
 			if (rotationProgress >= 1) {
-				autoPhase = 3;
-				sceneState.set(4); // signal downstream that icosahedron is settled
+				startZoom(); // → phase 3
 			}
 		}
 
-		controls.update();
+		// Phase 3: dolly the camera into the target room, spotlighting it.
+		if (autoPhase === 3 && zoomFocus) {
+			zoomProgress = clamp(zoomProgress + dt / ZOOM_DURATION, 0, 1);
+			const t = easeInOutCubic(zoomProgress);
+
+			camera.position.lerpVectors(zoomStartPos, zoomTargetPos, t);
+			camera.up.copy(zoomStartUp).lerp(zoomTargetUp, t).normalize();
+			const look = zoomStartLook.clone().lerp(zoomTargetLook, t);
+			frustum = lerp(zoomStartFrustum, zoomTargetFrustum, t);
+			applyFrustum(frustum);
+			camera.lookAt(look);
+
+			const fade = 1 - t;
+			if (icoWireMat) icoWireMat.opacity = fade;
+			if (icoSolidMat) icoSolidMat.opacity = 0.5 * fade;
+			rectangleComponents.forEach((comp, i) => {
+				if (!comp) return;
+				if (i === targetRoomIndex) comp.setLineDim(lerp(1, 0.4, t)); // keep a faint golden frame
+				else comp.setDim(fade);
+			});
+
+			if (zoomProgress >= 1) {
+				autoPhase = 4;
+				sceneState.set(4); // icosahedron settled → output screen shows
+			}
+		}
+
+		if (autoPhase < 3) controls.update();
 		renderer.render(scene, camera);
 	}
 
@@ -181,11 +313,12 @@
 		clock = new THREE.Clock();
 
 		const aspect = window.innerWidth / window.innerHeight;
-		isPortrait.set(window.innerHeight > window.innerWidth);
+		portrait = window.innerHeight > window.innerWidth;
+		isPortrait.set(portrait);
 
 		camera = new THREE.OrthographicCamera(
-			-FRUSTUM * aspect / 2, FRUSTUM * aspect / 2,
-			FRUSTUM / 2, -FRUSTUM / 2, 0.1, 100
+			-frustum * aspect / 2, frustum * aspect / 2,
+			frustum / 2, -frustum / 2, 0.1, 100
 		);
 		camera.position.set(5, 4, 5);
 		camera.lookAt(0, 0, 0);
@@ -194,6 +327,10 @@
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 		renderer.setClearColor(0x1b1b1b, 0);
+		renderer.outputEncoding = THREE.sRGBEncoding;
+
+		// Assign the four decades randomly across the six faces (every decade present).
+		decadeAssignments = assignDecades(rectangleConfigs.length);
 
 		controls = new OrbitControls(camera, canvasElement);
 		controls.enableDamping = true;
@@ -215,8 +352,14 @@
 			if (done && !canvasVisible) {
 				canvasVisible = true;
 				// Wait a beat (half a second) then start projecting rectangles
-				setTimeout(() => { autoPhase = 1; autoTimer = 0; }, 500);
+				setTimeout(startSequence, 500);
 			}
+		});
+
+		// Reset on restart; re-run the sequence on subsequent calculations.
+		unsubSceneState = sceneState.subscribe(s => {
+			if (s === 0) resetScene();
+			else if (s >= 1 && canvasVisible && !started) setTimeout(startSequence, 300);
 		});
 
 		sceneReady = true;
@@ -233,6 +376,7 @@
 	onDestroy(() => {
 		if (typeof window === 'undefined') return;
 		if (unsubSpiralDone) unsubSpiralDone();
+		if (unsubSceneState) unsubSceneState();
 		if (animationFrameId) cancelAnimationFrame(animationFrameId);
 		window.removeEventListener('resize', handleResize);
 		rectangleComponents.forEach(comp => { if (comp) comp.dispose(); });
@@ -251,6 +395,7 @@
 			{vertices}
 			indices={config.indices}
 			decadeKey={decadeAssignments[i]}
+			{portrait}
 		/>
 	{/each}
 {/if}
