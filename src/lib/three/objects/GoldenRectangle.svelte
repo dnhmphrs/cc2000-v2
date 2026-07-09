@@ -22,8 +22,14 @@
 	export let indices;
 	export let decadeKey = null;
 	export let portrait = false;
+	export let renderer = null;
 
 	const PHI = (1 + Math.sqrt(5)) / 2;
+
+	// How far the pane (and its room) travels out from the icosahedron centre at
+	// full projection, and how deep the room's parallax runs behind the frame.
+	const PANE_REACH = 6.4;
+	const ROOM_DEPTH = 3.0;
 
 	let rectangleGroup;
 	let traceLines = [];
@@ -297,8 +303,8 @@
 		if (!rectangleGroup) return;
 		lastProjection = projection;
 
-		const paneDist = projection * 3.14;
-		const schematicDist = projection * 7;
+		const paneDist = projection * PANE_REACH;
+		const schematicDist = projection * (PANE_REACH + 3.5);
 
 		rectangleGroup.position.copy(axis.clone().multiplyScalar(paneDist * direction));
 
@@ -385,5 +391,8 @@
 		{direction}
 		{decadeKey}
 		{portrait}
+		{renderer}
+		paneReach={PANE_REACH}
+		maxDepth={ROOM_DEPTH}
 	/>
 {/if}

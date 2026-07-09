@@ -4,7 +4,7 @@
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 	import { sceneState, decade, isPortrait, spiralDone } from '$lib/store/store';
 	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
-	import { assignDecades } from '$lib/data/roomElements';
+	import { assignDecades, elementUrl } from '$lib/data/roomElements';
 	import { accentHex } from '$lib/theme';
 	import { get } from 'svelte/store';
 	import GoldenRectangle from './objects/GoldenRectangle.svelte';
@@ -21,13 +21,15 @@
 	let icoSolidMat, icoWireMat;
 	let portrait = false;
 
-	// Fade-in: starts when spiralDone fires, runs over FADE_IN_DURATION
-	let canvasVisible = false;
-	let fadeStartTime = null;
-	const FADE_IN_DURATION = 5.0; // same as spiral CONDENSE_DURATION — overlap fully
+	// Canvas fades in at mount (so the floating elements read from the start);
+	// the icosahedron wireframe itself reveals later, when spiralDone fires.
+	let canvasFadeStart = null;
+	const CANVAS_FADE = 1.6;
+	let icoReveal = 0;          // 0 → 1 as the wireframe fades in on spiralDone
+	let icoRevealing = false;
 
 	const PHI = (1 + Math.sqrt(5)) / 2;
-	let frustum = 10;
+	let frustum = 13;
 
 	let currentProjection = 0;
 	let targetProjection = 0;
@@ -59,6 +61,15 @@
 	let flyStartFrustum = 10;
 	let flyEndFrustum = 10;
 	let targetRoomIndex = -1;
+
+	// Camera path: starts face-on (flat, aligned with the golden spiral), then
+	// orbits to a 3D angle as the panes project, then flies to the decade room.
+	const FACE_ON = new THREE.Vector3(0, 0, 12);
+	const ISO_POS = new THREE.Vector3(5, 4, 8);
+
+	// Ambient elements drifting from the very start (the "floating in the vibe" feel).
+	let floatSprites = [];
+	let floatOpacity = 0;
 
 	const smoothstep = (a, b, x) => {
 		const t = clamp((x - a) / (b - a), 0, 1);
@@ -112,7 +123,7 @@
 		solidGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
 		solidGeo.computeVertexNormals();
 		icoSolidMat = new THREE.MeshBasicMaterial({
-			color: 0x1b1b1b, transparent: true, opacity: 0.5,
+			color: 0x1b1b1b, transparent: true, opacity: 0,
 			side: THREE.DoubleSide, depthWrite: false
 		});
 		group.add(new THREE.Mesh(solidGeo, icoSolidMat));
@@ -122,9 +133,67 @@
 		const wireGeo = new THREE.BufferGeometry();
 		wireGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
 		icoWireMat = new THREE.LineBasicMaterial({
-			color: get(accentHex), transparent: true, opacity: 1.0
+			color: get(accentHex), transparent: true, opacity: 0
 		});
 		group.add(new THREE.LineSegments(wireGeo, icoWireMat));
+	}
+
+	// Small room-element sprites drifting in view space for ambient "float" vibe.
+	function buildFloatingElements() {
+		const loader = new THREE.TextureLoader();
+		const pool = [];
+		['50s', '60s', '90s', '10s'].forEach(d => {
+			['clock', 'poster', 'screen'].forEach(k => pool.push([d, k]));
+		});
+		const N = 11;
+		for (let i = 0; i < N; i++) {
+			const [d, k] = pool[Math.floor(Math.random() * pool.length)];
+			const mat = new THREE.MeshBasicMaterial({
+				transparent: true, opacity: 0, depthTest: false, depthWrite: false, side: THREE.DoubleSide
+			});
+			const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+			// spread across the field, biased away from dead centre
+			const ang = Math.random() * Math.PI * 2;
+			const rad = 3.5 + Math.random() * 5.5;
+			mesh.position.set(Math.cos(ang) * rad, (Math.random() - 0.5) * 9, -2 - Math.random() * 6);
+			mesh.renderOrder = -5; // behind the icosahedron/rooms
+			mesh.userData = {
+				vel: new THREE.Vector3((Math.random() - 0.5) * 0.25, (Math.random() - 0.5) * 0.25, 0),
+				spin: (Math.random() - 0.5) * 0.3,
+				base: 0.22 + Math.random() * 0.18
+			};
+			scene.add(mesh);
+			const entry = { mesh, mat };
+			floatSprites.push(entry);
+			loader.load(elementUrl(d, k), (tex) => {
+				tex.encoding = THREE.sRGBEncoding;
+				tex.generateMipmaps = false;
+				tex.minFilter = THREE.LinearFilter;
+				const a = (tex.image?.width || 1) / (tex.image?.height || 1);
+				const s = 1.4 + Math.random() * 1.1;
+				mesh.scale.set(s * a, s, 1);
+				mat.map = tex; mat.needsUpdate = true;
+				if (renderer) { try { renderer.initTexture(tex); } catch (e) { /* ignore */ } }
+			});
+		}
+	}
+
+	function updateFloating(dt) {
+		if (!floatSprites.length) return;
+		const bx = frustum * (window.innerWidth / window.innerHeight) / 2 + 3;
+		const by = frustum / 2 + 3;
+		floatSprites.forEach(({ mesh, mat }) => {
+			const u = mesh.userData;
+			mesh.position.addScaledVector(u.vel, dt);
+			mesh.rotation.z += u.spin * dt;
+			// wrap around the visible field so they keep drifting
+			if (mesh.position.x >  bx) mesh.position.x = -bx;
+			if (mesh.position.x < -bx) mesh.position.x =  bx;
+			if (mesh.position.y >  by) mesh.position.y = -by;
+			if (mesh.position.y < -by) mesh.position.y =  by;
+			mat.opacity = u.base * floatOpacity;
+			mesh.visible = mat.map != null && floatOpacity > 0.01;
+		});
 	}
 
 	let unsubSpiralDone;
@@ -146,14 +215,22 @@
 		if (p !== portrait) {
 			portrait = p;
 			rectangleComponents.forEach(comp => { if (comp) comp.setPortrait(p); });
+			// Keep the face-on hero rectangle landscape/portrait to match the screen.
+			if (worldGroup && autoPhase === 0) worldGroup.rotation.z = p ? 0 : Math.PI / 2;
 		}
 		applyFrustum(frustum);
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 
+	function beginReveal(delay) {
+		icoRevealing = true; // fade the wireframe in (aligned with the spiral)
+		setTimeout(startSequence, delay);
+	}
+
 	function startSequence() {
 		if (started) return;
 		started = true;
+		icoRevealing = true;
 		autoPhase = 1;
 		autoTimer = 0;
 	}
@@ -214,17 +291,22 @@
 		flyProgress = 0;
 		flyFocus = null;
 		targetRoomIndex = -1;
-		frustum = 10;
-		if (worldGroup) worldGroup.quaternion.identity();
+		frustum = 13;
+		icoReveal = 0;
+		icoRevealing = false;
+		if (worldGroup) {
+			worldGroup.quaternion.identity();
+			worldGroup.rotation.z = portrait ? 0 : Math.PI / 2;
+		}
 		if (camera) {
-			camera.position.set(5, 4, 5);
+			camera.position.copy(FACE_ON);
 			camera.up.set(0, 1, 0);
 			camera.lookAt(0, 0, 0);
 			applyFrustum(frustum);
 		}
-		if (controls) { controls.enabled = true; controls.target.set(0, 0, 0); }
-		if (icoWireMat) icoWireMat.opacity = 1.0;
-		if (icoSolidMat) icoSolidMat.opacity = 0.5;
+		if (controls) { controls.enabled = false; controls.target.set(0, 0, 0); }
+		if (icoWireMat) icoWireMat.opacity = 0;
+		if (icoSolidMat) icoSolidMat.opacity = 0;
 		rectangleComponents.forEach(comp => {
 			if (!comp) return;
 			comp.setDim(1);
@@ -240,22 +322,24 @@
 		const dt = clock.getDelta();
 		animTime += dt;
 
-		// ── Canvas fade-in ──────────────────────────────────────────────────
-		if (canvasVisible) {
-			if (fadeStartTime === null) fadeStartTime = (performance.now() / 1000) + 1.0;
-			const elapsed = performance.now() / 1000 - fadeStartTime;
-			const opacity = Math.min(elapsed / FADE_IN_DURATION, 1);
-			canvasElement.style.opacity = opacity.toFixed(4);
-		}
+		// ── Canvas fade-in (from mount) ─────────────────────────────────────
+		const sinceMount = canvasFadeStart != null ? (performance.now() / 1000 - canvasFadeStart) : 0;
+		const canvasRamp = clamp(sinceMount / CANVAS_FADE, 0, 1);
+		canvasElement.style.opacity = canvasRamp.toFixed(4);
 
-		// ── Idle slow spin (always while autoPhase === 0) ───────────────────
-		if (autoPhase === 0 && worldGroup) {
-			worldGroup.rotation.y += dt * 0.15;
-			worldGroup.rotation.x += dt * 0.07;
-		}
+		// ── Icosahedron wireframe reveal (on spiralDone) ────────────────────
+		if (icoRevealing) icoReveal = clamp(icoReveal + dt / 2.0, 0, 1);
+		if (icoWireMat) icoWireMat.opacity = icoReveal;
+		if (icoSolidMat) icoSolidMat.opacity = 0.5 * icoReveal;
 
-		// ── Auto-sequence triggered by spiralDone ───────────────────────────
-		// Phase 1: project rectangles out from 0 → 1 over PROJECT_DURATION
+		// ── Floating ambient elements ───────────────────────────────────────
+		let fOut = 1;
+		if (autoPhase >= 2) fOut = 0;
+		else if (autoPhase === 1) fOut = 1 - smoothstep(0, 0.5, currentProjection);
+		floatOpacity = canvasRamp * fOut;
+		updateFloating(dt);
+
+		// ── Phase 1: project rectangles out + orbit the camera off face-on ──
 		if (autoPhase === 1) {
 			autoTimer += dt;
 			const t = Math.min(autoTimer / PROJECT_DURATION, 2.5);
@@ -263,6 +347,11 @@
 			rectangleComponents.forEach(comp => {
 				if (comp) comp.updateProjection(currentProjection);
 			});
+			// Swing from the flat face-on view to a 3D angle as the panes emerge.
+			const camT = easeInOutCubic(clamp(autoTimer / PROJECT_DURATION, 0, 1));
+			camera.position.lerpVectors(FACE_ON, ISO_POS, camT);
+			camera.up.set(0, 1, 0);
+			camera.lookAt(0, 0, 0);
 			if (t >= 1) startFly(); // → phase 2 (single orbital zoom onto the decade room)
 		}
 
@@ -298,7 +387,7 @@
 			}
 		}
 
-		if (autoPhase < 2) controls.update();
+		if (controls && controls.enabled) controls.update();
 		renderer.render(scene, camera);
 	}
 
@@ -314,7 +403,10 @@
 			-frustum * aspect / 2, frustum * aspect / 2,
 			frustum / 2, -frustum / 2, 0.1, 100
 		);
-		camera.position.set(5, 4, 5);
+		// Start face-on (flat), so the front golden rectangle lines up with the
+		// initial golden spiral; the sequence orbits away from here.
+		camera.position.copy(FACE_ON);
+		camera.up.set(0, 1, 0);
 		camera.lookAt(0, 0, 0);
 
 		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true, alpha: true });
@@ -331,29 +423,33 @@
 		controls.dampingFactor = 0.05;
 		controls.enableZoom = true;
 		controls.enablePan = false;
+		controls.enabled = false; // the intro drives the camera; enabled after settle if desired
 
 		worldGroup = new THREE.Group();
 		scene.add(worldGroup);
+		// Orient so the +Z golden rectangle reads landscape (long edge horizontal)
+		// on wide screens / portrait on tall screens — matching the spiral.
+		worldGroup.rotation.z = portrait ? 0 : Math.PI / 2;
 		buildIcosahedronMeshes(worldGroup);
+		buildFloatingElements();
 
 		// Rectangles start fully collapsed (projection = 0)
 		currentProjection = 0;
 		targetProjection  = 0;
 
-		// Start invisible; begin fade-in and animation when spiralDone fires
+		// Canvas fades in from mount (floating elements read immediately); the
+		// wireframe + sequence reveal when spiralDone fires.
 		canvasElement.style.opacity = '0';
+		canvasFadeStart = performance.now() / 1000;
+
 		unsubSpiralDone = spiralDone.subscribe(done => {
-			if (done && !canvasVisible) {
-				canvasVisible = true;
-				// Wait a beat (half a second) then start projecting rectangles
-				setTimeout(startSequence, 500);
-			}
+			if (done) beginReveal(500);
 		});
 
 		// Reset on restart; re-run the sequence on subsequent calculations.
 		unsubSceneState = sceneState.subscribe(s => {
 			if (s === 0) resetScene();
-			else if (s >= 1 && canvasVisible && !started) setTimeout(startSequence, 300);
+			else if (s >= 1 && !started) beginReveal(300);
 		});
 
 		sceneReady = true;
@@ -374,6 +470,12 @@
 		if (animationFrameId) cancelAnimationFrame(animationFrameId);
 		window.removeEventListener('resize', handleResize);
 		rectangleComponents.forEach(comp => { if (comp) comp.dispose(); });
+		floatSprites.forEach(({ mesh, mat }) => {
+			scene.remove(mesh);
+			mesh.geometry.dispose();
+			if (mat.map) mat.map.dispose();
+			mat.dispose();
+		});
 		if (renderer) renderer.dispose();
 		if (controls) controls.dispose();
 	});
@@ -390,6 +492,7 @@
 			indices={config.indices}
 			decadeKey={decadeAssignments[i]}
 			{portrait}
+			{renderer}
 		/>
 	{/each}
 {/if}
