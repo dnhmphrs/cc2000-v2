@@ -5,6 +5,7 @@
 	import Intro from '$lib/components/screens/Intro.svelte';
 	import Calculate from '$lib/components/screens/Calculate.svelte';
 	import Transition from '$lib/components/screens/Transition.svelte';
+	import Output from '$lib/components/screens/Output.svelte';
 </script>
 
 <div class="bg" />
@@ -18,8 +19,10 @@
 			<Intro />
 		{:else if $phase === 'calculate'}
 			<Calculate />
+		{:else if $phase === 'output'}
+			<Output />
 		{:else}
-			<!-- transition, output, or any future phase: keep Transition UI up -->
+			<!-- transition (and any future in-between phase): keep Transition UI up -->
 			<Transition />
 		{/if}
 	{/key}

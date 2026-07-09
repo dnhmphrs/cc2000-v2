@@ -2,6 +2,7 @@
 	import { tick } from 'svelte';
 	import * as THREE from 'three';
 	import GoldenRectangleSchematic from './GoldenRectangleSchematic.svelte';
+	import RoomProjection from './RoomProjection.svelte';
 
 	// Single group — everything lives here and rotates together
 	export let group;
@@ -10,15 +11,20 @@
 	export let vertices;
 	export let indices;
 	export let decadeKey = null;
+	export let portrait = false;
 
 	const PHI = (1 + Math.sqrt(5)) / 2;
 
 	let rectangleGroup;
 	let traceLines = [];
 	let schematicComponent;
+	let roomComponent;
 	let basis = null;
 	let baseOpacity = 1.0;
 	let schematicBaseOpacity = 1.0;
+	let dimFactor = 1;   // fades everything (line-work + room)
+	let lineDim = 1;     // fades only the golden line-work
+	let lastProjection = 0;
 
 	let fillMaterial;
 	let outlineMaterial;
@@ -245,16 +251,17 @@
 	}
 
 	function updateOpacities(t) {
+		const d = dimFactor * lineDim;
 		if (fillMaterial) fillMaterial.opacity = 0;
-		if (outlineMaterial) outlineMaterial.opacity = t * baseOpacity;
-		if (spiralMaterial) spiralMaterial.opacity = t * baseOpacity;
+		if (outlineMaterial) outlineMaterial.opacity = t * baseOpacity * d;
+		if (spiralMaterial) spiralMaterial.opacity = t * baseOpacity * d;
 
 		subdivisionMaterials.forEach(({ mat }) => {
-			mat.opacity = t * baseOpacity * 0.5;
+			mat.opacity = t * baseOpacity * 0.5 * d;
 		});
 
 		traceLineMaterials.forEach(mat => {
-			mat.opacity = t * baseOpacity * 0.5;
+			mat.opacity = t * baseOpacity * 0.5 * d;
 		});
 	}
 
@@ -271,10 +278,14 @@
 		if (schematicComponent) {
 			schematicComponent.init();
 		}
+		if (roomComponent) {
+			roomComponent.init();
+		}
 	}
 
 	export function updateProjection(projection) {
 		if (!rectangleGroup) return;
+		lastProjection = projection;
 
 		const paneDist = projection * 3.14;
 		const schematicDist = projection * 7;
@@ -298,6 +309,31 @@
 		if (schematicComponent && schematicComponent.updateProjection) {
 			schematicComponent.updateProjection(projection, schematicDist);
 		}
+		if (roomComponent && roomComponent.updateProjection) {
+			roomComponent.updateProjection(projection);
+		}
+	}
+
+	// Fade this pane's line-work and room (used to hide non-target panes on zoom).
+	export function setDim(f) {
+		dimFactor = f;
+		updateOpacities(lastProjection);
+		if (roomComponent) roomComponent.setDim(f);
+	}
+
+	// Fade only the golden line-work, keeping the room (used on the zoom target).
+	export function setLineDim(f) {
+		lineDim = f;
+		updateOpacities(lastProjection);
+	}
+
+	export function setPortrait(p) {
+		portrait = p;
+		if (roomComponent) roomComponent.setPortrait(p);
+	}
+
+	export function getRoom() {
+		return roomComponent;
 	}
 
 	export function dispose() {
@@ -316,6 +352,9 @@
 		if (schematicComponent && schematicComponent.dispose) {
 			schematicComponent.dispose();
 		}
+		if (roomComponent && roomComponent.dispose) {
+			roomComponent.dispose();
+		}
 	}
 </script>
 
@@ -327,5 +366,14 @@
 		{axis}
 		{direction}
 		baseOpacity={schematicBaseOpacity}
+	/>
+	<RoomProjection
+		bind:this={roomComponent}
+		{group}
+		{basis}
+		{axis}
+		{direction}
+		{decadeKey}
+		{portrait}
 	/>
 {/if}
