@@ -56,12 +56,14 @@ const FILES = {
 // x/y anchor the CENTRE of each element. Numbers are intentionally easy to
 // tweak — they are the main knobs for how each room reads.
 export const LAYERS = [
-	{ key: 'bg',     depth: 1.00, cover: true,               opacity: 1.0 },
-	{ key: 'clock',  depth: 0.88, x:  0.42, y:  0.52, width: 0.13, opacity: 1.0 },
-	{ key: 'poster', depth: 0.84, x: -0.52, y:  0.42, width: 0.26, opacity: 1.0 },
-	{ key: 'desk',   depth: 0.44, x:  0.00, y: -0.34, width: 1.02, opacity: 1.0 },
-	{ key: 'screen', depth: 0.34, x:  0.03, y: -0.05, width: 0.34, opacity: 1.0 },
-	{ key: 'bed',    depth: 0.12, x:  0.00, y: -0.74, width: 1.10, opacity: 1.0 }
+	{ key: 'bg',     depth: 1.00, cover: true,                     opacity: 1.0 },
+	{ key: 'poster', depth: 0.92, x: -0.52, y:  0.42, width: 0.26, opacity: 1.0 },
+	{ key: 'clock',  depth: 0.90, x:  0.42, y:  0.52, width: 0.13, opacity: 1.0 },
+	// screen sits ON the desk → slightly BEHIND the desk plane so the desk's
+	// front edge occludes its base (correct "TV on a desk" read).
+	{ key: 'screen', depth: 0.60, x:  0.03, y: -0.02, width: 0.34, opacity: 1.0 },
+	{ key: 'desk',   depth: 0.48, x:  0.00, y: -0.34, width: 1.02, opacity: 1.0 },
+	{ key: 'bed',    depth: 0.16, x:  0.00, y: -0.74, width: 1.10, opacity: 1.0 }
 ];
 
 export function elementUrl(decade, key) {

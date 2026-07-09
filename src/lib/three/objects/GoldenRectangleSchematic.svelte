@@ -1,5 +1,10 @@
 <script>
+	import { get } from 'svelte/store';
 	import * as THREE from 'three';
+	import { accentHex } from '$lib/theme';
+
+	// Live accent recolour of the schematic line-work.
+	$: { const hex = $accentHex; materials.forEach(({ mat }) => mat && mat.color.setHex(hex)); }
 
 	// Same group as everything else — rotates together
 	export let group;
@@ -23,14 +28,14 @@
 		const geo = new THREE.BufferGeometry().setFromPoints(points);
 		const mat = dashed
 			? new THREE.LineDashedMaterial({
-				color: 0xc2a133,
+				color: get(accentHex),
 				transparent: true,
 				opacity: 0,
 				dashSize: 0.08,
 				gapSize: 0.04
 			})
 			: new THREE.LineBasicMaterial({
-				color: 0xc2a133,
+				color: get(accentHex),
 				transparent: true,
 				opacity: 0
 			});

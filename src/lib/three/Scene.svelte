@@ -2,6 +2,17 @@
 	import { onMount, onDestroy } from 'svelte';
 	import * as THREE from 'three';
 	import { phase, spiralDone } from '$lib/store/store';
+	import { accentHex } from '$lib/theme';
+
+	// Normalised accent direction (max channel = 1) so the per-frame brightness
+	// envelope is preserved across palettes.
+	let aR = 1, aG = 0.76, aB = 0.2;
+	$: {
+		const h = $accentHex;
+		const r = ((h >> 16) & 255) / 255, g = ((h >> 8) & 255) / 255, b = (h & 255) / 255;
+		const m = Math.max(r, g, b) || 1;
+		aR = r / m; aG = g / m; aB = b / m;
+	}
 
 	let canvas;
 	let renderer, scene, camera;
@@ -20,6 +31,12 @@
 	const CYCLE = 24;
 	const NUM_LAYERS = 48;
 	const SQUARES_PER_LAYER = 24;
+
+	// Self-similar golden spiral: a log spiral scales by φ every quarter turn, so
+	// over one φ⁴ zoom cycle it must rotate a full 2π. Coupling rotation to the
+	// zoom this way makes every layered copy land on the *same* spiral curve, so
+	// the field reads as one clean spiral zooming into itself at constant scale.
+	const SPIRAL_TURN = -2 * Math.PI; // sign sets winding direction
 
 	// 0 = normal, 1 = condensing + fading, 2 = done
 	let condenseState = 0;
@@ -151,7 +168,7 @@
 				const life = (baseT + n / NUM_LAYERS) % 1;
 				const zoom = PHI4 ** life;
 				const fade = Math.min(life / 0.15, (1 - life) / 0.5, 1);
-				const rot  = life * (Math.PI / PHI);
+				const rot  = life * SPIRAL_TURN;
 				const cos  = Math.cos(rot);
 				const sin  = Math.sin(rot);
 				const ownPX = -(CX * cos - CY * sin) * zoom;
@@ -164,7 +181,7 @@
 					mesh.position.y = ownPY;
 					mat.opacity = fade * 0.5;
 					const b = fade * 0.5;
-					mat.color.setRGB(b, b * 0.76, b * 0.20);
+					mat.color.setRGB(b * aR, b * aG, b * aB);
 				} else {
 					// All layers converge inward toward the spiral's own limit point (life→0).
 					// Stagger: layers with larger life values (further out) start moving first,
@@ -188,7 +205,7 @@
 					// Opacity: preserve own natural fade envelope, then globalFade takes it out
 					mat.opacity = fade * 0.5 * globalFade;
 					const b = fade * 0.5;
-					mat.color.setRGB(b, b * 0.76, b * 0.20);
+					mat.color.setRGB(b * aR, b * aG, b * aB);
 				}
 			}
 

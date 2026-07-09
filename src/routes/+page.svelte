@@ -2,6 +2,7 @@
 	import { phase } from '$lib/store/store';
 	import Scene from '$lib/three/Scene.svelte';
 	import SceneIcosahedron from '$lib/three/Scene-icosahedron.svelte';
+	import SilkBackground from '$lib/three/SilkBackground.svelte';
 	import Intro from '$lib/components/screens/Intro.svelte';
 	import Calculate from '$lib/components/screens/Calculate.svelte';
 	import Transition from '$lib/components/screens/Transition.svelte';
@@ -9,6 +10,7 @@
 </script>
 
 <div class="bg" />
+<SilkBackground />
 
 <Scene />
 <SceneIcosahedron />

@@ -45,15 +45,18 @@
 
 		const loader = new THREE.TextureLoader();
 		LAYERS.forEach((cfg) => {
+			// Opaque + alphaTest: hard cutout that writes depth, so layers occlude
+			// each other, the neighbouring rooms and the icosahedron correctly.
 			const mat = new THREE.MeshBasicMaterial({
-				transparent: true,
-				opacity: 0,
 				side: THREE.DoubleSide,
-				depthWrite: false,
-				depthTest: false
+				alphaTest: 0.5,
+				transparent: false,
+				depthTest: true,
+				depthWrite: true
 			});
 			const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
-			mesh.renderOrder = Math.round((1 - cfg.depth) * 10); // frame-side draws last
+			mesh.renderOrder = Math.round((1 - cfg.depth) * 20); // front layers draw later
+			mesh.visible = false;
 			roomGroup.add(mesh);
 
 			const entry = { mesh, mat, cfg, aspect: 1 };
@@ -99,6 +102,7 @@
 		lastProjection = projection;
 		if (!roomGroup) return;
 		const n = normal();
+		const visible = projection > 0.02;
 
 		// Ride outward with the pane.
 		roomGroup.position.copy(n.clone().multiplyScalar(projection * paneReach));
@@ -107,7 +111,19 @@
 			const back = n.clone().multiplyScalar(-entry.cfg.depth * maxDepth * projection);
 			const pos = basis.center.clone().add(entry.inPlane || new THREE.Vector3()).add(back);
 			entry.mesh.position.copy(pos);
-			entry.mat.opacity = projection * (entry.cfg.opacity ?? 1) * dimFactor;
+			entry.mesh.visible = visible && entry.mat.map != null && dimFactor > 0.02;
+			// When dimmed (zoom spotlight) fall back to a blended fade; otherwise the
+			// crisp depth-writing cutout. Toggling alphaTest recompiles the shader,
+			// so only flip material state when the mode actually changes.
+			const blended = dimFactor < 1;
+			if (blended !== entry.blended) {
+				entry.blended = blended;
+				entry.mat.transparent = blended;
+				entry.mat.depthWrite = !blended;
+				entry.mat.alphaTest = blended ? 0 : 0.5;
+				entry.mat.needsUpdate = true;
+			}
+			entry.mat.opacity = blended ? dimFactor : 1;
 		});
 	}
 
