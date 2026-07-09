@@ -28,15 +28,15 @@
 	let CY = IP3 / (1 - IP4);
 
 	const PHI4 = PHI ** 4;
-	const CYCLE = 24;
-	const NUM_LAYERS = 48;
+	const CYCLE = 7;          // seconds for one φ⁴ zoom step — fast enough to read as zooming
+	const NUM_LAYERS = 12;    // few enough that the nested squares stay distinct
 	const SQUARES_PER_LAYER = 24;
 
-	// Self-similar golden spiral: a log spiral scales by φ every quarter turn, so
-	// over one φ⁴ zoom cycle it must rotate a full 2π. Coupling rotation to the
-	// zoom this way makes every layered copy land on the *same* spiral curve, so
-	// the field reads as one clean spiral zooming into itself at constant scale.
-	const SPIRAL_TURN = -2 * Math.PI; // sign sets winding direction
+	// Constant-zoom golden spiral: each layer is the same golden-rectangle square
+	// tiling, scaled by φ⁴ across its life; staggered layers give a seamless,
+	// self-similar zoom into the pole. No extra spin — the squares' own 90°-per-
+	// step spiral traces the geometry as it zooms.
+	const SPIRAL_TURN = 0;
 
 	// 0 = normal, 1 = condensing + fading, 2 = done
 	let condenseState = 0;
