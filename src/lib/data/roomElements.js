@@ -57,8 +57,9 @@ const FILES = {
 // tweak — they are the main knobs for how each room reads.
 export const LAYERS = [
 	{ key: 'bg',     depth: 1.00, cover: true,                     opacity: 1.0 },
-	{ key: 'poster', depth: 0.92, x: -0.52, y:  0.42, width: 0.26, opacity: 1.0 },
-	{ key: 'clock',  depth: 0.90, x:  0.42, y:  0.52, width: 0.13, opacity: 1.0 },
+	// clock hangs left, poster/window right (matches the bg placement marks).
+	{ key: 'poster', depth: 0.92, x:  0.50, y:  0.42, width: 0.26, opacity: 1.0 },
+	{ key: 'clock',  depth: 0.90, x: -0.40, y:  0.52, width: 0.13, opacity: 1.0 },
 	// screen sits ON the desk → slightly BEHIND the desk plane so the desk's
 	// front edge occludes its base (correct "TV on a desk" read).
 	{ key: 'screen', depth: 0.60, x:  0.03, y: -0.02, width: 0.34, opacity: 1.0 },

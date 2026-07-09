@@ -11,6 +11,7 @@
 	export let portrait = false;
 	export let maxDepth = 1.5; // how far (world units) the back wall sits behind the frame
 	export let paneReach = 3.14; // matches GoldenRectangle paneDist at projection = 1
+	export let renderer = null; // used to pre-upload textures (avoids a transition stall)
 
 	let roomGroup;
 	let layers = [];           // { mesh, mat, cfg, aspect }
@@ -64,12 +65,18 @@
 
 			loader.load(elementUrl(decadeKey, cfg.key), (tex) => {
 				tex.encoding = THREE.sRGBEncoding;
-				tex.anisotropy = 4;
+				// These are large non-power-of-two images: skip mipmaps (and the
+				// costly POT resize) and pre-upload now, during the idle intro, so
+				// nothing stalls the main thread when the rooms first render.
+				tex.generateMipmaps = false;
+				tex.minFilter = THREE.LinearFilter;
+				tex.magFilter = THREE.LinearFilter;
 				mat.map = tex;
 				mat.needsUpdate = true;
 				entry.aspect = (tex.image?.width || 1) / (tex.image?.height || 1);
 				layout(entry);
 				apply(lastProjection);
+				if (renderer) { try { renderer.initTexture(tex); } catch (e) { /* ignore */ } }
 			});
 		});
 	}
@@ -102,7 +109,11 @@
 		lastProjection = projection;
 		if (!roomGroup) return;
 		const n = normal();
-		const visible = projection > 0.02;
+
+		// Fade the room in as it projects out (keeps the collapsed centre uncluttered).
+		const reveal = smoothstep(0.04, 0.55, projection);
+		const eff = reveal * dimFactor;
+		const visible = eff > 0.01;
 
 		// Ride outward with the pane.
 		roomGroup.position.copy(n.clone().multiplyScalar(projection * paneReach));
@@ -111,11 +122,11 @@
 			const back = n.clone().multiplyScalar(-entry.cfg.depth * maxDepth * projection);
 			const pos = basis.center.clone().add(entry.inPlane || new THREE.Vector3()).add(back);
 			entry.mesh.position.copy(pos);
-			entry.mesh.visible = visible && entry.mat.map != null && dimFactor > 0.02;
-			// When dimmed (zoom spotlight) fall back to a blended fade; otherwise the
-			// crisp depth-writing cutout. Toggling alphaTest recompiles the shader,
-			// so only flip material state when the mode actually changes.
-			const blended = dimFactor < 1;
+			entry.mesh.visible = visible && entry.mat.map != null;
+			// While fading (reveal-in or zoom-dim) use blended alpha; once fully
+			// present, switch to the crisp depth-writing cutout for correct occlusion.
+			// Toggling alphaTest recompiles the shader, so only flip on real changes.
+			const blended = eff < 0.999;
 			if (blended !== entry.blended) {
 				entry.blended = blended;
 				entry.mat.transparent = blended;
@@ -123,8 +134,13 @@
 				entry.mat.alphaTest = blended ? 0 : 0.5;
 				entry.mat.needsUpdate = true;
 			}
-			entry.mat.opacity = blended ? dimFactor : 1;
+			entry.mat.opacity = blended ? eff : 1;
 		});
+	}
+
+	function smoothstep(a, b, x) {
+		const t = Math.max(0, Math.min((x - a) / (b - a), 1));
+		return t * t * (3 - 2 * t);
 	}
 
 	export function init() {

@@ -6,7 +6,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { silkOn, silkKey, SILK_PALETTES, DEFAULT_SILK } from '$lib/theme';
 
-	export let opacity = 0.4; // master opacity of the silk overlay (0..1)
+	export let opacity = 0.5; // master opacity of the silk overlay (0..1)
 
 	let canvas;
 	let running = false;
