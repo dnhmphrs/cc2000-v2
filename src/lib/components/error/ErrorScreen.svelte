@@ -12,33 +12,66 @@
 </script>
 
 <div class="error-screen">
-	<div class="error-box">
-		{#if status === 404}
-			<p class="code">404</p>
-			<p class="msg">you shouldn't be here. run.</p>
-		{:else}
+	<div class="frame">
+		<div class="frame-head">
+			<span class="id">CC://2000</span>
+			<span>SYSTEM FAULT — 0x{status.toString(16).toUpperCase()}</span>
+		</div>
+		<div class="frame-body">
 			<p class="code">{status}</p>
-			<p class="msg">
-				our servers overheated. the algorithm found your moment of conception
-				too hot for calculation.
-			</p>
-			{#if message}<p class="detail">{message}</p>{/if}
-		{/if}
-		<button on:click={goHome}>return</button>
+			{#if status === 404}
+				<p class="msg">&gt; segment not found. you shouldn't be here. run.</p>
+			{:else}
+				<p class="msg">
+					&gt; kernel panic. the algorithm found your moment of conception too hot for calculation.
+				</p>
+				{#if message}<p class="detail">&gt; {message}</p>{/if}
+			{/if}
+			<button on:click={goHome}>return</button>
+		</div>
 	</div>
 </div>
 
 <style>
 	.error-screen {
-		position: fixed; inset: 0;
-		display: flex; align-items: center; justify-content: center;
-		background: var(--bg); z-index: 100; padding: 2rem;
+		position: fixed;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--bg);
+		z-index: 100;
+		padding: 2rem;
 	}
-	.error-box {
-		text-align: center; max-width: 360px;
-		display: flex; flex-direction: column; align-items: center; gap: 1rem;
+	.frame {
+		width: 100%;
+		max-width: 380px;
 	}
-	.code { font-size: 48px; font-weight: 300; color: var(--fg-faint); margin: 0; }
-	.msg { font-size: 11px; line-height: 1.7; color: var(--fg-dim); margin: 0; }
-	.detail { font-size: 9px; color: var(--fg-faint); margin: 0; }
+	.frame-body {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1.2rem;
+	}
+	.code {
+		font-size: 52px;
+		font-weight: 300;
+		color: var(--fg);
+		letter-spacing: 0.1em;
+		margin: 0;
+	}
+	.msg {
+		font-size: 11px;
+		line-height: 1.7;
+		color: var(--fg-dim);
+		margin: 0;
+		align-self: flex-start;
+		text-align: left;
+	}
+	.detail {
+		font-size: 9px;
+		color: var(--fg-faint);
+		margin: 0;
+		align-self: flex-start;
+	}
 </style>

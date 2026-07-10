@@ -2,9 +2,11 @@
 	import { phase, gender, date, spicy, track, decade, sceneState } from '$lib/store/store';
 	import { conceptionDate, previousDay, dateToDecade } from '$lib/functions/utils';
 	import { goto } from '$app/navigation';
+	import { fade } from 'svelte/transition';
 	import data from '$lib/data/cc2000_data.json';
 
 	let step = 1;
+	const STEP_IDS = ['SUBJECT.SEX', 'SUBJECT.DOB', 'RESONANCE.LVL'];
 
 	function selectGender(g) {
 		gender.set(g);
@@ -24,8 +26,14 @@
 		let cd = conceptionDate($date);
 		const today = new Date().toISOString().slice(0, 10);
 
-		if (cd <= '1958-06-01') { goto('/the-past', { replaceState: true }); return; }
-		if ($date >= today) { goto('/the-future', { replaceState: true }); return; }
+		if (cd <= '1958-06-01') {
+			goto('/the-past', { replaceState: true });
+			return;
+		}
+		if ($date >= today) {
+			goto('/the-future', { replaceState: true });
+			return;
+		}
 
 		let found = null;
 		for (let i = 0; i < 30; i++) {
@@ -40,101 +48,116 @@
 		if (found) {
 			track.set(found);
 			decade.set(dateToDecade(cd));
-			sceneState.set(1);
-			phase.set('transition');
+			sceneState.set(1); // hand the scene into its hyperspace search
+			phase.set('processing');
 		}
 	}
 </script>
 
-<div class="screen">
-	<div class="steps">
-		{#each [1, 2, 3] as s}
-			<span class="dot" class:active={s <= step}>{s}</span>
-			{#if s < 3}<span class="line" />{/if}
-		{/each}
-	</div>
+<div class="shell" in:fade={{ duration: 400 }}>
+	<div class="frame">
+		<div class="frame-head">
+			<span class="id">CC://2000</span>
+			<span>SUBJECT INPUT — {STEP_IDS[step - 1]}</span>
+		</div>
 
-	{#if step === 1}
-		<div class="panel">
-			<p class="label">gender</p>
-			<div class="options">
-				<button on:click={() => selectGender('male')}>male</button>
-				<button on:click={() => selectGender('female')}>female</button>
-				<button on:click={() => selectGender('other')}>other</button>
+		<div class="frame-body">
+			<div class="steps">
+				{#each [1, 2, 3] as s}
+					<span class="dot" class:active={s <= step}>{s}</span>
+					{#if s < 3}<span class="line" class:active={s < step} />{/if}
+				{/each}
 			</div>
+
+			{#if step === 1}
+				<div class="panel">
+					<p class="label">&gt; declare gender</p>
+					<div class="options">
+						<button on:click={() => selectGender('male')}>male</button>
+						<button on:click={() => selectGender('female')}>female</button>
+						<button on:click={() => selectGender('other')}>other</button>
+					</div>
+				</div>
+			{:else if step === 2}
+				<div class="panel">
+					<p class="label">&gt; enter date of birth</p>
+					<input type="date" bind:value={$date} max="2023-03-05" min="1958-06-01" />
+					<div class="nav">
+						<button on:click={back}>back</button>
+						<button on:click={nextBirthday} disabled={!$date}>next</button>
+					</div>
+				</div>
+			{:else}
+				<div class="panel">
+					<p class="label">&gt; set resonance level</p>
+					<div class="spice">
+						<span class="val">{String($spicy).padStart(2, '0')}</span>
+						<input type="range" bind:value={$spicy} min="1" max="10" />
+						<div class="range-labels"><span>mild</span><span>hot</span></div>
+					</div>
+					<div class="nav">
+						<button on:click={back}>back</button>
+						<button on:click={calculate}>calculate</button>
+					</div>
+				</div>
+			{/if}
 		</div>
-	{:else if step === 2}
-		<div class="panel">
-			<p class="label">date of birth</p>
-			<input type="date" bind:value={$date} max="2023-03-05" min="1958-06-01" />
-			<div class="nav">
-				<button on:click={back}>back</button>
-				<button on:click={nextBirthday} disabled={!$date}>next</button>
-			</div>
-		</div>
-	{:else}
-		<div class="panel">
-			<p class="label">spice level</p>
-			<div class="spice">
-				<span class="val">{$spicy}</span>
-				<input type="range" bind:value={$spicy} min="1" max="10" />
-				<div class="range-labels"><span>mild</span><span>hot</span></div>
-			</div>
-			<div class="nav">
-				<button on:click={back}>back</button>
-				<button on:click={calculate}>calculate</button>
-			</div>
-		</div>
-	{/if}
+	</div>
 </div>
 
 <style>
-	.screen {
-	background: var(--bg-t);
-		border: solid 1px var(--fg-faint);
-		backdrop-filter: blur(5px);
+	.shell {
+		position: fixed;
+		inset: 0;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		gap: 2rem;
-		padding: 2rem;
+		justify-content: center;
+		padding: 1.5rem;
+		pointer-events: none;
+	}
+
+	.frame {
 		width: 100%;
-		max-width: 420px;	
+		max-width: 380px;
+		pointer-events: auto;
 	}
 
 	.steps {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: 8px;
+		margin-bottom: 1.8rem;
 	}
 
-.dot {
-    /* 1. Define a fixed, equal size */
-    width: 24px; 
-    height: 24px;
-    
-    /* 2. Remove padding (it interferes with flex centering) */
-    padding: 0;
-    
-    /* 3. Make it a circle */
-    border-radius: 50%;
-    border: 1px solid var(--fg-faint);
-    
-    /* 4. Perfect centering */
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    
-    /* 5. Clean up typography */
-    font-size: 9px;
-    line-height: 1; /* Reset to normal */
-    color: var(--fg-faint);
-    transition: all 0.3s;
-  }
+	.dot {
+		width: 22px;
+		height: 22px;
+		border-radius: 0;
+		border: 1px solid var(--fg-faint);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 9px;
+		line-height: 1;
+		color: var(--fg-faint);
+		transition: all 0.3s;
+	}
+	.dot.active {
+		border-color: var(--fg);
+		color: var(--fg);
+		background: rgba(240, 240, 160, 0.06);
+	}
 
-	.dot.active { border-color: var(--fg-dim); color: var(--fg); }
-
-	.line { width: 24px; height: 1px; background: var(--fg-faint); }
+	.line {
+		width: 26px;
+		height: 1px;
+		background: var(--fg-faint);
+		transition: background 0.3s;
+	}
+	.line.active {
+		background: var(--fg);
+	}
 
 	.panel {
 		display: flex;
@@ -147,9 +170,10 @@
 	.label {
 		font-size: 10px;
 		text-transform: uppercase;
-		letter-spacing: 0.15em;
+		letter-spacing: 0.16em;
 		color: var(--fg-dim);
 		margin: 0;
+		align-self: flex-start;
 	}
 
 	.options {
@@ -158,18 +182,23 @@
 		gap: 8px;
 		width: 100%;
 	}
-
-	.options button { width: 100%; }
+	.options button {
+		width: 100%;
+	}
 
 	.spice {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 12px;
+		gap: 14px;
 		width: 100%;
 	}
-
-	.val { font-size: 24px; color: var(--fg); font-weight: 300; }
+	.val {
+		font-size: 30px;
+		color: var(--fg);
+		font-weight: 300;
+		letter-spacing: 0.1em;
+	}
 
 	.range-labels {
 		display: flex;
@@ -178,9 +207,17 @@
 		font-size: 9px;
 		color: var(--fg-faint);
 		text-transform: uppercase;
+		letter-spacing: 0.2em;
 	}
 
-	.nav { display: flex; gap: 12px; }
+	.nav {
+		display: flex;
+		gap: 12px;
+	}
 
-	input[type="date"] { text-align: center; width: 100%; max-width: 200px; }
+	input[type='date'] {
+		text-align: center;
+		width: 100%;
+		max-width: 220px;
+	}
 </style>
