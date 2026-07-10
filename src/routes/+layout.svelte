@@ -5,12 +5,8 @@
 	import { getDeviceType, getScreenSize, getIsPortrait } from '$lib/functions/utils';
 	import { palette, applyCssVars } from '$lib/theme';
 
-	import DevPanel from '$lib/components/DevPanel.svelte';
-
 	// Keep the UI accent (CSS custom properties) in sync with the active palette.
 	$: applyCssVars($palette);
-
-	let mounted = false;
 
 	function handleResize() {
 		screenSize.set(getScreenSize());
@@ -21,7 +17,6 @@
 	onMount(() => {
 		handleResize();
 		window.addEventListener('resize', handleResize);
-		mounted = true;
 		return () => window.removeEventListener('resize', handleResize);
 	});
 </script>
@@ -33,8 +28,6 @@
 		content="Calculate the song playing at your exact moment of conception."
 	/>
 </svelte:head>
-
-<DevPanel />
 
 <main>
 	<slot />

@@ -18,17 +18,20 @@
 {/if}
 
 <div class="ui">
-	{#key $phase}
-		{#if $phase === 'intro'}
-			<Intro />
-		{:else if $phase === 'calculate'}
-			<Calculate />
-		{:else if $phase === 'processing'}
-			<Transition />
-		{:else if $phase === 'output'}
-			<Output />
-		{/if}
-	{/key}
+	<!-- Left terminal log: boot lines type during the intro and stay put through
+	     the input step; the search log replaces them (resets) at processing. -->
+	{#if $phase === 'intro' || $phase === 'calculate'}
+		<Intro />
+	{:else if $phase === 'processing'}
+		<Transition />
+	{/if}
+
+	<!-- Centre interactive panels. -->
+	{#if $phase === 'calculate'}
+		<Calculate />
+	{:else if $phase === 'output'}
+		<Output />
+	{/if}
 </div>
 
 <style>
