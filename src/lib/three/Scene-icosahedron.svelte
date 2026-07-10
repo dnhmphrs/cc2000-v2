@@ -59,8 +59,8 @@
 	let stageT = 0;
 	const REVEAL_DUR = 0.0;
 
-	const SWIM_DUR = 8.0;      // total travel time, emerge → gone
-	const SWIM_Z_START = 6.0;  // camera plane (cam sits at z = 6) → materialises into view
+	const SWIM_DUR = 7.0;      // total travel time, emerge → gone
+	const SWIM_Z_START = 6.5;  // camera plane (cam sits at z = 6) → materialises into view
 	const SWIM_Z_END = -5.0;   // dives through the core and out the back
 	const SWIM_ACCEL = 2.6;    // ease-in exponent: >1 = slower start, sharper finish
 	const OPEN_DUR = 3.0;
@@ -238,7 +238,7 @@
 			blending: THREE.AdditiveBlending,
 			uniforms: {
 				uTime: { value: 0 },
-				uOpacity: { value: 0.75 },
+				uOpacity: { value: 0.5 },
 				uColor: { value: accentColorVec(get(accentHex)) }
 			},
 			vertexShader: `
@@ -558,7 +558,7 @@
 				const z = lerp(SWIM_Z_START, SWIM_Z_END, eased);
 				// Dead-centre on the camera axis; roll counter-clockwise throughout.
 				spermPivot.position.set(0, 0, z);
-				spermPivot.rotation.set(0, Math.PI, stageT * 5.5);
+				spermPivot.rotation.set(0, Math.PI, stageT * 6.0);
 				// Fade in as it clears the camera plane, out once it's through the core.
 				const appear = smoothstep(6.0, 5.2, z);
 				const gone = 1 - smoothstep(-2.0, -4.5, z);
@@ -642,7 +642,7 @@
 			// room rushes in, then relaxes so the final resting frame lands fairly flat.
 			const room = rectangleComponents[targetRoomIndex]?.getRoom?.();
 			if (room && room.setZoomProgress) room.setZoomProgress(Math.sin(t * Math.PI));
-			latticeActive.set(t < 0.5);
+			// latticeActive.set(t < 0.5);
 			publishSpin();
 			if (stageT >= LAND_DUR) {
 				setStage('settled');
