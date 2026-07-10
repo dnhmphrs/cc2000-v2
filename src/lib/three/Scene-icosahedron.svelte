@@ -59,11 +59,11 @@
 	let stageT = 0;
 	const REVEAL_DUR = 1.3;
 	const SWIM_DUR = 7.2; // slow emerge → pause in view → dive through, savoured
-	const OPEN_DUR = 3.6;
-	const LAND_DUR = 2.2;
+	const OPEN_DUR = 4.0;
+	const LAND_DUR = 2.8;
 	// Stepped search: slew to a decade, "scan" it, slew to the next — a few times.
-	const STEP_SPIN = 0.85; // seconds to rotate to a decade face
-	const STEP_SCAN = 0.6; // seconds dwelling / examining that decade
+	const STEP_SPIN = 1.1; // seconds to rotate to a decade face
+	const STEP_SCAN = 0.75; // seconds dwelling / examining that decade
 
 	// Mouse-look during the input flow.
 	let mouseNX = 0,
@@ -224,12 +224,13 @@
 		group.add(new THREE.LineSegments(wireGeo, icoWireMat));
 	}
 
-	// ── Sperm hologram overlay ───────────────────────────────────────────────
+	// ── Sperm wireframe hologram overlay ─────────────────────────────────────
 	function createSpermMaterial() {
 		return new THREE.ShaderMaterial({
 			transparent: true,
 			side: THREE.DoubleSide,
 			depthWrite: false,
+			wireframe: true,
 			blending: THREE.AdditiveBlending,
 			uniforms: {
 				uTime: { value: 0 },
@@ -260,7 +261,7 @@
 					scan = smoothstep(0.3, 0.75, scan);
 					float fres = pow(1.0 - abs(dot(vNormal, vViewDir)), 2.0);
 					vec3 col = uColor + vec3(0.25) * fres;
-					float a = (0.16 + scan * 0.22 + fres * 0.75) * uOpacity;
+					float a = (0.26 + scan * 0.22 + fres * 0.4) * uOpacity;
 					gl_FragColor = vec4(col * a, a);
 				}
 			`
@@ -514,7 +515,9 @@
 	function animate() {
 		animationFrameId = requestAnimationFrame(animate);
 		if (!clock) return;
-		const dt = clock.getDelta();
+		// Clamp dt so a one-off hitch (GLTF parse, texture upload on load) can't
+		// jump the animation forward — everything stays smooth instead of lurching.
+		const dt = Math.min(clock.getDelta(), 0.05);
 
 		// Canvas fade-in.
 		const sinceMount = canvasFadeStart != null ? performance.now() / 1000 - canvasFadeStart : 0;
@@ -593,7 +596,7 @@
 			const target = BASE_TILT.clone().multiply(
 				new THREE.Quaternion().setFromEuler(new THREE.Euler(rotX, idleAngle + rotY, 0))
 			);
-			worldGroup.quaternion.slerp(target, Math.min(1, dt * 4));
+			worldGroup.quaternion.slerp(target, Math.min(1, dt * 2.5));
 		}
 
 		// ── search: spin to a decade → scan it → spin to the next → … ─────
@@ -642,8 +645,10 @@
 				if (i === targetRoomIndex) comp.setLineDim(lerp(1, 0, smoothstep(0.15, 0.7, t)));
 				else comp.setDim(fade);
 			});
+			// Depth parallax is a transient felt *during* the move — it surges as the
+			// room rushes in, then relaxes so the final resting frame lands fairly flat.
 			const room = rectangleComponents[targetRoomIndex]?.getRoom?.();
-			if (room && room.setZoomProgress) room.setZoomProgress(t);
+			if (room && room.setZoomProgress) room.setZoomProgress(Math.sin(t * Math.PI));
 			latticeActive.set(t < 0.5);
 			publishSpin();
 			if (stageT >= LAND_DUR) {

@@ -18,18 +18,38 @@
 	// Eased 0..1 "search intensity" — how present / bright the lattice is.
 	let intensity = 0;
 
-	// ── Tesseract topology ──────────────────────────────────────────────────
-	// 16 vertices at (±1,±1,±1,±1); edges join vertices differing in one coord.
+	// ── 24-cell topology ──────────────────────────────────────────────────────
+	// 24 vertices = every permutation of (±1, ±1, 0, 0); edges join the pairs a
+	// squared-distance of 2 apart (96 edges). A richer regular 4-polytope than the
+	// tesseract, so the "hyperspace" read is more intricate as it rotates.
 	const verts4 = [];
-	for (let i = 0; i < 16; i++) {
-		verts4.push([i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1, i & 8 ? 1 : -1]);
+	const coordPairs = [
+		[0, 1],
+		[0, 2],
+		[0, 3],
+		[1, 2],
+		[1, 3],
+		[2, 3]
+	];
+	for (const [a, b] of coordPairs) {
+		for (const sa of [-1, 1]) {
+			for (const sb of [-1, 1]) {
+				const v = [0, 0, 0, 0];
+				v[a] = sa;
+				v[b] = sb;
+				verts4.push(v);
+			}
+		}
 	}
 	const edges = [];
-	for (let i = 0; i < 16; i++) {
-		for (let j = i + 1; j < 16; j++) {
-			let diff = 0;
-			for (let k = 0; k < 4; k++) if (verts4[i][k] !== verts4[j][k]) diff++;
-			if (diff === 1) edges.push([i, j]);
+	for (let i = 0; i < verts4.length; i++) {
+		for (let j = i + 1; j < verts4.length; j++) {
+			let d = 0;
+			for (let k = 0; k < 4; k++) {
+				const x = verts4[i][k] - verts4[j][k];
+				d += x * x;
+			}
+			if (Math.abs(d - 2) < 1e-6) edges.push([i, j]);
 		}
 	}
 
@@ -123,9 +143,13 @@
 	}
 
 	function drawLattice() {
+		// Hidden entirely outside the search — it belongs to the "searching
+		// hyperspace" moment and nothing else.
+		if (intensity < 0.01) return;
+
 		const cx = w / 2;
 		const cy = h / 2;
-		const scale = Math.min(w, h) * 0.34;
+		const scale = Math.min(w, h) * 0.3;
 		const qt = get(spinQuat);
 
 		const pts = verts4.map((v0) => {
@@ -143,7 +167,7 @@
 			return [cx + p3[0] * scale, cy - p3[1] * scale];
 		});
 
-		const base = 0.05 + intensity * 0.32;
+		const base = intensity * 0.34;
 		ctx.strokeStyle = uiColor(base);
 		ctx.lineWidth = 1;
 		ctx.beginPath();
