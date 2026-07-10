@@ -18,9 +18,9 @@
 {/if}
 
 <div class="ui">
-	<!-- Left terminal log: boot lines type during the intro and stay put through
-	     the input step; the search log replaces them (resets) at processing. -->
-	{#if $phase === 'intro' || $phase === 'calculate'}
+	<!-- Left terminal log: boot lines during the intro (fades out as the panes
+	     open); the search log plays during processing. -->
+	{#if $phase === 'intro'}
 		<Intro />
 	{:else if $phase === 'processing'}
 		<Transition />

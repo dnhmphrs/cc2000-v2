@@ -39,3 +39,7 @@ export const spinQuat = writable({ x: 0, y: 0, z: 0, w: 1 });
 // True while the search is running — tells the background lattice to add its own
 // 4D hyper-rotation on top of the synced 3D spin.
 export const latticeActive = writable(false);
+
+// Flips true the moment the icosahedron begins opening its panes, so the intro
+// boot log can fade out and leave the input screens clean.
+export const expanding = writable(false);

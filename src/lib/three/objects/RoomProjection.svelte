@@ -14,10 +14,11 @@
 	export let renderer = null; // used to pre-upload textures (avoids a transition stall)
 
 	let roomGroup;
-	let layers = []; // { mesh, mat, cfg, aspect }
+	let layers = []; // { mesh, mat, cfg, aspect, w, h }
 	let backing, backMat; // solid off-black card behind the room
 	let dimFactor = 1;
 	let lastProjection = 0;
+	let zoomK = 0; // 0..1 final-zoom progress; scales layers by depth for parallax
 
 	const normal = () => axis.clone().multiplyScalar(direction).normalize();
 
@@ -128,6 +129,8 @@
 			w = pos.width * W;
 			h = w / aspect;
 		}
+		entry.w = w;
+		entry.h = h;
 		entry.mesh.scale.set(w, h, 1);
 
 		// Orient the plane so local X→right, Y→up, +Z→normal.
@@ -175,6 +178,12 @@
 				.add(entry.inPlane || new THREE.Vector3())
 				.add(back);
 			entry.mesh.position.copy(pos);
+			// Depth parallax on the final zoom: nearer layers grow a little more
+			// than the back wall, so the room comes apart slightly as it fills.
+			if (entry.w != null) {
+				const zf = 1 + zoomK * 0.22 * (1 - entry.cfg.depth);
+				entry.mesh.scale.set(entry.w * zf, entry.h * zf, 1);
+			}
 			entry.mesh.visible = visible && entry.mat.map != null;
 			// While fading (reveal-in or zoom-dim) use blended alpha; once fully
 			// present, switch to the crisp depth-writing cutout for correct occlusion.
@@ -215,6 +224,12 @@
 
 	export function setDim(f) {
 		dimFactor = f;
+		apply(lastProjection);
+	}
+
+	// 0..1 progress of the final fill-zoom; drives per-layer depth parallax.
+	export function setZoomProgress(k) {
+		zoomK = k;
 		apply(lastProjection);
 	}
 

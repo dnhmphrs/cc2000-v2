@@ -2,7 +2,15 @@
 	import { onMount, onDestroy, tick } from 'svelte';
 	import * as THREE from 'three';
 	import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-	import { phase, sceneState, decade, isPortrait, spinQuat, latticeActive } from '$lib/store/store';
+	import {
+		phase,
+		sceneState,
+		decade,
+		isPortrait,
+		spinQuat,
+		latticeActive,
+		expanding
+	} from '$lib/store/store';
 	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
 	import { assignDecades, shuffle } from '$lib/data/roomElements';
 	import { accentHex } from '$lib/theme';
@@ -50,7 +58,7 @@
 	let stage = 'idle';
 	let stageT = 0;
 	const REVEAL_DUR = 1.3;
-	const SWIM_DUR = 4.2;
+	const SWIM_DUR = 6.4; // slow, savoured fly-in — gives the intro text time to read
 	const OPEN_DUR = 3.6;
 	const LAND_DUR = 2.2;
 	// Stepped search: slew to a decade, "scan" it, slew to the next — a few times.
@@ -375,6 +383,7 @@
 
 	function openIcosahedron() {
 		hideSperm();
+		expanding.set(true); // fade the intro boot log out as the panes open
 		setStage('open');
 	}
 
@@ -468,6 +477,7 @@
 	function resetScene() {
 		hideSperm();
 		setStage('idle');
+		expanding.set(false);
 		frustum = IDLE_FRUSTUM;
 		icoReveal = 0;
 		rotX = rotY = mouseNX = mouseNY = 0;
@@ -488,6 +498,8 @@
 			if (!comp) return;
 			comp.setDim(1);
 			comp.setLineDim(1);
+			const room = comp.getRoom && comp.getRoom();
+			if (room && room.setZoomProgress) room.setZoomProgress(0);
 			comp.updateProjection(0);
 		});
 		// If we're already past the preloader, re-run the intro.
@@ -538,9 +550,9 @@
 				zEnd = -3.5; // through the icosahedron centre (z = 0) and out the back
 			if (spermPivot) {
 				const z = lerp(zStart, zEnd, t);
-				// Dead-centre on the camera axis; roll clockwise as it flies in.
+				// Dead-centre on the camera axis; roll clockwise (fast) as it flies in.
 				spermPivot.position.set(0, 0, z);
-				spermPivot.rotation.set(0, Math.PI, -stageT * 2.4);
+				spermPivot.rotation.set(0, Math.PI, -stageT * 5.5);
 				// Appears once it clears the lens; fades as it enters the core.
 				const appear = smoothstep(5.8, 4.4, z);
 				const arrive = 1 - smoothstep(0.6, -2.2, z);
@@ -620,6 +632,8 @@
 				if (i === targetRoomIndex) comp.setLineDim(lerp(1, 0, smoothstep(0.15, 0.7, t)));
 				else comp.setDim(fade);
 			});
+			const room = rectangleComponents[targetRoomIndex]?.getRoom?.();
+			if (room && room.setZoomProgress) room.setZoomProgress(t);
 			latticeActive.set(t < 0.5);
 			publishSpin();
 			if (stageT >= LAND_DUR) {
@@ -640,13 +654,15 @@
 		if (spermMixer) spermMixer.update(dt);
 		if (spermMat) spermMat.uniforms.uTime.value += dt;
 
-		// Render: ortho scene, then sperm overlay on top while active.
+		// Render the sperm overlay FIRST (behind), then the ortho scene on top, so
+		// the icosahedron's solid faces occlude the sperm — it flies *into* the
+		// core and is swallowed rather than skating across the front.
 		renderer.autoClear = true;
-		renderer.render(scene, camera);
 		if (spermActive && spermScene && spermCam) {
-			renderer.autoClear = false;
 			renderer.render(spermScene, spermCam);
+			renderer.autoClear = false;
 		}
+		renderer.render(scene, camera);
 	}
 
 	let unsubPhase, unsubSceneState;
