@@ -28,7 +28,10 @@
 
 <svelte:head>
 	<title>Conception Calculator 2000</title>
-	<meta name="description" content="Calculate the song playing at your exact moment of conception." />
+	<meta
+		name="description"
+		content="Calculate the song playing at your exact moment of conception."
+	/>
 </svelte:head>
 
 <DevPanel />
@@ -41,9 +44,6 @@
 	main {
 		position: fixed;
 		inset: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
 		z-index: 10;
 		pointer-events: none;
 	}

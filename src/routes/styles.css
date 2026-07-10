@@ -3,12 +3,17 @@
 
 :root {
 	--bg: #1b1b1b;
-	--bg-t: #1b1b1b88;
+	--bg-t: rgba(18, 18, 18, 0.72);
 	--fg: rgba(240, 240, 160, 1);
 	--fg-dim: rgba(240, 240, 160, 0.85);
 	--fg-faint: rgba(240, 240, 160, 0.5);
+	--fg-ghost: rgba(240, 240, 160, 0.22);
+	--grid: rgba(240, 240, 160, 0.06);
+	--grid-strong: rgba(240, 240, 160, 0.11);
 	--accent: #357ec7;
-	--mono: 'nb-architekt';
+	--ok: #7ec96a;
+	--alert: #d6604a;
+	--mono: 'nb-architekt', 'Courier New', monospace;
 }
 
 html,
@@ -21,7 +26,7 @@ body {
 	color: var(--fg);
 	font-family: var(--mono);
 	font-size: 12px;
-	letter-spacing: 0.05em;
+	letter-spacing: 0.06em;
 	overflow: hidden;
 	-webkit-font-smoothing: antialiased;
 }
@@ -32,40 +37,127 @@ body {
 	box-sizing: border-box;
 }
 
+/* ── Technical typography helpers ─────────────────────────────────────────── */
+.label,
+.mono-label {
+	font-size: 9px;
+	text-transform: uppercase;
+	letter-spacing: 0.22em;
+	color: var(--fg-faint);
+}
+
+/* ── Blueprint frame: crisp corner brackets + thin border + double edge ────── */
+.frame {
+	position: relative;
+	background: var(--bg-t);
+	border: 1px solid var(--fg-faint);
+	outline: 1px solid var(--fg-ghost);
+	outline-offset: 3px;
+	backdrop-filter: blur(6px);
+}
+
+.frame::before {
+	content: '';
+	position: absolute;
+	inset: -1px;
+	pointer-events: none;
+	background: linear-gradient(var(--fg), var(--fg)) 0 0 / 12px 1px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 0 0 / 1px 12px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 100% 0 / 12px 1px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 100% 0 / 1px 12px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 0 100% / 12px 1px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 0 100% / 1px 12px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 100% 100% / 12px 1px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 100% 100% / 1px 12px no-repeat;
+}
+
+/* Header bar for a framed panel */
+.frame-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--fg-ghost);
+	font-size: 9px;
+	text-transform: uppercase;
+	letter-spacing: 0.22em;
+	color: var(--fg-faint);
+}
+
+.frame-head .id {
+	color: var(--fg-dim);
+}
+
+.frame-body {
+	padding: 20px 22px;
+}
+
+/* Full-width dashed rule, WROCLAW terminal style */
+.rule {
+	height: 0;
+	border-top: 1px dashed var(--fg-ghost);
+	width: 100%;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
 button {
 	font-family: var(--mono);
-	font-size: 12px;
-	letter-spacing: 0.08em;
+	font-size: 11px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
 	cursor: pointer;
 	border: 1px solid var(--fg-faint);
 	background: transparent;
 	color: var(--fg-dim);
-	padding: 8px 16px;
-	transition: color 0.2s, border-color 0.2s;
+	padding: 9px 16px;
+	position: relative;
+	transition: color 0.18s, border-color 0.18s, background 0.18s;
+}
+
+button::before {
+	content: '';
+	position: absolute;
+	inset: 3px;
+	border: 1px solid transparent;
+	transition: border-color 0.18s;
+	pointer-events: none;
 }
 
 button:hover {
 	color: var(--fg);
 	border-color: var(--fg-dim);
+	background: rgba(240, 240, 160, 0.04);
 }
+
+button:hover::before {
+	border-color: var(--fg-ghost);
+}
+
 button:active {
 	color: var(--fg);
 	border-color: var(--fg);
 }
+
 button:disabled {
-	opacity: 0.3;
+	opacity: 0.25;
 	cursor: default;
 }
 
+button:disabled::before {
+	border-color: transparent;
+}
+
+/* ── Inputs ───────────────────────────────────────────────────────────────── */
 input[type='date'],
 input[type='text'] {
 	font-family: var(--mono);
 	font-size: 12px;
 	letter-spacing: 0.05em;
-	background: transparent;
+	background: rgba(240, 240, 160, 0.03);
 	border: 1px solid var(--fg-faint);
 	color: var(--fg);
-	padding: 8px 12px;
+	padding: 9px 12px;
 	outline: none;
 	transition: border-color 0.2s;
 }
@@ -86,23 +178,42 @@ input[type='range'] {
 
 input[type='range']::-webkit-slider-thumb {
 	-webkit-appearance: none;
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
+	width: 10px;
+	height: 10px;
 	background: var(--fg);
 	cursor: pointer;
+	border-radius: 0;
 }
 
 input[type='range']::-moz-range-thumb {
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
+	width: 10px;
+	height: 10px;
 	background: var(--fg);
 	cursor: pointer;
+	border-radius: 0;
 	border: none;
 }
 
 ::-webkit-scrollbar {
 	width: 0;
 	height: 0;
+}
+
+/* ── Blinking terminal cursor ─────────────────────────────────────────────── */
+.cursor::after {
+	content: '\2588';
+	margin-left: 2px;
+	animation: blink 1s steps(1) infinite;
+	color: var(--fg);
+}
+
+@keyframes blink {
+	0%,
+	50% {
+		opacity: 1;
+	}
+	50.01%,
+	100% {
+		opacity: 0;
+	}
 }

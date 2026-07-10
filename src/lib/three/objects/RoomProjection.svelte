@@ -4,9 +4,9 @@
 
 	// Lives in the same worldGroup as everything else so it rotates together.
 	export let group;
-	export let basis;          // { center, uAxis, vAxis, uLen, vLen } — center is the origin
-	export let axis;           // rectangle normal (unit)
-	export let direction;      // +1 / -1, which way the pane projects out
+	export let basis; // { center, uAxis, vAxis, uLen, vLen } — center is the origin
+	export let axis; // rectangle normal (unit)
+	export let direction; // +1 / -1, which way the pane projects out
 	export let decadeKey;
 	export let portrait = false;
 	export let maxDepth = 1.5; // how far (world units) the back wall sits behind the frame
@@ -14,8 +14,8 @@
 	export let renderer = null; // used to pre-upload textures (avoids a transition stall)
 
 	let roomGroup;
-	let layers = [];           // { mesh, mat, cfg, aspect }
-	let backing, backMat;      // solid off-black card behind the room
+	let layers = []; // { mesh, mat, cfg, aspect }
+	let backing, backMat; // solid off-black card behind the room
 	let dimFactor = 1;
 	let lastProjection = 0;
 
@@ -27,11 +27,15 @@
 		const n = normal();
 		let right, up, W, H;
 		if (portrait) {
-			right = basis.uAxis.clone(); W = basis.uLen; // short edge across
-			up    = basis.vAxis.clone(); H = basis.vLen; // long edge up
+			right = basis.uAxis.clone();
+			W = basis.uLen; // short edge across
+			up = basis.vAxis.clone();
+			H = basis.vLen; // long edge up
 		} else {
-			right = basis.vAxis.clone(); W = basis.vLen; // long edge across
-			up    = basis.uAxis.clone(); H = basis.uLen; // short edge up
+			right = basis.vAxis.clone();
+			W = basis.vLen; // long edge across
+			up = basis.uAxis.clone();
+			H = basis.uLen; // short edge up
 		}
 		right.normalize();
 		up.normalize();
@@ -48,8 +52,12 @@
 		// Solid off-black substrate so the pane reads as a dark card (the site bg),
 		// not a washed-out translucent plane while the room fades in.
 		backMat = new THREE.MeshBasicMaterial({
-			color: 0x1b1b1b, transparent: true, opacity: 0,
-			side: THREE.DoubleSide, depthTest: true, depthWrite: true
+			color: 0x1b1b1b,
+			transparent: true,
+			opacity: 0,
+			side: THREE.DoubleSide,
+			depthTest: true,
+			depthWrite: true
 		});
 		backing = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), backMat);
 		backing.renderOrder = -1;
@@ -88,7 +96,13 @@
 				entry.aspect = (tex.image?.width || 1) / (tex.image?.height || 1);
 				layout(entry);
 				apply(lastProjection);
-				if (renderer) { try { renderer.initTexture(tex); } catch (e) { /* ignore */ } }
+				if (renderer) {
+					try {
+						renderer.initTexture(tex);
+					} catch (e) {
+						/* ignore */
+					}
+				}
 			});
 		});
 	}
@@ -98,13 +112,18 @@
 		const { cfg, aspect } = entry;
 		const { right, up, n, W, H } = frame();
 		// Portrait re-places elements to fill the tall frame.
-		const pos = (portrait && cfg.port) ? cfg.port : cfg;
+		const pos = portrait && cfg.port ? cfg.port : cfg;
 
 		let w, h;
 		if (cfg.cover) {
 			// cover the whole frame
-			if (W / H > aspect) { w = W; h = W / aspect; }
-			else { h = H; w = H * aspect; }
+			if (W / H > aspect) {
+				w = W;
+				h = W / aspect;
+			} else {
+				h = H;
+				w = H * aspect;
+			}
 		} else {
 			w = pos.width * W;
 			h = w / aspect;
@@ -115,8 +134,10 @@
 		const m = new THREE.Matrix4().makeBasis(right, up, n);
 		entry.mesh.quaternion.setFromRotationMatrix(m);
 
-		entry.inPlane = right.clone().multiplyScalar((pos.x || 0) * W / 2)
-			.add(up.clone().multiplyScalar((pos.y || 0) * H / 2));
+		entry.inPlane = right
+			.clone()
+			.multiplyScalar(((pos.x || 0) * W) / 2)
+			.add(up.clone().multiplyScalar(((pos.y || 0) * H) / 2));
 	}
 
 	function apply(projection) {
@@ -149,7 +170,10 @@
 
 		layers.forEach((entry) => {
 			const back = n.clone().multiplyScalar(-entry.cfg.depth * maxDepth * projection);
-			const pos = basis.center.clone().add(entry.inPlane || new THREE.Vector3()).add(back);
+			const pos = basis.center
+				.clone()
+				.add(entry.inPlane || new THREE.Vector3())
+				.add(back);
 			entry.mesh.position.copy(pos);
 			entry.mesh.visible = visible && entry.mat.map != null;
 			// While fading (reveal-in or zoom-dim) use blended alpha; once fully
@@ -194,11 +218,19 @@
 		apply(lastProjection);
 	}
 
+	// Local-space (pre-group-transform) orthonormal frame of this room's plane —
+	// used to compute the group orientation that lands this room facing camera.
+	export function localFrame() {
+		const { right, up, n } = frame();
+		return { right: right.clone(), up: up.clone(), normal: n.clone() };
+	}
+
 	// World-space frame data for the camera zoom (after the group's transform).
 	export function focusTarget() {
 		const { up, n, H, W } = frame();
 		const q = group.quaternion;
-		const centerWorld = basis.center.clone()
+		const centerWorld = basis.center
+			.clone()
 			.add(n.clone().multiplyScalar(lastProjection * paneReach))
 			.applyQuaternion(q);
 		return {
