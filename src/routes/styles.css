@@ -46,29 +46,23 @@ body {
 	color: var(--fg-faint);
 }
 
-/* ── Blueprint frame: crisp corner brackets + thin border + double edge ────── */
+/* ── Blueprint frame: a thin border with subtle corner ticks. Sleek, not busy. */
 .frame {
 	position: relative;
 	background: var(--bg-t);
-	border: 1px solid var(--fg-faint);
-	outline: 1px solid var(--fg-ghost);
-	outline-offset: 3px;
+	border: 1px solid var(--fg-ghost);
 	backdrop-filter: blur(6px);
 }
 
 .frame::before {
 	content: '';
 	position: absolute;
-	inset: -1px;
+	inset: 0;
 	pointer-events: none;
-	background: linear-gradient(var(--fg), var(--fg)) 0 0 / 12px 1px no-repeat,
-		linear-gradient(var(--fg), var(--fg)) 0 0 / 1px 12px no-repeat,
-		linear-gradient(var(--fg), var(--fg)) 100% 0 / 12px 1px no-repeat,
-		linear-gradient(var(--fg), var(--fg)) 100% 0 / 1px 12px no-repeat,
-		linear-gradient(var(--fg), var(--fg)) 0 100% / 12px 1px no-repeat,
-		linear-gradient(var(--fg), var(--fg)) 0 100% / 1px 12px no-repeat,
-		linear-gradient(var(--fg), var(--fg)) 100% 100% / 12px 1px no-repeat,
-		linear-gradient(var(--fg), var(--fg)) 100% 100% / 1px 12px no-repeat;
+	background: linear-gradient(var(--fg-dim), var(--fg-dim)) 0 0 / 9px 1px no-repeat,
+		linear-gradient(var(--fg-dim), var(--fg-dim)) 0 0 / 1px 9px no-repeat,
+		linear-gradient(var(--fg-dim), var(--fg-dim)) 100% 100% / 9px 1px no-repeat,
+		linear-gradient(var(--fg-dim), var(--fg-dim)) 100% 100% / 1px 9px no-repeat;
 }
 
 /* Header bar for a framed panel */
@@ -77,7 +71,7 @@ body {
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
-	padding: 8px 12px;
+	padding: 9px 14px;
 	border-bottom: 1px solid var(--fg-ghost);
 	font-size: 9px;
 	text-transform: uppercase;
@@ -111,27 +105,13 @@ button {
 	background: transparent;
 	color: var(--fg-dim);
 	padding: 9px 16px;
-	position: relative;
 	transition: color 0.18s, border-color 0.18s, background 0.18s;
-}
-
-button::before {
-	content: '';
-	position: absolute;
-	inset: 3px;
-	border: 1px solid transparent;
-	transition: border-color 0.18s;
-	pointer-events: none;
 }
 
 button:hover {
 	color: var(--fg);
 	border-color: var(--fg-dim);
-	background: rgba(240, 240, 160, 0.04);
-}
-
-button:hover::before {
-	border-color: var(--fg-ghost);
+	background: rgba(240, 240, 160, 0.03);
 }
 
 button:active {
@@ -142,10 +122,6 @@ button:active {
 button:disabled {
 	opacity: 0.25;
 	cursor: default;
-}
-
-button:disabled::before {
-	border-color: transparent;
 }
 
 /* ── Inputs ───────────────────────────────────────────────────────────────── */

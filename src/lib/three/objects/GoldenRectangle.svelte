@@ -9,9 +9,9 @@
 	// Live accent recolour of all this pane's line-work.
 	$: recolorAccent($accentHex);
 	function recolorAccent(hex) {
-		[fillMaterial, outlineMaterial, spiralMaterial].forEach(m => m && m.color.setHex(hex));
+		[fillMaterial, outlineMaterial, spiralMaterial].forEach((m) => m && m.color.setHex(hex));
 		subdivisionMaterials.forEach(({ mat }) => mat && mat.color.setHex(hex));
-		traceLineMaterials.forEach(m => m && m.color.setHex(hex));
+		traceLineMaterials.forEach((m) => m && m.color.setHex(hex));
 	}
 
 	// Single group — everything lives here and rotates together
@@ -23,8 +23,6 @@
 	export let decadeKey = null;
 	export let portrait = false;
 	export let renderer = null;
-
-	const PHI = (1 + Math.sqrt(5)) / 2;
 
 	// How far the pane (and its room) travels out from the icosahedron centre at
 	// full projection, and how deep the room's parallax runs behind the frame.
@@ -38,8 +36,8 @@
 	let basis = null;
 	let baseOpacity = 1.0;
 	let schematicBaseOpacity = 1.0;
-	let dimFactor = 1;   // fades everything (line-work + room)
-	let lineDim = 1;     // fades only the golden line-work
+	let dimFactor = 1; // fades everything (line-work + room)
+	let lineDim = 1; // fades only the golden line-work
 	let lastProjection = 0;
 
 	let fillMaterial;
@@ -49,7 +47,7 @@
 	let traceLineMaterials = [];
 
 	function getRectCorners() {
-		return indices.map(i => new THREE.Vector3(...vertices[i]));
+		return indices.map((i) => new THREE.Vector3(...vertices[i]));
 	}
 
 	function getRectBasis() {
@@ -74,14 +72,18 @@
 		}
 
 		const center = new THREE.Vector3()
-			.add(corners[0]).add(corners[1]).add(corners[2]).add(corners[3])
+			.add(corners[0])
+			.add(corners[1])
+			.add(corners[2])
+			.add(corners[3])
 			.multiplyScalar(0.25);
 
 		return { center, uAxis, vAxis, uLen, vLen, corners };
 	}
 
 	function localToWorld(u, v) {
-		return basis.center.clone()
+		return basis.center
+			.clone()
 			.add(basis.uAxis.clone().multiplyScalar(-u))
 			.add(basis.vAxis.clone().multiplyScalar(v));
 	}
@@ -107,22 +109,42 @@
 
 			switch (i % 4) {
 				case 0:
-					square = { left: rect.left, right: rect.left + side, bottom: rect.bottom, top: rect.bottom + side };
+					square = {
+						left: rect.left,
+						right: rect.left + side,
+						bottom: rect.bottom,
+						top: rect.bottom + side
+					};
 					arc = { u: rect.left + side, v: rect.bottom + side, startAngle: Math.PI, dir: 0 };
 					rect.bottom += side;
 					break;
 				case 1:
-					square = { left: rect.left, right: rect.left + side, bottom: rect.top - side, top: rect.top };
+					square = {
+						left: rect.left,
+						right: rect.left + side,
+						bottom: rect.top - side,
+						top: rect.top
+					};
 					arc = { u: rect.left + side, v: rect.top - side, startAngle: Math.PI * 0.5, dir: 1 };
 					rect.left += side;
 					break;
 				case 2:
-					square = { left: rect.right - side, right: rect.right, bottom: rect.top - side, top: rect.top };
+					square = {
+						left: rect.right - side,
+						right: rect.right,
+						bottom: rect.top - side,
+						top: rect.top
+					};
 					arc = { u: rect.right - side, v: rect.top - side, startAngle: 0, dir: 2 };
 					rect.top -= side;
 					break;
 				case 3:
-					square = { left: rect.right - side, right: rect.right, bottom: rect.bottom, top: rect.bottom + side };
+					square = {
+						left: rect.right - side,
+						right: rect.right,
+						bottom: rect.bottom,
+						top: rect.bottom + side
+					};
 					arc = { u: rect.right - side, v: rect.bottom + side, startAngle: Math.PI * 1.5, dir: 3 };
 					rect.right -= side;
 					break;
@@ -150,15 +172,13 @@
 			for (let j = 0; j <= pointsPerArc; j++) {
 				const t = j / pointsPerArc;
 				const angle = arc.startAngle + t * (Math.PI / 2);
-				arcPoints.push(localToWorld(
-					arc.u + arc.radius * Math.cos(angle),
-					arc.v + arc.radius * Math.sin(angle)
-				));
+				arcPoints.push(
+					localToWorld(arc.u + arc.radius * Math.cos(angle), arc.v + arc.radius * Math.sin(angle))
+				);
 			}
-			spiralGroup.add(new THREE.Line(
-				new THREE.BufferGeometry().setFromPoints(arcPoints),
-				spiralMaterial
-			));
+			spiralGroup.add(
+				new THREE.Line(new THREE.BufferGeometry().setFromPoints(arcPoints), spiralMaterial)
+			);
 		}
 
 		return spiralGroup;
@@ -178,10 +198,14 @@
 			];
 
 			const geo = new THREE.BufferGeometry().setFromPoints([
-				corners[0], corners[1],
-				corners[1], corners[2],
-				corners[2], corners[3],
-				corners[3], corners[0]
+				corners[0],
+				corners[1],
+				corners[1],
+				corners[2],
+				corners[2],
+				corners[3],
+				corners[3],
+				corners[0]
 			]);
 
 			const mat = new THREE.LineBasicMaterial({
@@ -209,8 +233,12 @@
 		});
 
 		const shape = new THREE.BufferGeometry().setFromPoints([
-			corners[0], corners[1], corners[2],
-			corners[0], corners[2], corners[3]
+			corners[0],
+			corners[1],
+			corners[2],
+			corners[0],
+			corners[2],
+			corners[3]
 		]);
 		rectGroup.add(new THREE.Mesh(shape, fillMaterial));
 
@@ -221,10 +249,14 @@
 		});
 
 		const outline = new THREE.BufferGeometry().setFromPoints([
-			corners[0], corners[1],
-			corners[1], corners[2],
-			corners[2], corners[3],
-			corners[3], corners[0]
+			corners[0],
+			corners[1],
+			corners[1],
+			corners[2],
+			corners[2],
+			corners[3],
+			corners[3],
+			corners[0]
 		]);
 		rectGroup.add(new THREE.LineSegments(outline, outlineMaterial));
 
@@ -239,13 +271,16 @@
 		const lines = [];
 		traceLineMaterials = [];
 
-		indices.forEach(i => {
+		indices.forEach((i) => {
 			const startPos = new THREE.Vector3(...vertices[i]);
 			const geometry = new THREE.BufferGeometry();
-			geometry.setAttribute('position', new THREE.Float32BufferAttribute([
-				startPos.x, startPos.y, startPos.z,
-				startPos.x, startPos.y, startPos.z
-			], 3));
+			geometry.setAttribute(
+				'position',
+				new THREE.Float32BufferAttribute(
+					[startPos.x, startPos.y, startPos.z, startPos.x, startPos.y, startPos.z],
+					3
+				)
+			);
 
 			const material = new THREE.LineDashedMaterial({
 				color: get(accentHex),
@@ -276,7 +311,7 @@
 			mat.opacity = t * baseOpacity * 0.5 * d;
 		});
 
-		traceLineMaterials.forEach(mat => {
+		traceLineMaterials.forEach((mat) => {
 			mat.opacity = t * baseOpacity * 0.5 * d;
 		});
 	}
@@ -310,7 +345,7 @@
 
 		updateOpacities(projection);
 
-		traceLines.forEach(line => {
+		traceLines.forEach((line) => {
 			const { startPos } = line.userData;
 			const endPos = startPos.clone().add(axis.clone().multiplyScalar(schematicDist * direction));
 
@@ -355,12 +390,12 @@
 	export function dispose() {
 		if (rectangleGroup) {
 			group.remove(rectangleGroup);
-			rectangleGroup.traverse(obj => {
+			rectangleGroup.traverse((obj) => {
 				if (obj.geometry) obj.geometry.dispose();
 				if (obj.material) obj.material.dispose();
 			});
 		}
-		traceLines.forEach(line => {
+		traceLines.forEach((line) => {
 			group.remove(line);
 			line.geometry.dispose();
 			line.material.dispose();

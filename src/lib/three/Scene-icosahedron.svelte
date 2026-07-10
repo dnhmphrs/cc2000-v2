@@ -65,13 +65,11 @@
 	const MOUSE_AMP_Y = 0.55,
 		MOUSE_AMP_X = 0.38;
 
-	// Search / land bookkeeping.
-	let landStartQuat = new THREE.Quaternion();
-	let landTargetQuat = new THREE.Quaternion();
+	// Search / zoom bookkeeping.
 	let stepStartQuat = new THREE.Quaternion();
 	let stepTargetQuat = new THREE.Quaternion();
 	let targetRoomIndex = -1;
-	let searchOrder = []; // face indices to visit (distinct decades) before landing
+	let searchOrder = []; // face indices to examine, resolved decade last
 	let searchStep = 0;
 	let searchSub = 'spin'; // 'spin' | 'scan'
 	let subT = 0;
@@ -189,11 +187,18 @@
 		solidGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
 		solidGeo.computeVertexNormals();
 		icoSolidMat = new THREE.MeshBasicMaterial({
-			color: 0x1b1b1b,
+			// Pre-convert to linear so the renderer's sRGB output encoding maps it
+			// back to true site off-black (#1b1b1b) instead of gamma-lifting it to grey.
+			color: new THREE.Color(0x1b1b1b).convertSRGBToLinear(),
 			transparent: true,
 			opacity: 0,
 			side: THREE.DoubleSide,
-			depthWrite: false
+			depthWrite: true,
+			// Push faces slightly back in depth so the gold wireframe always wins
+			// (solid faceted look, no z-fighting on the shared edges).
+			polygonOffset: true,
+			polygonOffsetFactor: 1,
+			polygonOffsetUnits: 1
 		});
 		group.add(new THREE.Mesh(solidGeo, icoSolidMat));
 
@@ -298,8 +303,14 @@
 		);
 	}
 
-	function disposeSperm() {
+	// Hide + park the sperm between runs (kept loaded so "run again" can reuse it).
+	function hideSperm() {
 		spermActive = false;
+		if (spermPivot) spermPivot.visible = false;
+	}
+
+	function disposeSperm() {
+		hideSperm();
 		if (spermPivot && spermScene) spermScene.remove(spermPivot);
 		if (spermModel) {
 			spermModel.traverse((o) => {
@@ -353,12 +364,17 @@
 	}
 
 	function beginSwim() {
+		if (spermPivot) {
+			spermPivot.visible = true;
+			spermPivot.position.set(0, 0, 8);
+			spermPivot.rotation.set(0, Math.PI, 0);
+		}
 		spermActive = true;
 		setStage('swim');
 	}
 
 	function openIcosahedron() {
-		disposeSperm();
+		hideSperm();
 		setStage('open');
 	}
 
@@ -398,9 +414,10 @@
 		return new THREE.Quaternion().setFromRotationMatrix(mTarget.multiply(mLocalInv));
 	}
 
-	// A handful of distinct-decade faces to visit before the answer, so the search
-	// reads as an actual programmatic scan rather than an idle tumble.
-	function pickSearchOrder() {
+	// A handful of distinct-decade faces to examine before the answer, then the
+	// resolved decade itself as the final step — so the search reads as an actual
+	// programmatic scan that lands on the result.
+	function pickSearchOrder(target) {
 		const byDecade = {};
 		rectangleComponents.forEach((comp, i) => {
 			const room = comp && comp.getRoom && comp.getRoom();
@@ -409,9 +426,11 @@
 			if (!byDecade[d]) byDecade[d] = [];
 			byDecade[d].push(i);
 		});
-		return shuffle(Object.keys(byDecade))
-			.slice(0, 3)
-			.map((d) => byDecade[d][0]);
+		const previsits = shuffle(Object.keys(byDecade))
+			.map((d) => byDecade[d][0])
+			.filter((i) => i !== target)
+			.slice(0, 3);
+		return [...previsits, target];
 	}
 
 	function beginStepSpin(idx) {
@@ -424,17 +443,17 @@
 	function startSearch() {
 		if (stage !== 'input') return;
 		targetRoomIndex = pickDecadeRoom();
-		searchOrder = pickSearchOrder();
+		searchOrder = pickSearchOrder(targetRoomIndex);
 		searchStep = 0;
 		latticeActive.set(true);
 		setStage('search');
 		beginStepSpin(searchOrder[0]);
 	}
 
-	function beginLand() {
-		landStartQuat.copy(worldGroup.quaternion);
-		landTargetQuat.copy(computeLandingQuat(targetRoomIndex));
-		// Fill zoom: crop the resolved room to cover the whole viewport.
+	// The decade is already facing camera (the final search spin put it there).
+	// Now do a pure, dead-centre zoom until the room's artwork fills the screen —
+	// no rotation, no orbit.
+	function beginZoom() {
 		const room = rectangleComponents[targetRoomIndex]?.getRoom?.();
 		const aspect = window.innerWidth / window.innerHeight;
 		if (room && room.localFrame) {
@@ -443,11 +462,11 @@
 		} else {
 			landFrustum = LAND_FRUSTUM;
 		}
-		setStage('land');
+		setStage('zoom');
 	}
 
 	function resetScene() {
-		disposeSperm();
+		hideSperm();
 		setStage('idle');
 		frustum = IDLE_FRUSTUM;
 		icoReveal = 0;
@@ -504,7 +523,7 @@
 			}
 		}
 
-		// ── swim: sperm dolly-swims through the collapsed icosahedron ──────
+		// ── swim: sperm flies straight down the camera axis into the core ──
 		if (stage === 'swim') {
 			icoReveal = 1;
 			idleAngle += dt * 0.25;
@@ -519,18 +538,14 @@
 				zEnd = -3.5; // through the icosahedron centre (z = 0) and out the back
 			if (spermPivot) {
 				const z = lerp(zStart, zEnd, t);
-				const wob = Math.sin(stageT * 2.4) * 0.1;
-				spermPivot.position.set(wob, wob * 0.5, z);
-				// Head pointing away, down the axis — we watch it swim into the core.
-				spermPivot.rotation.set(0.12, Math.PI, wob * 0.6);
+				// Dead-centre on the camera axis; roll clockwise as it flies in.
+				spermPivot.position.set(0, 0, z);
+				spermPivot.rotation.set(0, Math.PI, -stageT * 2.4);
 				// Appears once it clears the lens; fades as it enters the core.
 				const appear = smoothstep(5.8, 4.4, z);
 				const arrive = 1 - smoothstep(0.6, -2.2, z);
 				spermMat.uniforms.uOpacity.value = appear * arrive;
 			}
-			// Gentle dolly: pull the icosahedron a little closer as the sperm flies in.
-			frustum = lerp(IDLE_FRUSTUM, IDLE_FRUSTUM - 2.6, easeInOutCubic(t));
-			applyFrustum(frustum);
 
 			if (t >= 1) openIcosahedron();
 		}
@@ -562,12 +577,17 @@
 		// ── search: spin to a decade → scan it → spin to the next → … ─────
 		if (stage === 'search') {
 			subT += dt;
+			const isFinal = searchStep === searchOrder.length - 1;
 			if (searchSub === 'spin') {
 				const t = easeInOutCubic(clamp(subT / STEP_SPIN, 0, 1));
 				worldGroup.quaternion.copy(stepStartQuat).slerp(stepTargetQuat, t);
 				if (subT >= STEP_SPIN) {
-					searchSub = 'scan';
-					subT = 0;
+					// Landed on the resolved decade → hand straight to the zoom (no scan).
+					if (isFinal) beginZoom();
+					else {
+						searchSub = 'scan';
+						subT = 0;
+					}
 				}
 			} else {
 				// Dwell on the current decade with a "focus" pulse: everything else
@@ -580,40 +600,36 @@
 				if (subT >= STEP_SCAN) {
 					rectangleComponents.forEach((comp) => comp && comp.setDim(1));
 					searchStep += 1;
-					if (searchStep >= searchOrder.length) beginLand();
-					else beginStepSpin(searchOrder[searchStep]);
+					beginStepSpin(searchOrder[searchStep]);
 				}
 			}
 			publishSpin();
 		}
 
-		// ── land: slerp to the resolved decade, room facing camera ────────
-		if (stage === 'land') {
+		// ── zoom: pure centred zoom into the resolved room (no rotation) ──
+		if (stage === 'zoom') {
 			const t = easeInOutCubic(clamp(stageT / LAND_DUR, 0, 1));
-			worldGroup.quaternion.copy(landStartQuat).slerp(landTargetQuat, t);
-			publishSpin();
-			// Centred zoom (no orbit, stays dead-centre): the resolved decade's
-			// room grows until it fills the whole screen.
-			frustum = lerp(IDLE_FRUSTUM, landFrustum, smoothstep(0.1, 1, t));
+			frustum = lerp(IDLE_FRUSTUM, landFrustum, t);
 			applyFrustum(frustum);
-			// Fade the wireframe + the non-target rooms; keep the landed room.
-			const fade = 1 - smoothstep(0.25, 0.95, t);
+			// Fade the wireframe + the other rooms; keep the resolved room.
+			const fade = 1 - smoothstep(0.1, 0.8, t);
 			if (icoWireMat) icoWireMat.opacity = fade * icoReveal;
 			if (icoSolidMat) icoSolidMat.opacity = fade * icoReveal;
 			rectangleComponents.forEach((comp, i) => {
 				if (!comp) return;
-				if (i === targetRoomIndex) comp.setLineDim(lerp(1, 0, smoothstep(0.55, 1, t)));
+				if (i === targetRoomIndex) comp.setLineDim(lerp(1, 0, smoothstep(0.15, 0.7, t)));
 				else comp.setDim(fade);
 			});
-			latticeActive.set(t < 0.8);
+			latticeActive.set(t < 0.5);
+			publishSpin();
 			if (stageT >= LAND_DUR) {
 				setStage('settled');
 				sceneState.set(4);
 			}
 		}
 
-		// Wireframe opacity (except when land is driving it).
-		if (stage !== 'land') {
+		// Wireframe opacity (except when the zoom is driving its fade).
+		if (stage !== 'zoom') {
 			if (icoWireMat) icoWireMat.opacity = icoReveal;
 			// Solid faces are opaque site off-black so the polyhedron reads as a
 			// clean dark solid, not a translucent grey wash over the background.
@@ -706,6 +722,7 @@
 		window.removeEventListener('resize', handleResize);
 		window.removeEventListener('pointermove', handlePointer);
 		rectangleComponents.forEach((comp) => comp && comp.dispose());
+		disposeSperm();
 		if (renderer) renderer.dispose();
 	});
 </script>

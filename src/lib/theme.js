@@ -5,14 +5,7 @@ import { writable, derived, get } from 'svelte/store';
 // rectangles, spiral); `ui` is the UI text colour (CSS --fg). Swap the default
 // below, or flip live in the dev panel. Kept deliberately easy to extend.
 export const PALETTES = {
-	gold:  { label: 'gold',   line: 0xc2a133, ui: [240, 240, 160] }, // original
-	bone:  { label: 'bone',   line: 0xdcd3bd, ui: [233, 228, 214] }, // warm off-white / chalk
-	mint:  { label: 'mint',   line: 0x5fe0c8, ui: [200, 240, 232] }, // aqua — cool contrast
-	lime:  { label: 'lime',   line: 0xcaec4a, ui: [226, 238, 196] }, // acid lime
-	pearl: { label: 'pearl',  line: 0xf2eefc, ui: [238, 235, 246] }, // luminous cool white
-	bronze:{ label: 'bronze', line: 0xb98a55, ui: [223, 206, 176] }, // desaturated metallic
-	slate: { label: 'slate',  line: 0x93b1c6, ui: [210, 224, 233] }, // cool blueprint blue
-	clay:  { label: 'clay',   line: 0xcd7f5a, ui: [232, 205, 190] }  // warm terracotta
+	gold: { label: 'gold', line: 0xc2a133, ui: [240, 240, 160] }
 };
 
 export const DEFAULT_PALETTE = 'gold';
