@@ -15,7 +15,6 @@
 
 	let roomGroup;
 	let layers = []; // { mesh, mat, cfg, aspect, w, h }
-	let backing, backMat; // solid off-black card behind the room
 	let dimFactor = 1;
 	let lastProjection = 0;
 	let zoomK = 0; // 0..1 final-zoom progress; scales layers by depth for parallax
@@ -49,21 +48,6 @@
 		roomGroup = new THREE.Group();
 		group.add(roomGroup);
 		layers = [];
-
-		// Solid off-black substrate so the pane reads as a dark card (the site bg),
-		// not a washed-out translucent plane while the room fades in.
-		backMat = new THREE.MeshBasicMaterial({
-			color: 0x1b1b1b,
-			transparent: true,
-			opacity: 0,
-			side: THREE.DoubleSide,
-			depthTest: true,
-			depthWrite: true
-		});
-		backing = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), backMat);
-		backing.renderOrder = -1;
-		backing.visible = false;
-		roomGroup.add(backing);
 
 		const loader = new THREE.TextureLoader();
 		LAYERS.forEach((cfg) => {
@@ -149,27 +133,14 @@
 		const f = frame();
 		const n = f.n;
 
-		// Fade the room in as it projects out (keeps the collapsed centre uncluttered).
-		const reveal = smoothstep(0.04, 0.55, projection);
+		// Fade the room in later in the projection so the early spread stays clean
+		// and uncluttered — the colored artwork only firms up as the panes near full.
+		const reveal = smoothstep(0.32, 0.9, projection);
 		const eff = reveal * dimFactor;
 		const visible = eff > 0.01;
 
 		// Ride outward with the pane.
 		roomGroup.position.copy(n.clone().multiplyScalar(projection * paneReach));
-
-		// Off-black backing: appears quickly as the pane spins out, so the pane is a
-		// solid dark card the room composites onto.
-		if (backing) {
-			if (!backing.userData.oriented) {
-				const bm = new THREE.Matrix4().makeBasis(f.right, f.up, n);
-				backing.quaternion.setFromRotationMatrix(bm);
-				backing.userData.oriented = true;
-			}
-			backing.scale.set(f.W * 1.16, f.H * 1.16, 1);
-			backing.position.copy(basis.center.clone().addScaledVector(n, -1.06 * maxDepth * projection));
-			backMat.opacity = smoothstep(0.02, 0.18, projection) * dimFactor;
-			backing.visible = projection > 0.02 && dimFactor > 0.02;
-		}
 
 		layers.forEach((entry) => {
 			const back = n.clone().multiplyScalar(-entry.cfg.depth * maxDepth * projection);
@@ -178,10 +149,12 @@
 				.add(entry.inPlane || new THREE.Vector3())
 				.add(back);
 			entry.mesh.position.copy(pos);
-			// Depth parallax on the final zoom: nearer layers grow a little more
-			// than the back wall, so the room comes apart slightly as it fills.
+			// Depth parallax on the final zoom: nearer layers surge forward far more
+			// than the back wall, so you feel the bed rush past first, then the desk,
+			// then the screen — a real dolly-in with impact.
 			if (entry.w != null) {
-				const zf = 1 + zoomK * 0.22 * (1 - entry.cfg.depth);
+				const near = 1 - entry.cfg.depth; // 1 = frontmost, 0 = back wall
+				const zf = 1 + zoomK * 1.0 * near * near;
 				entry.mesh.scale.set(entry.w * zf, entry.h * zf, 1);
 			}
 			entry.mesh.visible = visible && entry.mat.map != null;
@@ -217,7 +190,6 @@
 	export function setPortrait(p) {
 		if (p === portrait) return;
 		portrait = p;
-		if (backing) backing.userData.oriented = false; // re-orient to new frame axes
 		layers.forEach(layout);
 		apply(lastProjection);
 	}

@@ -6,7 +6,9 @@
 	// left-hand boot log that plays alongside it, then fades out as the
 	// icosahedron opens so the input screens stay clean.
 	const lines = [
-		{ text: 'SYSTEM BOOT...', kind: 'sys' },
+		{ text: 'CC://2000 — CONCEPTION CALCULATOR', kind: 'sys' },
+		{ text: 'loading temporal dataset...', kind: 'dim' },
+		{ text: 'link established.', kind: 'ok' },
 		{ text: '...', kind: 'dim' },
 		{ text: 'in the earth year 2000, human technology advanced,', kind: 'sys' },
 		{ text: 'allowing all of mankind to calculate the song', kind: 'sys' },
