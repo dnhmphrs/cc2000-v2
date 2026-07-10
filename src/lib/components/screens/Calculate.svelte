@@ -6,7 +6,7 @@
 	import data from '$lib/data/cc2000_data.json';
 
 	let step = 1;
-	const STEP_IDS = ['SUBJECT.SEX', 'SUBJECT.DOB', 'RESONANCE.LVL'];
+	const STEP_IDS = ['SUBJECT.SEX', 'SUBJECT.DOB', 'SPICE.LVL'];
 
 	function selectGender(g) {
 		gender.set(g);
@@ -37,12 +37,14 @@
 
 		let found = null;
 		for (let i = 0; i < 30; i++) {
-			try {
-				found = data[cd][9 - $spicy];
+			// Each day holds 10 tracks ordered spicy 10 → 1 (index 0 → 9), so the
+			// track matching the chosen level is at index (10 - spicy).
+			const day = data[cd];
+			if (day && day[10 - $spicy]) {
+				found = day[10 - $spicy];
 				break;
-			} catch {
-				cd = previousDay(cd);
 			}
+			cd = previousDay(cd);
 		}
 
 		if (found) {
@@ -89,7 +91,7 @@
 				</div>
 			{:else}
 				<div class="panel">
-					<p class="label">&gt; set resonance level</p>
+					<p class="label">&gt; how spicy</p>
 					<div class="spice">
 						<span class="val">{String($spicy).padStart(2, '0')}</span>
 						<input type="range" bind:value={$spicy} min="1" max="10" />

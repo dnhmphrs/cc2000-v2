@@ -1,36 +1,27 @@
 <script>
 	import Terminal from '$lib/components/Terminal.svelte';
+	import { expanding } from '$lib/store/store';
 
 	// The cinematic (icosahedron + sperm) is driven by the scene; this is the
-	// left-hand boot log that plays alongside it. No central box, no button —
-	// the flow advances itself to the input panel once the sequence completes.
+	// left-hand boot log that plays alongside it, then fades out as the
+	// icosahedron opens so the input screens stay clean.
 	const lines = [
 		{ text: 'SYSTEM BOOT...', kind: 'sys' },
 		{ text: '...', kind: 'dim' },
-		{ text: 'NODE SYNCHRONISATION...', kind: 'sys' },
-		{ text: 'LINK ESTABLISHED.', kind: 'ok' },
-		{ text: 'LOADING TEMPORAL DATASET...', kind: 'sys' },
-		{ text: '...', kind: 'dim' },
-		{ text: 'in the earth year 2000, human technology advanced.', kind: 'sys' },
-		{ text: 'a method was discovered.', kind: 'hi' },
-		{ text: 'every song ever broadcast — indexed against every heartbeat.', kind: 'sys' },
-		{ text: 'allowing all of mankind to calculate the exact track', kind: 'sys' },
-		{ text: 'playing at their precise moment of conception.', kind: 'sys' },
-		{ text: '...', kind: 'dim' },
-		{ text: 'CALIBRATING RESONANCE CHAMBER...', kind: 'sys' },
-		{ text: 'INJECTING SEED VECTOR...', kind: 'alert' },
-		{ text: 'GEOMETRY LOCK: ICOSAHEDRON [12v / 30e / 20f]', kind: 'sys' },
-		{ text: 'awaiting subject input.', kind: 'hi' }
+		{ text: 'in the earth year 2000, human technology advanced,', kind: 'sys' },
+		{ text: 'allowing all of mankind to calculate the song', kind: 'sys' },
+		{ text: 'playing at their exact moment of conception.', kind: 'sys' },
+		{ text: 'awaiting subject.', kind: 'hi' }
 	];
 </script>
 
-<div class="intro">
+<div class="intro" class:out={$expanding}>
 	<div class="tag">
 		<span>CC://2000</span>
 		<span class="rule-s" />
 		<span>SESSION 0x01 — STANDBY</span>
 	</div>
-	<Terminal {lines} charDelay={13} linePause={190} />
+	<Terminal {lines} charDelay={15} linePause={260} />
 </div>
 
 <style>
@@ -41,6 +32,10 @@
 		max-width: min(46vw, 520px);
 		z-index: 20;
 		pointer-events: none;
+		transition: opacity 0.8s ease;
+	}
+	.intro.out {
+		opacity: 0;
 	}
 
 	.tag {
