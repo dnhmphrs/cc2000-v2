@@ -1,12 +1,11 @@
 import { writable } from 'svelte/store';
 
 // App flow:
-//   'preload'    → asset loading bar
 //   'intro'      → terminal boot lines + icosahedron instantiates + sperm swims through
 //   'calculate'  → reskinned user-input panel (mouse-look on the icosahedron is live)
 //   'processing' → faux-science terminal read-out while the icosahedron spins + hyperspace search
 //   'output'     → final result screen
-export const phase = writable('preload');
+export const phase = writable('intro');
 
 // User inputs
 export const gender = writable(null);
@@ -27,10 +26,6 @@ export const isPortrait = writable(false);
 // Scene state — a coarse command channel into the icosahedron scene.
 // 0 = reset/idle, 1 = begin processing spin (search), 4 = settled/landed.
 export const sceneState = writable(0);
-
-// Asset preloading — fraction 0..1 and a human-readable label for the loading bar.
-export const loadProgress = writable(0);
-export const loadLabel = writable('');
 
 // Published every frame by the scene: the icosahedron's live orientation, so the
 // background 4D lattice can rotate in lock-step during the hyperspace search.

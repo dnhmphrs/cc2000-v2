@@ -58,7 +58,7 @@
 	let stage = 'idle';
 	let stageT = 0;
 	const REVEAL_DUR = 1.3;
-	const SWIM_DUR = 6.4; // slow, savoured fly-in — gives the intro text time to read
+	const SWIM_DUR = 7.2; // slow emerge → pause in view → dive through, savoured
 	const OPEN_DUR = 3.6;
 	const LAND_DUR = 2.2;
 	// Stepped search: slew to a decade, "scan" it, slew to the next — a few times.
@@ -283,7 +283,7 @@
 				const center = box.getCenter(new THREE.Vector3());
 				const size = box.getSize(new THREE.Vector3());
 				const maxDim = Math.max(size.x, size.y, size.z);
-				const scaleFactor = 2.7 / maxDim;
+				const scaleFactor = 1.35 / maxDim;
 				spermModel.scale.setScalar(scaleFactor);
 				spermModel.position.set(
 					-center.x * scaleFactor,
@@ -531,7 +531,7 @@
 				.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, idleAngle, 0)));
 			if (stageT >= REVEAL_DUR * 0.55) {
 				if (spermReady) beginSwim();
-				else if (stageT >= REVEAL_DUR + 2.0) openIcosahedron(); // fail-open
+				else if (stageT >= REVEAL_DUR + 5.0) openIcosahedron(); // fail-open
 			}
 		}
 
@@ -544,19 +544,29 @@
 				.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, idleAngle, 0)));
 
 			const t = clamp(stageT / SWIM_DUR, 0, 1);
-			// 2001-style fly-by: a straight line locked to the camera axis, emerging
-			// from behind the lens (z > camera) and flying forward into the core.
+			// A three-beat entrance down the camera axis: slow emerge → hold fully in
+			// view for a moment → then dive through the core and vanish.
 			const zStart = 8, // behind the camera (which sits at z = 6)
-				zEnd = -3.5; // through the icosahedron centre (z = 0) and out the back
+				zHero = 3.4, // fully on screen, in front of the icosahedron
+				zEnd = -4.5; // dives through the core and out the back
 			if (spermPivot) {
-				const z = lerp(zStart, zEnd, t);
-				// Dead-centre on the camera axis; roll clockwise (fast) as it flies in.
+				let z;
+				if (t < 0.36) {
+					const u = t / 0.36;
+					z = lerp(zStart, zHero, 1 - Math.pow(1 - u, 2)); // ease-out (decelerate in)
+				} else if (t < 0.52) {
+					z = zHero; // pause — let the user take it in
+				} else {
+					const u = (t - 0.52) / 0.48;
+					z = lerp(zHero, zEnd, u * u); // ease-in (accelerate through)
+				}
+				// Dead-centre on the camera axis; roll counter-clockwise throughout.
 				spermPivot.position.set(0, 0, z);
-				spermPivot.rotation.set(0, Math.PI, -stageT * 5.5);
-				// Appears once it clears the lens; fades as it enters the core.
-				const appear = smoothstep(5.8, 4.4, z);
-				const arrive = 1 - smoothstep(0.6, -2.2, z);
-				spermMat.uniforms.uOpacity.value = appear * arrive;
+				spermPivot.rotation.set(0, Math.PI, stageT * 5.5);
+				// Fully visible from emergence; only fades once it has passed through.
+				const appear = smoothstep(6.0, 5.0, z);
+				const gone = 1 - smoothstep(-1.6, -4.2, z);
+				spermMat.uniforms.uOpacity.value = appear * gone;
 			}
 
 			if (t >= 1) openIcosahedron();
@@ -654,15 +664,18 @@
 		if (spermMixer) spermMixer.update(dt);
 		if (spermMat) spermMat.uniforms.uTime.value += dt;
 
-		// Render the sperm overlay FIRST (behind), then the ortho scene on top, so
-		// the icosahedron's solid faces occlude the sperm — it flies *into* the
-		// core and is swallowed rather than skating across the front.
+		// Render the ortho scene, then the sperm overlay on top — the sperm stays
+		// fully visible as it flies through the icosahedron, then fades out.
+		// clearDepth() wipes the ortho scene's depth buffer first, otherwise the
+		// perspective sperm would be depth-tested against the (incompatible) ortho
+		// depths written by the solid icosahedron faces and vanish.
 		renderer.autoClear = true;
-		if (spermActive && spermScene && spermCam) {
-			renderer.render(spermScene, spermCam);
-			renderer.autoClear = false;
-		}
 		renderer.render(scene, camera);
+		if (spermActive && spermScene && spermCam) {
+			renderer.autoClear = false;
+			renderer.clearDepth();
+			renderer.render(spermScene, spermCam);
+		}
 	}
 
 	let unsubPhase, unsubSceneState;
