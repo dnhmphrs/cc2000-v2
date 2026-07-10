@@ -57,10 +57,10 @@
 	//   'settled'— result on screen
 	let stage = 'idle';
 	let stageT = 0;
-	const REVEAL_DUR = 1.3;
-	const SWIM_DUR = 7.2; // slow emerge → pause in view → dive through, savoured
-	const OPEN_DUR = 4.0;
-	const LAND_DUR = 2.8;
+	const REVEAL_DUR = 0.0;
+	const SWIM_DUR = 10.0; // slow emerge → pause in view → dive through, savoured
+	const OPEN_DUR = 3.0;
+	const LAND_DUR = 2.5;
 	// Stepped search: slew to a decade, "scan" it, slew to the next — a few times.
 	const STEP_SPIN = 1.1; // seconds to rotate to a decade face
 	const STEP_SCAN = 0.75; // seconds dwelling / examining that decade
@@ -234,7 +234,7 @@
 			blending: THREE.AdditiveBlending,
 			uniforms: {
 				uTime: { value: 0 },
-				uOpacity: { value: 1.0 },
+				uOpacity: { value: 0.75 },
 				uColor: { value: accentColorVec(get(accentHex)) }
 			},
 			vertexShader: `
@@ -455,7 +455,7 @@
 		targetRoomIndex = pickDecadeRoom();
 		searchOrder = pickSearchOrder(targetRoomIndex);
 		searchStep = 0;
-		latticeActive.set(true);
+		// latticeActive.set(true);
 		setStage('search');
 		beginStepSpin(searchOrder[0]);
 	}
@@ -520,7 +520,7 @@
 		const dt = Math.min(clock.getDelta(), 0.05);
 
 		// Canvas fade-in.
-		const sinceMount = canvasFadeStart != null ? performance.now() / 1000 - canvasFadeStart : 0;
+		const sinceMount = canvasFadeStart != null ? performance.now() / 1000 - canvasFadeStart - 1.0 : 0;
 		canvasElement.style.opacity = clamp(sinceMount / CANVAS_FADE, 0, 1).toFixed(4);
 
 		stageT += dt;
@@ -550,7 +550,7 @@
 			// A three-beat entrance down the camera axis: slow emerge → hold fully in
 			// view for a moment → then dive through the core and vanish.
 			const zStart = 8, // behind the camera (which sits at z = 6)
-				zHero = 3.4, // fully on screen, in front of the icosahedron
+				zHero = 2.0, // fully on screen, in front of the icosahedron
 				zEnd = -4.5; // dives through the core and out the back
 			if (spermPivot) {
 				let z;
