@@ -221,8 +221,8 @@
 	// Local-space (pre-group-transform) orthonormal frame of this room's plane —
 	// used to compute the group orientation that lands this room facing camera.
 	export function localFrame() {
-		const { right, up, n } = frame();
-		return { right: right.clone(), up: up.clone(), normal: n.clone() };
+		const { right, up, n, W, H } = frame();
+		return { right: right.clone(), up: up.clone(), normal: n.clone(), W, H };
 	}
 
 	// World-space frame data for the camera zoom (after the group's transform).

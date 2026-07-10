@@ -4,7 +4,7 @@
 	import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 	import { phase, sceneState, decade, isPortrait, spinQuat, latticeActive } from '$lib/store/store';
 	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
-	import { assignDecades } from '$lib/data/roomElements';
+	import { assignDecades, shuffle } from '$lib/data/roomElements';
 	import { accentHex } from '$lib/theme';
 	import { get } from 'svelte/store';
 	import GoldenRectangle from './objects/GoldenRectangle.svelte';
@@ -29,7 +29,7 @@
 
 	const PHI = (1 + Math.sqrt(5)) / 2;
 	const IDLE_FRUSTUM = 13;
-	const LAND_FRUSTUM = 8; // gentle centred zoom that frames the landed room
+	const LAND_FRUSTUM = 8; // fallback zoom if the room's size can't be measured
 	let frustum = IDLE_FRUSTUM;
 
 	// ── Camera: fixed, face-on, orthographic, centred the whole time. The 3D
@@ -50,10 +50,12 @@
 	let stage = 'idle';
 	let stageT = 0;
 	const REVEAL_DUR = 1.3;
-	const SWIM_DUR = 4.6;
+	const SWIM_DUR = 4.2;
 	const OPEN_DUR = 3.6;
-	const SEARCH_DUR = 5.6;
-	const LAND_DUR = 2.0;
+	const LAND_DUR = 2.2;
+	// Stepped search: slew to a decade, "scan" it, slew to the next — a few times.
+	const STEP_SPIN = 0.85; // seconds to rotate to a decade face
+	const STEP_SCAN = 0.6; // seconds dwelling / examining that decade
 
 	// Mouse-look during the input flow.
 	let mouseNX = 0,
@@ -63,18 +65,23 @@
 	const MOUSE_AMP_Y = 0.55,
 		MOUSE_AMP_X = 0.38;
 
-	// Search tumble bookkeeping.
-	let spinQuatCurrent = new THREE.Quaternion();
+	// Search / land bookkeeping.
 	let landStartQuat = new THREE.Quaternion();
 	let landTargetQuat = new THREE.Quaternion();
+	let stepStartQuat = new THREE.Quaternion();
+	let stepTargetQuat = new THREE.Quaternion();
 	let targetRoomIndex = -1;
+	let searchOrder = []; // face indices to visit (distinct decades) before landing
+	let searchStep = 0;
+	let searchSub = 'spin'; // 'spin' | 'scan'
+	let subT = 0;
+	let landFrustum = LAND_FRUSTUM;
 	let idleAngle = 0;
 
 	// Sperm overlay (perspective) — swims through, then removed.
 	let spermScene, spermCam, spermPivot, spermModel, spermMixer, spermMat;
 	let spermActive = false;
 	let spermReady = false;
-	let spermStartCorner = new THREE.Vector2(-1, 0.6);
 
 	export let worldGroup;
 
@@ -347,9 +354,6 @@
 
 	function beginSwim() {
 		spermActive = true;
-		// Enter from a random-ish upper corner so it feels like it swims on-screen.
-		const side = Math.random() < 0.5 ? -1 : 1;
-		spermStartCorner.set(side * 1.15, 0.35 + Math.random() * 0.4);
 		setStage('swim');
 	}
 
@@ -394,17 +398,51 @@
 		return new THREE.Quaternion().setFromRotationMatrix(mTarget.multiply(mLocalInv));
 	}
 
+	// A handful of distinct-decade faces to visit before the answer, so the search
+	// reads as an actual programmatic scan rather than an idle tumble.
+	function pickSearchOrder() {
+		const byDecade = {};
+		rectangleComponents.forEach((comp, i) => {
+			const room = comp && comp.getRoom && comp.getRoom();
+			if (!room) return;
+			const d = decadeAssignments[i];
+			if (!byDecade[d]) byDecade[d] = [];
+			byDecade[d].push(i);
+		});
+		return shuffle(Object.keys(byDecade))
+			.slice(0, 3)
+			.map((d) => byDecade[d][0]);
+	}
+
+	function beginStepSpin(idx) {
+		stepStartQuat.copy(worldGroup.quaternion);
+		stepTargetQuat.copy(computeLandingQuat(idx));
+		searchSub = 'spin';
+		subT = 0;
+	}
+
 	function startSearch() {
 		if (stage !== 'input') return;
-		spinQuatCurrent.copy(worldGroup.quaternion);
 		targetRoomIndex = pickDecadeRoom();
+		searchOrder = pickSearchOrder();
+		searchStep = 0;
 		latticeActive.set(true);
 		setStage('search');
+		beginStepSpin(searchOrder[0]);
 	}
 
 	function beginLand() {
 		landStartQuat.copy(worldGroup.quaternion);
 		landTargetQuat.copy(computeLandingQuat(targetRoomIndex));
+		// Fill zoom: crop the resolved room to cover the whole viewport.
+		const room = rectangleComponents[targetRoomIndex]?.getRoom?.();
+		const aspect = window.innerWidth / window.innerHeight;
+		if (room && room.localFrame) {
+			const { W, H } = room.localFrame();
+			landFrustum = Math.min(H, W / aspect) * 0.98;
+		} else {
+			landFrustum = LAND_FRUSTUM;
+		}
 		setStage('land');
 	}
 
@@ -475,26 +513,23 @@
 				.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, idleAngle, 0)));
 
 			const t = clamp(stageT / SWIM_DUR, 0, 1);
-			// Gently front-loaded: visible arc across, then rushes through at the end.
-			const travel = Math.pow(t, 1.25);
-			const zStart = -11,
-				zEnd = 7.8; // camera at z=6 → rushes right past the lens near the end
+			// 2001-style fly-by: a straight line locked to the camera axis, emerging
+			// from behind the lens (z > camera) and flying forward into the core.
+			const zStart = 8, // behind the camera (which sits at z = 6)
+				zEnd = -3.5; // through the icosahedron centre (z = 0) and out the back
 			if (spermPivot) {
-				const z = lerp(zStart, zEnd, travel);
-				const conv = 1 - smoothstep(0.05, 0.82, t); // converge to centre
-				const wob = Math.sin(stageT * 3.0) * 0.3 * conv;
-				spermPivot.position.set(
-					spermStartCorner.x * 3.0 * conv + wob,
-					spermStartCorner.y * 2.2 * conv - wob * 0.5,
-					z
-				);
-				// Angled 3/4 view so the head + tail read as it swims through.
-				spermPivot.rotation.set(0.15, Math.PI * 0.82, Math.sin(stageT * 3.0) * 0.28 * conv);
-				spermMat.uniforms.uOpacity.value = smoothstep(0, 0.1, t) * (1 - smoothstep(0.9, 1, t));
+				const z = lerp(zStart, zEnd, t);
+				const wob = Math.sin(stageT * 2.4) * 0.1;
+				spermPivot.position.set(wob, wob * 0.5, z);
+				// Head pointing away, down the axis — we watch it swim into the core.
+				spermPivot.rotation.set(0.12, Math.PI, wob * 0.6);
+				// Appears once it clears the lens; fades as it enters the core.
+				const appear = smoothstep(5.8, 4.4, z);
+				const arrive = 1 - smoothstep(0.6, -2.2, z);
+				spermMat.uniforms.uOpacity.value = appear * arrive;
 			}
-			// Dolly push-in on the ortho composition, peaking mid-swim.
-			const bump = 4 * t * (1 - t);
-			frustum = IDLE_FRUSTUM - 3.2 * bump;
+			// Gentle dolly: pull the icosahedron a little closer as the sperm flies in.
+			frustum = lerp(IDLE_FRUSTUM, IDLE_FRUSTUM - 2.6, easeInOutCubic(t));
 			applyFrustum(frustum);
 
 			if (t >= 1) openIcosahedron();
@@ -524,20 +559,32 @@
 			worldGroup.quaternion.slerp(target, Math.min(1, dt * 4));
 		}
 
-		// ── search: controlled quaternion tumble (hyperspace) ─────────────
+		// ── search: spin to a decade → scan it → spin to the next → … ─────
 		if (stage === 'search') {
-			const t = clamp(stageT / SEARCH_DUR, 0, 1);
-			// Ramp angular speed up then hold, precessing the spin axis.
-			const env = smoothstep(0, 0.25, t);
-			const speed = 2.6 * env;
-			const ax = Math.sin(stageT * 0.7) * 0.6;
-			const ay = 1.0;
-			const az = Math.cos(stageT * 0.5) * 0.6;
-			const axis = new THREE.Vector3(ax, ay, az).normalize();
-			const dq = new THREE.Quaternion().setFromAxisAngle(axis, speed * dt);
-			worldGroup.quaternion.premultiply(dq);
+			subT += dt;
+			if (searchSub === 'spin') {
+				const t = easeInOutCubic(clamp(subT / STEP_SPIN, 0, 1));
+				worldGroup.quaternion.copy(stepStartQuat).slerp(stepTargetQuat, t);
+				if (subT >= STEP_SPIN) {
+					searchSub = 'scan';
+					subT = 0;
+				}
+			} else {
+				// Dwell on the current decade with a "focus" pulse: everything else
+				// dims out briefly, as if the machine is examining this candidate.
+				const pulse = Math.sin(clamp(subT / STEP_SCAN, 0, 1) * Math.PI);
+				rectangleComponents.forEach((comp, i) => {
+					if (!comp) return;
+					comp.setDim(i === searchOrder[searchStep] ? 1 : lerp(1, 0.15, pulse));
+				});
+				if (subT >= STEP_SCAN) {
+					rectangleComponents.forEach((comp) => comp && comp.setDim(1));
+					searchStep += 1;
+					if (searchStep >= searchOrder.length) beginLand();
+					else beginStepSpin(searchOrder[searchStep]);
+				}
+			}
 			publishSpin();
-			if (stageT >= SEARCH_DUR) beginLand();
 		}
 
 		// ── land: slerp to the resolved decade, room facing camera ────────
@@ -545,13 +592,14 @@
 			const t = easeInOutCubic(clamp(stageT / LAND_DUR, 0, 1));
 			worldGroup.quaternion.copy(landStartQuat).slerp(landTargetQuat, t);
 			publishSpin();
-			// Centred zoom (no orbit, stays dead-centre) frames the landed room.
-			frustum = lerp(IDLE_FRUSTUM, LAND_FRUSTUM, smoothstep(0.15, 1, t));
+			// Centred zoom (no orbit, stays dead-centre): the resolved decade's
+			// room grows until it fills the whole screen.
+			frustum = lerp(IDLE_FRUSTUM, landFrustum, smoothstep(0.1, 1, t));
 			applyFrustum(frustum);
 			// Fade the wireframe + the non-target rooms; keep the landed room.
 			const fade = 1 - smoothstep(0.25, 0.95, t);
 			if (icoWireMat) icoWireMat.opacity = fade * icoReveal;
-			if (icoSolidMat) icoSolidMat.opacity = 0.5 * fade * icoReveal;
+			if (icoSolidMat) icoSolidMat.opacity = fade * icoReveal;
 			rectangleComponents.forEach((comp, i) => {
 				if (!comp) return;
 				if (i === targetRoomIndex) comp.setLineDim(lerp(1, 0, smoothstep(0.55, 1, t)));
@@ -567,7 +615,9 @@
 		// Wireframe opacity (except when land is driving it).
 		if (stage !== 'land') {
 			if (icoWireMat) icoWireMat.opacity = icoReveal;
-			if (icoSolidMat) icoSolidMat.opacity = 0.5 * icoReveal;
+			// Solid faces are opaque site off-black so the polyhedron reads as a
+			// clean dark solid, not a translucent grey wash over the background.
+			if (icoSolidMat) icoSolidMat.opacity = icoReveal;
 		}
 
 		// Sperm overlay animation clock.
