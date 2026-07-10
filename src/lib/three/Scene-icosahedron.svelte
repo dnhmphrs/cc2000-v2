@@ -58,7 +58,11 @@
 	let stage = 'idle';
 	let stageT = 0;
 	const REVEAL_DUR = 0.0;
-	const SWIM_DUR = 10.0; // slow emerge → pause in view → dive through, savoured
+
+	const SWIM_DUR = 8.0;      // total travel time, emerge → gone
+	const SWIM_Z_START = 6.0;  // camera plane (cam sits at z = 6) → materialises into view
+	const SWIM_Z_END = -5.0;   // dives through the core and out the back
+	const SWIM_ACCEL = 2.6;    // ease-in exponent: >1 = slower start, sharper finish
 	const OPEN_DUR = 3.0;
 	const LAND_DUR = 2.5;
 	// Stepped search: slew to a decade, "scan" it, slew to the next — a few times.
@@ -538,7 +542,7 @@
 			}
 		}
 
-		// ── swim: sperm flies straight down the camera axis into the core ──
+		// ── swim: one accelerating glide straight down the camera axis ──────
 		if (stage === 'swim') {
 			icoReveal = 1;
 			idleAngle += dt * 0.25;
@@ -547,28 +551,17 @@
 				.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, idleAngle, 0)));
 
 			const t = clamp(stageT / SWIM_DUR, 0, 1);
-			// A three-beat entrance down the camera axis: slow emerge → hold fully in
-			// view for a moment → then dive through the core and vanish.
-			const zStart = 8, // behind the camera (which sits at z = 6)
-				zHero = 2.0, // fully on screen, in front of the icosahedron
-				zEnd = -4.5; // dives through the core and out the back
+			// Pure ease-in: d/dt of t^n is n·t^(n-1), which rises monotonically from 0,
+			// so it never slows — gentle start, speeds into the end.
+			const eased = Math.pow(t, SWIM_ACCEL);
 			if (spermPivot) {
-				let z;
-				if (t < 0.36) {
-					const u = t / 0.36;
-					z = lerp(zStart, zHero, 1 - Math.pow(1 - u, 2)); // ease-out (decelerate in)
-				} else if (t < 0.52) {
-					z = zHero; // pause — let the user take it in
-				} else {
-					const u = (t - 0.52) / 0.48;
-					z = lerp(zHero, zEnd, u * u); // ease-in (accelerate through)
-				}
+				const z = lerp(SWIM_Z_START, SWIM_Z_END, eased);
 				// Dead-centre on the camera axis; roll counter-clockwise throughout.
 				spermPivot.position.set(0, 0, z);
 				spermPivot.rotation.set(0, Math.PI, stageT * 5.5);
-				// Fully visible from emergence; only fades once it has passed through.
-				const appear = smoothstep(6.0, 5.0, z);
-				const gone = 1 - smoothstep(-1.6, -4.2, z);
+				// Fade in as it clears the camera plane, out once it's through the core.
+				const appear = smoothstep(6.0, 5.2, z);
+				const gone = 1 - smoothstep(-2.0, -4.5, z);
 				spermMat.uniforms.uOpacity.value = appear * gone;
 			}
 
