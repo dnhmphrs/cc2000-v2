@@ -48,6 +48,7 @@
 	p {
 		margin: 0;
 		font-size: 16px;
-		color: var(--ink-dim);
+		letter-spacing: 0.14em;
+		color: var(--ink);
 	}
 </style>

@@ -69,11 +69,11 @@
 	// a wide screen that the input panel hid it completely.
 	const ARRIVE_DUR = 2.6; // swims in from off-screen and settles into station
 	const HOVER_DIST = 3.6; // camera sits at z = 6, so it idles at z = 2.4
-	const HOVER_SPAN = 0.6; // fraction of the frame width it spans (landscape)
-	// Portrait has no room beside the card but plenty above it, so there the
-	// hologram is smaller and lifted into the gap instead of hiding behind it.
-	const HOVER_SPAN_PORTRAIT = 0.7;
-	const HOVER_RISE_PORTRAIT = 0.55; // fraction of the half-height, above centre
+	// It swims in the upper half; the questions live in the lower half.
+	const HOVER_SPAN = 0.42; // fraction of the frame width it spans (landscape)
+	const HOVER_SPAN_PORTRAIT = 0.62;
+	const HOVER_RISE = 0.42; // fraction of the half-height, above centre
+	const HOVER_RISE_PORTRAIT = 0.55;
 	const SPERM_SIZE = 1.35; // the model's largest dimension, set at load
 
 	// The cinematic runs about eight seconds, most of it the search. It once ran
@@ -108,11 +108,19 @@
 	let idleAngle = 0;
 
 	// Sperm overlay (perspective) — hovers through the input flow, then dives.
-	let spermScene, spermCam, spermPivot, spermModel, spermMixer, spermMat;
+	let spermScene, spermCam, spermPivot, spermSpin, spermModel, spermMixer, spermMat;
+	// The model's own long axis, found from its bounding box at load. Rolling
+	// about this is a barrel roll along the body; rolling about z (which is what
+	// it used to do) spun it like a propeller, which is why it read as an object
+	// tumbling in a box rather than something swimming.
+	let bodyAxis = new THREE.Vector3(1, 0, 0);
+	// Motes in the fluid — the depth cue for the canal.
+	let motes, moteMat, moteZ, moteSpeed;
+	const MOTE_COUNT = 300;
 	let spermActive = false;
 	let spermReady = false;
 	let spermFade = 0; // eased 0..1 hologram opacity
-	let spermRoll = 0; // accumulated roll, shared by hover and dive
+	let beat = 0; // tail-beat phase, drives rock / sway / surge
 	let hoverT = 0;
 	const diveFrom = new THREE.Vector3(0, 0, 2.4);
 
@@ -298,12 +306,90 @@
 		});
 	}
 
+	// Specks of matter suspended in the fluid, streaming past the camera. This is
+	// what makes the front half read as moving up a canal rather than hanging in
+	// the dark: near ones sweep past fast and large, far ones creep.
+	function buildMotes() {
+		const pos = new Float32Array(MOTE_COUNT * 3);
+		const seed = new Float32Array(MOTE_COUNT);
+		moteZ = new Float32Array(MOTE_COUNT);
+		moteSpeed = new Float32Array(MOTE_COUNT);
+		for (let i = 0; i < MOTE_COUNT; i++) {
+			pos[i * 3] = (Math.random() * 2 - 1) * 8;
+			pos[i * 3 + 1] = (Math.random() * 2 - 1) * 6;
+			moteZ[i] = -18 + Math.random() * 24;
+			pos[i * 3 + 2] = moteZ[i];
+			seed[i] = Math.random();
+			moteSpeed[i] = 0.8 + Math.random() * 2.4;
+		}
+		const geo = new THREE.BufferGeometry();
+		geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+		geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
+
+		moteMat = new THREE.ShaderMaterial({
+			transparent: true,
+			depthWrite: false,
+			blending: THREE.AdditiveBlending,
+			uniforms: {
+				uOpacity: { value: 0 },
+				uPix: { value: Math.min(window.devicePixelRatio, 2) },
+				uColor: { value: new THREE.Vector3(1.0, 0.86, 0.9) }
+			},
+			vertexShader: `
+				attribute float aSeed;
+				varying float vFade;
+				uniform float uPix;
+				void main() {
+					vec4 mv = modelViewMatrix * vec4(position, 1.0);
+					gl_Position = projectionMatrix * mv;
+					float d = max(-mv.z, 0.05);
+					// Clamped: a mote right on the lens would otherwise be hundreds of
+					// pixels of near-invisible overdraw, which is pure fill cost.
+					gl_PointSize = min((aSeed * 30.0 + 5.0) * uPix / d, 56.0 * uPix);
+					// In from the far dark, out as it sweeps past the lens.
+					vFade = smoothstep(20.0, 12.0, d) * smoothstep(0.3, 3.0, d);
+				}
+			`,
+			fragmentShader: `
+				varying float vFade;
+				uniform vec3 uColor;
+				uniform float uOpacity;
+				void main() {
+					float r = length(gl_PointCoord - 0.5);
+					float a = smoothstep(0.5, 0.05, r) * vFade * uOpacity;
+					gl_FragColor = vec4(uColor * a, a);
+				}
+			`
+		});
+
+		motes = new THREE.Points(geo, moteMat);
+		motes.frustumCulled = false;
+		spermScene.add(motes);
+	}
+
+	// Drift them toward the camera and recycle the ones that pass it.
+	function updateMotes(dt, flow) {
+		if (!motes) return;
+		const p = motes.geometry.attributes.position.array;
+		for (let i = 0; i < MOTE_COUNT; i++) {
+			moteZ[i] += dt * moteSpeed[i] * flow;
+			if (moteZ[i] > 7) {
+				moteZ[i] = -18;
+				p[i * 3] = (Math.random() * 2 - 1) * 8;
+				p[i * 3 + 1] = (Math.random() * 2 - 1) * 6;
+			}
+			p[i * 3 + 2] = moteZ[i];
+		}
+		motes.geometry.attributes.position.needsUpdate = true;
+	}
+
 	function loadSperm() {
 		spermScene = new THREE.Scene();
 		spermCam = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.01, 100);
 		spermCam.position.set(0, 0, 6);
 		spermCam.lookAt(0, 0, 0);
 		spermMat = createSpermMaterial();
+		buildMotes();
 
 		const loader = new GLTFLoader();
 		loader.load(
@@ -325,8 +411,20 @@
 					if (c.isMesh) c.material = spermMat;
 				});
 
+				// Longest bounding-box side is the body; roll happens about that.
+				const axisIdx = size.x >= size.y && size.x >= size.z ? 0 : size.y >= size.z ? 1 : 2;
+				bodyAxis = new THREE.Vector3(
+					axisIdx === 0 ? 1 : 0,
+					axisIdx === 1 ? 1 : 0,
+					axisIdx === 2 ? 1 : 0
+				);
+
+				// pivot = where it is and which way it faces; spin = the barrel roll
+				// about its own length, taken separately so the two don't fight.
+				spermSpin = new THREE.Group();
+				spermSpin.add(spermModel);
 				spermPivot = new THREE.Group();
-				spermPivot.add(spermModel);
+				spermPivot.add(spermSpin);
 				spermScene.add(spermPivot);
 
 				if (gltf.animations && gltf.animations.length) {
@@ -371,7 +469,7 @@
 		const span = portrait ? HOVER_SPAN_PORTRAIT : HOVER_SPAN;
 		return {
 			x: 0,
-			y: portrait ? tanHalf * HOVER_DIST * HOVER_RISE_PORTRAIT : 0,
+			y: tanHalf * HOVER_DIST * (portrait ? HOVER_RISE_PORTRAIT : HOVER_RISE),
 			z: spermCam.position.z - HOVER_DIST,
 			scale: (span * frameW) / SPERM_SIZE
 		};
@@ -408,6 +506,31 @@
 		mouseNY = (e.clientY / window.innerHeight) * 2 - 1;
 	}
 
+	// The swim. The model is a static mesh — no skin, no clips — so every bit of
+	// this is rigid-body motion, and it has to read as a cell beating rather than
+	// an object being turned.
+	//
+	// It ROCKS about its own length instead of rolling right over: a full barrel
+	// roll turns a flat curled body edge-on twice a cycle, where it collapses to a
+	// line and you cannot tell what you are looking at. Rocking sweeps the tail
+	// through depth and keeps it legible the whole time.
+	function applySwim(dt, rate) {
+		beat += dt * rate;
+		if (spermSpin) spermSpin.setRotationFromAxisAngle(bodyAxis, Math.sin(beat) * 0.62);
+	}
+
+	// Nose sway, on periods that don't divide into the rock, so it never falls
+	// into a mechanical-looking loop.
+	function undulate(amount) {
+		return {
+			x: Math.sin(beat * 0.63) * 0.1 * amount,
+			y: Math.PI + Math.sin(beat * 0.44) * 0.2 * amount
+		};
+	}
+
+	// It gains a little on each beat and coasts between — the propulsion cue.
+	const surge = () => Math.sin(beat * 2) * 0.11;
+
 	function setStage(s) {
 		stage = s;
 		stageT = 0;
@@ -422,7 +545,7 @@
 	function beginArrive() {
 		if (stage !== 'idle') return;
 		hoverT = 0;
-		spermRoll = 0;
+		beat = 0;
 		spermFade = 0;
 		if (spermPivot) {
 			const a = hoverAnchor();
@@ -449,8 +572,14 @@
 
 	// Beat 3: the dive. Captures wherever the sperm was idling so the launch is
 	// continuous rather than a snap back to the axis.
+	//
+	// Accepts any pre-dive stage, not just 'hover'. It used to require 'hover'
+	// exactly, so answering both questions and hitting calculate inside the 2.6s
+	// the sperm takes to swim on dropped the cue on the floor and hung the site
+	// in the tube forever, with no way out but a reload.
 	function beginDive() {
-		if (stage !== 'hover') return;
+		if (stage === 'dive' || stage === 'open' || stage === 'search') return;
+		if (stage === 'zoom' || stage === 'settled') return;
 		if (spermPivot) diveFrom.copy(spermPivot.position);
 		else diveFrom.set(0, 0, 2.4);
 		setStage('dive');
@@ -556,7 +685,7 @@
 		mouseNX = mouseNY = 0;
 		idleAngle = 0;
 		hoverT = 0;
-		spermRoll = 0;
+		beat = 0;
 		spermFade = 0;
 		targetRoomIndex = -1;
 		flare.set(0);
@@ -613,19 +742,23 @@
 		if (stage === 'arrive') {
 			icoReveal = 0;
 			hoverT += dt;
-			spermRoll += dt * 0.14;
 			if (spermReady && spermPivot && !spermPivot.visible) {
 				spermPivot.visible = true;
 				spermActive = true;
 			}
 			const t = easeInOutCubic(clamp(stageT / ARRIVE_DUR, 0, 1));
+			applySwim(dt, 3.6); // beating harder on the way in
 			if (spermPivot) {
 				const a = hoverAnchor();
 				const from = arriveFrom(a);
+				const u = undulate(1);
 				spermPivot.scale.setScalar(a.scale);
-				spermPivot.position.set(lerp(from.x, a.x, t), lerp(from.y, a.y, t), a.z);
-				// Angled into the swim on the way in, levelling off as it arrives.
-				spermPivot.rotation.set(0, Math.PI, spermRoll + (1 - t) * 0.5);
+				spermPivot.position.set(
+					lerp(from.x, a.x, t),
+					lerp(from.y, a.y, t),
+					a.z + surge() * (1 - t)
+				);
+				spermPivot.rotation.set(u.x, u.y + (1 - t) * 0.35, 0);
 			}
 			spermFade += (0.8 - spermFade) * Math.min(1, dt * 2.2);
 			if (spermMat) spermMat.uniforms.uOpacity.value = spermFade;
@@ -636,8 +769,8 @@
 		if (stage === 'hover') {
 			icoReveal = 0;
 			hoverT += dt;
-			spermRoll += dt * 0.14;
-			// The model may still have been parsing when the operator hit start.
+			applySwim(dt, 3.0);
+			// The model may still have been parsing when the page loaded.
 			if (spermReady && spermPivot && !spermPivot.visible) {
 				spermPivot.visible = true;
 				spermActive = true;
@@ -650,13 +783,10 @@
 				spermPivot.position.set(
 					a.x + Math.sin(hoverT * 0.34) * 0.09 + mouseNX * 0.06,
 					a.y + Math.sin(hoverT * 0.47) * 0.07 - mouseNY * 0.05,
-					a.z + Math.sin(hoverT * 0.23) * 0.14
+					a.z + Math.sin(hoverT * 0.23) * 0.14 + surge()
 				);
-				spermPivot.rotation.set(
-					Math.sin(hoverT * 0.31) * 0.09 - mouseNY * 0.07,
-					Math.PI + Math.sin(hoverT * 0.26) * 0.16 + mouseNX * 0.1,
-					spermRoll
-				);
+				const u = undulate(1);
+				spermPivot.rotation.set(u.x - mouseNY * 0.07, u.y + mouseNX * 0.1, 0);
 			}
 			spermFade += (0.8 - spermFade) * Math.min(1, dt * 1.2);
 			if (spermMat) spermMat.uniforms.uOpacity.value = spermFade;
@@ -676,14 +806,15 @@
 			// Pure ease-in: d/dt of t^n is n·t^(n-1), which rises monotonically from 0,
 			// so it never slows — gentle start, speeds into the end.
 			const eased = Math.pow(t, DIVE_ACCEL);
-			spermRoll += dt * (0.14 + 0.75 * t);
+			applySwim(dt, 3.0 + 6.0 * t); // beats harder the deeper it goes
 			if (spermPivot) {
 				const z = lerp(diveFrom.z, DIVE_Z_END, eased);
 				// Converge onto the camera axis as it commits, so it enters the core
 				// dead centre however far off to the side it had drifted.
 				const off = 1 - smoothstep(0, 0.42, t);
+				const u = undulate(1 - t * 0.6);
 				spermPivot.position.set(diveFrom.x * off, diveFrom.y * off, z);
-				spermPivot.rotation.set(0, Math.PI, spermRoll);
+				spermPivot.rotation.set(u.x, u.y, 0);
 				// Start fading before it reaches the core, so it dissolves into the
 				// polyhedron rather than punching through it.
 				const gone = 1 - smoothstep(-0.4, -4.0, z);
@@ -784,6 +915,19 @@
 		if (icoWireMesh) icoWireMesh.visible = icoOn;
 		if (icoSolidMesh) icoSolidMesh.visible = icoOn;
 
+		// Fluid. Streaming while we are in the tube, surging through the dive, gone
+		// once the machine takes over.
+		if (moteMat) {
+			const inTube = stage === 'arrive' || stage === 'hover';
+			const diving = stage === 'dive';
+			const flow = diving ? 1 + 5 * clamp(stageT / DIVE_DUR, 0, 1) : inTube ? 1 : 0;
+			const want = inTube ? 1 : diving ? 1 - clamp(stageT / (DIVE_DUR * 0.7), 0, 1) : 0;
+			moteMat.uniforms.uOpacity.value +=
+				(want - moteMat.uniforms.uOpacity.value) * Math.min(1, dt * 3);
+			if (motes) motes.visible = moteMat.uniforms.uOpacity.value > 0.01;
+			if (flow > 0) updateMotes(dt, flow);
+		}
+
 		// Sperm overlay animation clock.
 		if (spermMixer) spermMixer.update(dt);
 		if (spermMat) spermMat.uniforms.uTime.value += dt;
@@ -795,7 +939,8 @@
 		// depths written by the solid icosahedron faces and vanish.
 		renderer.autoClear = true;
 		renderer.render(scene, camera);
-		if (spermActive && spermScene && spermCam) {
+		const overlayVisible = spermActive || (motes && motes.visible);
+		if (overlayVisible && spermScene && spermCam) {
 			renderer.autoClear = false;
 			renderer.clearDepth();
 			renderer.render(spermScene, spermCam);
