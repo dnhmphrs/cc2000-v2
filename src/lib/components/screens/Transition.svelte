@@ -1,29 +1,45 @@
 <script>
-	import { phase, sceneState, spicy, decade } from '$lib/store/store';
-	import Terminal from '$lib/components/Terminal.svelte';
-	import Console from '$lib/components/Console.svelte';
+	import { onMount, onDestroy } from 'svelte';
+	import { phase, sceneState } from '$lib/store/store';
+	import { fade } from 'svelte/transition';
 
-	// Beat 3/4: the search log runs while the sperm dives, the icosahedron
-	// appears and opens, the background flares and the scan resolves a decade.
-	// When the scene lands it sets sceneState → 4.
+	// Beat 3. The scene does the work; this is one warm line at a time, sized to
+	// the ~5s the cinematic now takes. When the scene lands it sets sceneState 4.
 	$: if ($sceneState >= 4) phase.set('output');
 
-	const lines = [
-		{ text: 'cc2000 search --hyperspace', kind: 'cmd' },
-		{ text: 'releasing subject vector into the lattice', kind: 'sys' },
-		{ text: 'icosahedral rotor spun up ... 4 decades', kind: 'ok' },
-		{ text: 'cross-referencing 11,486,203 broadcast records', kind: 'sys' },
-		{ text: 'golden manifold aligned · phi = 1.6180339887', kind: 'ok' },
-		{ text: `harmonising resonance level ${$spicy}/10`, kind: 'sys' },
-		{ text: 'quantum-tunnelling through decade membrane', kind: 'sys' },
-		{ text: 'discarding improbable timelines [n=402]', kind: 'warn' },
-		{ text: 'triangulating conception coordinates', kind: 'sys' },
-		{ text: `decade candidate ... ${$decade ?? '??'}`, kind: 'ok' },
-		{ text: '', kind: 'blank' },
-		{ text: 'match converging', kind: 'hi' }
-	];
+	const lines = ['counting back 268 days', 'digging through the charts', 'found it'];
+	let i = 0;
+	let timer;
+
+	onMount(() => {
+		timer = setInterval(() => {
+			if (i < lines.length - 1) i += 1;
+		}, 1800);
+	});
+	onDestroy(() => clearInterval(timer));
 </script>
 
-<Console tty="tty1" status="searching" geometry="4d" lamp="warn">
-	<Terminal {lines} charDelay={11} linePause={190} />
-</Console>
+<div class="wrap">
+	{#key i}
+		<p in:fade={{ duration: 400 }}>{lines[i]}</p>
+	{/key}
+</div>
+
+<style>
+	.wrap {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: max(8vh, 54px);
+		z-index: 10;
+		display: flex;
+		justify-content: center;
+		pointer-events: none;
+	}
+
+	p {
+		margin: 0;
+		font-size: 16px;
+		color: var(--ink-dim);
+	}
+</style>

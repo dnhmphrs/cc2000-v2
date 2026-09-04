@@ -24,6 +24,12 @@
 	export let portrait = false;
 	export let renderer = null;
 
+	// The drafting layer: dimension lines and ticks, the 1:φ ratio bar, the golden
+	// spiral, the subdivision squares and the dashed trace lines. It is beautiful
+	// up close and unreadable in the 1.4s the panes take to open, where it only
+	// reads as clutter. Flip this to true to bring all of it back.
+	const DRAFTING_DETAIL = false;
+
 	// How far the pane (and its room) travels out from the icosahedron centre at
 	// full projection, and how deep the room's parallax runs behind the frame.
 	const PANE_REACH = 6.4;
@@ -260,9 +266,11 @@
 		]);
 		rectGroup.add(new THREE.LineSegments(outline, outlineMaterial));
 
-		const { squares, arcCenters } = computeGoldenRectangleData();
-		rectGroup.add(createGoldenSpiral(arcCenters));
-		rectGroup.add(createSubdivisionLines(squares));
+		if (DRAFTING_DETAIL) {
+			const { squares, arcCenters } = computeGoldenRectangleData();
+			rectGroup.add(createGoldenSpiral(arcCenters));
+			rectGroup.add(createSubdivisionLines(squares));
+		}
 
 		return rectGroup;
 	}
@@ -322,7 +330,7 @@
 		rectangleGroup = createRectangle();
 		group.add(rectangleGroup);
 
-		traceLines = createTraceLines();
+		if (DRAFTING_DETAIL) traceLines = createTraceLines();
 
 		await tick();
 
@@ -409,7 +417,7 @@
 	}
 </script>
 
-{#if basis}
+{#if basis && DRAFTING_DETAIL}
 	<GoldenRectangleSchematic
 		bind:this={schematicComponent}
 		{group}
@@ -418,6 +426,8 @@
 		{direction}
 		baseOpacity={schematicBaseOpacity}
 	/>
+{/if}
+{#if basis}
 	<RoomProjection
 		bind:this={roomComponent}
 		{group}

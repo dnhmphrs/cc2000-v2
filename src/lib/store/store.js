@@ -1,12 +1,12 @@
 import { writable } from 'svelte/store';
 
 // App flow — four beats, in order:
-//   'boot'       → terminal boots and types; nothing in 3D yet; ends on a start key
-//   'calculate'  → the sperm hologram is on screen while the operator fills the form
-//   'processing' → sperm dives, THE ICOSAHEDRON APPEARS, opens, background flares,
-//                  the search scans the decades and zooms into the resolved room
-//   'output'     → final result screen
-export const phase = writable('boot');
+//   'intro'      → title and a button; nothing in 3D yet
+//   'calculate'  → the sperm is on screen while the three questions are answered
+//   'processing' → sperm dives, THE ICOSAHEDRON APPEARS, opens, the field comes
+//                  up, and it turns to the resolved decade and zooms in. ~5s.
+//   'output'     → the room, in colour, with the song on it
+export const phase = writable('intro');
 
 // User inputs
 export const gender = writable(null);
@@ -18,6 +18,9 @@ export const track = writable(null);
 
 // Decade resolved from conception date
 export const decade = writable(null);
+
+// The day the track was playing — i.e. roughly when they were made.
+export const conceived = writable(null);
 
 // Out-of-range verdicts ('past' | 'future' | null) — the date fell outside the
 // broadcast archive, so there is no track to find.
