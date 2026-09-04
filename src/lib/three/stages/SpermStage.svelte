@@ -17,7 +17,17 @@
 	//   'wait2'    — holds at C while the spice is asked
 	//   'pierce'   — drives into the egg
 
-	const CAM_Z = 6;
+	// A narrower lens than a wide-angle: less distortion, and the egg reads much
+	// larger for the same geometry, which is what makes the approach feel like an
+	// approach.
+	const FOV = 40;
+	// The camera holds still for the fly-in, then follows the sperm forward, so
+	// the egg grows into the frame as it is closed on rather than sitting at a
+	// constant size.
+	const CAM_HOME = 6;
+	const CAM_AT_B = 4.6;
+	const CAM_AT_C = 2.7;
+	const CAM_AT_EGG = 1.0;
 	// It starts BEHIND the camera and comes past you into the frame, rather than
 	// receding away from you into it.
 	const FLY_FROM_Z = 8.6;
@@ -32,8 +42,8 @@
 	const APPROACH2_DUR = 1.4;
 	const PIERCE_DUR = 1.35;
 
-	// Two turns a second, clockwise as seen from the camera.
-	const SPIN_HZ = 2;
+	// Clockwise as seen from the camera. Half a turn a second — two was a blur.
+	const SPIN_HZ = 0.5;
 
 	// Fraction of the frame width it spans at station A; it grows from there as
 	// it comes in, which is the whole point of the approaches.
@@ -54,7 +64,7 @@
 	let driftT = 0;
 	let portrait = false;
 
-	let eggGroup, eggShell, eggShellMat, eggCore, eggCoreMat;
+	let eggGroup, eggShell, eggShellMat, eggCore, eggCoreMat, rimLight;
 	let eggFade = 0;
 	// 0..1 — how far into the egg it is. Read by the parent for the white-out;
 	// a plain getter, because an `export let` is a prop and cannot be read off a
@@ -64,6 +74,9 @@
 	// Where it sits for each stage, so the approaches are one lerp each.
 	const stationOf = (stage) =>
 		stage === 'wait2' || stage === 'pierce' ? STATION_C : stage === 'wait1' ? STATION_B : STATION_A;
+
+	const camOf = (stage) =>
+		stage === 'wait2' || stage === 'pierce' ? CAM_AT_C : stage === 'wait1' ? CAM_AT_B : CAM_HOME;
 
 	// ── Materials ────────────────────────────────────────────────────────────
 	function createSpermMaterial() {
@@ -148,7 +161,26 @@
 		});
 
 		eggShell = new THREE.Mesh(new THREE.SphereGeometry(EGG_R, 48, 32), eggShellMat);
-		eggCore = new THREE.Mesh(new THREE.SphereGeometry(EGG_R * 0.82, 32, 24), eggCoreMat);
+
+		// The core is displaced into a lumpy blob at build time. A perfect sphere
+		// rotating is invisible — there is nothing on it to move — so this is what
+		// makes the turn read, and it looks more like a cell than a ball besides.
+		const coreGeo = new THREE.SphereGeometry(EGG_R * 0.82, 64, 40);
+		const cp = coreGeo.attributes.position;
+		const v = new THREE.Vector3();
+		for (let i = 0; i < cp.count; i++) {
+			v.fromBufferAttribute(cp, i);
+			const n = v.clone().normalize();
+			const bump =
+				1 +
+				0.06 * Math.sin(n.x * 5.1 + 1.3) * Math.cos(n.y * 4.3) +
+				0.045 * Math.sin(n.z * 6.7 + 2.1) +
+				0.03 * Math.cos(n.x * 9.2 + n.y * 7.4);
+			v.multiplyScalar(bump);
+			cp.setXYZ(i, v.x, v.y, v.z);
+		}
+		coreGeo.computeVertexNormals();
+		eggCore = new THREE.Mesh(coreGeo, eggCoreMat);
 
 		eggGroup = new THREE.Group();
 		eggGroup.add(eggCore);
@@ -161,9 +193,9 @@
 		// no environment map.
 		const key = new THREE.DirectionalLight(0xffffff, 1.15);
 		key.position.set(-3, 4, 5);
-		const rim = new THREE.PointLight(0x9ab8ff, 12, 24);
-		rim.position.set(3.5, -1.5, EGG_Z + 3);
-		scene.add(key, rim, new THREE.AmbientLight(0x4a63b8, 0.55));
+		rimLight = new THREE.PointLight(0x9ab8ff, 14, 26);
+		rimLight.position.set(3.5, -1.5, EGG_Z + 3);
+		scene.add(key, rimLight, new THREE.AmbientLight(0x4a63b8, 0.55));
 	}
 
 	function loadSperm() {
@@ -200,10 +232,13 @@
 		);
 	}
 
-	function spanScale(z) {
+	// Fixed, measured once against the home camera at station A. Recomputing it
+	// per frame would normalise the approach away — it would stay the same size
+	// on screen however close it got.
+	function baseScale() {
 		if (!camera) return 1;
 		const tanHalf = Math.tan((camera.fov * Math.PI) / 360);
-		const frameW = 2 * tanHalf * (CAM_Z - z) * Math.max(camera.aspect, 0.05);
+		const frameW = 2 * tanHalf * (CAM_HOME - STATION_A) * Math.max(camera.aspect, 0.05);
 		return ((portrait ? HOLD_SPAN_PORTRAIT : HOLD_SPAN) * frameW) / SPERM_SIZE;
 	}
 
@@ -211,8 +246,8 @@
 	export function init() {
 		scene = new THREE.Scene();
 		scene.fog = new THREE.FogExp2(FOG_COLOR, FOG_DENSITY);
-		camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.01, 100);
-		camera.position.set(0, 0, CAM_Z);
+		camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, 0.01, 100);
+		camera.position.set(0, 0, CAM_HOME);
 		camera.lookAt(0, 0, 0);
 		buildEgg();
 		loadSperm();
@@ -257,6 +292,7 @@
 		if (live && spermReady && spermPivot) spermPivot.visible = true;
 
 		let z = stationOf(stage);
+		let camZ = camOf(stage);
 		hit = 0;
 
 		if (stage === 'fly') {
@@ -267,16 +303,21 @@
 			if (stageT >= FLY_DUR) done = true;
 		} else if (stage === 'approach') {
 			const t = clamp(stageT / APPROACH_DUR, 0, 1);
-			z = lerp(STATION_A, STATION_B, t * t * (3 - 2 * t));
+			const e = t * t * (3 - 2 * t);
+			z = lerp(STATION_A, STATION_B, e);
+			camZ = lerp(CAM_HOME, CAM_AT_B, e);
 			if (stageT >= APPROACH_DUR) done = true;
 		} else if (stage === 'approach2') {
 			const t = clamp(stageT / APPROACH2_DUR, 0, 1);
-			z = lerp(STATION_B, STATION_C, t * t * (3 - 2 * t));
+			const e = t * t * (3 - 2 * t);
+			z = lerp(STATION_B, STATION_C, e);
+			camZ = lerp(CAM_AT_B, CAM_AT_C, e);
 			if (stageT >= APPROACH2_DUR) done = true;
 		} else if (stage === 'pierce') {
 			const t = clamp(stageT / PIERCE_DUR, 0, 1);
 			const eased = Math.pow(t, 1.7);
 			z = lerp(STATION_C, EGG_Z, eased);
+			camZ = lerp(CAM_AT_C, CAM_AT_EGG, eased);
 			hit = clamp((eased - 0.68) / 0.32, 0, 1);
 			// Gone inside the shell.
 			spermFade = 0.9 * (1 - hit);
@@ -287,8 +328,10 @@
 			spermFade += (0 - spermFade) * Math.min(1, dt * 4);
 		}
 
+		camera.position.z = camZ;
+
 		if (spermPivot) {
-			spermPivot.scale.setScalar(spanScale(Math.min(z, STATION_A)));
+			spermPivot.scale.setScalar(baseScale());
 			// A little life in the hold, and a nudge from the cursor. No wobble in
 			// the body itself — the spin carries the motion.
 			const idle = stage === 'hold' || stage === 'wait1' || stage === 'wait2';
@@ -302,8 +345,22 @@
 		eggFade += ((eggWanted ? 1 : 0) - eggFade) * Math.min(1, dt * 1.6);
 		if (eggGroup) {
 			eggGroup.visible = eggFade > 0.01;
-			eggGroup.rotation.y += dt * 0.1;
 			eggGroup.scale.setScalar(1 + hit * 0.12);
+			// The lumpy core turns; the glassy shell barely does. Two rates, so
+			// there is something moving in the frame that isn't the sperm.
+			if (eggCore) {
+				eggCore.rotation.y += dt * 0.5;
+				eggCore.rotation.x += dt * 0.17;
+			}
+			if (eggShell) eggShell.rotation.y -= dt * 0.09;
+		}
+		// The highlight travels slowly across the shell.
+		if (rimLight) {
+			rimLight.position.set(
+				Math.cos(driftT * 0.32) * 4.2,
+				Math.sin(driftT * 0.23) * 2.4,
+				EGG_Z + 3.2
+			);
 		}
 		if (eggShellMat) eggShellMat.opacity = eggFade * 0.5;
 		if (eggCoreMat) eggCoreMat.opacity = eggFade * 0.85;

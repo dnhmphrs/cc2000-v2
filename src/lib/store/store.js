@@ -14,7 +14,9 @@ export const phase = writable('intro');
 export const gender = writable(null);
 export const spicy = writable(4);
 export const date = writable('2000-01-01');
-export const dob = writable({ month: '', day: '', year: '' });
+export const dobMonth = writable('');
+export const dobDay = writable('');
+export const dobYear = writable('');
 
 // Result
 export const track = writable(null);
@@ -61,7 +63,9 @@ export const flare = writable(0);
 // again" used to rely on components unmounting to forget their own state,
 // which is easy to get wrong and hard to see when it is.
 export function resetRun() {
-	dob.set({ month: '', day: '', year: '' });
+	dobMonth.set('');
+	dobDay.set('');
+	dobYear.set('');
 	date.set('2000-01-01');
 	spicy.set(4);
 	gender.set(null);
