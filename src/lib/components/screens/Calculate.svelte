@@ -78,119 +78,117 @@
 	}
 </script>
 
-<div class="wrap" out:fade={{ duration: 260 }}>
-	<p class="mark" in:fade={{ duration: 900, delay: 300 }}>conception calculator 2000</p>
-
-	<div class="ask" in:fade={{ duration: 900, delay: 1200 }}>
-		<p class="q">when were you born?</p>
-		<div class="dob">
-			<select bind:value={month} aria-label="month">
-				<option value="" disabled>month</option>
-				{#each MONTHS as m, i}<option value={i + 1}>{m}</option>{/each}
-			</select>
-			<select bind:value={day} aria-label="day">
-				<option value="" disabled>day</option>
-				{#each days as d}<option value={d}>{d}</option>{/each}
-			</select>
-			<select bind:value={year} aria-label="year">
-				<option value="" disabled>year</option>
-				{#each YEARS as y}<option value={y}>{y}</option>{/each}
-			</select>
-		</div>
-	</div>
-
-	<div class="ask" in:fade={{ duration: 900, delay: 1800 }}>
-		<p class="q">how spicy do you like it?</p>
-		<div class="dial">
-			<input type="range" bind:value={$spicy} min="1" max="10" />
-			<div class="ends">
-				<span>sweet</span>
-				<span class="num">{$spicy}</span>
-				<span>filthy</span>
+<div class="shell" in:fade={{ duration: 320 }} out:fade={{ duration: 220 }}>
+	<div class="panel">
+		<div class="ask">
+			<p class="q">when were you born?</p>
+			<div class="dob">
+				<select bind:value={month} aria-label="month">
+					<option value="" disabled>month</option>
+					{#each MONTHS as m, i}<option value={i + 1}>{m}</option>{/each}
+				</select>
+				<select bind:value={day} aria-label="day">
+					<option value="" disabled>day</option>
+					{#each days as d}<option value={d}>{d}</option>{/each}
+				</select>
+				<select bind:value={year} aria-label="year">
+					<option value="" disabled>year</option>
+					{#each YEARS as y}<option value={y}>{y}</option>{/each}
+				</select>
 			</div>
 		</div>
-	</div>
 
-	<div class="go-row" in:fade={{ duration: 900, delay: 2300 }}>
+		<div class="ask second">
+			<p class="q">how spicy do you like it?</p>
+			<div class="dial">
+				<input type="range" bind:value={$spicy} min="1" max="10" />
+				<div class="ends">
+					<span>sweet</span>
+					<span class="num">{$spicy}</span>
+					<span>filthy</span>
+				</div>
+			</div>
+		</div>
+
 		<button class="go" on:click={calculate} disabled={!complete}>calculate</button>
 	</div>
 </div>
 
 <style>
-	/* Sits in the fluid, low, so the sperm has the middle of the screen. */
-	.wrap {
+	.shell {
 		position: fixed;
-		left: 0;
-		right: 0;
-		bottom: 0;
+		inset: 0;
 		z-index: 10;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		gap: 20px;
-		padding: 0 24px max(5vh, 30px);
+		justify-content: center;
+		padding: 2rem 1.5rem;
 		pointer-events: none;
-		text-align: center;
-		text-shadow: 0 2px 14px rgba(60, 6, 26, 0.55);
 	}
 
-	.mark {
-		font-size: 11px;
-		letter-spacing: 0.34em;
-		color: rgba(255, 255, 255, 0.72);
-		margin: 0 0 6px;
-	}
-
-	.ask {
+	/* A plain pop-up over the scene. One box, a rule between the two questions,
+	   and nothing else on it. */
+	.panel {
+		width: 100%;
+		max-width: 340px;
+		background: var(--panel);
+		border: 1px solid rgba(var(--ink-rgb), 0.22);
+		padding: 24px 24px 22px;
 		pointer-events: auto;
+		backdrop-filter: blur(6px);
+	}
+
+	.ask.second {
+		margin-top: 22px;
+		padding-top: 22px;
+		border-top: 1px solid rgba(var(--ink-rgb), 0.16);
 	}
 
 	.q {
-		font-size: clamp(19px, 2.4vw, 26px);
-		color: #fff;
+		font-size: 17px;
+		color: var(--ink);
 		margin: 0 0 12px;
 	}
 
 	.dob {
-		display: flex;
-		gap: 8px;
-		justify-content: center;
-		flex-wrap: wrap;
+		display: grid;
+		grid-template-columns: 1.5fr 1fr 1fr;
+		gap: 6px;
 	}
 
 	select {
 		font-family: var(--face);
-		font-size: 15px;
-		background: rgba(60, 6, 26, 0.32);
-		border: 1px solid rgba(255, 255, 255, 0.5);
-		color: #fff;
-		padding: 10px 12px;
+		font-size: 14px;
+		background: transparent;
+		border: 1px solid rgba(var(--ink-rgb), 0.28);
+		color: var(--ink);
+		padding: 10px 8px;
 		outline: none;
 		border-radius: 0;
 		-webkit-appearance: none;
 		appearance: none;
 		cursor: pointer;
-		backdrop-filter: blur(4px);
 	}
 	select:focus {
 		border-color: var(--yellow);
 	}
 	select option {
-		background: #4d0f2c;
-		color: #fff;
+		background: #0a246a;
+		color: var(--ink);
 	}
 
 	.dial {
-		width: min(74vw, 340px);
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
 	}
 
 	.ends {
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
-		margin-top: 8px;
 		font-size: 12px;
-		color: rgba(255, 255, 255, 0.75);
+		color: var(--ink-dim);
 	}
 	.num {
 		font-size: 22px;
@@ -198,13 +196,8 @@
 		color: var(--yellow);
 	}
 
-	.go-row {
-		pointer-events: auto;
-		margin-top: 4px;
-	}
-
-	.go-row button {
-		padding: 14px 40px;
-		font-size: 15px;
+	button.go {
+		margin-top: 24px;
+		width: 100%;
 	}
 </style>
