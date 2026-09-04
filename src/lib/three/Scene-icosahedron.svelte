@@ -4,7 +4,7 @@
 	import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 	import { phase, sceneState, decade, isPortrait, flare } from '$lib/store/store';
 	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
-	import { assignDecades } from '$lib/data/roomElements';
+	import { assignDecades, shuffle } from '$lib/data/roomElements';
 	import { accentHex } from '$lib/theme';
 	import { get } from 'svelte/store';
 	import GoldenRectangle from './objects/GoldenRectangle.svelte';
@@ -47,7 +47,7 @@
 	//              the icosahedron appears: it fades in ahead of the sperm, which
 	//              passes straight through its core.
 	//   'open'   — the panes/rooms project outward and the background flares.
-	//   'search' — one turn to the decade the answer already named.
+	//   'search' — turns through a few decades, then rests on the answer.
 	//   'zoom'   — dead-centre zoom into the resolved room.
 	//   'settled'— result on screen.
 	let stage = 'idle';
@@ -65,17 +65,20 @@
 	const HOVER_RISE_PORTRAIT = 0.55; // fraction of the half-height, above centre
 	const SPERM_SIZE = 1.35; // the model's largest dimension, set at load
 
-	// The whole cinematic runs about five seconds. It used to run fourteen, which
-	// is a long time to hold someone in front of a joke about their parents.
-	const DIVE_DUR = 1.5; // hover position → through the core → gone
+	// The cinematic runs about eight seconds, most of it the search. It once ran
+	// fourteen and the padding was all in the approach; the turns themselves earn
+	// their time, because each one puts another decade's room on screen.
+	const DIVE_DUR = 1.3; // hover position → through the core → gone
 	const DIVE_Z_END = -7.0;
 	// Ease-in exponent. Barely above linear: a glide that gathers a little pace.
 	const DIVE_ACCEL = 1.35;
-	const OPEN_DUR = 1.4;
-	const LAND_DUR = 1.7;
-	// One turn straight to the answer. The old stepped scan visited decoy decades
-	// first, which is four seconds spent pretending to search.
-	const TURN_DUR = 1.1;
+	const OPEN_DUR = 1.2;
+	const LAND_DUR = 1.5;
+	// Turn to a decade, look at it, turn to the next — three of them, then the
+	// answer. Brisk: the old version dwelt nearly twice as long on each.
+	const PREVISITS = 3;
+	const STEP_SPIN = 0.7; // seconds to rotate to a decade face
+	const STEP_SCAN = 0.35; // seconds resting on it
 
 	// Pointer, normalised to [-1, 1]. During the input flow it nudges the sperm;
 	// the icosahedron is never on screen at a moment the operator could steer it.
@@ -86,6 +89,10 @@
 	let stepStartQuat = new THREE.Quaternion();
 	let stepTargetQuat = new THREE.Quaternion();
 	let targetRoomIndex = -1;
+	let searchOrder = []; // faces to look at, the resolved decade last
+	let searchStep = 0;
+	let searchSub = 'spin'; // 'spin' | 'scan'
+	let subT = 0;
 	let landFrustum = LAND_FRUSTUM;
 	let idleAngle = 0;
 
@@ -464,11 +471,38 @@
 		return new THREE.Quaternion().setFromRotationMatrix(mTarget.multiply(mLocalInv));
 	}
 
+	// A few distinct decades to visit before the answer, then the answer itself.
+	// The point is not to fake a search — it is that each turn shows another
+	// decade's artwork, which is otherwise built and never seen.
+	function pickSearchOrder(target) {
+		const byDecade = {};
+		rectangleComponents.forEach((comp, i) => {
+			const room = comp && comp.getRoom && comp.getRoom();
+			if (!room) return;
+			const d = decadeAssignments[i];
+			if (!byDecade[d]) byDecade[d] = [];
+			byDecade[d].push(i);
+		});
+		const previsits = shuffle(Object.keys(byDecade))
+			.map((d) => byDecade[d][0])
+			.filter((i) => i !== target)
+			.slice(0, PREVISITS);
+		return [...previsits, target];
+	}
+
+	function beginStepSpin(idx) {
+		stepStartQuat.copy(worldGroup.quaternion);
+		stepTargetQuat.copy(computeLandingQuat(idx));
+		searchSub = 'spin';
+		subT = 0;
+	}
+
 	function startSearch() {
 		targetRoomIndex = pickDecadeRoom();
-		stepStartQuat.copy(worldGroup.quaternion);
-		stepTargetQuat.copy(computeLandingQuat(targetRoomIndex));
+		searchOrder = pickSearchOrder(targetRoomIndex);
+		searchStep = 0;
 		setStage('search');
+		beginStepSpin(searchOrder[0]);
 	}
 
 	// The decade is already facing camera (the final search spin put it there).
@@ -610,12 +644,36 @@
 			if (stageT >= OPEN_DUR) finishOpen();
 		}
 
-		// ── search: one turn, straight to the decade the answer already named ─
+		// ── search: turn to a decade, rest on it, turn to the next ─────────
 		if (stage === 'search') {
-			const t = easeInOutCubic(clamp(stageT / TURN_DUR, 0, 1));
-			worldGroup.quaternion.copy(stepStartQuat).slerp(stepTargetQuat, t);
+			subT += dt;
+			const isFinal = searchStep === searchOrder.length - 1;
+			if (searchSub === 'spin') {
+				const t = easeInOutCubic(clamp(subT / STEP_SPIN, 0, 1));
+				worldGroup.quaternion.copy(stepStartQuat).slerp(stepTargetQuat, t);
+				if (subT >= STEP_SPIN) {
+					if (isFinal) beginZoom();
+					else {
+						searchSub = 'scan';
+						subT = 0;
+					}
+				}
+			} else {
+				// Lean on the one being looked at. The others only step back — they
+				// used to drop to 0.15, which hid the very artwork this is here to
+				// show.
+				const pulse = Math.sin(clamp(subT / STEP_SCAN, 0, 1) * Math.PI);
+				rectangleComponents.forEach((comp, i) => {
+					if (!comp) return;
+					comp.setDim(i === searchOrder[searchStep] ? 1 : lerp(1, 0.45, pulse));
+				});
+				if (subT >= STEP_SCAN) {
+					rectangleComponents.forEach((comp) => comp && comp.setDim(1));
+					searchStep += 1;
+					beginStepSpin(searchOrder[searchStep]);
+				}
+			}
 			flare.set(1);
-			if (stageT >= TURN_DUR) beginZoom();
 		}
 
 		// ── zoom: pure centred zoom into the resolved room (no rotation) ──

@@ -7,14 +7,22 @@
 	// the ~5s the cinematic now takes. When the scene lands it sets sceneState 4.
 	$: if ($sceneState >= 4) phase.set('output');
 
-	const lines = ['counting back 268 days', 'digging through the charts', 'found it'];
+	// Deliberately not naming decades: the scene picks which faces to visit at
+	// random, so any specific claim here would be wrong most of the time.
+	const lines = [
+		'counting back 268 days',
+		'opening the archive',
+		'checking each decade',
+		'narrowing it down',
+		'found it'
+	];
 	let i = 0;
 	let timer;
 
 	onMount(() => {
 		timer = setInterval(() => {
 			if (i < lines.length - 1) i += 1;
-		}, 1800);
+		}, 1350);
 	});
 	onDestroy(() => clearInterval(timer));
 </script>
