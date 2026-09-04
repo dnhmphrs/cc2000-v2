@@ -4,8 +4,9 @@
 	import { fade } from 'svelte/transition';
 	import data from '$lib/data/cc2000_data.json';
 
-	// Beat 2. Two fields, per the brief: birthdate, and the false-flag question.
-	// (There was a third — "who are you?" — which nothing downstream ever read.)
+	// Two fields, per the brief, put to you while you are already in the tube.
+	// No panel: a card floating in the fluid was the thing that read as a menu
+	// bolted onto the front of the site.
 	const MIN_YEAR = 1958;
 	const MAX_YEAR = new Date().getFullYear();
 
@@ -43,8 +44,6 @@
 		const today = new Date().toISOString().slice(0, 10);
 
 		// The archive starts in 1958 and nobody has been conceived after today.
-		// Both used to navigate to /the-past and /the-future — routes this build
-		// does not have, so they landed people on the 404 screen.
 		if (cd <= '1958-06-01') {
 			edge.set('past');
 			phase.set('output');
@@ -79,8 +78,10 @@
 	}
 </script>
 
-<div class="stage" in:fade={{ duration: 300 }} out:fade={{ duration: 200 }}>
-	<div class="col card">
+<div class="wrap" out:fade={{ duration: 260 }}>
+	<p class="mark" in:fade={{ duration: 900, delay: 300 }}>conception calculator 2000</p>
+
+	<div class="ask" in:fade={{ duration: 900, delay: 1200 }}>
 		<p class="q">when were you born?</p>
 		<div class="dob">
 			<select bind:value={month} aria-label="month">
@@ -96,75 +97,114 @@
 				{#each YEARS as y}<option value={y}>{y}</option>{/each}
 			</select>
 		</div>
+	</div>
 
-		<p class="q second">how spicy do you like it?</p>
+	<div class="ask" in:fade={{ duration: 900, delay: 1800 }}>
+		<p class="q">how spicy do you like it?</p>
 		<div class="dial">
-			<span class="num">{$spicy}</span>
 			<input type="range" bind:value={$spicy} min="1" max="10" />
-			<div class="ends"><span>sweet</span><span>filthy</span></div>
+			<div class="ends">
+				<span>sweet</span>
+				<span class="num">{$spicy}</span>
+				<span>filthy</span>
+			</div>
 		</div>
+	</div>
 
+	<div class="go-row" in:fade={{ duration: 900, delay: 2300 }}>
 		<button class="go" on:click={calculate} disabled={!complete}>calculate</button>
 	</div>
 </div>
 
 <style>
-	.q {
-		font-size: 17px;
-		color: var(--ink);
-		margin: 0 0 12px;
+	/* Sits in the fluid, low, so the sperm has the middle of the screen. */
+	.wrap {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 10;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 20px;
+		padding: 0 24px max(5vh, 30px);
+		pointer-events: none;
+		text-align: center;
+		text-shadow: 0 2px 14px rgba(60, 6, 26, 0.55);
 	}
-	.q.second {
-		margin-top: 26px;
+
+	.mark {
+		font-size: 11px;
+		letter-spacing: 0.34em;
+		color: rgba(255, 255, 255, 0.72);
+		margin: 0 0 6px;
+	}
+
+	.ask {
+		pointer-events: auto;
+	}
+
+	.q {
+		font-size: clamp(19px, 2.4vw, 26px);
+		color: #fff;
+		margin: 0 0 12px;
 	}
 
 	.dob {
-		display: grid;
-		grid-template-columns: 1.5fr 1fr 1fr;
-		gap: 6px;
+		display: flex;
+		gap: 8px;
+		justify-content: center;
+		flex-wrap: wrap;
 	}
 
 	select {
 		font-family: var(--face);
-		font-size: 14px;
-		background: transparent;
-		border: 1px solid rgba(var(--ink-rgb), 0.26);
-		color: var(--ink);
-		padding: 10px 8px;
+		font-size: 15px;
+		background: rgba(60, 6, 26, 0.32);
+		border: 1px solid rgba(255, 255, 255, 0.5);
+		color: #fff;
+		padding: 10px 12px;
 		outline: none;
 		border-radius: 0;
 		-webkit-appearance: none;
 		appearance: none;
 		cursor: pointer;
+		backdrop-filter: blur(4px);
 	}
 	select:focus {
-		border-color: var(--ink-dim);
+		border-color: var(--yellow);
 	}
 	select option {
-		background: #0a246a;
-		color: var(--ink);
+		background: #4d0f2c;
+		color: #fff;
 	}
 
 	.dial {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
+		width: min(74vw, 340px);
 	}
-	.num {
-		font-size: 44px;
-		font-weight: 700;
-		line-height: 1;
-		color: var(--yellow);
-	}
+
 	.ends {
 		display: flex;
 		justify-content: space-between;
+		align-items: baseline;
+		margin-top: 8px;
 		font-size: 12px;
-		color: var(--ink-dim);
+		color: rgba(255, 255, 255, 0.75);
+	}
+	.num {
+		font-size: 22px;
+		font-weight: 700;
+		color: var(--yellow);
 	}
 
-	button {
-		margin-top: 26px;
-		width: 100%;
+	.go-row {
+		pointer-events: auto;
+		margin-top: 4px;
+	}
+
+	.go-row button {
+		padding: 14px 40px;
+		font-size: 15px;
 	}
 </style>
