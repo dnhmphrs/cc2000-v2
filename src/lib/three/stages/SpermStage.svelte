@@ -53,7 +53,7 @@
 
 	// The fog does double duty: it hides the egg until it is close enough to
 	// matter, and it is what makes the field read as depth rather than flat blue.
-	const FOG_COLOR = 0x16357f;
+	const FOG_COLOR = 0xdedcca;
 	const FOG_DENSITY = 0.06;
 
 	let scene, camera;
@@ -85,11 +85,12 @@
 			side: THREE.DoubleSide,
 			depthWrite: false,
 			wireframe: true,
-			blending: THREE.AdditiveBlending,
+			// Normal blending, not additive: on paper it is drawn in ink, not lit.
+			blending: THREE.NormalBlending,
 			uniforms: {
 				uTime: { value: 0 },
 				uOpacity: { value: 0 },
-				uColor: { value: new THREE.Vector3(0.86, 0.88, 0.95) },
+				uColor: { value: new THREE.Vector3(0.1, 0.1, 0.086) },
 				// Custom shader, so scene.fog does not reach it — the same
 				// exponential is applied by hand to keep it in the same air.
 				uFogColor: { value: new THREE.Color(FOG_COLOR) },
@@ -124,12 +125,14 @@
 					float scan = sin(vWorldPos.y * 22.0 - uTime * 0.9) * 0.5 + 0.5;
 					scan = smoothstep(0.3, 0.75, scan);
 					float fres = pow(1.0 - abs(dot(vNormal, vViewDir)), 2.0);
-					vec3 col = uColor + vec3(0.12) * fres;
-					float a = (0.24 + scan * 0.12 + fres * 0.24) * uOpacity;
+					vec3 col = uColor;
+					// Darkest at the silhouette, lighter across the body, so the line
+					// has weight rather than reading as flat wireframe.
+					float a = (0.5 + scan * 0.18 + fres * 0.35) * uOpacity;
 					float fog = 1.0 - exp(-uFogDensity * uFogDensity * vDepth * vDepth);
 					col = mix(col, uFogColor, fog);
-					a *= 1.0 - fog * 0.85;
-					gl_FragColor = vec4(col * a, a);
+					a *= 1.0 - fog * 0.9;
+					gl_FragColor = vec4(col, a);
 				}
 			`
 		});
@@ -142,10 +145,10 @@
 	// bubble.
 	function buildEgg() {
 		eggShellMat = new THREE.MeshPhysicalMaterial({
-			color: 0xdfe6ff,
+			color: 0xf6f4e8,
 			transparent: true,
 			opacity: 0,
-			roughness: 0.12,
+			roughness: 0.1,
 			metalness: 0.0,
 			clearcoat: 1.0,
 			clearcoatRoughness: 0.08,
@@ -154,7 +157,7 @@
 			fog: true
 		});
 		eggCoreMat = new THREE.MeshLambertMaterial({
-			color: 0x9fb2e8,
+			color: 0xc0b99c,
 			transparent: true,
 			opacity: 0,
 			fog: true
@@ -191,11 +194,11 @@
 
 		// Enough light for the physical shell to have a shape. Cheap: no shadows,
 		// no environment map.
-		const key = new THREE.DirectionalLight(0xffffff, 1.15);
+		const key = new THREE.DirectionalLight(0xfffdf2, 0.95);
 		key.position.set(-3, 4, 5);
-		rimLight = new THREE.PointLight(0x9ab8ff, 14, 26);
+		rimLight = new THREE.PointLight(0x6f86d8, 13, 26);
 		rimLight.position.set(3.5, -1.5, EGG_Z + 3);
-		scene.add(key, rimLight, new THREE.AmbientLight(0x4a63b8, 0.55));
+		scene.add(key, rimLight, new THREE.AmbientLight(0xb9b6a2, 0.5));
 	}
 
 	function loadSperm() {
@@ -362,8 +365,8 @@
 				EGG_Z + 3.2
 			);
 		}
-		if (eggShellMat) eggShellMat.opacity = eggFade * 0.5;
-		if (eggCoreMat) eggCoreMat.opacity = eggFade * 0.85;
+		if (eggShellMat) eggShellMat.opacity = eggFade * 0.6;
+		if (eggCoreMat) eggCoreMat.opacity = eggFade * 0.95;
 
 		if (spermMat) {
 			spermMat.uniforms.uOpacity.value = spermFade;

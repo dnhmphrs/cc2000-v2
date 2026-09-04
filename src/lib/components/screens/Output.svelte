@@ -109,15 +109,20 @@
 		font-size: calc(1em * var(--s));
 	}
 
+	.glass {
+		--screen-ink: #efeee2;
+	}
+
 	.when {
 		font-size: calc(10px * var(--s));
-		color: var(--ink-dim);
+		color: rgba(239, 238, 226, 0.62);
 		margin: 0 0 calc(4px * var(--s));
 	}
 
 	h2 {
-		font-size: calc(19px * var(--s));
-		font-weight: 700;
+		font-family: var(--display);
+		font-size: calc(21px * var(--s));
+		font-weight: 900;
 		line-height: 1.05;
 		color: var(--yellow);
 		margin: 0 0 calc(3px * var(--s));
@@ -130,7 +135,7 @@
 
 	.artist {
 		font-size: calc(12px * var(--s));
-		color: var(--ink);
+		color: var(--screen-ink, #efeee2);
 		margin: 0 0 calc(8px * var(--s));
 		white-space: nowrap;
 		overflow: hidden;
@@ -150,7 +155,8 @@
 		display: block;
 	}
 
-	/* Sits under the monitor, on the desk, out of the room's way. */
+	/* Sits under the monitor, on the desk. Blue, because the rooms are bright and
+	   a yellow control disappears into half of them. */
 	.again {
 		position: fixed;
 		left: 50%;
@@ -160,9 +166,9 @@
 		/* main is pointer-events:none and this sits outside .stage, so it has to
 		   opt back in or the restart is dead. */
 		pointer-events: auto;
-		background: var(--yellow);
-		border-color: var(--yellow);
-		color: var(--bg);
+		background: var(--blue);
+		border-color: var(--blue);
+		color: #f3f2e6;
 	}
 
 	/* Fallback / out-of-range card. */
@@ -170,7 +176,10 @@
 		font-size: 13px;
 	}
 	.card h2 {
-		font-size: clamp(24px, 3.2vw, 34px);
+		font-family: var(--display);
+		font-weight: 900;
+		font-size: clamp(26px, 3.6vw, 40px);
+		line-height: 1.05;
 	}
 	.card .artist {
 		font-size: 17px;

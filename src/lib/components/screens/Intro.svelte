@@ -105,15 +105,24 @@
 	}
 
 	.write p {
-		font-size: clamp(12px, 1.15vw, 15px);
+		font-family: var(--face);
+		font-weight: 300;
+		font-size: clamp(12px, 1.2vw, 16px);
 		white-space: nowrap;
-		line-height: 1.45;
+		line-height: 1.5;
 		color: var(--ink-dim);
 		margin: 0;
-		min-height: 1.45em;
+		min-height: 1.5em;
 	}
+	/* The last line is the joke; it gets the serif and the accent. */
 	.write p.lit {
-		color: var(--yellow);
+		font-family: var(--display);
+		font-weight: 900;
+		font-size: clamp(15px, 1.7vw, 23px);
+		line-height: 1.25;
+		letter-spacing: -0.01em;
+		margin-top: 8px;
+		color: var(--blue);
 	}
 
 	.caret {
@@ -122,7 +131,7 @@
 		height: 1em;
 		margin-left: 1px;
 		vertical-align: text-bottom;
-		background: var(--ink);
+		background: var(--ink-dim);
 		animation: blink 1.05s steps(1) infinite;
 	}
 

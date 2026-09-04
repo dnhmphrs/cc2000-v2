@@ -126,14 +126,14 @@ export const SCREEN_GLASS = {
 };
 
 // The palettes the background field takes while the search turns through the
-// decades. All of them sit in the site's blue/yellow pairing — the era shifts
-// which way the field leans rather than changing its colours outright.
+// decades. Inks rather than lights: the field is a wash drawn over paper, so
+// these are dark, and the era shifts which way it leans.
 // [near, mid, far] feeding the shader's three stops.
 export const DECADE_FIELD = {
-	'50s': [0xffe6a3, 0x2f7fc8, 0x0a1f52],
-	'60s': [0xffd426, 0x2b5fd0, 0x0c1746],
-	'90s': [0xfff2c0, 0x4aa0d8, 0x0d2a5e],
-	'10s': [0xeef4ff, 0x3a56e0, 0x080f3a]
+	'50s': [0x8a8763, 0x2b4a9e, 0x171712],
+	'60s': [0x9a8f4a, 0x22409a, 0x14140f],
+	'90s': [0x7f8a6a, 0x2f57ad, 0x151510],
+	'10s': [0x8b93a8, 0x1f3f9c, 0x121216]
 };
 
 export function elementUrl(decade, key) {
