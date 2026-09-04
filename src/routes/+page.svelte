@@ -1,11 +1,18 @@
 <script>
-	import { phase } from '$lib/store/store';
+	import { onMount } from 'svelte';
+	import { phase, bgStage } from '$lib/store/store';
 	import Background from '$lib/components/Background.svelte';
 	import SceneIcosahedron from '$lib/three/Scene-icosahedron.svelte';
 	import Intro from '$lib/components/screens/Intro.svelte';
 	import Calculate from '$lib/components/screens/Calculate.svelte';
 	import Transition from '$lib/components/screens/Transition.svelte';
 	import Output from '$lib/components/screens/Output.svelte';
+
+	// A beat of black, then the shader comes on.
+	onMount(() => {
+		const t = setTimeout(() => bgStage.set('reveal'), 400);
+		return () => clearTimeout(t);
+	});
 </script>
 
 <Background />

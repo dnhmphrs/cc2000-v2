@@ -1,10 +1,8 @@
 <script>
 	import Terminal from '$lib/components/Terminal.svelte';
-	import { expanding } from '$lib/store/store';
+	import { phase, sceneState } from '$lib/store/store';
 
-	// The cinematic (icosahedron + sperm) is driven by the scene; this is the
-	// left-hand boot log that plays alongside it, then fades out as the
-	// icosahedron opens so the input screens stay clean.
+	// The boot log, then a button. Nothing advances until it is pressed.
 	const lines = [
 		{ text: 'CC://2000', kind: 'sys' },
 		{ text: '...', kind: 'dim' },
@@ -12,15 +10,23 @@
 		{ text: 'allowing all of mankind to calculate the song playing', kind: 'sys' },
 		{ text: 'at their exact moment of conception.', kind: 'sys' }
 	];
+
+	let ready = false;
+	let leaving = false;
+
+	function enter() {
+		if (leaving) return;
+		leaving = true;
+		sceneState.set(1); // the sperm sets off
+		setTimeout(() => phase.set('calculate'), 1400); // the panel follows it in
+	}
 </script>
 
-<div class="intro" class:out={$expanding}>
-	<div class="tag">
-		<span>CC://2000</span>
-		<span class="rule-s" />
-		<span>SESSION 0x01 — STANDBY</span>
+<div class="intro" class:out={leaving}>
+	<Terminal {lines} charDelay={24} linePause={380} on:done={() => (ready = true)} />
+	<div class="go" class:in={ready}>
+		<button on:click={enter}>begin</button>
 	</div>
-	<Terminal {lines} charDelay={15} linePause={260} />
 </div>
 
 <style>
@@ -37,20 +43,15 @@
 		opacity: 0;
 	}
 
-	.tag {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		font-size: 9px;
-		text-transform: uppercase;
-		letter-spacing: 0.24em;
-		color: var(--fg-faint);
-		margin-bottom: 18px;
+	.go {
+		margin-top: 26px;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.6s ease;
 	}
-	.rule-s {
-		flex: 0 0 42px;
-		height: 1px;
-		background: var(--fg-ghost);
+	.go.in {
+		opacity: 1;
+		pointer-events: auto;
 	}
 
 	@media (max-width: 760px), (orientation: portrait) {
