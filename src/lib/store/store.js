@@ -1,11 +1,15 @@
 import { writable } from 'svelte/store';
 
 // App flow:
-//   'intro'      → terminal boot lines + icosahedron instantiates + sperm swims through
-//   'calculate'  → reskinned user-input panel (mouse-look on the icosahedron is live)
-//   'processing' → faux-science terminal read-out while the icosahedron spins + hyperspace search
+//   'intro'      → terminal boot lines, then a button. Nothing advances on a timer.
+//   'calculate'  → sperm is on screen and the user-input panel is open
+//   'processing' → sperm dives, background detonates, icosahedron appears, rooms
+//                  project out, hyperspace search runs
 //   'output'     → final result screen
 export const phase = writable('intro');
+
+// Background shader stage: 'off' | 'reveal' | 'calm' | 'burst' | 'after'
+export const bgStage = writable('off');
 
 // User inputs
 export const gender = writable(null);
@@ -24,7 +28,8 @@ export const deviceType = writable('desktop');
 export const isPortrait = writable(false);
 
 // Scene state — a coarse command channel into the icosahedron scene.
-// 0 = reset/idle, 1 = begin processing spin (search), 4 = settled/landed.
+// 0 = reset/idle, 1 = sperm swims in and holds, 2 = ignite (dive → detonation →
+// icosahedron → rooms → search), 4 = settled/landed.
 export const sceneState = writable(0);
 
 // Published every frame by the scene: the icosahedron's live orientation, so the

@@ -1,5 +1,5 @@
 <script>
-	import { track, phase, sceneState, decade } from '$lib/store/store';
+	import { track, phase, sceneState, bgStage, decade } from '$lib/store/store';
 	import { fade } from 'svelte/transition';
 
 	$: uri = $track?.spotify_uri?.substring(14) ?? '';
@@ -7,6 +7,7 @@
 
 	function restart() {
 		sceneState.set(0);
+		bgStage.set('reveal');
 		phase.set('intro');
 	}
 </script>
