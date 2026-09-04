@@ -2,27 +2,22 @@
 @import '$lib/styles/fonts.css';
 
 :root {
-	/* Paper, not screen. Warm bone ground with warm near-black ink — the whole
-	   reason the site now has any body to it. The blue survives as the accent
-	   rather than as the ground. */
-	--ink-rgb: 26, 26, 22;
+	/* Windows blue and yellow. The ground is the blue — the brief's launch
+	   sequence is "a blue background (think Windows 2000)" and the 404 lives on
+	   the blue screen of death, so the whole machine sits on it. */
+	--ink-rgb: 240, 242, 248;
 
-	--bg: #e0e0d0;
-	--panel: rgba(233, 233, 222, 0.94);
-	--panel-dark: rgba(20, 20, 17, 0.94);
+	--bg: #0a246a; /* Windows 2000 title-bar blue */
+	--panel: rgba(5, 18, 60, 0.92);
 
 	--ink: rgba(var(--ink-rgb), 1);
-	--ink-dim: rgba(var(--ink-rgb), 0.62);
-	--ink-faint: rgba(var(--ink-rgb), 0.3);
+	--ink-dim: rgba(var(--ink-rgb), 0.66);
+	--ink-faint: rgba(var(--ink-rgb), 0.34);
 
-	--blue: #1b3a8f;
-	/* Only legible on the dark moments — the search field and the monitor. */
 	--yellow: #ffd426;
 
-	/* Display serif, text sans, and the grotesque for small technical labels. */
-	--display: 'martina-plantijn', 'Financier Display', Georgia, 'Times New Roman', serif;
-	--face: 'untitled-sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
-	--tech: 'nb-architekt', ui-sans-serif, system-ui, sans-serif;
+	/* NB Architekt is the site's own face and carries the whole interface. */
+	--face: 'nb-architekt', ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 html,
@@ -32,21 +27,18 @@ body {
 	width: 100%;
 	height: 100%;
 	background: var(--bg);
-	/* A slow warm bloom toward the middle — paper lit from the centre, rather
-	   than a flat sheet. */
 	background-image: radial-gradient(
-		ellipse 76% 68% at 50% 46%,
-		#efeee2 0%,
-		#e4e3d4 38%,
-		#d5d4c3 72%,
-		#c2c1af 100%
+		ellipse 74% 66% at 50% 48%,
+		#1b3f96 0%,
+		#123274 34%,
+		#0a246a 62%,
+		#05123c 100%
 	);
 	background-attachment: fixed;
 	color: var(--ink);
 	font-family: var(--face);
-	font-weight: 300;
-	font-size: 16px;
-	line-height: 1.55;
+	font-size: 15px;
+	line-height: 1.5;
 	overflow: hidden;
 	-webkit-font-smoothing: antialiased;
 }
@@ -110,20 +102,21 @@ button {
 }
 
 button:hover:not(:disabled) {
-	background: var(--ink);
-	border-color: var(--ink);
+	background: var(--yellow);
+	border-color: var(--yellow);
 	color: var(--bg);
 }
 
 button.go {
-	background: var(--blue);
-	border-color: var(--blue);
-	color: #f3f2e6;
+	background: var(--yellow);
+	border-color: var(--yellow);
+	color: var(--bg);
+	font-weight: 700;
 }
 
 button.go:hover:not(:disabled) {
-	background: #244bb5;
-	border-color: #244bb5;
+	background: #ffe166;
+	border-color: #ffe166;
 }
 
 button:disabled {
@@ -166,7 +159,7 @@ input[type='range']::-webkit-slider-thumb {
 	-webkit-appearance: none;
 	width: 16px;
 	height: 16px;
-	background: var(--blue);
+	background: var(--yellow);
 	cursor: pointer;
 	border-radius: 50%;
 }
@@ -186,8 +179,8 @@ input[type='range']::-moz-range-thumb {
 }
 
 ::selection {
-	background: var(--blue);
-	color: #f3f2e6;
+	background: var(--yellow);
+	color: var(--bg);
 }
 
 /* ── Question panel ────────────────────────────────────────────────────────
@@ -211,18 +204,14 @@ input[type='range']::-moz-range-thumb {
 	width: 100%;
 	max-width: 340px;
 	background: var(--panel);
-	border: 1px solid rgba(var(--ink-rgb), 0.18);
-	box-shadow: 0 18px 44px rgba(40, 38, 28, 0.16);
+	border: 1px solid rgba(var(--ink-rgb), 0.22);
 	padding: 24px 24px 22px;
 	pointer-events: auto;
 	backdrop-filter: blur(6px);
 }
 
 .panel .q {
-	font-family: var(--display);
-	font-weight: 900;
-	font-size: 24px;
-	letter-spacing: -0.01em;
+	font-size: 17px;
 	color: var(--ink);
 	margin: 0 0 14px;
 }
@@ -236,7 +225,7 @@ input[type='range']::-moz-range-thumb {
 .panel select {
 	font-family: var(--face);
 	font-size: 14px;
-	background: rgba(255, 255, 250, 0.6);
+	background: transparent;
 	border: 1px solid rgba(var(--ink-rgb), 0.28);
 	color: var(--ink);
 	padding: 10px 8px;
@@ -247,11 +236,11 @@ input[type='range']::-moz-range-thumb {
 	cursor: pointer;
 }
 .panel select:focus {
-	border-color: var(--blue);
+	border-color: var(--yellow);
 }
 .panel select option {
-	background: #f2f1e4;
-	color: #1a1a16;
+	background: #0a246a;
+	color: var(--ink);
 }
 
 .panel .dial {
@@ -268,10 +257,9 @@ input[type='range']::-moz-range-thumb {
 	color: var(--ink-dim);
 }
 .panel .num {
-	font-family: var(--display);
-	font-size: 26px;
-	font-weight: 900;
-	color: var(--blue);
+	font-size: 22px;
+	font-weight: 700;
+	color: var(--yellow);
 }
 
 .panel button.go {

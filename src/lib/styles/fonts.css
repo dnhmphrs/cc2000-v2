@@ -1,36 +1,22 @@
-/* Every face that ships in /static/fonts. The two trial faces below had been
-   sitting there unused — they are the warmth the site was missing. */
+/* Only faces that actually ship in /static/fonts are declared here. The old
+   NB-Television rules pointed at files that were never in the repo, so every
+   element that asked for them silently fell back — one of the several
+   half-migrations this redesign clears out. */
 
-/* Display: a high-contrast serif. Only the black weight ships, so it is used
-   large and sparingly — titles, the song, the numbers that matter. */
-@font-face {
-	font-family: martina-plantijn;
-	src: url(/fonts/test-martina-plantijn-black.woff2) format('woff2');
-	font-weight: 900;
-	font-display: swap;
-}
-
-/* Text: a quiet neutral sans, light weight only. */
-@font-face {
-	font-family: untitled-sans;
-	src: url(/fonts/test-untitled-sans-light.woff2) format('woff2');
-	font-weight: 300;
-	font-display: swap;
-}
-
-/* Drawing-office grotesque, kept for small technical labels. */
 @font-face {
 	font-family: nb-architekt;
 	src: url(/fonts/NB-Architekt-Pro-Light.woff) format('woff');
 	font-weight: 300;
 	font-display: swap;
 }
+
 @font-face {
 	font-family: nb-architekt;
 	src: url(/fonts/NB-Architekt-Pro-Regular.woff) format('woff');
 	font-weight: 400;
 	font-display: swap;
 }
+
 @font-face {
 	font-family: nb-architekt;
 	src: url(/fonts/NB-Architekt-Pro-Bold.woff) format('woff');

@@ -165,8 +165,8 @@
 		solidGeo.computeVertexNormals();
 		icoSolidMat = new THREE.MeshBasicMaterial({
 			// Pre-convert to linear so the renderer's sRGB output encoding maps it
-			// back to the true site ground (#e0e0d0) instead of gamma-shifting it.
-			color: new THREE.Color(0xe0e0d0).convertSRGBToLinear(),
+			// back to the true site ground (#0a246a) instead of gamma-lifting it.
+			color: new THREE.Color(0x0a246a).convertSRGBToLinear(),
 			transparent: true,
 			opacity: 0,
 			side: THREE.DoubleSide,
