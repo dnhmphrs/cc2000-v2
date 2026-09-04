@@ -22,7 +22,12 @@
 </script>
 
 <div class="proc">
-	<Terminal {lines} charDelay={12} linePause={200} startDelay={2400} />
+	<div class="tag">
+		<span>CC://2000</span>
+		<span class="rule-s" />
+		<span>SEARCH IN PROGRESS</span>
+	</div>
+	<Terminal {lines} charDelay={12} linePause={200} />
 </div>
 
 <style>
@@ -33,6 +38,22 @@
 		max-width: min(46vw, 520px);
 		z-index: 20;
 		pointer-events: none;
+	}
+
+	.tag {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		font-size: 9px;
+		text-transform: uppercase;
+		letter-spacing: 0.24em;
+		color: var(--fg-faint);
+		margin-bottom: 18px;
+	}
+	.rule-s {
+		flex: 0 0 42px;
+		height: 1px;
+		background: var(--fg-ghost);
 	}
 
 	@media (max-width: 760px), (orientation: portrait) {
