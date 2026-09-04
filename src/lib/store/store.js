@@ -22,6 +22,15 @@ export const decade = writable(null);
 // The day the track was playing — i.e. roughly when they were made.
 export const conceived = writable(null);
 
+// Screen-space rect of the resolved room's monitor glass, in CSS pixels, once
+// the camera has settled on it. The result UI is placed inside this rather than
+// floating over the room. Null until the landing finishes.
+export const monitorRect = writable(null);
+
+// Which decade the search is looking at right now, so the background field can
+// take that era's colours as it turns through them.
+export const fieldDecade = writable(null);
+
 // Out-of-range verdicts ('past' | 'future' | null) — the date fell outside the
 // broadcast archive, so there is no track to find.
 export const edge = writable(null);

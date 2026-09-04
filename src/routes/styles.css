@@ -2,21 +2,19 @@
 @import '$lib/styles/fonts.css';
 
 :root {
-	/* Warm dark ground, cream ink, one hot accent. The rooms supply the colour;
-	   everything before them is quiet but never cold. */
-	--ink-rgb: 247, 236, 220;
+	/* Windows blue and yellow. The ground is the blue — the brief's launch
+	   sequence is "a blue background (think Windows 2000)" and the 404 lives on
+	   the blue screen of death, so the whole machine sits on it. */
+	--ink-rgb: 240, 242, 248;
 
-	--bg: #17120f;
-	--panel: rgba(19, 15, 12, 0.95);
+	--bg: #0a246a; /* Windows 2000 title-bar blue */
+	--panel: rgba(5, 18, 60, 0.92);
 
 	--ink: rgba(var(--ink-rgb), 1);
-	--ink-dim: rgba(var(--ink-rgb), 0.62);
-	--ink-faint: rgba(var(--ink-rgb), 0.3);
+	--ink-dim: rgba(var(--ink-rgb), 0.66);
+	--ink-faint: rgba(var(--ink-rgb), 0.34);
 
-	/* Classic web blue, opened up just enough to hold its own on a dark ground
-	   (#0000ee itself disappears against #17120f). */
-	--blue: #3b4dff;
-	--blue-lit: #6c7cff; /* accent *text*, where the fill blue reads too dark */
+	--yellow: #ffd426;
 
 	/* NB Architekt is the site's own face and carries the whole interface. */
 	--face: 'nb-architekt', ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -96,20 +94,21 @@ button {
 }
 
 button:hover:not(:disabled) {
-	background: var(--blue);
-	border-color: var(--blue);
-	color: #fff;
+	background: var(--yellow);
+	border-color: var(--yellow);
+	color: var(--bg);
 }
 
 button.go {
-	background: var(--blue);
-	border-color: var(--blue);
-	color: #fff;
+	background: var(--yellow);
+	border-color: var(--yellow);
+	color: var(--bg);
+	font-weight: 700;
 }
 
 button.go:hover:not(:disabled) {
-	background: #5b6aff;
-	border-color: #5b6aff;
+	background: #ffe166;
+	border-color: #ffe166;
 }
 
 button:disabled {
@@ -152,7 +151,7 @@ input[type='range']::-webkit-slider-thumb {
 	-webkit-appearance: none;
 	width: 16px;
 	height: 16px;
-	background: var(--blue);
+	background: var(--yellow);
 	cursor: pointer;
 	border-radius: 50%;
 }
@@ -160,7 +159,7 @@ input[type='range']::-webkit-slider-thumb {
 input[type='range']::-moz-range-thumb {
 	width: 16px;
 	height: 16px;
-	background: var(--blue);
+	background: var(--yellow);
 	cursor: pointer;
 	border-radius: 50%;
 	border: none;
@@ -172,6 +171,6 @@ input[type='range']::-moz-range-thumb {
 }
 
 ::selection {
-	background: var(--blue);
-	color: #fff;
+	background: var(--yellow);
+	color: var(--bg);
 }

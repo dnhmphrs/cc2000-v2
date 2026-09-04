@@ -1,38 +1,51 @@
 <script>
-	import {
-		phase,
-		gender,
-		date,
-		spicy,
-		track,
-		decade,
-		conceived,
-		edge,
-		sceneState
-	} from '$lib/store/store';
+	import { phase, date, spicy, track, decade, conceived, edge, sceneState } from '$lib/store/store';
 	import { conceptionDate, previousDay, dateToDecade } from '$lib/functions/utils';
 	import { fade } from 'svelte/transition';
 	import data from '$lib/data/cc2000_data.json';
 
-	// Beat 2. Three questions, one at a time, as plainly as they can be asked.
-	let step = 1;
+	// Beat 2. Two fields, per the brief: birthdate, and the false-flag question.
+	// (There was a third — "who are you?" — which nothing downstream ever read.)
+	const MIN_YEAR = 1958;
+	const MAX_YEAR = new Date().getFullYear();
 
-	const MIN_DOB = '1958-06-01';
-	const MAX_DOB = new Date().toISOString().slice(0, 10);
+	const MONTHS = [
+		'january',
+		'february',
+		'march',
+		'april',
+		'may',
+		'june',
+		'july',
+		'august',
+		'september',
+		'october',
+		'november',
+		'december'
+	];
+	const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MAX_YEAR - i);
 
-	function pick(g) {
-		gender.set(g);
-		step = 2;
+	let month = '';
+	let day = '';
+	let year = '';
+
+	// Days in the selected month, so 31 February can't be picked.
+	$: maxDay = month && year ? new Date(Number(year), Number(month), 0).getDate() : 31;
+	$: days = Array.from({ length: maxDay }, (_, i) => i + 1);
+	$: if (day && Number(day) > maxDay) day = '';
+	$: complete = month && day && year;
+	$: if (complete) {
+		date.set(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
 	}
 
 	function calculate() {
 		let cd = conceptionDate($date);
 		const today = new Date().toISOString().slice(0, 10);
 
-		// The archive starts in 1958, and nobody has been conceived after today.
+		// The archive starts in 1958 and nobody has been conceived after today.
 		// Both used to navigate to /the-past and /the-future — routes this build
 		// does not have, so they landed people on the 404 screen.
-		if (cd <= MIN_DOB) {
+		if (cd <= '1958-06-01') {
 			edge.set('past');
 			phase.set('output');
 			return;
@@ -47,9 +60,9 @@
 		for (let i = 0; i < 30; i++) {
 			// Each day holds 10 tracks ordered spicy 10 → 1 (index 0 → 9), so the
 			// track matching the chosen level is at index (10 - spicy).
-			const day = data[cd];
-			if (day && day[10 - $spicy]) {
-				found = day[10 - $spicy];
+			const d = data[cd];
+			if (d && d[10 - $spicy]) {
+				found = d[10 - $spicy];
 				break;
 			}
 			cd = previousDay(cd);
@@ -68,66 +81,90 @@
 
 <div class="stage" in:fade={{ duration: 300 }} out:fade={{ duration: 200 }}>
 	<div class="col card">
-		{#if step === 1}
-			<p class="ask">who are you?</p>
-			<div class="rows">
-				<button on:click={() => pick('female')}>a woman</button>
-				<button on:click={() => pick('male')}>a man</button>
-				<button on:click={() => pick('other')}>neither, thanks</button>
-			</div>
-		{:else if step === 2}
-			<p class="ask">when were you born?</p>
-			<input type="date" bind:value={$date} max={MAX_DOB} min={MIN_DOB} />
-			<div class="nav">
-				<button on:click={() => (step = 1)}>back</button>
-				<button class="go" on:click={() => $date && (step = 3)} disabled={!$date}>next</button>
-			</div>
-		{:else}
-			<p class="ask">how spicy were your parents?</p>
-			<div class="dial">
-				<span class="num">{$spicy}</span>
-				<input type="range" bind:value={$spicy} min="1" max="10" />
-				<div class="ends"><span>sweet</span><span>filthy</span></div>
-			</div>
-			<div class="nav">
-				<button on:click={() => (step = 2)}>back</button>
-				<button class="go" on:click={calculate}>go</button>
-			</div>
-		{/if}
+		<p class="q">when were you born?</p>
+		<div class="dob">
+			<select bind:value={month} aria-label="month">
+				<option value="" disabled>month</option>
+				{#each MONTHS as m, i}<option value={i + 1}>{m}</option>{/each}
+			</select>
+			<select bind:value={day} aria-label="day">
+				<option value="" disabled>day</option>
+				{#each days as d}<option value={d}>{d}</option>{/each}
+			</select>
+			<select bind:value={year} aria-label="year">
+				<option value="" disabled>year</option>
+				{#each YEARS as y}<option value={y}>{y}</option>{/each}
+			</select>
+		</div>
+
+		<p class="q second">how spicy do you like it?</p>
+		<div class="dial">
+			<span class="num">{$spicy}</span>
+			<input type="range" bind:value={$spicy} min="1" max="10" />
+			<div class="ends"><span>sweet</span><span>filthy</span></div>
+		</div>
+
+		<button class="go" on:click={calculate} disabled={!complete}>calculate</button>
 	</div>
 </div>
 
 <style>
-	.rows {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
+	.q {
+		font-size: 17px;
+		color: var(--ink);
+		margin: 0 0 12px;
+	}
+	.q.second {
+		margin-top: 26px;
 	}
 
-	.nav {
-		display: flex;
-		gap: 8px;
-		margin-top: 22px;
+	.dob {
+		display: grid;
+		grid-template-columns: 1.5fr 1fr 1fr;
+		gap: 6px;
 	}
-	.nav button {
-		flex: 1;
+
+	select {
+		font-family: var(--face);
+		font-size: 14px;
+		background: transparent;
+		border: 1px solid rgba(var(--ink-rgb), 0.26);
+		color: var(--ink);
+		padding: 10px 8px;
+		outline: none;
+		border-radius: 0;
+		-webkit-appearance: none;
+		appearance: none;
+		cursor: pointer;
+	}
+	select:focus {
+		border-color: var(--ink-dim);
+	}
+	select option {
+		background: #0a246a;
+		color: var(--ink);
 	}
 
 	.dial {
 		display: flex;
 		flex-direction: column;
-		gap: 14px;
+		gap: 10px;
 	}
 	.num {
-		font-size: 54px;
+		font-size: 44px;
 		font-weight: 700;
 		line-height: 1;
-		color: var(--blue-lit);
+		color: var(--yellow);
 	}
 	.ends {
 		display: flex;
 		justify-content: space-between;
-		font-size: 13px;
+		font-size: 12px;
 		color: var(--ink-dim);
+	}
+
+	button {
+		margin-top: 26px;
+		width: 100%;
 	}
 </style>
