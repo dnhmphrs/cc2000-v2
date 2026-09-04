@@ -19,6 +19,9 @@ export const track = writable(null);
 // Decade resolved from conception date
 export const decade = writable(null);
 
+// The day the track was playing — i.e. roughly when they were made.
+export const conceived = writable(null);
+
 // Out-of-range verdicts ('past' | 'future' | null) — the date fell outside the
 // broadcast archive, so there is no track to find.
 export const edge = writable(null);

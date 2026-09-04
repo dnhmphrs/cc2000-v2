@@ -1,11 +1,17 @@
 <script>
-	import { track, phase, sceneState, decade, edge } from '$lib/store/store';
+	import { track, phase, sceneState, conceived, edge } from '$lib/store/store';
+	import { formatDay } from '$lib/functions/utils';
 	import { fade } from 'svelte/transition';
 
-	// Beat 4. The room is on screen in full colour behind this; the card just
-	// names the song and gets out of the way.
+	// Beat 4. The room is behind this in full colour; the card names the day and
+	// the song, then hands over to the player.
 	$: uri = $track?.spotify_uri?.substring(14) ?? '';
 	$: src = uri ? `https://open.spotify.com/embed/track/${uri}?utm_source=generator` : '';
+
+	// Just the day. The decade label is deliberately not shown: dateToDecade
+	// buckets everything from 1975 to 2004 as '90s' so the room art has one of
+	// its four sets to use, which is fine for picking a room and wrong as a
+	// caption next to a real date. The room says which era it is anyway.
 
 	const EDGE = {
 		past: {
@@ -39,9 +45,9 @@
 {:else if src}
 	<div class="stage" in:fade={{ duration: 500, delay: 300 }}>
 		<div class="col card">
-			<p class="ask">
-				{#if $decade}<span class="era">the {$decade}.</span><br />{/if}this was on.
-			</p>
+			<p class="when">{$conceived ? `roughly ${formatDay($conceived)}` : ''}</p>
+			<h2>{$track?.title ?? ''}</h2>
+			<p class="artist">{$track?.artist ?? ''}</p>
 			<iframe
 				{src}
 				frameBorder="0"
@@ -56,16 +62,32 @@
 {/if}
 
 <style>
-	.era {
+	.when {
+		font-size: 13px;
+		color: var(--ink-dim);
+		margin: 0 0 12px;
+	}
+
+	h2 {
+		font-size: clamp(26px, 3.4vw, 38px);
+		font-weight: 700;
+		line-height: 1.05;
 		color: var(--hot);
+		margin: 0 0 6px;
+	}
+
+	.artist {
+		font-size: 17px;
+		color: var(--ink);
+		margin: 0 0 20px;
 	}
 
 	iframe {
 		width: 100%;
-		height: 152px;
+		height: 80px;
 		border: none;
 		display: block;
-		margin-bottom: 22px;
+		margin-bottom: 20px;
 	}
 
 	/* Full colour — these are the best thing in the repo. */

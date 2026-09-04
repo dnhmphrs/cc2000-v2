@@ -1,5 +1,15 @@
 <script>
-	import { phase, gender, date, spicy, track, decade, edge, sceneState } from '$lib/store/store';
+	import {
+		phase,
+		gender,
+		date,
+		spicy,
+		track,
+		decade,
+		conceived,
+		edge,
+		sceneState
+	} from '$lib/store/store';
 	import { conceptionDate, previousDay, dateToDecade } from '$lib/functions/utils';
 	import { fade } from 'svelte/transition';
 	import data from '$lib/data/cc2000_data.json';
@@ -48,6 +58,7 @@
 		if (found) {
 			edge.set(null);
 			track.set(found);
+			conceived.set(cd);
 			decade.set(dateToDecade(cd));
 			sceneState.set(1);
 			phase.set('processing');
