@@ -171,9 +171,9 @@ void main() {
 	// currently looking at — so the page changes colour with the era on screen
 	// instead of holding one palette through the whole run.
 	const NEUTRAL = [
-		[0.56, 0.54, 0.4], // warm ink
-		[0.11, 0.23, 0.56], // the accent blue, drawn dark
-		[0.08, 0.08, 0.07] // near-black
+		[1.0, 0.86, 0.28], // yellow
+		[0.22, 0.5, 0.82], // a brighter, less flat blue than the ground
+		[0.04, 0.08, 0.28] // deep
 	];
 	let stops = NEUTRAL.map((c) => c.slice());
 
