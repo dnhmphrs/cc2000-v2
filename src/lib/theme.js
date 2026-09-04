@@ -1,14 +1,14 @@
 import { writable, derived, get } from 'svelte/store';
 
 // ── Site ink ─────────────────────────────────────────────────────────────────
-// One warm cream, used for both the UI text and every line in the 3D scene, so
-// the wireframe and the copy read as the same material. The colour event on this
-// site is the room at the end — everything before it is ink on warm dark.
+// One warm near-black, used for both the UI text and every line in the 3D
+// scene, so the wireframe and the copy read as the same ink. The colour event on
+// this site is the room at the end; everything before it is ink on paper.
 export const PALETTES = {
-	warm: { label: 'warm', line: 0xd6d6db, ui: [214, 214, 219] }
+	paper: { label: 'paper', line: 0x1a1a16, ui: [26, 26, 22] }
 };
 
-export const DEFAULT_PALETTE = 'warm';
+export const DEFAULT_PALETTE = 'paper';
 
 // ── Stores ───────────────────────────────────────────────────────────────────
 export const paletteKey = writable(DEFAULT_PALETTE);

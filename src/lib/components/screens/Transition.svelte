@@ -47,8 +47,10 @@
 
 	p {
 		margin: 0;
-		font-size: 16px;
-		letter-spacing: 0.14em;
-		color: var(--ink);
+		font-family: var(--tech);
+		font-size: 12px;
+		letter-spacing: 0.24em;
+		text-transform: uppercase;
+		color: var(--ink-dim);
 	}
 </style>
