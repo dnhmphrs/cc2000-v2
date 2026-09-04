@@ -99,10 +99,9 @@ void main() {
     float normalizedTheta = 0.5 + 0.5 * tanh(thetaValueReal);
 
     // Create gradients for visualization
-    // NOTE both mixes above collapsed to color1 mathematically; the picture came
-    // out of log(0) -> -inf -> NaN, which is undefined per driver (it renders as
-    // a flat fill on some). Same picture, drawn from the sign the NaN stood in for.
-    vec3 gradient2 = color1 * step(0.0, thetaValueReal);
+    vec3 gradient1 = mix(color1, color1, log(normalizedTheta));
+    vec3 gradient2 = mix(color1, gradient1, log(normalizedTheta));
+    
 
     gl_FragColor = vec4(gradient2, 1.0);
 }
