@@ -24,7 +24,9 @@
 		}
 
 		let found = null;
-		for (let i = 0; i < 30; i++) {
+		// Widened from 30: a silent return left the button doing nothing at all,
+		// with no way to tell whether it had registered the click.
+		for (let i = 0; i < 400; i++) {
 			// Each day holds 10 tracks ordered spicy 10 → 1 (index 0 → 9), so the
 			// track matching the chosen level is at index (10 - spicy).
 			const d = data[cd];
@@ -35,7 +37,12 @@
 			cd = previousDay(cd);
 		}
 
-		if (!found) return;
+		if (!found) {
+			// Off the end of the archive rather than a gap in it.
+			edge.set('past');
+			phase.set('output');
+			return;
+		}
 		edge.set(null);
 		track.set(found);
 		conceived.set(cd);

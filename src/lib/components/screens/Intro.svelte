@@ -85,7 +85,7 @@
 		top: 0;
 		left: 0;
 		z-index: 10;
-		max-width: min(58vw, 620px);
+		right: 0;
 		padding: clamp(26px, 6vh, 58px) clamp(24px, 4vw, 56px);
 		pointer-events: none;
 	}
@@ -105,7 +105,8 @@
 	}
 
 	.write p {
-		font-size: clamp(14px, 1.6vw, 19px);
+		font-size: clamp(12px, 1.15vw, 15px);
+		white-space: nowrap;
 		line-height: 1.45;
 		color: var(--ink-dim);
 		margin: 0;
