@@ -19,6 +19,7 @@
 
 	function back() {
 		if (step > 1) step -= 1;
+		else phase.set('intro');
 	}
 
 	function calculate() {
@@ -49,8 +50,8 @@
 		if (found) {
 			track.set(found);
 			decade.set(dateToDecade(cd));
-			sceneState.set(2); // dive → detonation → icosahedron → rooms → search
-			setTimeout(() => phase.set('processing'), 700);
+			sceneState.set(1); // hand the scene into its hyperspace search
+			phase.set('processing');
 		}
 	}
 </script>

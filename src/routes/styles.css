@@ -46,12 +46,23 @@ body {
 	color: var(--fg-faint);
 }
 
-/* ── Panel frame ──────────────────────────────────────────────────────────── */
+/* ── Blueprint frame: a thin border with subtle corner ticks. Sleek, not busy. */
 .frame {
 	position: relative;
 	background: var(--bg-t);
 	border: 1px solid var(--fg-ghost);
 	backdrop-filter: blur(6px);
+}
+
+.frame::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background: linear-gradient(var(--fg-dim), var(--fg-dim)) 0 0 / 9px 1px no-repeat,
+		linear-gradient(var(--fg-dim), var(--fg-dim)) 0 0 / 1px 9px no-repeat,
+		linear-gradient(var(--fg-dim), var(--fg-dim)) 100% 100% / 9px 1px no-repeat,
+		linear-gradient(var(--fg-dim), var(--fg-dim)) 100% 100% / 1px 9px no-repeat;
 }
 
 /* Header bar for a framed panel */
