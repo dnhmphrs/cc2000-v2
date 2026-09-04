@@ -2,223 +2,297 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
 	import { palette } from '$lib/theme';
-	import { spinQuat, latticeActive } from '$lib/store/store';
+	import { latticeActive } from '$lib/store/store';
+
+	// ── Knobs ─────────────────────────────────────────────────────────────────
+	// How much of the palette colour the shader's fill gets. The shader paints
+	// color1 on one side of the theta sum and black on the other, so this is the
+	// single control over how loud the background reads. The old grid drew at
+	// alpha 0.05–0.28, so keep it low.
+	const INK = 1.0;
+
+	// The shader's `mouse` is its only input, and it is very non-linear:
+	//   |mouse| small  → both tanh terms saturate, Omega settles, and the probe
+	//                    slice sits nearly flat. Calm, legible figure.
+	//   |mouse| → 1    → they unsaturate and the slice fills with hyperplanes.
+	// Neither component may ever reach zero: the shader's quaternion axis is
+	// normalize(vec3(x*y, x*y, x*y)), which is 0/0 on either axis.
+	const M_CALM = 0.15;
+	const M_SEARCH = 0.55; // where it goes while the search is running
+	const M_MIN = 0.01;
+
+	// 343 tan() calls per pixel, so the buffer is rendered small and stretched by
+	// CSS. It steps down further if the frame rate can't hold.
+	const SCALES = [1.0];
+
+	const PRELUDE = `
+		precision highp float;
+		float tanh(float x) {
+			float e = exp(-2.0 * abs(x));
+			return sign(x) * (1.0 - e) / (1.0 + e);
+		}
+	`;
+
+	const VERT = `
+		attribute vec2 aPos;
+		varying vec2 vUv;
+		void main() {
+			vUv = aPos * 0.5 + 0.5;
+			gl_Position = vec4(aPos, 0.0, 1.0);
+		}
+	`;
+
+	const FRAG = `
+precision highp float; // Use medium precision for balance between quality and performance
+varying vec2 vUv;
+uniform vec3 color1;
+uniform vec3 color2;
+uniform vec3 color3;
+uniform vec2 mouse;
+uniform float aspectRatio;
+
+// Function to create a symmetric and positive definite matrix
+mat3 createDynamicOmega(vec2 mouse) {
+    float a = tanh(3.14159 * log(abs(mouse.x ) + 0.001));
+    float b = tanh(3.14159 * log(abs(mouse.y ) + 0.001));
+    float c = a * b * 0.5; // coupling / shear term
+
+    // Symmetric positive definite with off-diagonal coupling
+    return mat3(
+        1.0 + a,  c,       c * 0.5,
+        c,        1.0 + b, c * 0.5,
+        c * 0.5,  c * 0.5, 1.0
+    );
+}
+
+
+const int N = 3; // Reduced number of terms in the series for better performance
+
+// Function to compute the real part of the Riemann theta function
+float riemannThetaReal(vec3 z, mat3 Omega) {
+    float sum = 0.0;
+
+    // Iterate over the range of n values for 3 dimensions
+    for (int n1 = -N; n1 <= N; ++n1) {
+        for (int n2 = -N; n2 <= N; ++n2) {
+            for (int n3 = -N; n3 <= N; ++n3) {
+                vec3 n = vec3(float(n1), float(n2), float(n3));
+
+                // Compute n^T * Omega * n
+                float nt_Omega_n = dot(n, Omega * n);
+
+                // Compute 2 * n^T * z
+                float nt_z = 2.0 * dot(n, z);
+
+                // Compute the real part of the exponential term
+                float exponent = 3.14159 * (nt_Omega_n + nt_z);
+                float realPart = tan(exponent); // Use cosine for the real part
+
+                sum += realPart;
+            }
+        }
+    }
+
+    return sum;
+}
+
+// Quaternion from mouse position
+vec4 mouseToQuat(vec2 mouse) {
+    float angle = length(mouse) * 3.14159;
+    float halfAngle = angle * 0.5;
+    vec3 axis = normalize(vec3(mouse.x * mouse.y, mouse.x * mouse.y, mouse.x * mouse.y)); // avoid zero
+    return vec4(axis * sin(halfAngle), cos(halfAngle));
+}
+
+// Rotate a vector by a quaternion
+vec3 rotateByQuat(vec3 v, vec4 q) {
+    vec3 u = q.xyz;
+    float s = q.w;
+    return 2.0 * dot(u, v) * u
+         + (s*s - dot(u,u)) * v
+         + 2.0 * s * cross(u, v);
+}
+
+void main() {
+    // Map the fragment coordinates to the complex plane
+    float x = vUv.x * 0.05 - 0.025;
+    float y = vUv.y * 0.05 - 0.025;
+
+    // Create a dynamic Riemann matrix based on mouse input
+    mat3 OmegaDynamic = createDynamicOmega(mouse); // createDynamicOmega(mouse);
+
+    // Construct a 3D vector for the z variable
+    // vec3 z = vec3(x, y, x * y); // Static third component
+
+    vec4 q = mouseToQuat(mouse);
+    vec3 baseSlice = vec3(x, y, 0.0); // flat probe plane
+    vec3 z = rotateByQuat(baseSlice, q); // rotate it through the volume
+
+    // float accum = 0.0;
+    // int STEPS = 8;
+    // for (int i = 0; i < STEPS; i++) {
+    //     float t = (float(i) / float(STEPS)) - 0.5;
+    //     vec3 z = vec3(x, y, t * 0.05);
+    //     accum += riemannThetaReal(z, OmegaDynamic);
+    // }
+    // float thetaValueReal = accum / float(STEPS);
+
+    // Calculate the real part of the Riemann theta function at z
+    float thetaValueReal = riemannThetaReal(z, OmegaDynamic);
+
+    // Normalize thetaValue to map to color range
+    float normalizedTheta = 0.5 + 0.5 * tanh(thetaValueReal);
+
+    // Create gradients for visualization
+    vec3 gradient1 = mix(color1, color1, log(normalizedTheta));
+    vec3 gradient2 = mix(color1, gradient1, log(normalizedTheta));
+
+
+    gl_FragColor = vec4(gradient2, 1.0);
+}
+	`;
 
 	let canvas;
-	let ctx;
+	let gl;
 	let frame;
-	let w = 0;
-	let h = 0;
-	let dpr = 1;
+	let uColor1, uColor2, uColor3, uMouse, uAspect;
 
-	// 4D hyper-rotation angles (advanced only while the search is active).
-	let aXW = 0.2;
-	let aYW = 0.6;
-	let aZW = 0.4;
-	// Eased 0..1 "search intensity" — how present / bright the lattice is.
-	let intensity = 0;
+	let scaleIdx = 0;
+	let t = 0;
+	let radius = M_CALM;
+	let pointer = [0, 0];
+	let pointerEase = [0, 0];
 
-	// ── 24-cell topology ──────────────────────────────────────────────────────
-	// 24 vertices = every permutation of (±1, ±1, 0, 0); edges join the pairs a
-	// squared-distance of 2 apart (96 edges). A richer regular 4-polytope than the
-	// tesseract, so the "hyperspace" read is more intricate as it rotates.
-	const verts4 = [];
-	const coordPairs = [
-		[0, 1],
-		[0, 2],
-		[0, 3],
-		[1, 2],
-		[1, 3],
-		[2, 3]
-	];
-	for (const [a, b] of coordPairs) {
-		for (const sa of [-1, 1]) {
-			for (const sb of [-1, 1]) {
-				const v = [0, 0, 0, 0];
-				v[a] = sa;
-				v[b] = sb;
-				verts4.push(v);
-			}
+	const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+	function compile(type, src) {
+		const s = gl.createShader(type);
+		gl.shaderSource(s, src);
+		gl.compileShader(s);
+		if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+			console.error(gl.getShaderInfoLog(s));
 		}
+		return s;
 	}
-	const edges = [];
-	for (let i = 0; i < verts4.length; i++) {
-		for (let j = i + 1; j < verts4.length; j++) {
-			let d = 0;
-			for (let k = 0; k < 4; k++) {
-				const x = verts4[i][k] - verts4[j][k];
-				d += x * x;
-			}
-			if (Math.abs(d - 2) < 1e-6) edges.push([i, j]);
+
+	function build() {
+		const p = gl.createProgram();
+		gl.attachShader(p, compile(gl.VERTEX_SHADER, VERT));
+		gl.attachShader(p, compile(gl.FRAGMENT_SHADER, PRELUDE + FRAG));
+		gl.linkProgram(p);
+		if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+			console.error(gl.getProgramInfoLog(p));
+			return null;
 		}
-	}
+		gl.useProgram(p);
 
-	function rot4(p, a, b, ang) {
-		const c = Math.cos(ang);
-		const s = Math.sin(ang);
-		const q = p.slice();
-		q[a] = p[a] * c - p[b] * s;
-		q[b] = p[a] * s + p[b] * c;
-		return q;
-	}
+		// One triangle big enough to cover the viewport; vUv comes out 0..1.
+		const buf = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+		const aPos = gl.getAttribLocation(p, 'aPos');
+		gl.enableVertexAttribArray(aPos);
+		gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-	// Apply the icosahedron's live quaternion to a 3D point (so the lattice
-	// tumbles in lock-step during the search).
-	function applyQuat(p, qt) {
-		const { x, y, z, w: qw } = qt;
-		const ix = qw * p[0] + y * p[2] - z * p[1];
-		const iy = qw * p[1] + z * p[0] - x * p[2];
-		const iz = qw * p[2] + x * p[1] - y * p[0];
-		const iw = -x * p[0] - y * p[1] - z * p[2];
-		return [
-			ix * qw + iw * -x + iy * -z - iz * -y,
-			iy * qw + iw * -y + iz * -x - ix * -z,
-			iz * qw + iw * -z + ix * -y - iy * -x
-		];
+		// color2/color3/aspectRatio are declared but unused, so the compiler
+		// strips them and these come back null. Guarded at every set.
+		uColor1 = gl.getUniformLocation(p, 'color1');
+		uColor2 = gl.getUniformLocation(p, 'color2');
+		uColor3 = gl.getUniformLocation(p, 'color3');
+		uMouse = gl.getUniformLocation(p, 'mouse');
+		uAspect = gl.getUniformLocation(p, 'aspectRatio');
+		return p;
 	}
 
 	function resize() {
-		dpr = Math.min(window.devicePixelRatio || 1, 2);
-		w = window.innerWidth;
-		h = window.innerHeight;
-		canvas.width = w * dpr;
-		canvas.height = h * dpr;
-		canvas.style.width = w + 'px';
-		canvas.style.height = h + 'px';
-		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+		if (!gl) return;
+		const s = SCALES[scaleIdx];
+		canvas.width = Math.max(2, Math.round(window.innerWidth * s));
+		canvas.height = Math.max(2, Math.round(window.innerHeight * s));
+		gl.viewport(0, 0, canvas.width, canvas.height);
+		if (uAspect) gl.uniform1f(uAspect, window.innerWidth / window.innerHeight);
 	}
 
-	function uiColor(alpha) {
-		const [r, g, b] = get(palette).ui;
-		return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-	}
-
-	function drawGrid() {
-		const step = 42;
-		ctx.lineWidth = 1;
-		ctx.strokeStyle = uiColor(0.05);
-		ctx.beginPath();
-		for (let x = (w / 2) % step; x < w; x += step) {
-			ctx.moveTo(Math.round(x) + 0.5, 0);
-			ctx.lineTo(Math.round(x) + 0.5, h);
-		}
-		for (let y = (h / 2) % step; y < h; y += step) {
-			ctx.moveTo(0, Math.round(y) + 0.5);
-			ctx.lineTo(w, Math.round(y) + 0.5);
-		}
-		ctx.stroke();
-
-		// Stronger centre crosshair + registration marks.
-		ctx.strokeStyle = uiColor(0.09);
-		ctx.beginPath();
-		ctx.moveTo(w / 2, 0);
-		ctx.lineTo(w / 2, h);
-		ctx.moveTo(0, h / 2);
-		ctx.lineTo(w, h / 2);
-		ctx.stroke();
-
-		// Corner brackets on the viewport.
-		const m = 18;
-		const L = 26;
-		ctx.strokeStyle = uiColor(0.28);
-		ctx.lineWidth = 1;
-		ctx.beginPath();
-		// TL
-		ctx.moveTo(m, m + L);
-		ctx.lineTo(m, m);
-		ctx.lineTo(m + L, m);
-		// TR
-		ctx.moveTo(w - m - L, m);
-		ctx.lineTo(w - m, m);
-		ctx.lineTo(w - m, m + L);
-		// BL
-		ctx.moveTo(m, h - m - L);
-		ctx.lineTo(m, h - m);
-		ctx.lineTo(m + L, h - m);
-		// BR
-		ctx.moveTo(w - m - L, h - m);
-		ctx.lineTo(w - m, h - m);
-		ctx.lineTo(w - m, h - m - L);
-		ctx.stroke();
-	}
-
-	function drawLattice() {
-		// Hidden entirely outside the search — it belongs to the "searching
-		// hyperspace" moment and nothing else.
-		if (intensity < 0.01) return;
-
-		const cx = w / 2;
-		const cy = h / 2;
-		const scale = Math.min(w, h) * 0.3;
-		const qt = get(spinQuat);
-
-		const pts = verts4.map((v0) => {
-			// 4D rotation (only advances while searching)
-			let p = rot4(v0, 0, 3, aXW);
-			p = rot4(p, 1, 3, aYW);
-			p = rot4(p, 2, 3, aZW);
-			// 4D → 3D perspective (divide by distance along w)
-			const wdist = 3.2;
-			const k = wdist / (wdist - p[3]);
-			let p3 = [p[0] * k, p[1] * k, p[2] * k];
-			// Tumble with the icosahedron during the search
-			p3 = applyQuat(p3, qt);
-			// 3D → 2D orthographic
-			return [cx + p3[0] * scale, cy - p3[1] * scale];
-		});
-
-		const base = intensity * 0.34;
-		ctx.strokeStyle = uiColor(base);
-		ctx.lineWidth = 1;
-		ctx.beginPath();
-		edges.forEach(([a, b]) => {
-			ctx.moveTo(pts[a][0], pts[a][1]);
-			ctx.lineTo(pts[b][0], pts[b][1]);
-		});
-		ctx.stroke();
-
-		// Vertex nodes brighten during the search.
-		if (intensity > 0.02) {
-			ctx.fillStyle = uiColor(0.15 + intensity * 0.5);
-			pts.forEach((p) => {
-				ctx.fillRect(p[0] - 1.5, p[1] - 1.5, 3, 3);
-			});
-		}
+	function handlePointer(e) {
+		pointer = [(e.clientX / window.innerWidth) * 2 - 1, (e.clientY / window.innerHeight) * 2 - 1];
 	}
 
 	let last = performance.now();
+	let avg = 16;
+	let slow = 0;
+	let warmup = 0;
+
 	function loop() {
 		frame = requestAnimationFrame(loop);
 		const now = performance.now();
-		const dt = Math.min((now - last) / 1000, 0.05);
+		const raw = now - last;
+		const dt = Math.min(raw / 1000, 0.05);
 		last = now;
+		t += dt;
 
-		const active = get(latticeActive);
-		const target = active ? 1 : 0;
-		intensity += (target - intensity) * Math.min(1, dt * 2.2);
+		// Same contract the 24-cell had: the search is the loud moment. Here that
+		// means pushing the parameter point out toward the hyperplane regime.
+		const target = get(latticeActive) ? M_SEARCH : M_CALM;
+		radius += (target - radius) * Math.min(1, dt * 2.2);
 
-		// Advance the 4D rotation only meaningfully while searching; a whisper
-		// of drift keeps it alive in the ambient state.
-		const speed = 0.15 + intensity * 0.85;
-		aXW += dt * 0.31 * speed;
-		aYW += dt * 0.23 * speed;
-		aZW += dt * 0.17 * speed;
+		pointerEase[0] += (pointer[0] - pointerEase[0]) * Math.min(1, dt * 2);
+		pointerEase[1] += (pointer[1] - pointerEase[1]) * Math.min(1, dt * 2);
 
-		ctx.clearRect(0, 0, w, h);
-		drawGrid();
-		drawLattice();
+		// A slow drift on two different periods so the figure keeps moving, plus a
+		// little pull from the cursor. Both components stay well clear of zero.
+		if (uMouse) {
+			gl.uniform2f(
+				uMouse,
+				clamp(radius + Math.sin(t * 0.19) * 0.03 + pointerEase[0] * 0.05, M_MIN, 0.95),
+				clamp(radius + Math.cos(t * 0.146) * 0.03 - pointerEase[1] * 0.05, M_MIN, 0.95)
+			);
+		}
+
+		// Re-read the palette every frame, as the old uiColor() did, so a live
+		// palette swap lands without a remount.
+		const [r, g, b] = get(palette).ui;
+		const c = [(r / 255) * INK, (g / 255) * INK, (b / 255) * INK];
+		if (uColor1) gl.uniform3f(uColor1, c[0], c[1], c[2]);
+		if (uColor2) gl.uniform3f(uColor2, c[0], c[1], c[2]);
+		if (uColor3) gl.uniform3f(uColor3, c[0], c[1], c[2]);
+
+		gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+		// GPU work is async, so timing the draw call tells you nothing — the frame
+		// interval is what actually reveals the cost. Drop a level if it sags.
+		if (warmup < 30) {
+			warmup += 1;
+		} else {
+			avg = avg * 0.85 + raw * 0.15;
+			if (avg > 22 && scaleIdx < SCALES.length - 1) {
+				if ((slow += 1) > 20) {
+					scaleIdx += 1;
+					slow = 0;
+					avg = 16;
+					resize();
+				}
+			} else {
+				slow = 0;
+			}
+		}
 	}
 
 	onMount(() => {
-		ctx = canvas.getContext('2d');
+		gl = canvas.getContext('webgl', { antialias: false, alpha: false });
+		if (!gl) return; // no WebGL: leave the page background showing through
+		if (!build()) return;
 		resize();
 		window.addEventListener('resize', resize);
+		window.addEventListener('pointermove', handlePointer);
 		loop();
 	});
 
 	onDestroy(() => {
 		if (frame) cancelAnimationFrame(frame);
-		if (typeof window !== 'undefined') window.removeEventListener('resize', resize);
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('resize', resize);
+			window.removeEventListener('pointermove', handlePointer);
+		}
 	});
 </script>
 
