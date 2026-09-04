@@ -1,45 +1,50 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
-	import { palette } from '$lib/theme';
 	import { flare } from '$lib/store/store';
 
-	// ── Knobs ─────────────────────────────────────────────────────────────────
-	// How much of the palette colour the shader's fill gets. The shader paints
-	// color1 on one side of the theta sum and black on the other, so this is the
-	// single control over how loud the background reads. It has to stay well
-	// under 1 or the flare washes out the white wireframe drawn on top of it.
-	const INK = 0.34;
+	// The shader below is used exactly as supplied: cos() series over a
+	// stereographic projection from RP3, N = 2. Smooth and pulsey rather than
+	// the chaotic tan() figure that used to be here.
 
-	// The field is a *transition effect*, not the site's wallpaper. It is drawn
-	// only while `flare` is up — the icosahedron opening and the search — and the
-	// canvas is fully transparent (and the shader not even dispatched) the rest of
-	// the time. Rising edges are fast so the open reads as a flash; the decay is
-	// slow so it bleeds off through the landing.
-	const FLARE_ATTACK = 7.0;
-	const FLARE_DECAY = 1.9;
-	const FLARE_OFF = 0.004; // below this the frame is skipped entirely
-
-	// The shader's `mouse` is its only input, and it is very non-linear:
-	//   |mouse| small  → both tanh terms saturate, Omega settles, and the probe
-	//                    slice sits nearly flat. Calm, legible figure.
-	//   |mouse| → 1    → they unsaturate and the slice fills with hyperplanes.
-	// Neither component may ever reach zero: the shader's quaternion axis is
-	// normalize(vec3(x*y, x*y, x*y)), which is 0/0 on either axis.
+	// Calm/search modulation of the mouse uniform.
 	const M_CALM = 0.15;
-	const M_SEARCH = 0.55; // where it goes while the search is running
+	const M_SEARCH = 0.55;
 	const M_MIN = 0.01;
 
-	// 343 tan() calls per pixel — by far the most expensive thing on the page. The
-	// buffer is rendered well under viewport size and stretched by CSS (the figure
-	// is a soft full-screen wash, so the resampling does not read), and it steps
-	// down further if the frame rate can't hold. This used to be [1.0], i.e. no
-	// ladder at all, which is what made the field so costly to leave running.
-	const SCALES = [0.6, 0.42, 0.3];
+	// The field is a transition effect, not the site's wallpaper: it is only on
+	// while `flare` is up (the icosahedron opening and the search), and below the
+	// cutoff the shader is not dispatched at all. Both edges are slow — this
+	// swells and recedes, it does not flash.
+	const FLARE_ATTACK = 1.6;
+	const FLARE_DECAY = 1.2;
+	const FLARE_OFF = 0.004;
+	// This shader fills the whole frame (unlike the old one, which was mostly
+	// black), so it is held well down: a field that comes up behind the scene,
+	// not a wallpaper that takes the page off the terminal.
+	const FLARE_MAX = 0.26;
 
+	// This shader is fairly heavy; let the backing buffer step down on slower GPUs.
+	const SCALES = [0.5, 0.35, 0.25];
+
+	// WebGL 1 / GLSL ES 1.00 does not guarantee hyperbolic built-ins, so provide
+	// equivalents using exp(). Names are prefixed to avoid implementation clashes.
 	const PRELUDE = `
 		precision highp float;
-		float tanh(float x) {
+
+		float hSinh(float x) {
+			float ex = exp(x);
+			float enx = exp(-x);
+			return 0.5 * (ex - enx);
+		}
+
+		float hCosh(float x) {
+			float ex = exp(x);
+			float enx = exp(-x);
+			return 0.5 * (ex + enx);
+		}
+
+		float hTanh(float x) {
 			float e = exp(-2.0 * abs(x));
 			return sign(x) * (1.0 - e) / (1.0 + e);
 		}
@@ -48,6 +53,7 @@
 	const VERT = `
 		attribute vec2 aPos;
 		varying vec2 vUv;
+
 		void main() {
 			vUv = aPos * 0.5 + 0.5;
 			gl_Position = vec4(aPos, 0.0, 1.0);
@@ -55,7 +61,7 @@
 	`;
 
 	const FRAG = `
-precision highp float; // Use medium precision for balance between quality and performance
+precision highp float;
 varying vec2 vUv;
 uniform vec3 color1;
 uniform vec3 color2;
@@ -65,41 +71,33 @@ uniform float aspectRatio;
 
 // Function to create a symmetric and positive definite matrix
 mat3 createDynamicOmega(vec2 mouse) {
-    float a = tanh(3.14159 * log(abs(mouse.x ) + 0.001));
-    float b = tanh(3.14159 * log(abs(mouse.y ) + 0.001));
-    float c = a * b * 0.5; // coupling / shear term
+    mouse.x *= 1.0;
+    mouse.y *= 1.0;
 
-    // Symmetric positive definite with off-diagonal coupling
+    float sinX = hSinh(3.14159 * log(abs(mouse.x) + 0.1));
+    float cosY = hCosh(3.14159 * log(abs(mouse.y) + 0.1));
+
     return mat3(
-        1.0 + a,  c,       c * 0.5,
-        c,        1.0 + b, c * 0.5,
-        c * 0.5,  c * 0.5, 1.0
+        sinX, 0.0, 0.0,
+        0.0, cosY, 0.0,
+        0.0, 0.0, 1.0
     );
 }
 
-
-const int N = 3; // Reduced number of terms in the series for better performance
+const int N = 2;
 
 // Function to compute the real part of the Riemann theta function
 float riemannThetaReal(vec3 z, mat3 Omega) {
     float sum = 0.0;
 
-    // Iterate over the range of n values for 3 dimensions
     for (int n1 = -N; n1 <= N; ++n1) {
         for (int n2 = -N; n2 <= N; ++n2) {
             for (int n3 = -N; n3 <= N; ++n3) {
                 vec3 n = vec3(float(n1), float(n2), float(n3));
-
-                // Compute n^T * Omega * n
                 float nt_Omega_n = dot(n, Omega * n);
-
-                // Compute 2 * n^T * z
                 float nt_z = 2.0 * dot(n, z);
-
-                // Compute the real part of the exponential term
                 float exponent = 3.14159 * (nt_Omega_n + nt_z);
-                float realPart = tan(exponent); // Use cosine for the real part
-
+                float realPart = cos(exponent);
                 sum += realPart;
             }
         }
@@ -108,57 +106,51 @@ float riemannThetaReal(vec3 z, mat3 Omega) {
     return sum;
 }
 
-// Quaternion from mouse position
-vec4 mouseToQuat(vec2 mouse) {
-    float angle = length(mouse) * 3.14159;
-    float halfAngle = angle * 0.5;
-    vec3 axis = normalize(vec3(mouse.x * mouse.y, mouse.x * mouse.y, mouse.x * mouse.y)); // avoid zero
-    return vec4(axis * sin(halfAngle), cos(halfAngle));
-}
+// Stereographic projection from RP3 to visualizable space
+vec3 stereographicProject(vec4 p) {
+    // Normalize the homogeneous coordinates
+    vec4 normalized = p / length(p);
 
-// Rotate a vector by a quaternion
-vec3 rotateByQuat(vec3 v, vec4 q) {
-    vec3 u = q.xyz;
-    float s = q.w;
-    return 2.0 * dot(u, v) * u
-         + (s*s - dot(u,u)) * v
-         + 2.0 * s * cross(u, v);
+    // Use stereographic projection from the sphere S3 (double cover of RP3)
+    // Project from north pole (0,0,0,1)
+    float denom = 1.0 - normalized.w;
+
+    if (abs(denom) < 0.001) {
+        denom = 0.001; // Avoid division by zero
+    }
+
+    return normalized.xyz / denom;
 }
 
 void main() {
-    // Map the fragment coordinates to the complex plane
-    float x = vUv.x * 0.05 - 0.025;
-    float y = vUv.y * 0.05 - 0.025;
+    // Map UV coordinates to projective space
+    // Create homogeneous coordinates [x:y:z:w]
+    float x = (vUv.x - 0.5) * 0.5;
+    float y = (vUv.y - 0.5) * 0.5;
 
-    // Create a dynamic Riemann matrix based on mouse input
-    mat3 OmegaDynamic = createDynamicOmega(mouse); // createDynamicOmega(mouse);
+    // Create a point in RP3 using homogeneous coordinates
+    // The fourth coordinate w varies with mouse position
+    float w = 1.0 + mouse.x * 1.0;
+    vec4 projectivePoint = vec4(x, y, mouse.y, w);
 
-    // Construct a 3D vector for the z variable
-    // vec3 z = vec3(x, y, x * y); // Static third component
+    // Apply stereographic projection to get a 3D point
+    vec3 projected3D = stereographicProject(projectivePoint);
 
-    vec4 q = mouseToQuat(mouse);
-    vec3 baseSlice = vec3(x, y, 0.0); // flat probe plane
-    vec3 z = rotateByQuat(baseSlice, q); // rotate it through the volume
+    // Normalize to reasonable range for theta function
+    vec3 z = projected3D * 1.0;
 
-    // float accum = 0.0;
-    // int STEPS = 8;
-    // for (int i = 0; i < STEPS; i++) {
-    //     float t = (float(i) / float(STEPS)) - 0.5;
-    //     vec3 z = vec3(x, y, t * 0.05);
-    //     accum += riemannThetaReal(z, OmegaDynamic);
-    // }
-    // float thetaValueReal = accum / float(STEPS);
+    // Create dynamic Riemann matrix based on mouse input
+    mat3 OmegaDynamic = createDynamicOmega(mouse);
 
-    // Calculate the real part of the Riemann theta function at z
+    // Calculate the real part of the Riemann theta function
     float thetaValueReal = riemannThetaReal(z, OmegaDynamic);
 
-    // Normalize thetaValue to map to color range
-    float normalizedTheta = 0.5 + 0.5 * tanh(thetaValueReal);
+    // Normalize theta value for coloring
+    float normalizedTheta = 0.5 + 0.5 * hTanh(thetaValueReal * 0.1);
 
     // Create gradients for visualization
-    vec3 gradient1 = mix(color1, color1, log(normalizedTheta));
-    vec3 gradient2 = mix(color1, gradient1, log(normalizedTheta));
-
+    vec3 gradient1 = mix(color1, color2, hCosh(normalizedTheta));
+    vec3 gradient2 = mix(color3, gradient1, hSinh(normalizedTheta));
 
     gl_FragColor = vec4(gradient2, 1.0);
 }
@@ -168,67 +160,76 @@ void main() {
 	let gl;
 	let frame;
 	let uColor1, uColor2, uColor3, uMouse, uAspect;
-
 	let scaleIdx = 0;
 	let t = 0;
 	let radius = M_CALM;
 	let pointer = [0, 0];
 	let pointerEase = [0, 0];
-
-	// Eased flare level, plus a one-shot burst that fires on the rising edge —
-	// the white bloom that sells the icosahedron cracking open.
 	let flareEase = 0;
-	let burst = 0;
-	let burstArmed = true;
-	let burstEl;
 
 	const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 	function compile(type, src) {
-		const s = gl.createShader(type);
-		gl.shaderSource(s, src);
-		gl.compileShader(s);
-		if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-			console.error(gl.getShaderInfoLog(s));
+		const shader = gl.createShader(type);
+		gl.shaderSource(shader, src);
+		gl.compileShader(shader);
+
+		if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+			console.error(gl.getShaderInfoLog(shader));
+			gl.deleteShader(shader);
+			return null;
 		}
-		return s;
+
+		return shader;
 	}
 
 	function build() {
-		const p = gl.createProgram();
-		gl.attachShader(p, compile(gl.VERTEX_SHADER, VERT));
-		gl.attachShader(p, compile(gl.FRAGMENT_SHADER, PRELUDE + FRAG));
-		gl.linkProgram(p);
-		if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
-			console.error(gl.getProgramInfoLog(p));
+		const vertexShader = compile(gl.VERTEX_SHADER, VERT);
+		const fragmentShader = compile(gl.FRAGMENT_SHADER, PRELUDE + FRAG);
+		if (!vertexShader || !fragmentShader) return null;
+
+		const program = gl.createProgram();
+		gl.attachShader(program, vertexShader);
+		gl.attachShader(program, fragmentShader);
+		gl.linkProgram(program);
+
+		gl.deleteShader(vertexShader);
+		gl.deleteShader(fragmentShader);
+
+		if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+			console.error(gl.getProgramInfoLog(program));
+			gl.deleteProgram(program);
 			return null;
 		}
-		gl.useProgram(p);
 
-		// One triangle big enough to cover the viewport; vUv comes out 0..1.
-		const buf = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+		gl.useProgram(program);
+
+		// One oversized triangle covers the viewport; vUv is reconstructed 0..1.
+		const buffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-		const aPos = gl.getAttribLocation(p, 'aPos');
+
+		const aPos = gl.getAttribLocation(program, 'aPos');
 		gl.enableVertexAttribArray(aPos);
 		gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-		// color2/color3/aspectRatio are declared but unused, so the compiler
-		// strips them and these come back null. Guarded at every set.
-		uColor1 = gl.getUniformLocation(p, 'color1');
-		uColor2 = gl.getUniformLocation(p, 'color2');
-		uColor3 = gl.getUniformLocation(p, 'color3');
-		uMouse = gl.getUniformLocation(p, 'mouse');
-		uAspect = gl.getUniformLocation(p, 'aspectRatio');
-		return p;
+		uColor1 = gl.getUniformLocation(program, 'color1');
+		uColor2 = gl.getUniformLocation(program, 'color2');
+		uColor3 = gl.getUniformLocation(program, 'color3');
+		uMouse = gl.getUniformLocation(program, 'mouse');
+		uAspect = gl.getUniformLocation(program, 'aspectRatio');
+
+		return program;
 	}
 
 	function resize() {
 		if (!gl) return;
-		const s = SCALES[scaleIdx];
-		canvas.width = Math.max(2, Math.round(window.innerWidth * s));
-		canvas.height = Math.max(2, Math.round(window.innerHeight * s));
+
+		const scale = SCALES[scaleIdx];
+		canvas.width = Math.max(2, Math.round(window.innerWidth * scale));
+		canvas.height = Math.max(2, Math.round(window.innerHeight * scale));
 		gl.viewport(0, 0, canvas.width, canvas.height);
+
 		if (uAspect) gl.uniform1f(uAspect, window.innerWidth / window.innerHeight);
 	}
 
@@ -243,6 +244,7 @@ void main() {
 
 	function loop() {
 		frame = requestAnimationFrame(loop);
+
 		const now = performance.now();
 		const raw = now - last;
 		const dt = Math.min(raw / 1000, 0.05);
@@ -253,34 +255,20 @@ void main() {
 		const want = clamp(get(flare), 0, 1);
 		const rate = want > flareEase ? FLARE_ATTACK : FLARE_DECAY;
 		flareEase += (want - flareEase) * Math.min(1, dt * rate);
-
-		// One bloom per run, on the way up.
-		if (burstArmed && want > 0.25) {
-			burst = 1;
-			burstArmed = false;
-		} else if (want < 0.02) {
-			burstArmed = true;
-		}
-		burst *= Math.exp(-dt * 4.4);
-		if (burstEl) burstEl.style.opacity = (burst * burst * 0.55).toFixed(4);
-
-		canvas.style.opacity = flareEase.toFixed(4);
+		canvas.style.opacity = (flareEase * FLARE_MAX).toFixed(4);
 
 		// Keep tracking the cursor even while dark, so the field doesn't snap to a
-		// stale position the moment it lights up.
+		// stale position the moment it comes up.
 		pointerEase[0] += (pointer[0] - pointerEase[0]) * Math.min(1, dt * 2);
 		pointerEase[1] += (pointer[1] - pointerEase[1]) * Math.min(1, dt * 2);
 
-		// Nothing on screen → don't pay for 343 tan() calls per pixel.
 		if (flareEase < FLARE_OFF) return;
 
-		// The field's own loudness rides the flare: calm as it comes up, pushed out
-		// into the hyperplane regime at full burn during the search.
+		// Search activity pushes the shader into a more energetic part of its
+		// parameter space, in step with the flare.
 		const target = M_CALM + (M_SEARCH - M_CALM) * flareEase;
 		radius += (target - radius) * Math.min(1, dt * 2.2);
 
-		// A slow drift on two different periods so the figure keeps moving, plus a
-		// little pull from the cursor. Both components stay well clear of zero.
 		if (uMouse) {
 			gl.uniform2f(
 				uMouse,
@@ -289,22 +277,23 @@ void main() {
 			);
 		}
 
-		// Re-read the palette every frame, as the old uiColor() did, so a live
-		// palette swap lands without a remount.
-		const [r, g, b] = get(palette).ui;
-		const c = [(r / 255) * INK, (g / 255) * INK, (b / 255) * INK];
-		if (uColor1) gl.uniform3f(uColor1, c[0], c[1], c[2]);
-		if (uColor2) gl.uniform3f(uColor2, c[0], c[1], c[2]);
-		if (uColor3) gl.uniform3f(uColor3, c[0], c[1], c[2]);
+		// The shader arrived with the original lattice colours (#d0d0d0 / #5099b4 /
+		// #8fbd5a). Those mix to olive over a warm ground and fought everything
+		// else on the page, so the three stops are the site's own: cream, the hot
+		// accent, and the ground it sits on. Swap them back here if you want the
+		// originals — nothing else depends on these values.
+		if (uColor1) gl.uniform3f(uColor1, 0xf7 / 255, 0xec / 255, 0xdc / 255);
+		if (uColor2) gl.uniform3f(uColor2, 0xff / 255, 0x5a / 255, 0x3c / 255);
+		if (uColor3) gl.uniform3f(uColor3, 0x3a / 255, 0x24 / 255, 0x19 / 255);
 
 		gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-		// GPU work is async, so timing the draw call tells you nothing — the frame
-		// interval is what actually reveals the cost. Drop a level if it sags.
+		// GPU work is asynchronous, so use frame interval as the cost signal.
 		if (warmup < 30) {
 			warmup += 1;
 		} else {
 			avg = avg * 0.85 + raw * 0.15;
+
 			if (avg > 22 && scaleIdx < SCALES.length - 1) {
 				if ((slow += 1) > 20) {
 					scaleIdx += 1;
@@ -320,8 +309,9 @@ void main() {
 
 	onMount(() => {
 		gl = canvas.getContext('webgl', { antialias: false, alpha: false });
-		if (!gl) return; // no WebGL: leave the page background showing through
+		if (!gl) return;
 		if (!build()) return;
+
 		resize();
 		window.addEventListener('resize', resize);
 		window.addEventListener('pointermove', handlePointer);
@@ -330,6 +320,7 @@ void main() {
 
 	onDestroy(() => {
 		if (frame) cancelAnimationFrame(frame);
+
 		if (typeof window !== 'undefined') {
 			window.removeEventListener('resize', resize);
 			window.removeEventListener('pointermove', handlePointer);
@@ -338,7 +329,6 @@ void main() {
 </script>
 
 <canvas bind:this={canvas} />
-<div class="burst" bind:this={burstEl} />
 
 <style>
 	canvas {
@@ -350,21 +340,5 @@ void main() {
 		z-index: 0;
 		opacity: 0;
 		pointer-events: none;
-	}
-
-	/* The bloom on the rising edge — a soft wash from the centre, driven by the
-	   loop, sitting above the field but below the 3D canvas. */
-	.burst {
-		position: fixed;
-		inset: 0;
-		z-index: 0;
-		opacity: 0;
-		pointer-events: none;
-		background: radial-gradient(
-			circle at 50% 50%,
-			rgba(var(--fg-rgb), 0.95) 0%,
-			rgba(var(--fg-rgb), 0.28) 22%,
-			transparent 52%
-		);
 	}
 </style>

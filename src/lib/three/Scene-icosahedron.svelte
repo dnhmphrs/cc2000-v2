@@ -4,7 +4,7 @@
 	import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 	import { phase, sceneState, decade, isPortrait, flare } from '$lib/store/store';
 	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
-	import { assignDecades, shuffle } from '$lib/data/roomElements';
+	import { assignDecades } from '$lib/data/roomElements';
 	import { accentHex } from '$lib/theme';
 	import { get } from 'svelte/store';
 	import GoldenRectangle from './objects/GoldenRectangle.svelte';
@@ -47,23 +47,35 @@
 	//              the icosahedron appears: it fades in ahead of the sperm, which
 	//              passes straight through its core.
 	//   'open'   — the panes/rooms project outward and the background flares.
-	//   'search' — stepped quaternion scan across the decades.
+	//   'search' — one turn to the decade the answer already named.
 	//   'zoom'   — dead-centre zoom into the resolved room.
 	//   'settled'— result on screen.
 	let stage = 'idle';
 	let stageT = 0;
 
-	const HOVER_Z = 3.2; // nearest the sperm is allowed to idle (camera sits at z = 6)
-	const HOVER_SPAN = 0.78; // most of the frame width the hologram may take up
+	// The hologram idles at a fixed, comfortable distance (close enough to read,
+	// far enough that the 52° lens doesn't distort it) and is *scaled* to fill the
+	// frame rather than moved. Solving for distance instead put it so far back on
+	// a wide screen that the input panel hid it completely.
+	const HOVER_DIST = 3.6; // camera sits at z = 6, so it idles at z = 2.4
+	const HOVER_SPAN = 0.6; // fraction of the frame width it spans (landscape)
+	// Portrait has no room beside the card but plenty above it, so there the
+	// hologram is smaller and lifted into the gap instead of hiding behind it.
+	const HOVER_SPAN_PORTRAIT = 0.7;
+	const HOVER_RISE_PORTRAIT = 0.55; // fraction of the half-height, above centre
 	const SPERM_SIZE = 1.35; // the model's largest dimension, set at load
-	const DIVE_DUR = 3.0; // hover position → through the core → gone
+
+	// The whole cinematic runs about five seconds. It used to run fourteen, which
+	// is a long time to hold someone in front of a joke about their parents.
+	const DIVE_DUR = 1.5; // hover position → through the core → gone
 	const DIVE_Z_END = -7.0;
-	const DIVE_ACCEL = 2.4; // ease-in exponent: >1 = slower start, sharper finish
-	const OPEN_DUR = 2.4;
-	const LAND_DUR = 2.5;
-	// Stepped search: slew to a decade, "scan" it, slew to the next — a few times.
-	const STEP_SPIN = 1.0; // seconds to rotate to a decade face
-	const STEP_SCAN = 0.6; // seconds dwelling / examining that decade
+	// Ease-in exponent. Barely above linear: a glide that gathers a little pace.
+	const DIVE_ACCEL = 1.35;
+	const OPEN_DUR = 1.4;
+	const LAND_DUR = 1.7;
+	// One turn straight to the answer. The old stepped scan visited decoy decades
+	// first, which is four seconds spent pretending to search.
+	const TURN_DUR = 1.1;
 
 	// Pointer, normalised to [-1, 1]. During the input flow it nudges the sperm;
 	// the icosahedron is never on screen at a moment the operator could steer it.
@@ -74,10 +86,6 @@
 	let stepStartQuat = new THREE.Quaternion();
 	let stepTargetQuat = new THREE.Quaternion();
 	let targetRoomIndex = -1;
-	let searchOrder = []; // face indices to examine, resolved decade last
-	let searchStep = 0;
-	let searchSub = 'spin'; // 'spin' | 'scan'
-	let subT = 0;
 	let landFrustum = LAND_FRUSTUM;
 	let idleAngle = 0;
 
@@ -88,7 +96,7 @@
 	let spermFade = 0; // eased 0..1 hologram opacity
 	let spermRoll = 0; // accumulated roll, shared by hover and dive
 	let hoverT = 0;
-	const diveFrom = new THREE.Vector3(0, 0, HOVER_Z);
+	const diveFrom = new THREE.Vector3(0, 0, 2.4);
 
 	export let worldGroup;
 
@@ -180,11 +188,10 @@
 	};
 
 	function accentColorVec(hex) {
-		// Brighten toward white so the hologram glows on-brand.
 		const r = ((hex >> 16) & 255) / 255;
 		const g = ((hex >> 8) & 255) / 255;
 		const b = (hex & 255) / 255;
-		return new THREE.Vector3(0.55 + r * 0.45, 0.55 + g * 0.45, 0.55 + b * 0.45);
+		return new THREE.Vector3(r, g, b);
 	}
 
 	function buildIcosahedronMeshes(group) {
@@ -197,8 +204,8 @@
 		solidGeo.computeVertexNormals();
 		icoSolidMat = new THREE.MeshBasicMaterial({
 			// Pre-convert to linear so the renderer's sRGB output encoding maps it
-			// back to true site off-black (#0c0d0f) instead of gamma-lifting it to grey.
-			color: new THREE.Color(0x0c0d0f).convertSRGBToLinear(),
+			// back to the true site ground (#17120f) instead of gamma-lifting it.
+			color: new THREE.Color(0x17120f).convertSRGBToLinear(),
 			transparent: true,
 			opacity: 0,
 			side: THREE.DoubleSide,
@@ -262,11 +269,11 @@
 				varying vec3 vViewDir;
 				varying vec3 vWorldPos;
 				void main() {
-					float scan = sin(vWorldPos.y * 55.0 - uTime * 3.0) * 0.5 + 0.5;
+					float scan = sin(vWorldPos.y * 22.0 - uTime * 0.9) * 0.5 + 0.5;
 					scan = smoothstep(0.3, 0.75, scan);
 					float fres = pow(1.0 - abs(dot(vNormal, vViewDir)), 2.0);
-					vec3 col = uColor + vec3(0.25) * fres;
-					float a = (0.26 + scan * 0.22 + fres * 0.4) * uOpacity;
+					vec3 col = uColor + vec3(0.12) * fres;
+					float a = (0.22 + scan * 0.12 + fres * 0.22) * uOpacity;
 					gl_FragColor = vec4(col * a, a);
 				}
 			`
@@ -336,23 +343,20 @@
 		spermMixer = null;
 	}
 
-	// Where the sperm idles in the perspective overlay, measured off that camera's
-	// own frustum so it stays clear of the centred input panel at any aspect:
-	// out to the right in landscape, above the panel in portrait.
-	//
-	// The depth is solved rather than fixed. A phone's frustum is far narrower
-	// than a desktop's, so parking the hologram at a constant z cropped its tail
-	// straight off the side; instead it is pushed back until it spans at most
-	// HOVER_SPAN of the frame, and never nearer than HOVER_Z.
+	// Where the sperm idles in the perspective overlay: dead centre, on the same
+	// axis it will later dive down, with the input panel sitting over the middle
+	// of it. Parking it off to one side read as an accident.
 	function hoverAnchor() {
-		if (!spermCam) return { x: 0, y: 0, z: HOVER_Z };
+		if (!spermCam) return { x: 0, y: 0, z: 2.4, scale: 1 };
 		const tanHalf = Math.tan((spermCam.fov * Math.PI) / 360);
-		const fit = SPERM_SIZE / (HOVER_SPAN * 2 * tanHalf * Math.max(spermCam.aspect, 0.05));
-		const dist = Math.max(spermCam.position.z - HOVER_Z, fit);
-		const halfH = tanHalf * dist;
-		const halfW = halfH * spermCam.aspect;
-		const z = spermCam.position.z - dist;
-		return portrait ? { x: 0, y: halfH * 0.52, z } : { x: halfW * 0.46, y: -halfH * 0.06, z };
+		const frameW = 2 * tanHalf * HOVER_DIST * Math.max(spermCam.aspect, 0.05);
+		const span = portrait ? HOVER_SPAN_PORTRAIT : HOVER_SPAN;
+		return {
+			x: 0,
+			y: portrait ? tanHalf * HOVER_DIST * HOVER_RISE_PORTRAIT : 0,
+			z: spermCam.position.z - HOVER_DIST,
+			scale: (span * frameW) / SPERM_SIZE
+		};
 	}
 
 	function applyFrustum(fr) {
@@ -404,6 +408,7 @@
 			spermPivot.visible = true;
 			spermPivot.position.set(a.x, a.y, a.z);
 			spermPivot.rotation.set(0, Math.PI, 0);
+			spermPivot.scale.setScalar(a.scale);
 		}
 		spermActive = true;
 		setStage('hover');
@@ -414,7 +419,7 @@
 	function beginDive() {
 		if (stage !== 'hover') return;
 		if (spermPivot) diveFrom.copy(spermPivot.position);
-		else diveFrom.set(0, 0, HOVER_Z);
+		else diveFrom.set(0, 0, 2.4);
 		setStage('dive');
 	}
 
@@ -459,38 +464,11 @@
 		return new THREE.Quaternion().setFromRotationMatrix(mTarget.multiply(mLocalInv));
 	}
 
-	// A handful of distinct-decade faces to examine before the answer, then the
-	// resolved decade itself as the final step — so the search reads as an actual
-	// programmatic scan that lands on the result.
-	function pickSearchOrder(target) {
-		const byDecade = {};
-		rectangleComponents.forEach((comp, i) => {
-			const room = comp && comp.getRoom && comp.getRoom();
-			if (!room) return;
-			const d = decadeAssignments[i];
-			if (!byDecade[d]) byDecade[d] = [];
-			byDecade[d].push(i);
-		});
-		const previsits = shuffle(Object.keys(byDecade))
-			.map((d) => byDecade[d][0])
-			.filter((i) => i !== target)
-			.slice(0, 2);
-		return [...previsits, target];
-	}
-
-	function beginStepSpin(idx) {
-		stepStartQuat.copy(worldGroup.quaternion);
-		stepTargetQuat.copy(computeLandingQuat(idx));
-		searchSub = 'spin';
-		subT = 0;
-	}
-
 	function startSearch() {
 		targetRoomIndex = pickDecadeRoom();
-		searchOrder = pickSearchOrder(targetRoomIndex);
-		searchStep = 0;
+		stepStartQuat.copy(worldGroup.quaternion);
+		stepTargetQuat.copy(computeLandingQuat(targetRoomIndex));
 		setStage('search');
-		beginStepSpin(searchOrder[0]);
 	}
 
 	// The decade is already facing camera (the final search spin put it there).
@@ -559,7 +537,7 @@
 		if (stage === 'hover') {
 			icoReveal = 0;
 			hoverT += dt;
-			spermRoll += dt * 0.5;
+			spermRoll += dt * 0.14;
 			// The model may still have been parsing when the operator hit start.
 			if (spermReady && spermPivot && !spermPivot.visible) {
 				spermPivot.visible = true;
@@ -567,19 +545,21 @@
 			}
 			if (spermPivot) {
 				const a = hoverAnchor();
+				// Re-solved every frame so a resize re-fits it; frozen once it dives.
+				spermPivot.scale.setScalar(a.scale);
 				// Two incommensurate periods per axis, so it never repeats a loop.
 				spermPivot.position.set(
-					a.x + Math.sin(hoverT * 0.62) * 0.17 + mouseNX * 0.12,
-					a.y + Math.sin(hoverT * 0.94) * 0.13 - mouseNY * 0.1,
-					a.z + Math.sin(hoverT * 0.41) * 0.24
+					a.x + Math.sin(hoverT * 0.34) * 0.09 + mouseNX * 0.06,
+					a.y + Math.sin(hoverT * 0.47) * 0.07 - mouseNY * 0.05,
+					a.z + Math.sin(hoverT * 0.23) * 0.14
 				);
 				spermPivot.rotation.set(
-					Math.sin(hoverT * 0.7) * 0.17 - mouseNY * 0.14,
-					Math.PI + Math.sin(hoverT * 0.53) * 0.3 + mouseNX * 0.2,
+					Math.sin(hoverT * 0.31) * 0.09 - mouseNY * 0.07,
+					Math.PI + Math.sin(hoverT * 0.26) * 0.16 + mouseNX * 0.1,
 					spermRoll
 				);
 			}
-			spermFade += (0.95 - spermFade) * Math.min(1, dt * 1.6);
+			spermFade += (0.8 - spermFade) * Math.min(1, dt * 1.2);
 			if (spermMat) spermMat.uniforms.uOpacity.value = spermFade;
 		}
 
@@ -597,7 +577,7 @@
 			// Pure ease-in: d/dt of t^n is n·t^(n-1), which rises monotonically from 0,
 			// so it never slows — gentle start, speeds into the end.
 			const eased = Math.pow(t, DIVE_ACCEL);
-			spermRoll += dt * (1.6 + 9.0 * t);
+			spermRoll += dt * (0.14 + 0.75 * t);
 			if (spermPivot) {
 				const z = lerp(diveFrom.z, DIVE_Z_END, eased);
 				// Converge onto the camera axis as it commits, so it enters the core
@@ -605,9 +585,10 @@
 				const off = 1 - smoothstep(0, 0.42, t);
 				spermPivot.position.set(diveFrom.x * off, diveFrom.y * off, z);
 				spermPivot.rotation.set(0, Math.PI, spermRoll);
-				// Hold full brightness until it is through, then fade behind the core.
-				const gone = 1 - smoothstep(-2.2, -5.0, z);
-				if (spermMat) spermMat.uniforms.uOpacity.value = 0.95 * gone;
+				// Start fading before it reaches the core, so it dissolves into the
+				// polyhedron rather than punching through it.
+				const gone = 1 - smoothstep(-0.4, -4.0, z);
+				if (spermMat) spermMat.uniforms.uOpacity.value = 0.8 * gone;
 			}
 
 			if (t >= 1) openIcosahedron();
@@ -623,43 +604,18 @@
 				.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, idleAngle, 0)));
 			const raw = clamp(stageT / OPEN_DUR, 0, 1);
 			rectangleComponents.forEach((comp) => comp && comp.updateProjection(easeInOutCubic(raw)));
-			// The one moment the theta field is allowed on screen starts here: the
-			// panes crack apart and the background catches fire behind them.
-			flare.set(smoothstep(0.02, 0.34, raw));
+			// The one moment the field is allowed on screen starts here: it comes up
+			// with the panes over the whole open, not as a hit.
+			flare.set(smoothstep(0.0, 0.85, raw));
 			if (stageT >= OPEN_DUR) finishOpen();
 		}
 
-		// ── search: spin to a decade → scan it → spin to the next → … ─────
+		// ── search: one turn, straight to the decade the answer already named ─
 		if (stage === 'search') {
-			subT += dt;
-			const isFinal = searchStep === searchOrder.length - 1;
-			if (searchSub === 'spin') {
-				const t = easeInOutCubic(clamp(subT / STEP_SPIN, 0, 1));
-				worldGroup.quaternion.copy(stepStartQuat).slerp(stepTargetQuat, t);
-				if (subT >= STEP_SPIN) {
-					// Landed on the resolved decade → hand straight to the zoom (no scan).
-					if (isFinal) beginZoom();
-					else {
-						searchSub = 'scan';
-						subT = 0;
-					}
-				}
-			} else {
-				// Dwell on the current decade with a "focus" pulse: everything else
-				// dims out briefly, as if the machine is examining this candidate.
-				const pulse = Math.sin(clamp(subT / STEP_SCAN, 0, 1) * Math.PI);
-				rectangleComponents.forEach((comp, i) => {
-					if (!comp) return;
-					comp.setDim(i === searchOrder[searchStep] ? 1 : lerp(1, 0.15, pulse));
-				});
-				if (subT >= STEP_SCAN) {
-					rectangleComponents.forEach((comp) => comp && comp.setDim(1));
-					searchStep += 1;
-					beginStepSpin(searchOrder[searchStep]);
-				}
-			}
-			// Held at full burn for the length of the scan.
+			const t = easeInOutCubic(clamp(stageT / TURN_DUR, 0, 1));
+			worldGroup.quaternion.copy(stepStartQuat).slerp(stepTargetQuat, t);
 			flare.set(1);
+			if (stageT >= TURN_DUR) beginZoom();
 		}
 
 		// ── zoom: pure centred zoom into the resolved room (no rotation) ──
@@ -681,7 +637,7 @@
 			const room = rectangleComponents[targetRoomIndex]?.getRoom?.();
 			if (room && room.setZoomProgress) room.setZoomProgress(Math.sin(t * Math.PI));
 			// Bleed the field off as the room takes the screen.
-			flare.set(1 - smoothstep(0.1, 0.7, t));
+			flare.set(1 - smoothstep(0.05, 0.6, t));
 			if (stageT >= LAND_DUR) {
 				setStage('settled');
 				sceneState.set(4);
@@ -746,7 +702,7 @@
 		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true, alpha: true });
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-		renderer.setClearColor(0x0c0d0f, 0);
+		renderer.setClearColor(0x17120f, 0);
 		renderer.outputEncoding = THREE.sRGBEncoding;
 
 		decadeAssignments = assignDecades(rectangleConfigs.length);
@@ -763,12 +719,12 @@
 
 		window.addEventListener('pointermove', handlePointer);
 
-		// Phase owns the two hand-offs the operator triggers: 'calculate' (the
-		// start key was pressed) brings the sperm on, and 'boot' — reached by
-		// "run again", or by an out-of-range date that never ran a search —
+		// Phase owns the two hand-offs the visitor triggers: 'calculate' (they
+		// pressed the button) brings the sperm on, and 'intro' — reached by
+		// "go again", or by an out-of-range date that never ran a search —
 		// tears everything back down.
 		unsubPhase = phase.subscribe((p) => {
-			if (p === 'boot') {
+			if (p === 'intro') {
 				if (stage !== 'idle') resetScene();
 			} else if (p === 'calculate' && stage === 'idle') {
 				beginHover();

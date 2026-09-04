@@ -13,36 +13,36 @@ export const DECADES = ['50s', '60s', '90s', '10s'];
 // on disk, so it is spelled out explicitly here).
 const FILES = {
 	'50s': {
-		bg:     '50s_BG.jpg',
+		bg: '50s_BG.jpg',
 		poster: '50s_Poster.png',
-		clock:  '50s_Clock.png',
-		desk:   '50s_Desk.png',
+		clock: '50s_Clock.png',
+		desk: '50s_Desk.png',
 		screen: '50s_TV.png',
-		bed:    '50s_Bed.png'
+		bed: '50s_Bed.png'
 	},
 	'60s': {
-		bg:     '60s_BG.png',
+		bg: '60s_BG.png',
 		poster: '60s_Poster.png',
-		clock:  '60s_Clock.png',
-		desk:   '60s_desk.png',
+		clock: '60s_Clock.png',
+		desk: '60s_desk.png',
 		screen: '60s_tv.png',
-		bed:    '60s_bed.png'
+		bed: '60s_bed.png'
 	},
 	'90s': {
-		bg:     '90s_BG.png',
+		bg: '90s_BG.png',
 		poster: '90s_poster.png',
-		clock:  '90s_clock.png',
-		desk:   '90s_desk.png',
+		clock: '90s_clock.png',
+		desk: '90s_desk.png',
 		screen: '90_computer.png',
-		bed:    '90s_bed.png'
+		bed: '90s_bed.png'
 	},
 	'10s': {
-		bg:     '10s_BG.png',
+		bg: '10s_BG.png',
 		poster: '10s_Poster.png',
-		clock:  '10s_Clock.png',
-		desk:   '10s_Desk.png',
+		clock: '10s_Clock.png',
+		desk: '10s_Desk.png',
 		screen: '10s_Computer.png',
-		bed:    '10s_Bed.png'
+		bed: '10s_Bed.png'
 	}
 };
 
@@ -60,20 +60,55 @@ const FILES = {
 // vertical screen (this re-placement is the whole point of separate elements).
 // x: -1 left … +1 right · y: -1 floor … +1 ceiling · width: fraction of frame width.
 export const LAYERS = [
-	{ key: 'bg',     depth: 1.00, cover: true, opacity: 1.0 },
+	{ key: 'bg', depth: 1.0, cover: true, opacity: 1.0 },
 	// clock hangs left, poster/window right (matches the bg placement marks).
-	{ key: 'poster', depth: 0.92, x:  0.50, y:  0.42, width: 0.26, opacity: 1.0,
-		port: { x:  0.30, y:  0.66, width: 0.46 } },
-	{ key: 'clock',  depth: 0.90, x: -0.40, y:  0.52, width: 0.13, opacity: 1.0,
-		port: { x: -0.32, y:  0.82, width: 0.24 } },
+	{
+		key: 'poster',
+		depth: 0.92,
+		x: 0.5,
+		y: 0.42,
+		width: 0.26,
+		opacity: 1.0,
+		port: { x: 0.3, y: 0.66, width: 0.46 }
+	},
+	{
+		key: 'clock',
+		depth: 0.9,
+		x: -0.4,
+		y: 0.52,
+		width: 0.13,
+		opacity: 1.0,
+		port: { x: -0.32, y: 0.82, width: 0.24 }
+	},
 	// screen sits ON the desk → slightly BEHIND the desk plane so the desk's
 	// front edge occludes its base (correct "TV on a desk" read).
-	{ key: 'screen', depth: 0.60, x:  0.03, y: -0.02, width: 0.34, opacity: 1.0,
-		port: { x:  0.00, y:  0.16, width: 0.58 } },
-	{ key: 'desk',   depth: 0.48, x:  0.00, y: -0.34, width: 1.02, opacity: 1.0,
-		port: { x:  0.00, y: -0.34, width: 1.08 } },
-	{ key: 'bed',    depth: 0.16, x:  0.00, y: -0.74, width: 1.10, opacity: 1.0,
-		port: { x:  0.00, y: -0.74, width: 1.20 } }
+	{
+		key: 'screen',
+		depth: 0.6,
+		x: 0.03,
+		y: -0.02,
+		width: 0.34,
+		opacity: 1.0,
+		port: { x: 0.0, y: 0.16, width: 0.58 }
+	},
+	{
+		key: 'desk',
+		depth: 0.48,
+		x: 0.0,
+		y: -0.34,
+		width: 1.02,
+		opacity: 1.0,
+		port: { x: 0.0, y: -0.34, width: 1.08 }
+	},
+	{
+		key: 'bed',
+		depth: 0.16,
+		x: 0.0,
+		y: -0.74,
+		width: 1.1,
+		opacity: 1.0,
+		port: { x: 0.0, y: -0.74, width: 1.2 }
+	}
 ];
 
 export function elementUrl(decade, key) {
