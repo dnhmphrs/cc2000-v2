@@ -1,5 +1,5 @@
 <script>
-	import { track, phase, sceneState, conceived, edge, monitorRect } from '$lib/store/store';
+	import { track, phase, conceived, edge, monitorRect, resetRun } from '$lib/store/store';
 	import { formatDay, accuracyFor } from '$lib/functions/utils';
 	import { fade } from 'svelte/transition';
 
@@ -29,9 +29,9 @@
 	};
 
 	function restart() {
-		edge.set(null);
-		monitorRect.set(null);
-		sceneState.set(0);
+		// One place clears everything a run wrote, so nothing can survive into the
+		// next one by being forgotten here.
+		resetRun();
 		phase.set('intro');
 	}
 </script>

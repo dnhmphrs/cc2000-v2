@@ -130,10 +130,10 @@ export const SCREEN_GLASS = {
 // which way the field leans rather than changing its colours outright.
 // [near, mid, far] feeding the shader's three stops.
 export const DECADE_FIELD = {
-	'50s': [0xffe89a, 0x2f5fb8, 0x081a4e],
-	'60s': [0xffd426, 0x1f4fae, 0x07184a],
-	'90s': [0xfff0b0, 0x3a6ea5, 0x0a2456],
-	'10s': [0xf4f7ff, 0x2d63d6, 0x061442]
+	'50s': [0xffe6a3, 0x2f7fc8, 0x0a1f52],
+	'60s': [0xffd426, 0x2b5fd0, 0x0c1746],
+	'90s': [0xfff2c0, 0x4aa0d8, 0x0d2a5e],
+	'10s': [0xeef4ff, 0x3a56e0, 0x080f3a]
 };
 
 export function elementUrl(decade, key) {

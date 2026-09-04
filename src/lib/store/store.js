@@ -1,17 +1,20 @@
 import { writable } from 'svelte/store';
 
-// App flow — four beats, in order:
-//   'intro'      → title and a button; nothing in 3D yet
-//   'calculate'  → the sperm is on screen while the three questions are answered
-//   'processing' → sperm dives, THE ICOSAHEDRON APPEARS, opens, the field comes
-//                  up, and it turns to the resolved decade and zooms in. ~5s.
-//   'output'     → the room, in colour, with the song on it
+// App flow. The sperm's animation moves it along: each approach finishes and
+// the scene sets the next phase, so the questions arrive on the movement.
+//   'intro'      → write-on text over the incoming sperm
+//   'dob'        → birthday, asked once it has closed in on the egg
+//   'spicy'      → the false-flag question, asked closer still
+//   'processing' → it pierces the egg, then the icosahedron, search and landing
+//   'output'     → the room, in colour, with the song in the monitor
 export const phase = writable('intro');
 
-// User inputs
+// User inputs. The birthday lives here rather than inside a component so that
+// starting again clears it for certain — see resetRun() at the bottom.
 export const gender = writable(null);
 export const spicy = writable(4);
 export const date = writable('2000-01-01');
+export const dob = writable({ month: '', day: '', year: '' });
 
 // Result
 export const track = writable(null);
@@ -44,8 +47,30 @@ export const isPortrait = writable(false);
 // 0 = reset/idle, 1 = begin the dive → open → search, 4 = settled/landed.
 export const sceneState = writable(0);
 
+// Scene cues from the UI: 1 = begin, 2 = birthday answered, 3 = calculate,
+// 4 = the scene has landed on a room.
+// (declared above as sceneState)
+
 // 0..1 — how hard the theta-field background is burning. The scene owns this:
 // it stays at 0 for the whole boot and input flow, snaps up when the icosahedron
 // opens, holds through the search, and decays as the room fills the screen.
 // This is the only thing that ever puts the flash background on screen.
 export const flare = writable(0);
+
+// Everything a run puts into the stores, cleared in one place. "Calculate
+// again" used to rely on components unmounting to forget their own state,
+// which is easy to get wrong and hard to see when it is.
+export function resetRun() {
+	dob.set({ month: '', day: '', year: '' });
+	date.set('2000-01-01');
+	spicy.set(4);
+	gender.set(null);
+	track.set(null);
+	decade.set(null);
+	conceived.set(null);
+	edge.set(null);
+	monitorRect.set(null);
+	fieldDecade.set(null);
+	flare.set(0);
+	sceneState.set(0);
+}
