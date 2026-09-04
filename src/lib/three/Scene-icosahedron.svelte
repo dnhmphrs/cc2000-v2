@@ -2,7 +2,15 @@
 	import { onMount, onDestroy, tick } from 'svelte';
 	import * as THREE from 'three';
 	import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-	import { phase, sceneState, decade, isPortrait, flare } from '$lib/store/store';
+	import {
+		phase,
+		sceneState,
+		decade,
+		isPortrait,
+		flare,
+		fieldDecade,
+		monitorRect
+	} from '$lib/store/store';
 	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
 	import { assignDecades, shuffle } from '$lib/data/roomElements';
 	import { accentHex } from '$lib/theme';
@@ -40,9 +48,11 @@
 
 	// ── Stage machine ───────────────────────────────────────────────────────
 	// One pass through the site, in the order the beats are meant to land:
-	//   'idle'   — mounted; the boot terminal is typing. Nothing is drawn.
-	//   'hover'  — the sperm hologram is on screen, swimming in place, while the
-	//              operator works through the input panel. Still no icosahedron.
+	//   'idle'   — mounted, nothing drawn.
+	//   'arrive' — the sperm swims onto the screen. This is the opening: it is
+	//              the first thing that happens, before any copy.
+	//   'hover'  — it holds station, swimming in place, through the title screen
+	//              and the questions. Still no icosahedron.
 	//   'dive'   — the sperm accelerates away down the camera axis. THIS is where
 	//              the icosahedron appears: it fades in ahead of the sperm, which
 	//              passes straight through its core.
@@ -57,6 +67,7 @@
 	// far enough that the 52° lens doesn't distort it) and is *scaled* to fill the
 	// frame rather than moved. Solving for distance instead put it so far back on
 	// a wide screen that the input panel hid it completely.
+	const ARRIVE_DUR = 2.6; // swims in from off-screen and settles into station
 	const HOVER_DIST = 3.6; // camera sits at z = 6, so it idles at z = 2.4
 	const HOVER_SPAN = 0.6; // fraction of the frame width it spans (landscape)
 	// Portrait has no room beside the card but plenty above it, so there the
@@ -211,8 +222,8 @@
 		solidGeo.computeVertexNormals();
 		icoSolidMat = new THREE.MeshBasicMaterial({
 			// Pre-convert to linear so the renderer's sRGB output encoding maps it
-			// back to the true site ground (#17120f) instead of gamma-lifting it.
-			color: new THREE.Color(0x17120f).convertSRGBToLinear(),
+			// back to the true site ground (#0a246a) instead of gamma-lifting it.
+			color: new THREE.Color(0x0a246a).convertSRGBToLinear(),
 			transparent: true,
 			opacity: 0,
 			side: THREE.DoubleSide,
@@ -385,6 +396,7 @@
 		}
 		applyFrustum(frustum);
 		renderer.setSize(window.innerWidth, window.innerHeight);
+		if (stage === 'settled') publishMonitor();
 		if (spermCam) {
 			spermCam.aspect = window.innerWidth / window.innerHeight;
 			spermCam.updateProjectionMatrix();
@@ -405,7 +417,9 @@
 	// Beat 2: the sperm comes on and swims in place beside the input panel. The
 	// icosahedron is deliberately not built into view here — it belongs to the
 	// dive, and showing it now would spend the reveal early.
-	function beginHover() {
+	// Beat 0: the sperm swims on. It is the first thing on screen — the site
+	// opens on it, not on a block of copy.
+	function beginArrive() {
 		if (stage !== 'idle') return;
 		hoverT = 0;
 		spermRoll = 0;
@@ -413,11 +427,23 @@
 		if (spermPivot) {
 			const a = hoverAnchor();
 			spermPivot.visible = true;
-			spermPivot.position.set(a.x, a.y, a.z);
+			spermPivot.position.set(arriveFrom(a).x, arriveFrom(a).y, a.z);
 			spermPivot.rotation.set(0, Math.PI, 0);
 			spermPivot.scale.setScalar(a.scale);
 		}
 		spermActive = true;
+		setStage('arrive');
+	}
+
+	// Enters from off the left edge, a little low, so it swims up into station.
+	function arriveFrom(a) {
+		const tanHalf = Math.tan((spermCam.fov * Math.PI) / 360);
+		const halfH = tanHalf * HOVER_DIST;
+		return { x: -halfH * spermCam.aspect * 2.1, y: a.y - halfH * 0.5 };
+	}
+
+	function beginHover() {
+		hoverT = 0;
 		setStage('hover');
 	}
 
@@ -493,6 +519,8 @@
 	function beginStepSpin(idx) {
 		stepStartQuat.copy(worldGroup.quaternion);
 		stepTargetQuat.copy(computeLandingQuat(idx));
+		// The background takes this decade's colours as we turn toward it.
+		fieldDecade.set(decadeAssignments[idx] ?? null);
 		searchSub = 'spin';
 		subT = 0;
 	}
@@ -532,6 +560,8 @@
 		spermFade = 0;
 		targetRoomIndex = -1;
 		flare.set(0);
+		fieldDecade.set(null);
+		monitorRect.set(null);
 		if (worldGroup) worldGroup.quaternion.copy(BASE_TILT);
 		if (camera) {
 			camera.position.copy(CAM_POS);
@@ -551,6 +581,18 @@
 			if (room && room.setZoomProgress) room.setZoomProgress(0);
 			comp.updateProjection(0);
 		});
+		// "go again" comes back through 'intro', so swim on again.
+		setTimeout(() => {
+			if (stage === 'idle' && get(phase) === 'intro') beginArrive();
+		}, 250);
+	}
+
+	// Where the resolved room's monitor glass has landed on screen, so the result
+	// can be drawn inside it rather than floating over the room.
+	function publishMonitor() {
+		const room = rectangleComponents[targetRoomIndex]?.getRoom?.();
+		if (!room || !room.screenRect) return monitorRect.set(null);
+		monitorRect.set(room.screenRect(camera, window.innerWidth, window.innerHeight));
 	}
 
 	function animate() {
@@ -567,7 +609,30 @@
 
 		stageT += dt;
 
-		// ── hover: the sperm swims in place beside the input panel ─────────
+		// ── arrive: swims on from off-screen and settles into station ──────
+		if (stage === 'arrive') {
+			icoReveal = 0;
+			hoverT += dt;
+			spermRoll += dt * 0.14;
+			if (spermReady && spermPivot && !spermPivot.visible) {
+				spermPivot.visible = true;
+				spermActive = true;
+			}
+			const t = easeInOutCubic(clamp(stageT / ARRIVE_DUR, 0, 1));
+			if (spermPivot) {
+				const a = hoverAnchor();
+				const from = arriveFrom(a);
+				spermPivot.scale.setScalar(a.scale);
+				spermPivot.position.set(lerp(from.x, a.x, t), lerp(from.y, a.y, t), a.z);
+				// Angled into the swim on the way in, levelling off as it arrives.
+				spermPivot.rotation.set(0, Math.PI, spermRoll + (1 - t) * 0.5);
+			}
+			spermFade += (0.8 - spermFade) * Math.min(1, dt * 2.2);
+			if (spermMat) spermMat.uniforms.uOpacity.value = spermFade;
+			if (stageT >= ARRIVE_DUR) beginHover();
+		}
+
+		// ── hover: holds station through the title and the questions ───────
 		if (stage === 'hover') {
 			icoReveal = 0;
 			hoverT += dt;
@@ -698,8 +763,10 @@
 			flare.set(1 - smoothstep(0.05, 0.6, t));
 			if (stageT >= LAND_DUR) {
 				setStage('settled');
+				publishMonitor();
 				sceneState.set(4);
 				flare.set(0);
+				fieldDecade.set(null);
 			}
 		}
 
@@ -760,7 +827,7 @@
 		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true, alpha: true });
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-		renderer.setClearColor(0x17120f, 0);
+		renderer.setClearColor(0x0a246a, 0);
 		renderer.outputEncoding = THREE.sRGBEncoding;
 
 		decadeAssignments = assignDecades(rectangleConfigs.length);
@@ -782,10 +849,11 @@
 		// "go again", or by an out-of-range date that never ran a search —
 		// tears everything back down.
 		unsubPhase = phase.subscribe((p) => {
+			// 'intro' both opens the run (the sperm swims on) and, after "go
+			// again", tears the previous one down.
 			if (p === 'intro') {
 				if (stage !== 'idle') resetScene();
-			} else if (p === 'calculate' && stage === 'idle') {
-				beginHover();
+				else beginArrive();
 			}
 		});
 		// Calculate hands off the dive → open → search on sceneState → 1.
@@ -802,8 +870,9 @@
 		animate();
 		window.addEventListener('resize', handleResize);
 
-		// If the boot log already finished before the scene mounted.
-		if (get(phase) === 'calculate' && stage === 'idle') beginHover();
+		// The store starts at 'intro', so the subscribe above may have run before
+		// the sperm's loader was wired up.
+		if (get(phase) === 'intro' && stage === 'idle') beginArrive();
 	});
 
 	onDestroy(() => {

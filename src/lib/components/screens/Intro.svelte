@@ -1,118 +1,108 @@
 <script>
-	import { onMount, onDestroy } from 'svelte';
 	import { phase } from '$lib/store/store';
 	import { fade } from 'svelte/transition';
 
-	// Beat 1. Not a magazine cover — a machine, sitting there switched on and
-	// ready. Its display is the thing it actually knows: how far back the archive
-	// reaches and how much is in it. Both figures are the real ones.
-	const FROM = 1958;
-	const TO = 2023;
-	const TRACKS = '33,800';
-
-	// A short power-up on the readout: the digits hunt, then settle. This is the
-	// whole "it is a machine" gesture — no boot log, no scrolling text.
-	let readout = '---- — ----';
-	let settled = false;
-	let timer;
-
-	onMount(() => {
-		const started = performance.now();
-		const rnd = () => 1000 + Math.floor(Math.random() * 9000);
-		timer = setInterval(() => {
-			if (performance.now() - started > 850) {
-				clearInterval(timer);
-				readout = `${FROM} — ${TO}`;
-				settled = true;
-				return;
-			}
-			readout = `${rnd()} — ${rnd()}`;
-		}, 55);
-	});
-	onDestroy(() => clearInterval(timer));
-
+	// Beat 0/1. The site opens on the sperm swimming onto the screen — the scene
+	// does that — and the copy arrives after it, briefly. Not a boot log: three
+	// lines, shown at once, out of the way of the animation.
 	function start() {
 		phase.set('calculate');
 	}
 </script>
 
-<div class="stage" out:fade={{ duration: 220 }}>
-	<div class="machine" in:fade={{ duration: 500 }}>
+<!-- Sits behind the 3D canvas (z-index 1), so the sperm swims over it. -->
+<div class="grid" out:fade={{ duration: 220 }} />
+
+<div class="stage intro-stage" out:fade={{ duration: 220 }}>
+	<div class="plate" in:fade={{ duration: 800, delay: 1600 }}>
 		<p class="model">model cc-2000</p>
 		<h1>Conception Calculator</h1>
-		<p class="tag">the song that was playing the moment you were made.</p>
-
-		<div class="readout" class:settled>
-			<span class="years">{readout}</span>
-			<span class="spec">{TRACKS} tracks indexed{settled ? ' · ready' : ' · checking'}</span>
-		</div>
-
-		<button class="go" on:click={start} disabled={!settled}>start</button>
+		<p class="manifesto">
+			in the earth year 2000, human technology advanced<br />
+			allowing all of mankind to calculate the song playing<br />
+			at their exact moment of conception<br />
+			<span class="lit">with the statistical accuracy only the internet can provide</span>
+		</p>
+		<button class="go" on:click={start}>calculate</button>
 	</div>
 </div>
 
 <style>
-	.machine {
+	/* Graph paper on the blue. Two scales — a fine rule and a heavier one every
+	   fifth line — masked out of the middle so the sperm swims through clean
+	   space and the texture lives at the edges. */
+	.grid {
+		position: fixed;
+		inset: 0;
+		z-index: 0;
+		pointer-events: none;
+		background-image: linear-gradient(rgba(var(--ink-rgb), 0.055) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(var(--ink-rgb), 0.055) 1px, transparent 1px),
+			linear-gradient(rgba(var(--ink-rgb), 0.1) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(var(--ink-rgb), 0.1) 1px, transparent 1px);
+		background-size: 34px 34px, 34px 34px, 170px 170px, 170px 170px;
+		-webkit-mask-image: radial-gradient(
+			ellipse 62% 58% at 50% 46%,
+			transparent 0%,
+			rgba(0, 0, 0, 0.55) 55%,
+			#000 100%
+		);
+		mask-image: radial-gradient(
+			ellipse 62% 58% at 50% 46%,
+			transparent 0%,
+			rgba(0, 0, 0, 0.55) 55%,
+			#000 100%
+		);
+	}
+
+	/* The sperm owns the middle of the screen, so the copy sits out of its way
+	   rather than on top of it. */
+	.intro-stage {
+		align-items: flex-end;
+		justify-content: flex-start;
+		padding: clamp(24px, 6vh, 64px) clamp(24px, 5vw, 72px);
+	}
+
+	.plate {
 		width: 100%;
-		max-width: 620px;
+		max-width: 560px;
 		pointer-events: auto;
 	}
 
 	.model {
-		font-size: 12px;
+		font-size: 11px;
 		letter-spacing: 0.3em;
 		color: var(--ink-dim);
-		margin: 0 0 10px;
+		margin: 0 0 8px;
 	}
 
 	h1 {
-		font-size: clamp(28px, 4.4vw, 50px);
+		font-size: clamp(26px, 4vw, 44px);
 		font-weight: 700;
 		line-height: 1;
-		margin: 0 0 14px;
+		margin: 0 0 18px;
 		color: var(--ink);
 	}
 
-	.tag {
-		font-size: clamp(14px, 1.5vw, 17px);
+	.manifesto {
+		font-size: clamp(13px, 1.4vw, 16px);
+		line-height: 1.5;
 		color: var(--ink-dim);
-		margin: 0 0 clamp(24px, 4vh, 40px);
-		max-width: 30ch;
+		margin: 0 0 clamp(20px, 3.5vh, 34px);
 	}
 
-	/* The display. A rule above and below and nothing else — it reads as an
-	   instrument panel because of the numbers, not because of chrome. */
-	.readout {
-		border-top: 1px solid rgba(var(--ink-rgb), 0.18);
-		border-bottom: 1px solid rgba(var(--ink-rgb), 0.18);
-		padding: 18px 0 16px;
-		margin-bottom: clamp(22px, 3.5vh, 34px);
-	}
-
-	.years {
-		display: block;
-		font-size: clamp(38px, 7vw, 76px);
-		font-weight: 700;
-		line-height: 1;
-		font-variant-numeric: tabular-nums;
-		color: var(--blue-lit);
-		opacity: 0.55;
-		transition: opacity 0.3s;
-	}
-	.readout.settled .years {
-		opacity: 1;
-	}
-
-	.spec {
-		display: block;
-		margin-top: 10px;
-		font-size: 12px;
-		letter-spacing: 0.16em;
-		color: var(--ink-dim);
+	.manifesto .lit {
+		color: var(--yellow);
 	}
 
 	button {
-		padding: 15px 40px;
+		padding: 14px 34px;
 		font-size: 15px;
+	}
+
+	@media (max-width: 620px) {
+		.manifesto br {
+			display: none;
+		}
 	}
 </style>

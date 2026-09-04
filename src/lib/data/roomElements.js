@@ -111,6 +111,31 @@ export const LAYERS = [
 	}
 ];
 
+// The 'screen' element is the monitor the results are displayed in. Its artwork
+// is a whole TV/computer, so this is where the glass actually is inside that
+// PNG — centre and size as fractions of the image — measured off each one.
+// The end-of-run UI is placed into this rect rather than floating over the room.
+// Detected as the largest uniform-colour region in each PNG, except the 50s,
+// whose screen fill is too close to its own casing for that to work — measured
+// off the artwork by hand instead.
+export const SCREEN_GLASS = {
+	'50s': { cx: 0.545, cy: 0.42, w: 0.73, h: 0.58 },
+	'60s': { cx: 0.382, cy: 0.391, w: 0.64, h: 0.65 },
+	'90s': { cx: 0.352, cy: 0.436, w: 0.51, h: 0.63 },
+	'10s': { cx: 0.498, cy: 0.319, w: 0.94, h: 0.6 }
+};
+
+// The palettes the background field takes while the search turns through the
+// decades. All of them sit in the site's blue/yellow pairing — the era shifts
+// which way the field leans rather than changing its colours outright.
+// [near, mid, far] feeding the shader's three stops.
+export const DECADE_FIELD = {
+	'50s': [0xffe89a, 0x2f5fb8, 0x081a4e],
+	'60s': [0xffd426, 0x1f4fae, 0x07184a],
+	'90s': [0xfff0b0, 0x3a6ea5, 0x0a2456],
+	'10s': [0xf4f7ff, 0x2d63d6, 0x061442]
+};
+
 export function elementUrl(decade, key) {
 	const files = FILES[decade] || FILES['90s'];
 	return `/room-elements/${decade}/${files[key]}`;

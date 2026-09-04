@@ -1,6 +1,6 @@
 <script>
 	import * as THREE from 'three';
-	import { LAYERS, elementUrl } from '$lib/data/roomElements';
+	import { LAYERS, SCREEN_GLASS, elementUrl } from '$lib/data/roomElements';
 
 	// Lives in the same worldGroup as everything else so it rotates together.
 	export let group;
@@ -203,6 +203,50 @@
 	export function setZoomProgress(k) {
 		zoomK = k;
 		apply(lastProjection);
+	}
+
+	// Where this room's monitor glass lands on screen, in CSS pixels, given the
+	// camera that is currently looking at it. The glass is a sub-rectangle of the
+	// 'screen' artwork (the PNG is a whole TV, bezel and all), so its four corners
+	// are taken in the mesh's own unit-plane space, pushed through the full world
+	// transform, and projected. Returns null if the screen isn't loaded yet.
+	export function screenRect(camera, vw, vh) {
+		const entry = layers.find((l) => l.cfg.key === 'screen');
+		if (!entry || !entry.mesh || !entry.mat.map) return null;
+		const glass = SCREEN_GLASS[decadeKey] || SCREEN_GLASS['90s'];
+
+		// PlaneGeometry(1,1) scaled to (w, h): local ±0.5 are its edges, +y is up
+		// while image y runs down, hence the flip on cy.
+		// Pulled in a little from the measured rect. The glass edges are drawn, not
+		// crisp, and a few percent of overhang puts the panel onto the casing —
+		// far more noticeable than a slightly small panel.
+		const SAFETY = 0.86;
+		const lx = glass.cx - 0.5;
+		const ly = 0.5 - glass.cy;
+		const hw = (glass.w * SAFETY) / 2;
+		const hh = (glass.h * SAFETY) / 2;
+
+		entry.mesh.updateWorldMatrix(true, false);
+		let minX = Infinity,
+			minY = Infinity,
+			maxX = -Infinity,
+			maxY = -Infinity;
+		for (const [sx, sy] of [
+			[-hw, -hh],
+			[hw, -hh],
+			[hw, hh],
+			[-hw, hh]
+		]) {
+			const v = entry.mesh.localToWorld(new THREE.Vector3(lx + sx, ly + sy, 0));
+			v.project(camera);
+			const px = (v.x * 0.5 + 0.5) * vw;
+			const py = (-v.y * 0.5 + 0.5) * vh;
+			minX = Math.min(minX, px);
+			maxX = Math.max(maxX, px);
+			minY = Math.min(minY, py);
+			maxY = Math.max(maxY, py);
+		}
+		return { left: minX, top: minY, width: maxX - minX, height: maxY - minY };
 	}
 
 	// Local-space (pre-group-transform) orthonormal frame of this room's plane —

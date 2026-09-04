@@ -1,7 +1,8 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
-	import { flare } from '$lib/store/store';
+	import { flare, fieldDecade } from '$lib/store/store';
+	import { DECADE_FIELD } from '$lib/data/roomElements';
 
 	// The shader below is used exactly as supplied: cos() series over a
 	// stereographic projection from RP3, N = 2. Smooth and pulsey rather than
@@ -19,10 +20,9 @@
 	const FLARE_ATTACK = 1.6;
 	const FLARE_DECAY = 1.2;
 	const FLARE_OFF = 0.004;
-	// This shader fills the whole frame (unlike the old one, which was mostly
-	// black), so it is held well down: a field that comes up behind the scene,
-	// not a wallpaper that takes the page off the terminal.
-	const FLARE_MAX = 0.26;
+	// How far up the field is allowed to come. It fills the whole frame, so this
+	// is the single dial for how loud the search reads.
+	const FLARE_MAX = 0.62;
 
 	// This shader is fairly heavy; let the backing buffer step down on slower GPUs.
 	const SCALES = [0.5, 0.35, 0.25];
@@ -167,6 +167,24 @@ void main() {
 	let pointerEase = [0, 0];
 	let flareEase = 0;
 
+	// The field's three stops, eased toward whichever decade the search is
+	// currently looking at — so the page changes colour with the era on screen
+	// instead of holding one palette through the whole run.
+	const NEUTRAL = [
+		[1.0, 0.83, 0.15], // yellow
+		[0.23, 0.43, 0.65], // windows blue
+		[0.04, 0.09, 0.31] // deep
+	];
+	let stops = NEUTRAL.map((c) => c.slice());
+
+	const hexToRgb = (h) => [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
+
+	function targetStops() {
+		const d = get(fieldDecade);
+		const set = d && DECADE_FIELD[d];
+		return set ? set.map(hexToRgb) : NEUTRAL;
+	}
+
 	const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 	function compile(type, src) {
@@ -277,14 +295,18 @@ void main() {
 			);
 		}
 
-		// The shader arrived with the original lattice colours (#d0d0d0 / #5099b4 /
-		// #8fbd5a). Those mix to olive over a warm ground and fought everything
-		// else on the page, so the three stops are the site's own: cream, the
-		// accent, and the ground it sits on. Swap them back here if you want the
-		// originals — nothing else depends on these values.
-		if (uColor1) gl.uniform3f(uColor1, 0xf7 / 255, 0xec / 255, 0xdc / 255);
-		if (uColor2) gl.uniform3f(uColor2, 0x3b / 255, 0x4d / 255, 0xff / 255);
-		if (uColor3) gl.uniform3f(uColor3, 0x3a / 255, 0x24 / 255, 0x19 / 255);
+		// The shader arrived with fixed lattice colours (#d0d0d0 / #5099b4 /
+		// #8fbd5a). They are driven per-decade instead: each room's era supplies
+		// the three stops, eased so the turn from one decade to the next is a
+		// colour change rather than a cut. DECADE_FIELD holds the palettes.
+		const wantStops = targetStops();
+		const k = Math.min(1, dt * 1.8);
+		for (let i = 0; i < 3; i++) {
+			for (let c = 0; c < 3; c++) stops[i][c] += (wantStops[i][c] - stops[i][c]) * k;
+		}
+		if (uColor1) gl.uniform3f(uColor1, stops[0][0], stops[0][1], stops[0][2]);
+		if (uColor2) gl.uniform3f(uColor2, stops[1][0], stops[1][1], stops[1][2]);
+		if (uColor3) gl.uniform3f(uColor3, stops[2][0], stops[2][1], stops[2][2]);
 
 		gl.drawArrays(gl.TRIANGLES, 0, 3);
 

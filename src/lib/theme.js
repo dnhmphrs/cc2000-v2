@@ -5,7 +5,7 @@ import { writable, derived, get } from 'svelte/store';
 // the wireframe and the copy read as the same material. The colour event on this
 // site is the room at the end — everything before it is ink on warm dark.
 export const PALETTES = {
-	warm: { label: 'warm', line: 0xf7ecdc, ui: [247, 236, 220] }
+	warm: { label: 'warm', line: 0xd6d6db, ui: [214, 214, 219] }
 };
 
 export const DEFAULT_PALETTE = 'warm';
