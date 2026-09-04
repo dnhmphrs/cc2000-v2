@@ -2,18 +2,28 @@
 @import '$lib/styles/fonts.css';
 
 :root {
-	--bg: #1b1b1b;
-	--bg-t: rgba(18, 18, 18, 0.72);
-	--fg: rgba(240, 240, 160, 1);
-	--fg-dim: rgba(240, 240, 160, 0.85);
-	--fg-faint: rgba(240, 240, 160, 0.5);
-	--fg-ghost: rgba(240, 240, 160, 0.22);
-	--grid: rgba(240, 240, 160, 0.06);
-	--grid-strong: rgba(240, 240, 160, 0.11);
-	--accent: #357ec7;
-	--ok: #7ec96a;
-	--alert: #d6604a;
-	--mono: 'nb-architekt', 'Courier New', monospace;
+	/* Single greyscale ink. Every alpha below is derived from it, so the whole
+	   interface recolours from one triple (theme.js writes --fg-rgb). */
+	--fg-rgb: 214, 219, 224;
+
+	--bg: #0c0d0f;
+	--panel: rgba(9, 10, 12, 0.86);
+
+	--fg: rgba(var(--fg-rgb), 1);
+	--fg-dim: rgba(var(--fg-rgb), 0.76);
+	--fg-faint: rgba(var(--fg-rgb), 0.44);
+	--fg-ghost: rgba(var(--fg-rgb), 0.2);
+	--fg-hair: rgba(var(--fg-rgb), 0.09);
+	--wash: rgba(var(--fg-rgb), 0.04);
+
+	--ok: #7fae8c;
+	--alert: #c8635f;
+
+	/* A real fixed-pitch stack for terminal read-outs, and the drawing-office
+	   face for chrome labels. */
+	--mono: ui-monospace, 'SF Mono', SFMono-Regular, 'Cascadia Mono', 'Roboto Mono', Menlo, Consolas,
+		'Liberation Mono', 'Courier New', monospace;
+	--tech: 'nb-architekt', ui-sans-serif, system-ui, sans-serif;
 }
 
 html,
@@ -26,7 +36,6 @@ body {
 	color: var(--fg);
 	font-family: var(--mono);
 	font-size: 12px;
-	letter-spacing: 0.06em;
 	overflow: hidden;
 	-webkit-font-smoothing: antialiased;
 }
@@ -37,42 +46,89 @@ body {
 	box-sizing: border-box;
 }
 
-/* ── Technical typography helpers ─────────────────────────────────────────── */
-.label,
-.mono-label {
-	font-size: 9px;
-	text-transform: uppercase;
-	letter-spacing: 0.22em;
-	color: var(--fg-faint);
+/* Small blinking status lamp used in panel headers and the site HUD. */
+.led {
+	display: inline-block;
+	width: 5px;
+	height: 5px;
+	background: var(--fg);
+	margin-right: 7px;
+	vertical-align: middle;
+	animation: led-pulse 1.8s ease-in-out infinite;
+}
+.led.warn {
+	background: var(--alert);
+}
+.led.good {
+	background: var(--ok);
 }
 
-/* ── Blueprint frame: a thin border with subtle corner ticks. Sleek, not busy. */
+@keyframes led-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.25;
+	}
+}
+
+/* ── Instrument panel ─────────────────────────────────────────────────────────
+   The frames used to be a single hairline box. They are now built up: a double
+   rule (border + offset outline), brackets on all four corners, a three-slot
+   header, a meta footer, hatched rules and a faint scanline wash — chrome that
+   reads as a piece of equipment rather than a bare div. */
 .frame {
 	position: relative;
-	background: var(--bg-t);
+	background: var(--panel);
 	border: 1px solid var(--fg-ghost);
-	backdrop-filter: blur(6px);
+	outline: 1px solid var(--fg-hair);
+	outline-offset: 5px;
+	backdrop-filter: blur(7px) saturate(0.75);
+	box-shadow: 0 26px 70px rgba(0, 0, 0, 0.62), inset 0 0 0 1px rgba(var(--fg-rgb), 0.03);
 }
 
+/* Brackets on every corner. */
 .frame::before {
+	content: '';
+	position: absolute;
+	inset: -1px;
+	pointer-events: none;
+	z-index: 3;
+	background: linear-gradient(var(--fg), var(--fg)) 0 0 / 13px 1px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 0 0 / 1px 13px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 100% 0 / 13px 1px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 100% 0 / 1px 13px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 0 100% / 13px 1px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 0 100% / 1px 13px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 100% 100% / 13px 1px no-repeat,
+		linear-gradient(var(--fg), var(--fg)) 100% 100% / 1px 13px no-repeat;
+}
+
+/* CRT wash over the whole panel. */
+.frame::after {
 	content: '';
 	position: absolute;
 	inset: 0;
 	pointer-events: none;
-	background: linear-gradient(var(--fg-dim), var(--fg-dim)) 0 0 / 9px 1px no-repeat,
-		linear-gradient(var(--fg-dim), var(--fg-dim)) 0 0 / 1px 9px no-repeat,
-		linear-gradient(var(--fg-dim), var(--fg-dim)) 100% 100% / 9px 1px no-repeat,
-		linear-gradient(var(--fg-dim), var(--fg-dim)) 100% 100% / 1px 9px no-repeat;
+	z-index: 2;
+	background: repeating-linear-gradient(
+		to bottom,
+		rgba(var(--fg-rgb), 0.026) 0 1px,
+		transparent 1px 3px
+	);
 }
 
-/* Header bar for a framed panel */
 .frame-head {
-	display: flex;
+	position: relative;
+	display: grid;
+	grid-template-columns: auto 1fr auto;
 	align-items: center;
-	justify-content: space-between;
 	gap: 12px;
 	padding: 9px 14px;
 	border-bottom: 1px solid var(--fg-ghost);
+	background: linear-gradient(rgba(var(--fg-rgb), 0.055), rgba(var(--fg-rgb), 0));
+	font-family: var(--tech);
 	font-size: 9px;
 	text-transform: uppercase;
 	letter-spacing: 0.22em;
@@ -80,47 +136,97 @@ body {
 }
 
 .frame-head .id {
+	color: var(--fg);
+}
+
+.frame-head .title {
+	text-align: center;
 	color: var(--fg-dim);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.frame-head .stat {
+	display: flex;
+	align-items: center;
+	color: var(--fg-dim);
+	white-space: nowrap;
+}
+
+/* Hatched tape below the header — the panel's "measured" edge. */
+.frame-tape {
+	height: 7px;
+	border-bottom: 1px solid var(--fg-hair);
+	background: repeating-linear-gradient(90deg, var(--fg-ghost) 0 1px, transparent 1px 7px);
+	opacity: 0.7;
 }
 
 .frame-body {
-	padding: 20px 22px;
+	position: relative;
+	padding: 22px 22px 20px;
 }
 
-/* Full-width dashed rule, WROCLAW terminal style */
-.rule {
-	height: 0;
-	border-top: 1px dashed var(--fg-ghost);
-	width: 100%;
+.frame-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 7px 14px;
+	border-top: 1px solid var(--fg-hair);
+	background: rgba(var(--fg-rgb), 0.022);
+	font-family: var(--tech);
+	font-size: 8px;
+	text-transform: uppercase;
+	letter-spacing: 0.2em;
+	color: var(--fg-faint);
 }
 
 /* ── Buttons ──────────────────────────────────────────────────────────────── */
 button {
-	font-family: var(--mono);
-	font-size: 11px;
-	letter-spacing: 0.14em;
+	position: relative;
+	font-family: var(--tech);
+	font-size: 10px;
+	letter-spacing: 0.2em;
 	text-transform: uppercase;
 	cursor: pointer;
 	border: 1px solid var(--fg-faint);
-	background: transparent;
+	background: var(--wash);
 	color: var(--fg-dim);
-	padding: 9px 16px;
-	transition: color 0.18s, border-color 0.18s, background 0.18s;
+	padding: 10px 16px;
+	transition: color 0.16s, border-color 0.16s, background 0.16s;
 }
 
-button:hover {
-	color: var(--fg);
-	border-color: var(--fg-dim);
-	background: rgba(240, 240, 160, 0.03);
+/* Corner ticks so a button reads as a keyed switch, not a rectangle. */
+button::before {
+	content: '';
+	position: absolute;
+	inset: 3px;
+	pointer-events: none;
+	background: linear-gradient(var(--fg-ghost), var(--fg-ghost)) 0 0 / 5px 1px no-repeat,
+		linear-gradient(var(--fg-ghost), var(--fg-ghost)) 0 0 / 1px 5px no-repeat,
+		linear-gradient(var(--fg-ghost), var(--fg-ghost)) 100% 100% / 5px 1px no-repeat,
+		linear-gradient(var(--fg-ghost), var(--fg-ghost)) 100% 100% / 1px 5px no-repeat;
 }
 
-button:active {
+button:hover:not(:disabled) {
+	color: var(--bg);
+	border-color: var(--fg);
+	background: var(--fg);
+}
+
+button:hover:not(:disabled)::before {
+	background: none;
+}
+
+button:active:not(:disabled) {
 	color: var(--fg);
+	background: var(--wash);
 	border-color: var(--fg);
 }
 
 button:disabled {
-	opacity: 0.25;
+	opacity: 0.22;
 	cursor: default;
 }
 
@@ -130,17 +236,24 @@ input[type='text'] {
 	font-family: var(--mono);
 	font-size: 12px;
 	letter-spacing: 0.05em;
-	background: rgba(240, 240, 160, 0.03);
+	background: var(--wash);
 	border: 1px solid var(--fg-faint);
 	color: var(--fg);
-	padding: 9px 12px;
+	padding: 10px 12px;
 	outline: none;
-	transition: border-color 0.2s;
+	transition: border-color 0.2s, background 0.2s;
 }
 
 input[type='date']:focus,
 input[type='text']:focus {
-	border-color: var(--fg-dim);
+	border-color: var(--fg);
+	background: rgba(var(--fg-rgb), 0.07);
+}
+
+input[type='date']::-webkit-calendar-picker-indicator {
+	filter: invert(1);
+	opacity: 0.45;
+	cursor: pointer;
 }
 
 input[type='range'] {
@@ -154,16 +267,16 @@ input[type='range'] {
 
 input[type='range']::-webkit-slider-thumb {
 	-webkit-appearance: none;
-	width: 10px;
-	height: 10px;
+	width: 9px;
+	height: 16px;
 	background: var(--fg);
 	cursor: pointer;
 	border-radius: 0;
 }
 
 input[type='range']::-moz-range-thumb {
-	width: 10px;
-	height: 10px;
+	width: 9px;
+	height: 16px;
 	background: var(--fg);
 	cursor: pointer;
 	border-radius: 0;
@@ -175,11 +288,16 @@ input[type='range']::-moz-range-thumb {
 	height: 0;
 }
 
-/* ── Blinking terminal cursor ─────────────────────────────────────────────── */
+::selection {
+	background: var(--fg);
+	color: var(--bg);
+}
+
+/* ── Terminal block cursor ────────────────────────────────────────────────── */
 .cursor::after {
 	content: '\2588';
-	margin-left: 2px;
-	animation: blink 1s steps(1) infinite;
+	margin-left: 1px;
+	animation: blink 1.05s steps(1) infinite;
 	color: var(--fg);
 }
 

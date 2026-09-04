@@ -2,14 +2,23 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
 	import { palette } from '$lib/theme';
-	import { latticeActive } from '$lib/store/store';
+	import { flare } from '$lib/store/store';
 
 	// ── Knobs ─────────────────────────────────────────────────────────────────
 	// How much of the palette colour the shader's fill gets. The shader paints
 	// color1 on one side of the theta sum and black on the other, so this is the
-	// single control over how loud the background reads. The old grid drew at
-	// alpha 0.05–0.28, so keep it low.
-	const INK = 1.0;
+	// single control over how loud the background reads. It has to stay well
+	// under 1 or the flare washes out the white wireframe drawn on top of it.
+	const INK = 0.34;
+
+	// The field is a *transition effect*, not the site's wallpaper. It is drawn
+	// only while `flare` is up — the icosahedron opening and the search — and the
+	// canvas is fully transparent (and the shader not even dispatched) the rest of
+	// the time. Rising edges are fast so the open reads as a flash; the decay is
+	// slow so it bleeds off through the landing.
+	const FLARE_ATTACK = 7.0;
+	const FLARE_DECAY = 1.9;
+	const FLARE_OFF = 0.004; // below this the frame is skipped entirely
 
 	// The shader's `mouse` is its only input, and it is very non-linear:
 	//   |mouse| small  → both tanh terms saturate, Omega settles, and the probe
@@ -21,9 +30,12 @@
 	const M_SEARCH = 0.55; // where it goes while the search is running
 	const M_MIN = 0.01;
 
-	// 343 tan() calls per pixel, so the buffer is rendered small and stretched by
-	// CSS. It steps down further if the frame rate can't hold.
-	const SCALES = [1.0];
+	// 343 tan() calls per pixel — by far the most expensive thing on the page. The
+	// buffer is rendered well under viewport size and stretched by CSS (the figure
+	// is a soft full-screen wash, so the resampling does not read), and it steps
+	// down further if the frame rate can't hold. This used to be [1.0], i.e. no
+	// ladder at all, which is what made the field so costly to leave running.
+	const SCALES = [0.6, 0.42, 0.3];
 
 	const PRELUDE = `
 		precision highp float;
@@ -163,6 +175,13 @@ void main() {
 	let pointer = [0, 0];
 	let pointerEase = [0, 0];
 
+	// Eased flare level, plus a one-shot burst that fires on the rising edge —
+	// the white bloom that sells the icosahedron cracking open.
+	let flareEase = 0;
+	let burst = 0;
+	let burstArmed = true;
+	let burstEl;
+
 	const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 	function compile(type, src) {
@@ -230,13 +249,35 @@ void main() {
 		last = now;
 		t += dt;
 
-		// Same contract the 24-cell had: the search is the loud moment. Here that
-		// means pushing the parameter point out toward the hyperplane regime.
-		const target = get(latticeActive) ? M_SEARCH : M_CALM;
-		radius += (target - radius) * Math.min(1, dt * 2.2);
+		// Flare envelope. The scene owns the level; this only shapes it.
+		const want = clamp(get(flare), 0, 1);
+		const rate = want > flareEase ? FLARE_ATTACK : FLARE_DECAY;
+		flareEase += (want - flareEase) * Math.min(1, dt * rate);
 
+		// One bloom per run, on the way up.
+		if (burstArmed && want > 0.25) {
+			burst = 1;
+			burstArmed = false;
+		} else if (want < 0.02) {
+			burstArmed = true;
+		}
+		burst *= Math.exp(-dt * 4.4);
+		if (burstEl) burstEl.style.opacity = (burst * burst * 0.55).toFixed(4);
+
+		canvas.style.opacity = flareEase.toFixed(4);
+
+		// Keep tracking the cursor even while dark, so the field doesn't snap to a
+		// stale position the moment it lights up.
 		pointerEase[0] += (pointer[0] - pointerEase[0]) * Math.min(1, dt * 2);
 		pointerEase[1] += (pointer[1] - pointerEase[1]) * Math.min(1, dt * 2);
+
+		// Nothing on screen → don't pay for 343 tan() calls per pixel.
+		if (flareEase < FLARE_OFF) return;
+
+		// The field's own loudness rides the flare: calm as it comes up, pushed out
+		// into the hyperplane regime at full burn during the search.
+		const target = M_CALM + (M_SEARCH - M_CALM) * flareEase;
+		radius += (target - radius) * Math.min(1, dt * 2.2);
 
 		// A slow drift on two different periods so the figure keeps moving, plus a
 		// little pull from the cursor. Both components stay well clear of zero.
@@ -297,6 +338,7 @@ void main() {
 </script>
 
 <canvas bind:this={canvas} />
+<div class="burst" bind:this={burstEl} />
 
 <style>
 	canvas {
@@ -306,6 +348,23 @@ void main() {
 		height: 100vh;
 		display: block;
 		z-index: 0;
+		opacity: 0;
 		pointer-events: none;
+	}
+
+	/* The bloom on the rising edge — a soft wash from the centre, driven by the
+	   loop, sitting above the field but below the 3D canvas. */
+	.burst {
+		position: fixed;
+		inset: 0;
+		z-index: 0;
+		opacity: 0;
+		pointer-events: none;
+		background: radial-gradient(
+			circle at 50% 50%,
+			rgba(var(--fg-rgb), 0.95) 0%,
+			rgba(var(--fg-rgb), 0.28) 22%,
+			transparent 52%
+		);
 	}
 </style>

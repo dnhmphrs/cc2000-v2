@@ -5,7 +5,7 @@
 	import { getDeviceType, getScreenSize, getIsPortrait } from '$lib/functions/utils';
 	import { palette, applyCssVars } from '$lib/theme';
 
-	// Keep the UI accent (CSS custom properties) in sync with the active palette.
+	// Keep the UI ink (CSS custom properties) in sync with the active palette.
 	$: applyCssVars($palette);
 
 	function handleResize() {
@@ -41,8 +41,7 @@
 		pointer-events: none;
 	}
 
-	/* All children get pointer events back */
-	main :global(*) {
-		pointer-events: auto;
-	}
+	/* No blanket pointer-events reset here: it used to re-enable hit-testing on
+	   every descendant, including the HUD and the console, which then sat on top
+	   of the 3D stage. Each interactive shell opts itself back in instead. */
 </style>
