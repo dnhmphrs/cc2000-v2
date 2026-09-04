@@ -279,11 +279,11 @@ void main() {
 
 		// The shader arrived with the original lattice colours (#d0d0d0 / #5099b4 /
 		// #8fbd5a). Those mix to olive over a warm ground and fought everything
-		// else on the page, so the three stops are the site's own: cream, the hot
+		// else on the page, so the three stops are the site's own: cream, the
 		// accent, and the ground it sits on. Swap them back here if you want the
 		// originals — nothing else depends on these values.
 		if (uColor1) gl.uniform3f(uColor1, 0xf7 / 255, 0xec / 255, 0xdc / 255);
-		if (uColor2) gl.uniform3f(uColor2, 0xff / 255, 0x5a / 255, 0x3c / 255);
+		if (uColor2) gl.uniform3f(uColor2, 0x3b / 255, 0x4d / 255, 0xff / 255);
 		if (uColor3) gl.uniform3f(uColor3, 0x3a / 255, 0x24 / 255, 0x19 / 255);
 
 		gl.drawArrays(gl.TRIANGLES, 0, 3);

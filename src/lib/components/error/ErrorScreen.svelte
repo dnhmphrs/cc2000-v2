@@ -44,7 +44,7 @@
 		font-size: 54px;
 		font-weight: 700;
 		line-height: 1;
-		color: var(--hot);
+		color: var(--blue-lit);
 		margin: 0 0 14px;
 	}
 	.note {

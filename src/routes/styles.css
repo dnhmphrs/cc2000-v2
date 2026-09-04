@@ -13,7 +13,10 @@
 	--ink-dim: rgba(var(--ink-rgb), 0.62);
 	--ink-faint: rgba(var(--ink-rgb), 0.3);
 
-	--hot: #ff5a3c;
+	/* Classic web blue, opened up just enough to hold its own on a dark ground
+	   (#0000ee itself disappears against #17120f). */
+	--blue: #3b4dff;
+	--blue-lit: #6c7cff; /* accent *text*, where the fill blue reads too dark */
 
 	/* NB Architekt is the site's own face and carries the whole interface. */
 	--face: 'nb-architekt', ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -93,20 +96,20 @@ button {
 }
 
 button:hover:not(:disabled) {
-	background: var(--hot);
-	border-color: var(--hot);
+	background: var(--blue);
+	border-color: var(--blue);
 	color: #fff;
 }
 
 button.go {
-	background: var(--hot);
-	border-color: var(--hot);
+	background: var(--blue);
+	border-color: var(--blue);
 	color: #fff;
 }
 
 button.go:hover:not(:disabled) {
-	background: #ff7358;
-	border-color: #ff7358;
+	background: #5b6aff;
+	border-color: #5b6aff;
 }
 
 button:disabled {
@@ -149,7 +152,7 @@ input[type='range']::-webkit-slider-thumb {
 	-webkit-appearance: none;
 	width: 16px;
 	height: 16px;
-	background: var(--hot);
+	background: var(--blue);
 	cursor: pointer;
 	border-radius: 50%;
 }
@@ -157,7 +160,7 @@ input[type='range']::-webkit-slider-thumb {
 input[type='range']::-moz-range-thumb {
 	width: 16px;
 	height: 16px;
-	background: var(--hot);
+	background: var(--blue);
 	cursor: pointer;
 	border-radius: 50%;
 	border: none;
@@ -169,6 +172,6 @@ input[type='range']::-moz-range-thumb {
 }
 
 ::selection {
-	background: var(--hot);
+	background: var(--blue);
 	color: #fff;
 }

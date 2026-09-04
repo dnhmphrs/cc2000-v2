@@ -72,7 +72,7 @@
 		font-size: clamp(26px, 3.4vw, 38px);
 		font-weight: 700;
 		line-height: 1.05;
-		color: var(--hot);
+		color: var(--blue-lit);
 		margin: 0 0 6px;
 	}
 
