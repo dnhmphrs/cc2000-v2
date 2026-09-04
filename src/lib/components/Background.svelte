@@ -171,9 +171,9 @@ void main() {
 	// currently looking at — so the page changes colour with the era on screen
 	// instead of holding one palette through the whole run.
 	const NEUTRAL = [
-		[1.0, 0.83, 0.15], // yellow
-		[0.23, 0.43, 0.65], // windows blue
-		[0.04, 0.09, 0.31] // deep
+		[1.0, 0.86, 0.28], // yellow
+		[0.22, 0.5, 0.82], // a brighter, less flat blue than the ground
+		[0.04, 0.08, 0.28] // deep
 	];
 	let stops = NEUTRAL.map((c) => c.slice());
 

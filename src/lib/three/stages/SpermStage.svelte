@@ -1,62 +1,69 @@
 <script>
 	import * as THREE from 'three';
 	import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-	import { lerp, easeInOutCubic, clamp } from '$lib/functions/utils';
-	import { accentHex } from '$lib/theme';
-	import { get } from 'svelte/store';
+	import { lerp, clamp } from '$lib/functions/utils';
 
 	// ── The organic half ─────────────────────────────────────────────────────
-	// The sperm and the egg, and nothing else. This is deliberately its own
-	// component so it can be reworked without touching the machine half: change
-	// the model, the egg, the motion or the materials in here and the running
-	// order in Scene.svelte is unaffected.
-	//
-	// It owns its own scene and PERSPECTIVE camera (the machine half is
-	// orthographic), and is composited over that half by the parent.
+	// The sperm and the egg, and nothing else. Its own scene and PERSPECTIVE
+	// camera; the parent owns the renderer and the running order and composites
+	// this over the machine half.
 	//
 	// Stages it owns:
-	//   'fly'    — enters from deep behind the frame and comes forward to station
-	//   'hold'   — sits mid-frame turning over, through the text and the questions
-	//   'pierce' — drives forward into the egg and is gone
+	//   'fly'      — comes past the camera from behind it and settles at A
+	//   'hold'     — holds at A, spinning, while the intro text is read
+	//   'approach' — swims A → B; the egg comes out of the fog
+	//   'wait1'    — holds at B while the birthday is asked
+	//   'approach2'— swims B → C, closer in
+	//   'wait2'    — holds at C while the spice is asked
+	//   'pierce'   — drives into the egg
 
-	$: if (spermMat) spermMat.uniforms.uColor.value = accentColorVec($accentHex);
-
-	let scene, camera;
-
-	// ── Staging ──────────────────────────────────────────────────────────────
 	const CAM_Z = 6;
-	const FLY_FROM_Z = -16; // far behind the frame
-	const HOLD_Z = 2.0; // where it settles: forward, mid-frame
-	const EGG_Z = -2.2; // the egg sits behind it, on the same axis
-	const FLY_DUR = 3.2;
-	const PIERCE_DUR = 1.5;
+	// It starts BEHIND the camera and comes past you into the frame, rather than
+	// receding away from you into it.
+	const FLY_FROM_Z = 8.6;
+	const STATION_A = 2.0;
+	const STATION_B = 0.8;
+	const STATION_C = -0.9;
+	const EGG_Z = -3.0;
+	const EGG_R = 1.5;
 
-	// How much of the frame width the sperm spans once it is at station. Solved
-	// into a scale rather than a distance so it frames the same on any aspect.
+	const FLY_DUR = 2.8;
+	const APPROACH_DUR = 1.6;
+	const APPROACH2_DUR = 1.4;
+	const PIERCE_DUR = 1.35;
+
+	// Two turns a second, clockwise as seen from the camera.
+	const SPIN_HZ = 2;
+
+	// Fraction of the frame width it spans at station A; it grows from there as
+	// it comes in, which is the whole point of the approaches.
 	const HOLD_SPAN = 0.44;
 	const HOLD_SPAN_PORTRAIT = 0.66;
-	const SPERM_SIZE = 1.35; // the model's largest dimension, applied at load
+	const SPERM_SIZE = 1.35;
 
-	let spermPivot, spermSpin, spermModel, spermMixer, spermMat;
+	// The fog does double duty: it hides the egg until it is close enough to
+	// matter, and it is what makes the field read as depth rather than flat blue.
+	const FOG_COLOR = 0x16357f;
+	const FOG_DENSITY = 0.06;
+
+	let scene, camera;
+	let spermPivot, spermSpin, spermModel, spermMat;
 	let spermReady = false;
 	let spermFade = 0;
-	let beat = 0; // tail-beat phase: drives the rock, the sway and the surge
+	let spin = 0;
 	let driftT = 0;
-	// The model's own long axis, from its bounding box at load. Rocking about
-	// this sweeps the tail through depth; rocking about z would spin the whole
-	// cell like a propeller, because z is not its long axis.
-	let bodyAxis = new THREE.Vector3(1, 0, 0);
-
-	let egg, eggMat;
 	let portrait = false;
 
-	function accentColorVec(hex) {
-		return new THREE.Vector3(
-			((hex >> 16) & 255) / 255,
-			((hex >> 8) & 255) / 255,
-			(hex & 255) / 255
-		);
-	}
+	let eggGroup, eggShell, eggShellMat, eggCore, eggCoreMat;
+	let eggFade = 0;
+	// 0..1 — how far into the egg it is. Read by the parent for the white-out;
+	// a plain getter, because an `export let` is a prop and cannot be read off a
+	// component instance without accessors.
+	let hit = 0;
+
+	// Where it sits for each stage, so the approaches are one lerp each.
+	const stationOf = (stage) =>
+		stage === 'wait2' || stage === 'pierce' ? STATION_C : stage === 'wait1' ? STATION_B : STATION_A;
 
 	// ── Materials ────────────────────────────────────────────────────────────
 	function createSpermMaterial() {
@@ -69,33 +76,46 @@
 			uniforms: {
 				uTime: { value: 0 },
 				uOpacity: { value: 0 },
-				uColor: { value: accentColorVec(get(accentHex)) }
+				uColor: { value: new THREE.Vector3(0.86, 0.88, 0.95) },
+				// Custom shader, so scene.fog does not reach it — the same
+				// exponential is applied by hand to keep it in the same air.
+				uFogColor: { value: new THREE.Color(FOG_COLOR) },
+				uFogDensity: { value: FOG_DENSITY }
 			},
 			vertexShader: `
 				varying vec3 vNormal;
 				varying vec3 vViewDir;
 				varying vec3 vWorldPos;
+				varying float vDepth;
 				void main() {
 					vec4 wp = modelMatrix * vec4(position, 1.0);
 					vWorldPos = wp.xyz;
 					vNormal = normalize(normalMatrix * normal);
 					vViewDir = normalize(cameraPosition - wp.xyz);
-					gl_Position = projectionMatrix * viewMatrix * wp;
+					vec4 mv = viewMatrix * wp;
+					vDepth = -mv.z;
+					gl_Position = projectionMatrix * mv;
 				}
 			`,
 			fragmentShader: `
 				uniform float uTime;
 				uniform float uOpacity;
 				uniform vec3 uColor;
+				uniform vec3 uFogColor;
+				uniform float uFogDensity;
 				varying vec3 vNormal;
 				varying vec3 vViewDir;
 				varying vec3 vWorldPos;
+				varying float vDepth;
 				void main() {
 					float scan = sin(vWorldPos.y * 22.0 - uTime * 0.9) * 0.5 + 0.5;
 					scan = smoothstep(0.3, 0.75, scan);
 					float fres = pow(1.0 - abs(dot(vNormal, vViewDir)), 2.0);
 					vec3 col = uColor + vec3(0.12) * fres;
-					float a = (0.22 + scan * 0.12 + fres * 0.22) * uOpacity;
+					float a = (0.24 + scan * 0.12 + fres * 0.24) * uOpacity;
+					float fog = 1.0 - exp(-uFogDensity * uFogDensity * vDepth * vDepth);
+					col = mix(col, uFogColor, fog);
+					a *= 1.0 - fog * 0.85;
 					gl_FragColor = vec4(col * a, a);
 				}
 			`
@@ -103,49 +123,47 @@
 	}
 
 	// ── The egg ──────────────────────────────────────────────────────────────
-	// A placeholder: a soft rim-lit sphere sitting on the axis, so the pierce has
-	// something to land in. Swap the geometry and this material for the real one
-	// — nothing outside this component depends on either.
+	// Two spheres. Outer is physical and glossy — a wet, plasticky shell that
+	// takes the highlights. Inner is Lambert: matte, unlit-cheap, and it gives
+	// the shell something to sit in front of so it doesn't read as an empty
+	// bubble.
 	function buildEgg() {
-		eggMat = new THREE.ShaderMaterial({
+		eggShellMat = new THREE.MeshPhysicalMaterial({
+			color: 0xdfe6ff,
 			transparent: true,
+			opacity: 0,
+			roughness: 0.12,
+			metalness: 0.0,
+			clearcoat: 1.0,
+			clearcoatRoughness: 0.08,
 			side: THREE.DoubleSide,
 			depthWrite: false,
-			blending: THREE.AdditiveBlending,
-			uniforms: {
-				uOpacity: { value: 0 },
-				uPulse: { value: 0 },
-				uColor: { value: accentColorVec(get(accentHex)) }
-			},
-			vertexShader: `
-				varying vec3 vNormal;
-				varying vec3 vViewDir;
-				void main() {
-					vec4 wp = modelMatrix * vec4(position, 1.0);
-					vNormal = normalize(normalMatrix * normal);
-					vViewDir = normalize(cameraPosition - wp.xyz);
-					gl_Position = projectionMatrix * viewMatrix * wp;
-				}
-			`,
-			fragmentShader: `
-				uniform float uOpacity;
-				uniform float uPulse;
-				uniform vec3 uColor;
-				varying vec3 vNormal;
-				varying vec3 vViewDir;
-				void main() {
-					// Rim only: bright at the silhouette, clear through the middle, so
-					// it reads as a membrane rather than a ball.
-					float fres = pow(1.0 - abs(dot(vNormal, vViewDir)), 2.4);
-					float a = (fres * 0.85 + 0.03 + uPulse * 0.5) * uOpacity;
-					gl_FragColor = vec4(uColor * a, a);
-				}
-			`
+			fog: true
 		});
-		egg = new THREE.Mesh(new THREE.SphereGeometry(1.15, 48, 32), eggMat);
-		egg.position.set(0, 0, EGG_Z);
-		egg.visible = false;
-		scene.add(egg);
+		eggCoreMat = new THREE.MeshLambertMaterial({
+			color: 0x9fb2e8,
+			transparent: true,
+			opacity: 0,
+			fog: true
+		});
+
+		eggShell = new THREE.Mesh(new THREE.SphereGeometry(EGG_R, 48, 32), eggShellMat);
+		eggCore = new THREE.Mesh(new THREE.SphereGeometry(EGG_R * 0.82, 32, 24), eggCoreMat);
+
+		eggGroup = new THREE.Group();
+		eggGroup.add(eggCore);
+		eggGroup.add(eggShell);
+		eggGroup.position.set(0, 0, EGG_Z);
+		eggGroup.visible = false;
+		scene.add(eggGroup);
+
+		// Enough light for the physical shell to have a shape. Cheap: no shadows,
+		// no environment map.
+		const key = new THREE.DirectionalLight(0xffffff, 1.15);
+		key.position.set(-3, 4, 5);
+		const rim = new THREE.PointLight(0x9ab8ff, 12, 24);
+		rim.position.set(3.5, -1.5, EGG_Z + 3);
+		scene.add(key, rim, new THREE.AmbientLight(0x4a63b8, 0.55));
 	}
 
 	function loadSperm() {
@@ -158,39 +176,21 @@
 				const box = new THREE.Box3().setFromObject(spermModel);
 				const center = box.getCenter(new THREE.Vector3());
 				const size = box.getSize(new THREE.Vector3());
-				const maxDim = Math.max(size.x, size.y, size.z);
-				const scaleFactor = SPERM_SIZE / maxDim;
-				spermModel.scale.setScalar(scaleFactor);
-				spermModel.position.set(
-					-center.x * scaleFactor,
-					-center.y * scaleFactor,
-					-center.z * scaleFactor
-				);
+				const s = SPERM_SIZE / Math.max(size.x, size.y, size.z);
+				spermModel.scale.setScalar(s);
+				spermModel.position.set(-center.x * s, -center.y * s, -center.z * s);
 				spermModel.traverse((c) => {
 					if (c.isMesh) c.material = spermMat;
 				});
 
-				// Longest bounding-box side is the body; the rock happens about that.
-				const axisIdx = size.x >= size.y && size.x >= size.z ? 0 : size.y >= size.z ? 1 : 2;
-				bodyAxis = new THREE.Vector3(
-					axisIdx === 0 ? 1 : 0,
-					axisIdx === 1 ? 1 : 0,
-					axisIdx === 2 ? 1 : 0
-				);
-
-				// pivot = where it is and which way it points; spin = the rock about
-				// its own length, kept separate so the two never fight.
+				// spin = the roll about the view axis; pivot = where it is.
 				spermSpin = new THREE.Group();
 				spermSpin.add(spermModel);
 				spermPivot = new THREE.Group();
 				spermPivot.add(spermSpin);
+				spermPivot.rotation.y = Math.PI;
 				spermPivot.visible = false;
 				scene.add(spermPivot);
-
-				if (gltf.animations && gltf.animations.length) {
-					spermMixer = new THREE.AnimationMixer(spermModel);
-					gltf.animations.forEach((clip) => spermMixer.clipAction(clip).play());
-				}
 				spermReady = true;
 			},
 			undefined,
@@ -200,36 +200,17 @@
 		);
 	}
 
-	// ── Motion ───────────────────────────────────────────────────────────────
-	// The model is a static mesh — no skin, no clips — so all of this is
-	// rigid-body. It ROCKS about its own length rather than rolling right over:
-	// a full barrel roll turns a flat curled body edge-on twice a cycle, where it
-	// collapses to a line and you cannot read it.
-	function applySwim(dt, rate) {
-		beat += dt * rate;
-		if (spermSpin) spermSpin.setRotationFromAxisAngle(bodyAxis, Math.sin(beat) * 0.62);
-	}
-
-	// Nose sway, on periods that don't divide into the rock.
-	const sway = (amount) => ({
-		x: Math.sin(beat * 0.63) * 0.1 * amount,
-		y: Math.PI + Math.sin(beat * 0.44) * 0.2 * amount
-	});
-
-	// It gains on each beat and coasts between — the propulsion cue.
-	const surge = () => Math.sin(beat * 2) * 0.11;
-
-	// Scale that makes it span the intended fraction of the frame at station.
-	function holdScale() {
+	function spanScale(z) {
 		if (!camera) return 1;
 		const tanHalf = Math.tan((camera.fov * Math.PI) / 360);
-		const frameW = 2 * tanHalf * (CAM_Z - HOLD_Z) * Math.max(camera.aspect, 0.05);
+		const frameW = 2 * tanHalf * (CAM_Z - z) * Math.max(camera.aspect, 0.05);
 		return ((portrait ? HOLD_SPAN_PORTRAIT : HOLD_SPAN) * frameW) / SPERM_SIZE;
 	}
 
 	// ── Parent API ───────────────────────────────────────────────────────────
 	export function init() {
 		scene = new THREE.Scene();
+		scene.fog = new THREE.FogExp2(FOG_COLOR, FOG_DENSITY);
 		camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.01, 100);
 		camera.position.set(0, 0, CAM_Z);
 		camera.lookAt(0, 0, 0);
@@ -245,123 +226,115 @@
 	}
 
 	export function reset() {
-		beat = 0;
+		spin = 0;
 		driftT = 0;
 		spermFade = 0;
+		eggFade = 0;
 		if (spermPivot) spermPivot.visible = false;
 		if (spermMat) spermMat.uniforms.uOpacity.value = 0;
-		if (egg) egg.visible = false;
-		if (eggMat) {
-			eggMat.uniforms.uOpacity.value = 0;
-			eggMat.uniforms.uPulse.value = 0;
+		if (eggGroup) {
+			eggGroup.visible = false;
+			eggGroup.scale.setScalar(1);
 		}
+		if (eggShellMat) eggShellMat.opacity = 0;
+		if (eggCoreMat) eggCoreMat.opacity = 0;
 	}
 
 	// True on the frame the stage it owns finishes.
 	export function update(dt, stage, stageT, mouse) {
 		if (!camera) return false;
 		let done = false;
+		driftT += dt;
 
-		const flying = stage === 'fly';
-		const holding = stage === 'hold';
-		const piercing = stage === 'pierce';
-		const live = flying || holding || piercing;
+		// Clockwise, from the camera's point of view, at a steady 2 Hz. Constant
+		// through every stage — it is the one thing that never stops.
+		spin -= dt * SPIN_HZ * Math.PI * 2;
+		if (spermSpin) spermSpin.rotation.z = spin;
 
+		const live = ['fly', 'hold', 'approach', 'wait1', 'approach2', 'wait2', 'pierce'].includes(
+			stage
+		);
 		if (live && spermReady && spermPivot) spermPivot.visible = true;
-		if (spermPivot) spermPivot.scale.setScalar(holdScale());
 
-		if (flying) {
-			driftT += dt;
-			applySwim(dt, 3.4);
-			const t = easeInOutCubic(clamp(stageT / FLY_DUR, 0, 1));
-			if (spermPivot) {
-				const s = sway(1);
-				// Straight down the axis, out of the far dark and into the frame.
-				spermPivot.position.set(0, 0, lerp(FLY_FROM_Z, HOLD_Z, t));
-				spermPivot.rotation.set(s.x, s.y, 0);
-			}
-			// Comes up out of nothing rather than popping in at the far plane.
-			spermFade = clamp(stageT / (FLY_DUR * 0.45), 0, 1) * 0.85;
+		let z = stationOf(stage);
+		hit = 0;
+
+		if (stage === 'fly') {
+			const t = clamp(stageT / FLY_DUR, 0, 1);
+			// Ease-out: it comes past the camera fast, then settles.
+			z = lerp(FLY_FROM_Z, STATION_A, 1 - Math.pow(1 - t, 3));
+			spermFade = clamp((stageT - 0.15) / 0.7, 0, 1) * 0.9;
 			if (stageT >= FLY_DUR) done = true;
-		}
-
-		if (holding) {
-			driftT += dt;
-			applySwim(dt, 3.0);
-			if (spermPivot) {
-				const s = sway(1);
-				spermPivot.position.set(
-					Math.sin(driftT * 0.34) * 0.1 + (mouse?.x ?? 0) * 0.07,
-					Math.sin(driftT * 0.47) * 0.08 - (mouse?.y ?? 0) * 0.05,
-					HOLD_Z + Math.sin(driftT * 0.23) * 0.14 + surge()
-				);
-				spermPivot.rotation.set(s.x - (mouse?.y ?? 0) * 0.06, s.y + (mouse?.x ?? 0) * 0.09, 0);
-			}
-			spermFade += (0.85 - spermFade) * Math.min(1, dt * 1.6);
-		}
-
-		if (piercing) {
-			applySwim(dt, 3.0 + 7.0 * clamp(stageT / PIERCE_DUR, 0, 1));
+		} else if (stage === 'approach') {
+			const t = clamp(stageT / APPROACH_DUR, 0, 1);
+			z = lerp(STATION_A, STATION_B, t * t * (3 - 2 * t));
+			if (stageT >= APPROACH_DUR) done = true;
+		} else if (stage === 'approach2') {
+			const t = clamp(stageT / APPROACH2_DUR, 0, 1);
+			z = lerp(STATION_B, STATION_C, t * t * (3 - 2 * t));
+			if (stageT >= APPROACH2_DUR) done = true;
+		} else if (stage === 'pierce') {
 			const t = clamp(stageT / PIERCE_DUR, 0, 1);
-			// Accelerating: gentle push, then committed.
-			const eased = Math.pow(t, 1.6);
-			if (spermPivot) {
-				const s = sway(1 - t * 0.6);
-				spermPivot.position.set(0, 0, lerp(HOLD_Z, EGG_Z, eased));
-				spermPivot.rotation.set(s.x, s.y, 0);
-			}
-			// Dissolves into the membrane rather than punching out the far side.
-			spermFade = 0.85 * (1 - clamp((eased - 0.72) / 0.28, 0, 1));
+			const eased = Math.pow(t, 1.7);
+			z = lerp(STATION_C, EGG_Z, eased);
+			hit = clamp((eased - 0.68) / 0.32, 0, 1);
+			// Gone inside the shell.
+			spermFade = 0.9 * (1 - hit);
 			if (stageT >= PIERCE_DUR) done = true;
+		} else if (live) {
+			spermFade += (0.9 - spermFade) * Math.min(1, dt * 2);
+		} else {
+			spermFade += (0 - spermFade) * Math.min(1, dt * 4);
 		}
 
-		if (!live) spermFade += (0 - spermFade) * Math.min(1, dt * 4);
-
-		// The egg only exists for the pierce. The opening is meant to be the sperm
-		// on a blank background and nothing else, so it is not telegraphed.
-		if (eggMat) {
-			const want = piercing ? 0.85 : 0;
-			eggMat.uniforms.uOpacity.value +=
-				(want - eggMat.uniforms.uOpacity.value) * Math.min(1, dt * (piercing ? 5 : 3));
-			const hit = piercing ? Math.pow(clamp(stageT / PIERCE_DUR, 0, 1), 6) : 0;
-			eggMat.uniforms.uPulse.value = hit;
-			if (egg) {
-				egg.visible = eggMat.uniforms.uOpacity.value > 0.01;
-				egg.rotation.y += dt * 0.12;
-				const swellS = 1 + hit * 0.16;
-				egg.scale.setScalar(swellS);
-			}
+		if (spermPivot) {
+			spermPivot.scale.setScalar(spanScale(Math.min(z, STATION_A)));
+			// A little life in the hold, and a nudge from the cursor. No wobble in
+			// the body itself — the spin carries the motion.
+			const idle = stage === 'hold' || stage === 'wait1' || stage === 'wait2';
+			const ax = idle ? Math.sin(driftT * 0.4) * 0.07 + (mouse?.x ?? 0) * 0.09 : 0;
+			const ay = idle ? Math.sin(driftT * 0.53) * 0.05 - (mouse?.y ?? 0) * 0.07 : 0;
+			spermPivot.position.set(ax, ay, z);
 		}
+
+		// The egg comes out of the fog on the first approach and stays.
+		const eggWanted = ['approach', 'wait1', 'approach2', 'wait2', 'pierce'].includes(stage);
+		eggFade += ((eggWanted ? 1 : 0) - eggFade) * Math.min(1, dt * 1.6);
+		if (eggGroup) {
+			eggGroup.visible = eggFade > 0.01;
+			eggGroup.rotation.y += dt * 0.1;
+			eggGroup.scale.setScalar(1 + hit * 0.12);
+		}
+		if (eggShellMat) eggShellMat.opacity = eggFade * 0.5;
+		if (eggCoreMat) eggCoreMat.opacity = eggFade * 0.85;
 
 		if (spermMat) {
 			spermMat.uniforms.uOpacity.value = spermFade;
 			spermMat.uniforms.uTime.value += dt;
 		}
-		if (spermMixer) spermMixer.update(dt);
 		if (spermPivot) spermPivot.visible = spermFade > 0.005;
 
 		return done;
 	}
 
+	export function getHit() {
+		return hit;
+	}
+
 	export function isBusy() {
-		return spermFade > 0.005 || (eggMat && eggMat.uniforms.uOpacity.value > 0.01);
+		return spermFade > 0.005 || eggFade > 0.01;
 	}
 
 	export function render(r) {
-		if (!scene || !camera) return;
-		r.render(scene, camera);
+		if (scene && camera) r.render(scene, camera);
 	}
 
 	export function dispose() {
-		if (spermModel) {
-			spermModel.traverse((o) => {
-				if (o.geometry) o.geometry.dispose();
-			});
-		}
-		if (egg) {
-			egg.geometry.dispose();
-			eggMat.dispose();
-		}
-		if (spermMat) spermMat.dispose();
+		spermModel?.traverse((o) => o.geometry && o.geometry.dispose());
+		eggShell?.geometry.dispose();
+		eggCore?.geometry.dispose();
+		eggShellMat?.dispose();
+		eggCoreMat?.dispose();
+		spermMat?.dispose();
 	}
 </script>

@@ -1,6 +1,6 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
-	import { phase } from '$lib/store/store';
+	import { sceneState } from '$lib/store/store';
 	import { fade } from 'svelte/transition';
 
 	// Beat 1. The sperm is already on screen coming forward; this writes on over
@@ -47,40 +47,46 @@
 		done = true;
 	};
 
+	let sent = false;
+
 	function begin() {
-		phase.set('calculate');
+		// Sends the sperm forward; the scene raises 'dob' when it gets there.
+		sent = true;
+		sceneState.set(1);
 	}
 </script>
 
-<div class="wrap" out:fade={{ duration: 300 }}>
-	<!-- Impatient visitors get the rest of it at once rather than waiting. -->
-	<button class="skip" class:hidden={done} on:click={skip} aria-label="show all text" />
+{#if !sent}
+	<div class="wrap" out:fade={{ duration: 300 }}>
+		<!-- Impatient visitors get the rest of it at once rather than waiting. -->
+		<button class="skip" class:hidden={done} on:click={skip} aria-label="show all text" />
 
-	<div class="write">
-		{#each LINES as line, i}
-			<p class:lit={i === LINES.length - 1}>
-				{line.slice(0, shown[i])}{#if !done && shown[i] > 0 && shown[i] < line.length}<span
-						class="caret"
-					/>{/if}
-			</p>
-		{/each}
-	</div>
-
-	{#if done}
-		<div class="enter" in:fade={{ duration: 600 }}>
-			<button class="go" on:click={begin}>begin</button>
+		<div class="write">
+			{#each LINES as line, i}
+				<p class:lit={i === LINES.length - 1}>
+					{line.slice(0, shown[i])}{#if !done && shown[i] > 0 && shown[i] < line.length}<span
+							class="caret"
+						/>{/if}
+				</p>
+			{/each}
 		</div>
-	{/if}
-</div>
+
+		{#if done}
+			<div class="enter" in:fade={{ duration: 600 }}>
+				<button class="go" on:click={begin}>begin</button>
+			</div>
+		{/if}
+	</div>
+{/if}
 
 <style>
 	.wrap {
 		position: fixed;
+		top: 0;
 		left: 0;
-		right: 0;
-		bottom: 0;
 		z-index: 10;
-		padding: 0 clamp(24px, 5vw, 72px) clamp(26px, 7vh, 66px);
+		max-width: min(58vw, 620px);
+		padding: clamp(26px, 6vh, 58px) clamp(24px, 4vw, 56px);
 		pointer-events: none;
 	}
 

@@ -18,14 +18,22 @@
 	// The background shader is a sibling of this component, behind both.
 	//
 	// Running order:
-	//   idle   → nothing
-	//   fly    → sperm comes forward out of the dark to mid-frame   [Sperm]
-	//   hold   → it turns over there, through the text and the form [Sperm]
-	//   pierce → it drives into the egg                             [Sperm]
-	//   open   → the icosahedron resolves and comes apart           [Icosa]
-	//   search → turns through the decades                          [Icosa]
-	//   zoom   → the resolved room fills the frame                  [Icosa]
+	//   idle      → nothing
+	//   fly       → sperm comes past the camera and settles at A     [Sperm]
+	//   hold      → spins at A while the intro text is read          [Sperm]
+	//   approach  → swims A → B, the egg comes out of the fog        [Sperm]
+	//   wait1     → holds at B while the birthday is asked           [Sperm]
+	//   approach2 → swims B → C, closer in                           [Sperm]
+	//   wait2     → holds at C while the spice is asked              [Sperm]
+	//   pierce    → drives into the egg, and the screen goes white   [Sperm]
+	//   open      → the icosahedron resolves and comes apart         [Icosa]
+	//   search    → turns through the decades                        [Icosa]
+	//   zoom      → the resolved room fills the frame                [Icosa]
 	//   settled
+	//
+	// The sperm half moves the flow along: when an approach finishes it is the
+	// scene that sets the next phase, so the questions arrive on the animation
+	// rather than the animation chasing the questions.
 	let stage = 'idle';
 	let stageT = 0;
 
@@ -41,6 +49,10 @@
 	const CANVAS_FADE = 1.2;
 
 	const mouse = { x: 0, y: 0 };
+
+	// The white-out on contact.
+	let flashEl;
+	let flash = 0;
 
 	function setStage(s) {
 		stage = s;
@@ -66,18 +78,21 @@
 		setStage('fly');
 	}
 
-	// The form's calculate button. Accepts any pre-pierce stage — requiring an
-	// exact one meant a fast answer during the fly-in dropped the cue and hung
-	// the whole thing.
-	function beginPierce() {
-		if (stage === 'pierce' || stage === 'open') return;
-		if (stage === 'search' || stage === 'zoom' || stage === 'settled') return;
-		setStage('pierce');
+	// Cues from the UI, all of them tolerant of arriving early: requiring an
+	// exact stage meant a fast click during an animation dropped the cue on the
+	// floor and hung the whole thing.
+	const PAST_SPERM = ['open', 'search', 'zoom', 'settled'];
+
+	function cue(target) {
+		if (PAST_SPERM.includes(stage) || stage === target) return;
+		setStage(target);
 	}
 
 	function resetScene() {
 		setStage('idle');
 		mouse.x = mouse.y = 0;
+		flash = 0;
+		if (flashEl) flashEl.style.opacity = '0';
 		flare.set(0);
 		monitorRect.set(null);
 		spermStage?.reset();
@@ -106,13 +121,24 @@
 		const icosaDone = icosaStage ? icosaStage.update(dt, stage, stageT) : false;
 
 		if (stage === 'fly' && spermDone) setStage('hold');
-		else if (stage === 'pierce' && spermDone) setStage('open');
+		else if (stage === 'approach' && spermDone) {
+			setStage('wait1');
+			phase.set('dob'); // the first question arrives once it has closed in
+		} else if (stage === 'approach2' && spermDone) {
+			setStage('wait2');
+			phase.set('spicy');
+		} else if (stage === 'pierce' && spermDone) setStage('open');
 		else if (stage === 'open' && icosaDone) setStage('search');
 		else if (stage === 'search' && icosaDone) setStage('zoom');
 		else if (stage === 'zoom' && icosaDone) {
 			setStage('settled');
 			sceneState.set(4);
 		}
+
+		// Contact blows the frame out to white, then it falls away fast.
+		const impact = stage === 'pierce' ? spermStage?.getHit() ?? 0 : 0;
+		flash = Math.max(flash * Math.exp(-dt * 3.6), Math.pow(impact, 2.2));
+		if (flashEl) flashEl.style.opacity = flash.toFixed(4);
 
 		// The machine half clears and draws first; the organic half is composited
 		// on top with a fresh depth buffer, because a perspective overlay tested
@@ -157,8 +183,12 @@
 			if (stage !== 'idle') resetScene();
 			else begin();
 		});
+		// 1 = begin (swim in, egg appears), 2 = birthday answered (swim closer),
+		// 3 = calculate (pierce).
 		unsubSceneState = sceneState.subscribe((s) => {
-			if (s === 1) beginPierce();
+			if (s === 1) cue('approach');
+			else if (s === 2) cue('approach2');
+			else if (s === 3) cue('pierce');
 		});
 
 		animate();
@@ -184,6 +214,7 @@
 {/if}
 
 <canvas bind:this={canvasElement} />
+<div class="flash" bind:this={flashEl} />
 
 <style>
 	canvas {
@@ -194,5 +225,15 @@
 		display: block;
 		z-index: 1;
 		opacity: 0;
+	}
+
+	/* Contact. Sits over the 3D but under the UI. */
+	.flash {
+		position: fixed;
+		inset: 0;
+		z-index: 2;
+		background: #fff;
+		opacity: 0;
+		pointer-events: none;
 	}
 </style>

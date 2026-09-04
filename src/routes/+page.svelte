@@ -3,7 +3,8 @@
 	import Background from '$lib/components/Background.svelte';
 	import Scene from '$lib/three/Scene.svelte';
 	import Intro from '$lib/components/screens/Intro.svelte';
-	import Calculate from '$lib/components/screens/Calculate.svelte';
+	import AskDob from '$lib/components/screens/AskDob.svelte';
+	import AskSpicy from '$lib/components/screens/AskSpicy.svelte';
 	import Transition from '$lib/components/screens/Transition.svelte';
 	import Output from '$lib/components/screens/Output.svelte';
 </script>
@@ -18,8 +19,10 @@
 
 {#if $phase === 'intro'}
 	<Intro />
-{:else if $phase === 'calculate'}
-	<Calculate />
+{:else if $phase === 'dob'}
+	<AskDob />
+{:else if $phase === 'spicy'}
+	<AskSpicy />
 {:else if $phase === 'processing'}
 	<Transition />
 {:else if $phase === 'output'}
