@@ -17,20 +17,17 @@
 	// The background shader is a sibling of this component, behind both.
 	//
 	// Running order:
-	//   idle      → nothing; the machine is on screen over the top
-	//   fly       → sperm overtakes the camera and runs out to A     [Sperm]
-	//   wait1     → holds at A while the birthday is asked           [Sperm]
-	//   approach  → swims A → C, closing on the egg                  [Sperm]
-	//   wait2     → holds at C while the spice is asked              [Sperm]
-	//   pierce    → drives into the egg, and the screen goes white   [Sperm]
-	//   open      → the icosahedron resolves and comes apart         [Icosa]
-	//   search    → turns through the decades                        [Icosa]
-	//   zoom      → the resolved room fills the frame                [Icosa]
+	//   idle    → nothing; the machine is on screen over the top
+	//   dive    → the sperm overtakes the camera and drives into the
+	//             egg in one unbroken move, ending in white          [Sperm]
+	//   open    → the icosahedron resolves and comes apart           [Icosa]
+	//   search  → turns through the decades                          [Icosa]
+	//   zoom    → the resolved room fills the frame                  [Icosa]
 	//   settled
 	//
-	// The sperm half moves the flow along: when an approach finishes it is the
-	// scene that sets the next phase, so the questions arrive on the animation
-	// rather than the animation chasing the questions.
+	// Both questions are answered on the machine before any of this runs, so
+	// there is nothing here to stop and wait for — it is one shot from the
+	// machine's window to the room.
 	let stage = 'idle';
 	let stageT = 0;
 
@@ -107,13 +104,7 @@
 		const spermDone = spermStage ? spermStage.update(dt, stage, stageT, mouse) : false;
 		const icosaDone = icosaStage ? icosaStage.update(dt, stage, stageT) : false;
 
-		if (stage === 'fly' && spermDone) {
-			setStage('wait1');
-			phase.set('dob'); // the first question arrives once it has settled
-		} else if (stage === 'approach' && spermDone) {
-			setStage('wait2');
-			phase.set('spicy');
-		} else if (stage === 'pierce' && spermDone) setStage('open');
+		if (stage === 'dive' && spermDone) setStage('open');
 		else if (stage === 'open' && icosaDone) setStage('search');
 		else if (stage === 'search' && icosaDone) setStage('zoom');
 		else if (stage === 'zoom' && icosaDone) {
@@ -122,7 +113,7 @@
 		}
 
 		// Contact blows the frame out to white, then it falls away fast.
-		const impact = stage === 'pierce' ? spermStage?.getHit() ?? 0 : 0;
+		const impact = stage === 'dive' ? spermStage?.getHit() ?? 0 : 0;
 		flash = Math.max(flash * Math.exp(-dt * 3.6), Math.pow(impact, 2.2));
 		if (flashEl) flashEl.style.opacity = flash.toFixed(4);
 
@@ -169,13 +160,10 @@
 		unsubPhase = phase.subscribe((p) => {
 			if (p === 'intro' && stage !== 'idle') resetScene();
 		});
-		// 1 = start pressed on the machine (the camera goes through its window and
-		// the sperm overtakes it), 2 = birthday answered (swim closer),
-		// 3 = calculate (pierce).
+		// 1 = calculate pressed on the machine: the camera goes through its window
+		// and the whole dive runs from there. 4 is raised by this file, not read.
 		unsubSceneState = sceneState.subscribe((s) => {
-			if (s === 1) cue('fly');
-			else if (s === 2) cue('approach');
-			else if (s === 3) cue('pierce');
+			if (s === 1) cue('dive');
 		});
 
 		animate();

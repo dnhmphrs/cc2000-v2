@@ -8,22 +8,18 @@
 	// camera; the parent owns the renderer and the running order and composites
 	// this over the machine half.
 	//
-	// Stages it owns:
-	//   'fly'      — overtakes the camera from behind and runs out ahead to A
-	//   'wait1'    — holds at A while the birthday is asked
-	//   'approach' — swims A → C, closing on the egg
-	//   'wait2'    — holds at C while the spice is asked
-	//   'pierce'   — drives into the egg
+	// One stage, 'dive': both questions are answered on the machine before this
+	// runs, so there is nothing to stop for. The sperm overtakes the camera,
+	// runs out ahead, and drives straight into the egg in a single move.
 
 	// A narrower lens than a wide-angle: less distortion, and the egg reads much
 	// larger for the same geometry, which is what makes the approach feel like an
 	// approach.
 	const FOV = 40;
-	// The camera holds still for the fly-in, then follows the sperm forward, so
-	// the egg grows into the frame as it is closed on rather than sitting at a
-	// constant size.
+	// The camera holds still while it is overtaken, then follows it forward, so
+	// the egg grows into the frame as it is closed on. The sperm keeps roughly a
+	// constant size throughout — you are travelling with it, not watching it go.
 	const CAM_HOME = 6;
-	const CAM_AT_C = 3.0;
 	const CAM_AT_EGG = 1.0;
 	// Starts behind the camera and OFF the axis, so it sweeps past the corner of
 	// the frame and runs out ahead — 2001, not a dot growing in the middle.
@@ -31,13 +27,13 @@
 	// one frame of infinite magnification), which is why it is offset.
 	const FLY_FROM = { x: 2.4, y: -1.15, z: 8.8 };
 	const STATION_A = 2.0;
-	const STATION_C = -0.9;
 	const EGG_Z = -3.0;
 	const EGG_R = 1.5;
 
-	const FLY_DUR = 2.6;
-	const APPROACH_DUR = 1.7;
-	const PIERCE_DUR = 1.35;
+	const DIVE_DUR = 4.6;
+	// Fraction of the dive spent overtaking. The overtake eases out to rest and
+	// the run in eases out of rest, so the two halves join without a stop.
+	const PASS_T = 0.26;
 
 	// Clockwise as seen from the camera. Half a turn a second — two was a blur.
 	const SPIN_HZ = 0.5;
@@ -67,10 +63,6 @@
 	// a plain getter, because an `export let` is a prop and cannot be read off a
 	// component instance without accessors.
 	let hit = 0;
-
-	// Where it sits for each stage, so the approaches are one lerp each.
-	const stationOf = (stage) => (stage === 'wait2' || stage === 'pierce' ? STATION_C : STATION_A);
-	const camOf = (stage) => (stage === 'wait2' || stage === 'pierce' ? CAM_AT_C : CAM_HOME);
 
 	// ── Materials ────────────────────────────────────────────────────────────
 	function createSpermMaterial() {
@@ -289,42 +281,41 @@
 		spin -= dt * SPIN_HZ * Math.PI * 2;
 		if (spermSpin) spermSpin.rotation.z = spin;
 
-		const live = ['fly', 'approach', 'wait1', 'wait2', 'pierce'].includes(stage);
+		const live = stage === 'dive';
 		if (live && spermReady && spermPivot) spermPivot.visible = true;
 
-		let z = stationOf(stage);
-		let camZ = camOf(stage);
+		let z = STATION_A;
+		let camZ = CAM_HOME;
 		let flyX = 0;
 		let flyY = 0;
+		let sway = 0;
 		hit = 0;
 
-		if (stage === 'fly') {
-			const t = clamp(stageT / FLY_DUR, 0, 1);
-			// Ease-out: it overtakes fast, then runs out ahead and settles.
-			const e = 1 - Math.pow(1 - t, 3);
-			z = lerp(FLY_FROM.z, STATION_A, e);
-			flyX = lerp(FLY_FROM.x, 0, e);
-			flyY = lerp(FLY_FROM.y, 0, e);
-			// Nothing to see until it is clear of the camera's near field.
-			spermFade = clamp((CAM_HOME - z - 0.7) / 1.6, 0, 1) * 0.9;
-			if (stageT >= FLY_DUR) done = true;
-		} else if (stage === 'approach') {
-			const t = clamp(stageT / APPROACH_DUR, 0, 1);
-			const e = t * t * (3 - 2 * t);
-			z = lerp(STATION_A, STATION_C, e);
-			camZ = lerp(CAM_HOME, CAM_AT_C, e);
-			if (stageT >= APPROACH_DUR) done = true;
-		} else if (stage === 'pierce') {
-			const t = clamp(stageT / PIERCE_DUR, 0, 1);
-			const eased = Math.pow(t, 1.7);
-			z = lerp(STATION_C, EGG_Z, eased);
-			camZ = lerp(CAM_AT_C, CAM_AT_EGG, eased);
-			hit = clamp((eased - 0.68) / 0.32, 0, 1);
-			// Gone inside the shell.
-			spermFade = 0.9 * (1 - hit);
-			if (stageT >= PIERCE_DUR) done = true;
-		} else if (live) {
-			spermFade += (0.9 - spermFade) * Math.min(1, dt * 2);
+		if (live) {
+			const t = clamp(stageT / DIVE_DUR, 0, 1);
+			if (t < PASS_T) {
+				// Overtake. Fast past the lens, easing out as it runs ahead.
+				const u = t / PASS_T;
+				const e = 1 - Math.pow(1 - u, 3);
+				z = lerp(FLY_FROM.z, STATION_A, e);
+				flyX = lerp(FLY_FROM.x, 0, e);
+				flyY = lerp(FLY_FROM.y, 0, e);
+				// Nothing to see until it is clear of the camera's near field.
+				spermFade = clamp((CAM_HOME - z - 0.7) / 1.6, 0, 1) * 0.9;
+			} else {
+				// The run in. One accelerating curve from ahead of the lens all the
+				// way into the egg, with the camera following it down.
+				const u = (t - PASS_T) / (1 - PASS_T);
+				const e = Math.pow(u, 1.8);
+				z = lerp(STATION_A, EGG_Z, e);
+				camZ = lerp(CAM_HOME, CAM_AT_EGG, e);
+				hit = clamp((e - 0.7) / 0.3, 0, 1);
+				// Gone inside the shell.
+				spermFade = 0.9 * (1 - hit);
+			}
+			// Cursor sway early on, gone by the time it is lining up the egg.
+			sway = clamp((1 - t) / 0.4, 0, 1);
+			if (stageT >= DIVE_DUR) done = true;
 		} else {
 			spermFade += (0 - spermFade) * Math.min(1, dt * 4);
 		}
@@ -333,17 +324,15 @@
 
 		if (spermPivot) {
 			spermPivot.scale.setScalar(baseScale());
-			// A little life in the hold, and a nudge from the cursor. No wobble in
-			// the body itself — the spin carries the motion.
-			const idle = stage === 'wait1' || stage === 'wait2';
-			const ax = idle ? Math.sin(driftT * 0.4) * 0.07 + (mouse?.x ?? 0) * 0.09 : 0;
-			const ay = idle ? Math.sin(driftT * 0.53) * 0.05 - (mouse?.y ?? 0) * 0.07 : 0;
+			// A nudge from the cursor and a slow drift, so the run in is not on
+			// rails. No wobble in the body itself — the spin carries the motion.
+			const ax = (Math.sin(driftT * 0.7) * 0.05 + (mouse?.x ?? 0) * 0.14) * sway;
+			const ay = (Math.sin(driftT * 0.9) * 0.04 - (mouse?.y ?? 0) * 0.1) * sway;
 			spermPivot.position.set(ax + flyX, ay + flyY, z);
 		}
 
-		// The egg comes out of the fog on the first approach and stays.
-		const eggWanted = ['wait1', 'approach', 'wait2', 'pierce'].includes(stage);
-		eggFade += ((eggWanted ? 1 : 0) - eggFade) * Math.min(1, dt * 1.6);
+		// The egg comes out of the fog as soon as the dive starts, and stays.
+		eggFade += ((live ? 1 : 0) - eggFade) * Math.min(1, dt * 1.6);
 		if (eggGroup) {
 			eggGroup.visible = eggFade > 0.01;
 			eggGroup.scale.setScalar(1 + hit * 0.12);
