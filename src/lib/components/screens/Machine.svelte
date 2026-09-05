@@ -330,13 +330,14 @@
 		position: absolute;
 		inset: 12px;
 		border-radius: 10px;
-		/* Translucent, so the field burning behind the whole site reads as what
-		   is on the other side of the machine's window. */
+		/* A vignette, not a colour: the window looks straight onto the corridor
+		   the camera is about to fly down, so it only needs darkening at the
+		   edges to read as glass. */
 		background: radial-gradient(
 			ellipse at 50% 40%,
-			rgba(18, 50, 116, 0.24) 0%,
-			rgba(10, 36, 106, 0.44) 55%,
-			rgba(5, 18, 60, 0.7) 100%
+			rgba(0, 0, 0, 0.34) 0%,
+			rgba(0, 0, 0, 0.5) 68%,
+			rgba(0, 0, 0, 0.72) 100%
 		);
 		padding: 14px 16px;
 		display: flex;

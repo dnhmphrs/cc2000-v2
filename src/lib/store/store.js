@@ -47,10 +47,11 @@ export const isPortrait = writable(false);
 // 4 = the scene has landed on a room.
 export const sceneState = writable(0);
 
-// 0..1 — how hard the theta-field background is burning. The scene owns this:
-// it stays at 0 for the whole boot and input flow, snaps up when the icosahedron
-// opens, holds through the search, and decays as the room fills the screen.
-// This is the only thing that ever puts the flash background on screen.
+// 0..1 — how hard the theta-field background is burning. The computation scene
+// owns this: it snaps up when the icosahedron opens, holds through the search,
+// and decays as the room fills the screen. The field rests at a low level the
+// rest of the time, but the tunnel clears opaque over it, so it is only ever
+// seen from the computation onwards.
 export const flare = writable(0);
 
 // Everything a run puts into the stores, cleared in one place. "Calculate

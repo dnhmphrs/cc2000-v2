@@ -3,8 +3,8 @@
 	import { phase, sceneState } from '$lib/store/store';
 	import { fade } from 'svelte/transition';
 
-	// Beat 3. The scene does the work; this is one warm line at a time, sized to
-	// the ~5s the cinematic now takes. When the scene lands it sets sceneState 4.
+	// Beat 3. The scene does the work; this is one warm line at a time, paced to
+	// the ~14s of the three scenes. When the scene lands it sets sceneState 4.
 	$: if ($sceneState >= 4) phase.set('output');
 
 	// Deliberately not naming decades: the scene picks which faces to visit at
@@ -22,7 +22,7 @@
 	onMount(() => {
 		timer = setInterval(() => {
 			if (i < lines.length - 1) i += 1;
-		}, 1350);
+		}, 2600);
 	});
 	onDestroy(() => clearInterval(timer));
 </script>

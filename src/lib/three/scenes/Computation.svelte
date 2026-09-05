@@ -8,14 +8,14 @@
 	import { get } from 'svelte/store';
 	import GoldenRectangle from '../objects/GoldenRectangle.svelte';
 
-	// ── The machine half ─────────────────────────────────────────────────────
+	// ── Scene 3: the computation ─────────────────────────────────────────────
 	// Everything from the icosahedron appearing to the room filling the screen:
 	// the polyhedron, the golden-rectangle panes, the decade rooms inside them,
-	// the search, and the landing zoom. Behaviour is unchanged from before the
-	// split — this is the half that already worked.
+	// the search, and the landing zoom.
 	//
-	// It owns its own scene and orthographic camera. The parent owns the
-	// renderer and the running order, and calls update()/render() each frame.
+	// Unlike the other two this one builds its own world — it has its own scene
+	// and orthographic camera, and its own three steps (open → search → zoom)
+	// which it sequences itself. The stage above only ever calls update(dt).
 
 	export let renderer = null;
 
@@ -255,7 +255,7 @@
 		subT = 0;
 	}
 
-	export function startSearch() {
+	function startSearch() {
 		targetRoomIndex = pickDecadeRoom();
 		searchOrder = pickSearchOrder(targetRoomIndex);
 		searchStep = 0;
@@ -333,6 +333,8 @@
 	}
 
 	export function reset() {
+		step = 'open';
+		stepT = 0;
 		frustum = IDLE_FRUSTUM;
 		icoReveal = 0;
 		idleAngle = 0;
@@ -360,14 +362,42 @@
 		});
 	}
 
-	export function beginOpen() {
-		// The polyhedron resolves out of nothing as the sperm goes through.
+	function beginOpen() {
+		// The polyhedron resolves out of nothing as the egg gives way.
 		icoReveal = 0;
 	}
 
-	// Returns true on the frame the stage it owns finishes, so the parent can
-	// advance the running order.
-	export function update(dt, stage, stageT) {
+	// ── The three steps, sequenced here ──────────────────────────────────────
+	// open   → the polyhedron resolves and comes apart
+	// search → turns through the decades, one at a time
+	// zoom   → the resolved room fills the frame
+	let step = 'open';
+	let stepT = 0;
+
+	export function enter() {
+		step = 'open';
+		stepT = 0;
+		beginOpen();
+	}
+
+	export function update(dt) {
+		stepT += dt;
+		if (!runStep(dt, step, stepT)) return false;
+		if (step === 'open') step = 'search';
+		else if (step === 'search') step = 'zoom';
+		else return true; // the zoom has landed; this is the end of the run
+		stepT = 0;
+		return false;
+	}
+
+	// The site is blue behind this one: clear transparent so the theta field
+	// shows through.
+	export function backdrop() {
+		return { color: 0x0a246a, alpha: 0 };
+	}
+
+	// True on the frame the current step finishes.
+	function runStep(dt, stage, stageT) {
 		if (!camera) return false;
 		let done = false;
 
