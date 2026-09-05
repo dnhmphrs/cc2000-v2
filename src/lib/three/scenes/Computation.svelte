@@ -7,6 +7,8 @@
 	import { accentHex } from '$lib/theme';
 	import { get } from 'svelte/store';
 	import GoldenRectangle from '../objects/GoldenRectangle.svelte';
+	import { createEgg, EGG_SCREEN } from '../world/egg';
+	import { WHITE } from '../world/tunnel';
 
 	// ── Scene 3: the computation ─────────────────────────────────────────────
 	// Everything from the icosahedron appearing to the room filling the screen:
@@ -39,8 +41,13 @@
 	const CAM_POS = new THREE.Vector3(0, 0, 14);
 	const BASE_TILT = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.32, 0.55, 0));
 
-	const OPEN_DUR = 1.2;
+	// The open is deliberately unhurried: a beat on the egg first, then the
+	// polyhedron resolves inside it, then the panes push out through it.
+	const OPEN_DUR = 3.6;
+	const OPEN_HOLD = 0.26; // fraction of the open spent on the egg alone
 	const LAND_DUR = 1.5;
+	// Flying back into the room's monitor, so the loop returns to the machine.
+	const RETURN_DUR = 1.7;
 	// Turn to a decade, look at it, turn to the next — three of them, then the
 	// answer. Each turn puts another decade's artwork square to the camera.
 	const PREVISITS = 3;
@@ -58,6 +65,15 @@
 	let idleAngle = 0;
 
 	let worldGroup;
+
+	// The egg carries over from scene 2. Same factory, and its radius comes from
+	// the same EGG_SCREEN, so at the cut it is in exactly the same place at
+	// exactly the same size. It sits in the scene rather than in worldGroup: a
+	// still bubble the polyhedron turns inside.
+	let egg;
+	const EGG_R = (EGG_SCREEN * IDLE_FRUSTUM) / 2;
+	const EGG_SETTLED = 0.6; // it draws in to this once the panes are out
+	const EGG_FAINT = 0.4; // and thins out, so the rooms are not washed blue
 
 	const vertices = [
 		[-1, PHI, 0],
@@ -310,6 +326,9 @@
 		worldGroup.quaternion.copy(BASE_TILT);
 		buildIcosahedronMeshes(worldGroup);
 
+		egg = createEgg(EGG_R);
+		scene.add(egg.group);
+
 		ready = true;
 		await tick();
 		rectangleComponents.forEach((comp) => comp && comp.init());
@@ -336,6 +355,11 @@
 		step = 'open';
 		stepT = 0;
 		frustum = IDLE_FRUSTUM;
+		if (egg) {
+			egg.setCore(1);
+			egg.setShell(1);
+			egg.group.scale.setScalar(1);
+		}
 		icoReveal = 0;
 		idleAngle = 0;
 		targetRoomIndex = -1;
@@ -390,11 +414,19 @@
 		return false;
 	}
 
-	// The site is blue behind this one: clear transparent so the theta field
-	// shows through.
+	// White, the same white scene 2 ends on, so the hand-over is invisible.
 	export function backdrop() {
-		return { color: 0x0a246a, alpha: 0 };
+		return { color: WHITE, alpha: 1 };
 	}
+
+	// The loop home: the room's monitor grows until it is the whole frame, and
+	// the machine grows out of it. Driven by the stage on "calculate again".
+	export function beginReturn() {
+		step = 'return';
+		stepT = 0;
+		returnFrom = frustum;
+	}
+	let returnFrom = LAND_FRUSTUM;
 
 	// True on the frame the current step finishes.
 	function runStep(dt, stage, stageT) {
@@ -402,23 +434,47 @@
 		let done = false;
 
 		if (stage === 'open') {
-			// Fades in ahead of the sperm, then comes apart.
-			icoReveal = smoothstep(0.0, 0.45, stageT / OPEN_DUR);
+			const raw = clamp(stageT / OPEN_DUR, 0, 1);
+			// A beat on the egg exactly as scene 2 left it, then everything else
+			// happens in the time that remains.
+			const after = clamp((raw - OPEN_HOLD) / (1 - OPEN_HOLD), 0, 1);
+
 			frustum = lerp(frustum, IDLE_FRUSTUM, Math.min(1, dt * 4));
 			applyFrustum(frustum);
 			idleAngle += dt * 0.2;
 			worldGroup.quaternion
 				.copy(BASE_TILT)
 				.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, idleAngle, 0)));
-			const raw = clamp(stageT / OPEN_DUR, 0, 1);
-			rectangleComponents.forEach((comp) => comp && comp.updateProjection(easeInOutCubic(raw)));
-			// The one moment the field is allowed on screen starts here.
-			flare.set(smoothstep(0.0, 0.85, raw));
+
+			// The yolk dissolves and the polyhedron is what was inside it.
+			egg.setCore(1 - smoothstep(0.0, 0.4, after));
+			icoReveal = smoothstep(0.1, 0.5, after);
+			// Then the panes push out through the shell, which draws in behind
+			// them and stays as a bubble around the polyhedron.
+			const push = easeInOutCubic(smoothstep(0.28, 1.0, after));
+			rectangleComponents.forEach((comp) => comp && comp.updateProjection(push));
+			egg.group.scale.setScalar(lerp(1, EGG_SETTLED, push));
+			egg.setShell(lerp(1, EGG_FAINT, push));
+
+			flare.set(smoothstep(0.0, 0.85, after));
 			if (stageT >= OPEN_DUR) {
 				rectangleComponents.forEach((comp) => comp && comp.updateProjection(1));
+				egg.setCore(0);
+				egg.setShell(EGG_FAINT);
+				egg.group.scale.setScalar(EGG_SETTLED);
 				startSearch();
 				done = true;
 			}
+		}
+
+		if (stage === 'return') {
+			// Straight in on the monitor, no rotation, and the result panel rides
+			// the glass out because the rect is republished every frame.
+			const t = easeInOutCubic(clamp(stageT / RETURN_DUR, 0, 1));
+			frustum = lerp(returnFrom, returnFrom * 0.14, t);
+			applyFrustum(frustum);
+			publishMonitor();
+			if (stageT >= RETURN_DUR) done = true;
 		}
 
 		if (stage === 'search') {
@@ -471,6 +527,7 @@
 			// resting frame lands flat.
 			const room = rectangleComponents[targetRoomIndex]?.getRoom?.();
 			if (room && room.setZoomProgress) room.setZoomProgress(Math.sin(t * Math.PI));
+			egg.setShell(EGG_FAINT * (1 - smoothstep(0.0, 0.45, t)));
 			flare.set(1 - smoothstep(0.05, 0.6, t));
 			if (stageT >= LAND_DUR) {
 				publishMonitor();
@@ -481,7 +538,7 @@
 		}
 
 		// Wireframe opacity (except when the zoom is driving its fade).
-		if (stage !== 'zoom') {
+		if (stage !== 'zoom' && stage !== 'return') {
 			if (icoWireMat) icoWireMat.opacity = icoReveal;
 			// Solid faces are opaque site ground so the polyhedron reads as a clean
 			// dark solid, not a translucent wash over the background.
@@ -504,6 +561,7 @@
 
 	export function dispose() {
 		rectangleComponents.forEach((comp) => comp && comp.dispose());
+		egg?.dispose();
 	}
 </script>
 

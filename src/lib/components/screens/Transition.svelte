@@ -1,6 +1,6 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
-	import { phase, sceneState } from '$lib/store/store';
+	import { phase, sceneState, sceneTone } from '$lib/store/store';
 	import { fade } from 'svelte/transition';
 
 	// Beat 3. The scene does the work; this is one warm line at a time, paced to
@@ -27,7 +27,7 @@
 	onDestroy(() => clearInterval(timer));
 </script>
 
-<div class="wrap">
+<div class="wrap" class:light={$sceneTone === 'light'}>
 	{#key i}
 		<p in:fade={{ duration: 400 }}>{lines[i]}</p>
 	{/key}
@@ -50,5 +50,11 @@
 		font-size: 16px;
 		letter-spacing: 0.14em;
 		color: var(--ink);
+		transition: color 0.4s ease;
+	}
+
+	/* The conception and the search are on white. */
+	.wrap.light p {
+		color: #2b3350;
 	}
 </style>

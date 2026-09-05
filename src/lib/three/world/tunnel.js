@@ -1,49 +1,42 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { createEgg, EGG_SCREEN } from './egg';
 
 // ── The tunnel ───────────────────────────────────────────────────────────────
-// The place scenes 1 and 2 happen in: a corridor of counter-turning grids
-// running away into fog, the egg waiting at the far end, and the sperm
-// corkscrewing along in front of the camera.
+// The place scenes 1 and 2 happen in: deep blue air with the egg waiting at the
+// far end of it, and the sperm corkscrewing in front of the camera.
 //
 // This file is the LOOK — every object, material and dimension lives here.
 // FlyIn.svelte and Conception.svelte are the MOTION: they move what is built
-// here and never build anything themselves. Change the feel of the corridor in
-// this file; change the choreography in those two.
+// here and never build anything themselves.
+//
+// The air changes colour across the run — deep blue for the approach, white for
+// the conception — so the fog and the renderer's clear colour are one value,
+// set with setAir(). Ask for it back with getAir() and clear to that.
 
-export const BACKDROP = 0x232323;
+export const DEEP_BLUE = 0x0a246a;
+export const WHITE = 0xffffff;
 const FOG_DENSITY = 0.006;
 
-// The corridor: fixed planes in world space that the camera flies through.
-// Big enough to fill the frame, fine enough that a plane close to the lens
-// still reads as mesh rather than as two stray lines.
-const GRID_SIZE = 400;
-const GRID_DIVISIONS = 40;
-const GRID_COLOR = 0xf0f0f0;
-const GRID_SPIN = 0.1; // rad/s, alternating sign plane to plane
-
-// Where the panes sit. The gap in the middle is the egg — nothing crosses it —
-// and the run at the back is what the egg is silhouetted against once the
-// camera has flown out of the near ones.
-const GRID_Z = [60, 20, -20, -60, -100, -200, -260];
-
-// The egg, at the far end.
+// The egg, at the far end. SHELL_R is a world size; how big it READS is
+// EGG_SCREEN (in world/egg.js), which the fly-in turns into a camera distance.
 export const EGG_Z = -150;
-export const EGG_R = 14;
 export const SHELL_R = 22;
 
-// The camera, and where the sperm rides relative to it. It sits further out
-// while the machine is up, because the machine's window is a small crop of the
-// frame and a sperm right in the lens falls outside it; it closes to
-// SPERM_LEAD once the chassis has flown past.
+// The camera, and where the sperm rides relative to it.
 export const CAM_FOV = 30;
 export const CAM_START = 100;
 export const SPERM_LEAD = 5.5;
-export const SPERM_LEAD_IDLE = 13;
+
+// Where the camera has to stop for the shell to fill EGG_SCREEN of the frame's
+// half-height. Scene 3 sizes its own sphere from the same number, which is what
+// makes the cut between the two invisible.
+export const CAM_END = EGG_Z + SHELL_R / (EGG_SCREEN * Math.tan((CAM_FOV * Math.PI) / 360));
 
 export function createTunnel() {
 	const scene = new THREE.Scene();
-	scene.fog = new THREE.FogExp2(BACKDROP, FOG_DENSITY);
+	scene.fog = new THREE.FogExp2(DEEP_BLUE, FOG_DENSITY);
+	let air = DEEP_BLUE;
 
 	const camera = new THREE.PerspectiveCamera(
 		CAM_FOV,
@@ -53,31 +46,9 @@ export function createTunnel() {
 	);
 	camera.position.z = CAM_START;
 
-	// Each plane faces the camera and turns in its own plane; alternating the
-	// direction is what makes the depth read as movement rather than a slide.
-	const grids = GRID_Z.map((z, i) => {
-		const g = new THREE.GridHelper(GRID_SIZE, GRID_DIVISIONS, GRID_COLOR, GRID_COLOR);
-		g.rotation.x = Math.PI / 2;
-		g.position.z = z;
-		g.userData.dir = i % 2 ? 1 : -1;
-		scene.add(g);
-		return g;
-	});
-
-	// Two spheres: a matte core, and a slack translucent shell around it.
-	const core = new THREE.Mesh(
-		new THREE.SphereGeometry(EGG_R, 32, 16),
-		new THREE.MeshToonMaterial({ color: 0xd0d0d0 })
-	);
-	const shell = new THREE.Mesh(
-		new THREE.SphereGeometry(SHELL_R, 32, 16),
-		new THREE.MeshPhysicalMaterial({ color: 0xd0d0d0, transparent: true, opacity: 0.5 })
-	);
-	core.position.z = EGG_Z;
-	shell.position.z = EGG_Z;
-	scene.add(core, shell);
-
-	scene.add(new THREE.HemisphereLight(0xd0d0d0, BACKDROP, 1.5));
+	const egg = createEgg(SHELL_R);
+	egg.group.position.z = EGG_Z;
+	scene.add(egg.group);
 
 	// The group is what spins; the model sits off that axis, so it corkscrews
 	// rather than pirouettes. These offsets are calibrated to the model's own
@@ -87,7 +58,11 @@ export function createTunnel() {
 	sperm.visible = false;
 	scene.add(sperm);
 
-	const spermMaterial = new THREE.MeshToonMaterial({ color: 0xf0f0f0, transparent: true });
+	const spermMaterial = new THREE.MeshBasicMaterial({
+		color: new THREE.Color(0xf4f7ff).convertSRGBToLinear(),
+		transparent: true,
+		fog: true
+	});
 	new GLTFLoader().load('/sperm.glb', (glb) => {
 		const model = glb.scene.children[0] ?? glb.scene;
 		model.rotation.x += Math.PI;
@@ -98,22 +73,21 @@ export function createTunnel() {
 			if (child.material) child.material = spermMaterial;
 		});
 		sperm.add(model);
-		sperm.visible = true;
 	});
 
 	return {
 		scene,
 		camera,
-		grids,
-		core,
-		shell,
+		egg,
 		sperm,
 		spermMaterial,
 
-		// The corridor turns whatever else is happening — it is the one thing
-		// that never stops, in both scenes.
-		drift(dt) {
-			grids.forEach((g) => (g.rotation.y += g.userData.dir * dt * GRID_SPIN));
+		setAir(hex) {
+			air = hex;
+			scene.fog.color.setHex(hex);
+		},
+		getAir() {
+			return air;
 		},
 
 		resize() {
@@ -122,19 +96,20 @@ export function createTunnel() {
 		},
 
 		reset() {
+			this.setAir(DEEP_BLUE);
 			camera.position.z = CAM_START;
-			sperm.position.set(0, -0.1, CAM_START - SPERM_LEAD_IDLE);
+			sperm.position.set(0, -0.1, CAM_START - SPERM_LEAD);
 			sperm.rotation.z = 0;
-			sperm.visible = sperm.children.length > 0;
-			spermMaterial.opacity = 1;
-			grids.forEach((g) => (g.rotation.y = 0));
+			sperm.visible = false;
+			spermMaterial.opacity = 0;
+			egg.setCore(1);
+			egg.setShell(1);
 		},
 
 		dispose() {
-			scene.traverse((o) => {
-				o.geometry?.dispose();
-				o.material?.dispose();
-			});
+			egg.dispose();
+			spermMaterial.dispose();
+			sperm.traverse((o) => o.geometry?.dispose());
 		}
 	};
 }

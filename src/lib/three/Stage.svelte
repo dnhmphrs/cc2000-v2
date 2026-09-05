@@ -1,7 +1,7 @@
 <script>
 	import { onMount, onDestroy, tick } from 'svelte';
 	import * as THREE from 'three';
-	import { phase, sceneState, flare, monitorRect } from '$lib/store/store';
+	import { sceneState, sceneTone, flare, monitorRect } from '$lib/store/store';
 	import { clamp } from '$lib/functions/utils';
 	import { createTunnel } from './world/tunnel';
 	import FlyIn from './scenes/FlyIn.svelte';
@@ -24,9 +24,14 @@
 	//   backdrop()   { color, alpha } for the renderer to clear to
 	//   resize()     the window changed
 	//
-	// Scenes 1 and 2 share a world (world/tunnel.js) so the cut between them is
-	// invisible: the camera is simply left where the fly-in parked it. Scene 3
-	// is its own world, so the cut into it gets a white bloom.
+	// Scenes 1 and 2 share a world (world/tunnel.js), and scene 3 builds its egg
+	// from the same factory at the same on-screen size, so all three line up and
+	// only ONE cut is visible — the white blow-out at the end of the fly-in,
+	// which is also where the air turns from deep blue to white.
+	//
+	// The whole run is driven by sceneState alone:
+	//   0  reset to idle          5  calculate again → fly back into the machine
+	//   1  calculate → run        4  landed (raised here, read by the UI)
 
 	let canvasElement;
 	let renderer;
@@ -54,16 +59,19 @@
 
 	// True once the last scene has landed, so the run only ends once.
 	let landed = false;
+	// True while flying back into the room's monitor on "calculate again".
+	let returning = false;
 
 	function advance() {
 		index += 1;
-		if (index === 2) flash = 1; // the cut between worlds
+		if (index === 1) flash = 1; // conception: the one blow-out in the run
 		sceneAt(index)?.enter();
 	}
 
 	function resetScene() {
 		index = -1;
 		landed = false;
+		returning = false;
 		flash = 0;
 		if (flashEl) flashEl.style.opacity = '0';
 		flare.set(0);
@@ -71,6 +79,9 @@
 		flyIn?.reset();
 		conception?.reset();
 		computation?.reset();
+		// Fade back in, so the room does not simply cut to the empty tunnel
+		// behind the machine that has just grown out of it.
+		canvasFadeStart = performance.now() / 1000;
 	}
 
 	function handleResize() {
@@ -97,6 +108,7 @@
 
 		if (active.update(dt)) {
 			if (index < 2) advance();
+			else if (returning) sceneState.set(0); // home; the cue runs the reset
 			else if (!landed) {
 				landed = true;
 				sceneState.set(4); // the room has settled; the result screen takes over
@@ -106,12 +118,23 @@
 		flash = Math.max(0, flash - dt * BLOOM_DECAY);
 		if (flashEl) flashEl.style.opacity = flash.toFixed(4);
 
+		// The ground swings from deep blue to white mid-run, so anything drawn
+		// over the canvas is told which it is on.
 		const { color, alpha } = active.backdrop();
 		renderer.setClearColor(color, alpha);
+		sceneTone.set(luma(color) > 0.55 ? 'light' : 'dark');
 		active.render(renderer);
 	}
 
-	let unsubPhase, unsubSceneState;
+	// Rec. 709 on the clear colour — good enough to decide black text or white.
+	function luma(hex) {
+		const r = ((hex >> 16) & 255) / 255;
+		const g = ((hex >> 8) & 255) / 255;
+		const b = (hex & 255) / 255;
+		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	}
+
+	let unsubSceneState;
 
 	onMount(async () => {
 		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true, alpha: true });
@@ -134,17 +157,17 @@
 
 		window.addEventListener('resize', handleResize);
 
-		// 'intro' means the machine is on screen and the tunnel is idling behind
-		// it — on a first load, and again after "calculate again".
-		unsubPhase = phase.subscribe((p) => {
-			if (p === 'intro' && index !== -1) resetScene();
-		});
-		// 1 = calculate pressed on the machine. That is the only cue the UI sends:
-		// the three scenes hand over to each other from there.
 		unsubSceneState = sceneState.subscribe((s) => {
-			if (s === 1 && index === -1) {
+			if (s === 0) {
+				if (index !== -1) resetScene();
+			} else if (s === 1 && index === -1) {
 				index = 0;
 				flyIn.launch();
+			} else if (s === 5 && index === 2 && !returning) {
+				// Back out through the monitor. The room stays on screen and grows
+				// while the machine grows out of its glass.
+				returning = true;
+				computation.beginReturn();
 			}
 		});
 
@@ -153,7 +176,6 @@
 
 	onDestroy(() => {
 		if (typeof window === 'undefined') return;
-		unsubPhase?.();
 		unsubSceneState?.();
 		if (animationFrameId) cancelAnimationFrame(animationFrameId);
 		window.removeEventListener('resize', handleResize);
