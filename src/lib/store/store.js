@@ -1,11 +1,8 @@
 import { writable } from 'svelte/store';
 
-// App flow. The sperm's animation moves it along: each approach finishes and
-// the scene sets the next phase, so the questions arrive on the movement.
-//   'intro'      → write-on text over the incoming sperm
-//   'dob'        → birthday, asked once it has closed in on the egg
-//   'spicy'      → the false-flag question, asked closer still
-//   'processing' → it pierces the egg, then the icosahedron, search and landing
+// App flow. Short, because the machine carries the whole form:
+//   'intro'      → the machine: manifesto, both questions, calculate
+//   'processing' → the dive into the egg, then the icosahedron, search, landing
 //   'output'     → the room, in colour, with the song in the monitor
 export const phase = writable('intro');
 
@@ -45,13 +42,10 @@ export const screenSize = writable({ width: 0, height: 0 });
 export const deviceType = writable('desktop');
 export const isPortrait = writable(false);
 
-// Scene state — a coarse command channel into the icosahedron scene.
-// 0 = reset/idle, 1 = begin the dive → open → search, 4 = settled/landed.
-export const sceneState = writable(0);
-
-// Scene cues from the UI: 1 = begin, 2 = birthday answered, 3 = calculate,
+// Scene state — a coarse command channel into the 3D.
+// 0 = reset/idle, 1 = calculate pressed (dive → open → search → zoom),
 // 4 = the scene has landed on a room.
-// (declared above as sceneState)
+export const sceneState = writable(0);
 
 // 0..1 — how hard the theta-field background is burning. The scene owns this:
 // it stays at 0 for the whole boot and input flow, snaps up when the icosahedron

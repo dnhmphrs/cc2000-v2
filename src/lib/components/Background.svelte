@@ -13,13 +13,12 @@
 	const M_SEARCH = 0.55;
 	const M_MIN = 0.01;
 
-	// The field is a transition effect, not the site's wallpaper: it is only on
-	// while `flare` is up (the icosahedron opening and the search), and below the
-	// cutoff the shader is not dispatched at all. Both edges are slow — this
-	// swells and recedes, it does not flash.
+	// The field is always on now — it is the site's air, not a transition effect.
+	// `flare` still swells it for the search; it just never goes out. Both edges
+	// stay slow, so it breathes rather than flashing.
 	const FLARE_ATTACK = 1.6;
 	const FLARE_DECAY = 1.2;
-	const FLARE_OFF = 0.004;
+	const FLARE_BASE = 0.38; // resting level, visible from the first frame
 	// How far up the field is allowed to come. It fills the whole frame, so this
 	// is the single dial for how loud the search reads.
 	const FLARE_MAX = 0.62;
@@ -273,14 +272,12 @@ void main() {
 		const want = clamp(get(flare), 0, 1);
 		const rate = want > flareEase ? FLARE_ATTACK : FLARE_DECAY;
 		flareEase += (want - flareEase) * Math.min(1, dt * rate);
-		canvas.style.opacity = (flareEase * FLARE_MAX).toFixed(4);
+		canvas.style.opacity = (FLARE_BASE + flareEase * (FLARE_MAX - FLARE_BASE)).toFixed(4);
 
 		// Keep tracking the cursor even while dark, so the field doesn't snap to a
 		// stale position the moment it comes up.
 		pointerEase[0] += (pointer[0] - pointerEase[0]) * Math.min(1, dt * 2);
 		pointerEase[1] += (pointer[1] - pointerEase[1]) * Math.min(1, dt * 2);
-
-		if (flareEase < FLARE_OFF) return;
 
 		// Search activity pushes the shader into a more energetic part of its
 		// parameter space, in step with the flare.

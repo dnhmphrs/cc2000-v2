@@ -1,16 +1,31 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
-	import { sceneState } from '$lib/store/store';
+	import {
+		phase,
+		sceneState,
+		dobMonth,
+		dobDay,
+		dobYear,
+		date,
+		spicy,
+		track,
+		decade,
+		conceived,
+		edge
+	} from '$lib/store/store';
+	import { conceptionDate, previousDay, dateToDecade } from '$lib/functions/utils';
+	import data from '$lib/data/cc2000_data.json';
 
 	// ── The Conception Calculator 2000 ───────────────────────────────────────
-	// The landing IS the machine: a yellow chassis filling the frame with a
-	// window cut out of the middle, sized in the same ballpark as the decade TVs
-	// you end up inside. Its own screen types the manifesto; START flies the
-	// camera through that window into the scene behind.
+	// The landing IS the machine, and it takes BOTH answers: a yellow chassis
+	// filling the frame with a window cut out of the middle, sized in the same
+	// ballpark as the decade TVs you end up inside.
 	//
-	// Built in CSS rather than geometry: the hole is a box-shadow spread over the
-	// whole viewport, so everything after it in the DOM paints on top of the
-	// chassis, and the fly-through is one transform about the window's centre.
+	// The window is a box-shadow spread over the whole viewport, so everything
+	// after it in the DOM paints on top of the chassis and the hole stays
+	// genuinely transparent — the field shows through the machine's own screen.
+	// That also makes the fly-through one transform: scale the machine about the
+	// window's centre and the hole grows past the frame.
 	const LINES = [
 		'in the earth year 2000, human technology advanced',
 		'allowing all of mankind to calculate the song playing',
@@ -18,24 +33,58 @@
 		'with the statistical accuracy only the internet can provide'
 	];
 
-	const CHAR_MS = 24;
-	const LINE_GAP = 240;
-	const START_DELAY = 700;
+	const CHAR_MS = 22;
+	const LINE_GAP = 220;
+	const START_DELAY = 600;
+
+	const MIN_YEAR = 1958;
+	const MAX_YEAR = new Date().getFullYear();
+	const MONTHS = [
+		'jan',
+		'feb',
+		'mar',
+		'apr',
+		'may',
+		'jun',
+		'jul',
+		'aug',
+		'sep',
+		'oct',
+		'nov',
+		'dec'
+	];
+	const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MAX_YEAR - i);
+
+	// The chassis flies at the camera for this long before the transition screen
+	// takes over — matched to the .machine transform transition below.
+	const LAUNCH_MS = 1500;
 
 	let shown = LINES.map(() => 0);
-	let ready = false;
+	let typed = false;
 	let launching = false;
 	let timer;
+	let handoff;
 
-	// Cosmetic read-outs, so the panel looks like it is doing something.
 	let power = 0;
 	let ticker;
+
+	// bind:value, not value={...}: a plain value on a <select> whose <option>
+	// list re-renders does not stick, and the day list changes with the month.
+	$: maxDay = $dobMonth && $dobYear ? new Date(+$dobYear, +$dobMonth, 0).getDate() : 31;
+	$: days = Array.from({ length: maxDay }, (_, i) => i + 1);
+	// Clamp rather than clear, so picking the year last cannot silently wipe a
+	// day of 29–31 and leave the button dead with no explanation.
+	$: if ($dobDay && Number($dobDay) > maxDay) dobDay.set(maxDay);
+	$: complete = $dobMonth && $dobDay && $dobYear;
+	$: readout = complete
+		? `${String($dobDay).padStart(2, '0')} ${MONTHS[$dobMonth - 1].toUpperCase()} ${$dobYear}`
+		: '-- --- ----';
 
 	onMount(() => {
 		let li = 0;
 		const step = () => {
 			if (li >= LINES.length) {
-				ready = true;
+				typed = true;
 				return;
 			}
 			if (shown[li] >= LINES[li].length) {
@@ -52,37 +101,101 @@
 	});
 	onDestroy(() => {
 		clearTimeout(timer);
+		clearTimeout(handoff);
 		clearInterval(ticker);
 	});
 
 	function skip() {
-		if (ready || launching) return;
+		if (typed || launching) return;
 		clearTimeout(timer);
 		shown = LINES.map((l) => l.length);
-		ready = true;
+		typed = true;
 	}
 
-	function start() {
-		if (!ready || launching) return;
+	function calculate() {
+		if (!complete || launching) return;
+		date.set(
+			`${$dobYear}-${String($dobMonth).padStart(2, '0')}-${String($dobDay).padStart(2, '0')}`
+		);
+
+		let cd = conceptionDate($date);
+		const today = new Date().toISOString().slice(0, 10);
+
+		// The archive starts in 1958 and nobody has been conceived after today.
+		if (cd <= '1958-06-01') {
+			edge.set('past');
+			phase.set('output');
+			return;
+		}
+		if ($date >= today) {
+			edge.set('future');
+			phase.set('output');
+			return;
+		}
+
+		let found = null;
+		for (let i = 0; i < 400; i++) {
+			// Each day holds 10 tracks ordered spicy 10 → 1 (index 0 → 9), so the
+			// track matching the chosen level is at index (10 - spicy).
+			const d = data[cd];
+			if (d && d[10 - $spicy]) {
+				found = d[10 - $spicy];
+				break;
+			}
+			cd = previousDay(cd);
+		}
+		if (!found) {
+			edge.set('past');
+			phase.set('output');
+			return;
+		}
+
+		edge.set(null);
+		track.set(found);
+		conceived.set(cd);
+		decade.set(dateToDecade(cd));
+
+		// The camera goes through the window and straight on into the egg — one
+		// move, no stops. The dive starts now, behind the chassis; the machine
+		// hands over to the transition once it has flown past the lens.
 		launching = true;
-		// The sperm comes past the camera as the window opens up.
 		sceneState.set(1);
+		handoff = setTimeout(() => phase.set('processing'), LAUNCH_MS);
 	}
 </script>
 
-<!-- eslint-disable-next-line svelte/valid-compile -->
+<!-- svelte-ignore a11y-click-events-have-key-events -->
 <div class="machine" class:launching on:click={skip}>
-	<!-- The hole. Its shadow is the chassis. -->
+	<!-- The hole. Its shadow is the chassis, and the field shows through it. -->
 	<div class="hole">
 		<div class="screen">
 			<div class="scanlines" />
-			{#each LINES as line, i}
-				<p class:lit={i === LINES.length - 1}>
-					{line.slice(0, shown[i])}{#if !ready && shown[i] > 0 && shown[i] < line.length}<span
-							class="caret"
-						/>{/if}
-				</p>
-			{/each}
+			{#if !typed}
+				{#each LINES as line, i}
+					<p class:lit={i === LINES.length - 1}>
+						{line.slice(0, shown[i])}{#if shown[i] > 0 && shown[i] < line.length}<span
+								class="caret"
+							/>{/if}
+					</p>
+				{/each}
+			{:else}
+				<!-- Once it has said its piece the screen becomes a read-out of what
+				     the operator has dialled in. -->
+				<dl class="readout">
+					<div>
+						<dt>subject dob</dt>
+						<dd>{readout}</dd>
+					</div>
+					<div>
+						<dt>resonance</dt>
+						<dd>{String($spicy).padStart(2, '0')} / 10</dd>
+					</div>
+					<div>
+						<dt>status</dt>
+						<dd class:ready={complete}>{complete ? 'ready' : 'awaiting input'}</dd>
+					</div>
+				</dl>
+			{/if}
 		</div>
 	</div>
 
@@ -110,14 +223,45 @@
 		{/each}
 	</div>
 
+	<!-- Both questions, on the panel. -->
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
+	<div class="controls" on:click|stopPropagation>
+		<div class="ctl">
+			<span class="lab">date of birth</span>
+			<div class="dob">
+				<select bind:value={$dobMonth} aria-label="month">
+					<option value="" disabled>mth</option>
+					{#each MONTHS as m, i}<option value={i + 1}>{m}</option>{/each}
+				</select>
+				<select bind:value={$dobDay} aria-label="day">
+					<option value="" disabled>day</option>
+					{#each days as d}<option value={d}>{d}</option>{/each}
+				</select>
+				<select bind:value={$dobYear} aria-label="year">
+					<option value="" disabled>year</option>
+					{#each YEARS as y}<option value={y}>{y}</option>{/each}
+				</select>
+			</div>
+		</div>
+
+		<div class="ctl">
+			<span class="lab">how spicy do you like it?</span>
+			<input type="range" bind:value={$spicy} min="1" max="10" aria-label="spicy" />
+			<div class="ends"><span>sweet</span><span>filthy</span></div>
+		</div>
+	</div>
+
 	<div class="vent left" />
 	<div class="vent right" />
 	<div class="grille" />
 
-	<div class="meter"><span style="width:{28 + power * 9}%" /></div>
-
-	<button class="start" class:armed={ready} on:click|stopPropagation={start} disabled={!ready}>
-		start
+	<button
+		class="start"
+		class:armed={complete}
+		on:click|stopPropagation={calculate}
+		disabled={!complete}
+	>
+		calculate
 	</button>
 
 	<span class="screw tl" />
@@ -134,6 +278,12 @@
 		/* main is pointer-events:none so the 3D shows through the UI layer; any
 		   screen that wants clicks has to opt back in. */
 		pointer-events: auto;
+		/* One source of truth for the window, so everything bolted around it
+		   moves when it does. --below is the chassis line under the glass. */
+		--win: clamp(250px, 31vw, 400px);
+		--winh: calc(var(--win) * 0.75); /* 4:3 */
+		--below: calc(46% + var(--winh) / 2);
+		--ctl-h: 86px;
 		/* The window is centred, so the fly-through scales about the middle. */
 		transform-origin: 50% 46%;
 		transition: transform 1.5s cubic-bezier(0.6, 0, 0.85, 0.4), opacity 0.5s ease 1s;
@@ -151,6 +301,7 @@
 	/* Clear the glass first, so what you fly through is the window rather than
 	   the words that were on it. */
 	.machine.launching .screen p,
+	.machine.launching .readout,
 	.machine.launching .scanlines {
 		opacity: 0;
 		transition: opacity 0.22s ease;
@@ -165,7 +316,7 @@
 		position: absolute;
 		left: 50%;
 		top: 46%;
-		width: clamp(250px, 31vw, 400px);
+		width: var(--win);
 		aspect-ratio: 4 / 3;
 		transform: translate(-50%, -50%);
 		border-radius: 18px;
@@ -179,7 +330,14 @@
 		position: absolute;
 		inset: 12px;
 		border-radius: 10px;
-		background: radial-gradient(ellipse at 50% 40%, #123274 0%, #0a246a 55%, #05123c 100%);
+		/* Translucent, so the field burning behind the whole site reads as what
+		   is on the other side of the machine's window. */
+		background: radial-gradient(
+			ellipse at 50% 40%,
+			rgba(18, 50, 116, 0.24) 0%,
+			rgba(10, 36, 106, 0.44) 55%,
+			rgba(5, 18, 60, 0.7) 100%
+		);
 		padding: 14px 16px;
 		display: flex;
 		flex-direction: column;
@@ -208,6 +366,37 @@
 		transition: opacity 0.25s ease;
 	}
 	.screen p.lit {
+		color: var(--yellow);
+	}
+
+	.readout {
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: clamp(4px, 1.4vh, 10px);
+		transition: opacity 0.25s ease;
+	}
+	.readout div {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 14px;
+		padding-bottom: 3px;
+		border-bottom: 1px dotted rgba(240, 242, 248, 0.22);
+	}
+	.readout dt {
+		font-size: clamp(7px, 0.72vw, 9px);
+		letter-spacing: 0.24em;
+		text-transform: uppercase;
+		color: rgba(240, 242, 248, 0.5);
+	}
+	.readout dd {
+		margin: 0;
+		font-size: clamp(10px, 1.05vw, 14px);
+		letter-spacing: 0.08em;
+		color: rgba(240, 242, 248, 0.85);
+	}
+	.readout dd.ready {
 		color: var(--yellow);
 	}
 
@@ -262,7 +451,7 @@
 	.lamps {
 		position: absolute;
 		left: 50%;
-		top: calc(46% - clamp(125px, 15.5vw, 200px) - 34px);
+		top: calc(46% - var(--winh) / 2 - 30px);
 		transform: translateX(-50%);
 		display: flex;
 		gap: 7px;
@@ -379,29 +568,73 @@
 		border: 2px solid var(--machine-dark);
 	}
 
-	.meter {
+	/* ── The panel: both questions live on the machine ───────────────────── */
+	.controls {
 		position: absolute;
 		left: 50%;
-		top: calc(46% + clamp(125px, 15.5vw, 200px) + 26px);
+		top: calc(var(--below) + 18px);
 		transform: translateX(-50%);
-		width: clamp(140px, 17vw, 220px);
-		height: 12px;
-		border: 2px solid var(--machine-ink);
-		border-radius: 3px;
+		display: flex;
+		align-items: flex-start;
+		gap: clamp(16px, 2.6vw, 34px);
+		padding: 12px clamp(14px, 2vw, 22px) 14px;
 		background: var(--machine-dark);
-		overflow: hidden;
+		border: 2px solid var(--machine-ink);
+		border-radius: 8px;
+		box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.18), 0 3px 0 rgba(0, 0, 0, 0.18);
 	}
-	.meter span {
-		display: block;
-		height: 100%;
-		background: repeating-linear-gradient(90deg, var(--machine-ink) 0 4px, transparent 4px 8px);
-		transition: width 0.4s ease;
+
+	.ctl {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.lab {
+		font-size: 9px;
+		letter-spacing: 0.24em;
+		text-transform: uppercase;
+		opacity: 0.78;
+	}
+
+	.dob {
+		display: flex;
+		gap: 6px;
+	}
+
+	select {
+		font-family: var(--tech);
+		font-size: 13px;
+		letter-spacing: 0.04em;
+		padding: 6px 8px;
+		color: var(--machine-ink);
+		background: var(--machine-light);
+		border: 2px solid var(--machine-ink);
+		border-radius: 4px;
+		box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.14);
+		cursor: pointer;
+	}
+
+	input[type='range'] {
+		width: clamp(130px, 15vw, 200px);
+		margin: 5px 0 0;
+		accent-color: #ff6a3c;
+		cursor: pointer;
+	}
+
+	.ends {
+		display: flex;
+		justify-content: space-between;
+		font-size: 8px;
+		letter-spacing: 0.2em;
+		text-transform: uppercase;
+		opacity: 0.7;
 	}
 
 	.start {
 		position: absolute;
 		left: 50%;
-		top: calc(46% + clamp(125px, 15.5vw, 200px) + 58px);
+		top: calc(var(--below) + 18px + var(--ctl-h) + 16px);
 		transform: translateX(-50%);
 		font-family: var(--tech);
 		font-size: 14px;
@@ -473,8 +706,18 @@
 	@media (max-width: 700px) {
 		.dials,
 		.switches,
-		.vent {
+		.vent,
+		.grille {
 			display: none;
+		}
+
+		/* Stacked, so the panel gets taller and the button moves down with it. */
+		.machine {
+			--ctl-h: 156px;
+		}
+		.controls {
+			flex-direction: column;
+			gap: 16px;
 		}
 	}
 </style>
