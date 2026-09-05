@@ -1,11 +1,11 @@
 import { writable, derived, get } from 'svelte/store';
 
 // ── Site ink ─────────────────────────────────────────────────────────────────
-// One warm cream, used for both the UI text and every line in the 3D scene, so
-// the wireframe and the copy read as the same material. The colour event on this
-// site is the room at the end — everything before it is ink on warm dark.
+// Two inks, because the two surfaces are no longer the same colour: `ui` is the
+// copy, which sits on the deep blue ground, and `line` is every line in the 3D,
+// which since the conception scene went white is only ever seen on white.
 export const PALETTES = {
-	warm: { label: 'warm', line: 0xd6d6db, ui: [214, 214, 219] }
+	warm: { label: 'warm', line: 0x2b3350, ui: [214, 214, 219] }
 };
 
 export const DEFAULT_PALETTE = 'warm';

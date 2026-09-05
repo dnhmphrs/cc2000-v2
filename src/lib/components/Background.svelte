@@ -4,6 +4,13 @@
 	import { flare, fieldDecade } from '$lib/store/store';
 	import { DECADE_FIELD } from '$lib/data/roomElements';
 
+	// ── THE SWITCH ───────────────────────────────────────────────────────────
+	// The theta field is off. Every scene now clears an opaque ground over the
+	// top of it, so it would not be seen anyway — and turning it off means not
+	// paying for it. Flip this to true to bring it back; nothing else about the
+	// shader has been touched, and `flare` is still driven by the scene.
+	const FIELD_ON = false;
+
 	// The shader below is used exactly as supplied: cos() series over a
 	// stereographic projection from RP3, N = 2. Smooth and pulsey rather than
 	// the chaotic tan() figure that used to be here.
@@ -327,6 +334,7 @@ void main() {
 	}
 
 	onMount(() => {
+		if (!FIELD_ON) return;
 		gl = canvas.getContext('webgl', { antialias: false, alpha: false });
 		if (!gl) return;
 		if (!build()) return;
@@ -347,7 +355,9 @@ void main() {
 	});
 </script>
 
-<canvas bind:this={canvas} />
+{#if FIELD_ON}
+	<canvas bind:this={canvas} />
+{/if}
 
 <style>
 	canvas {

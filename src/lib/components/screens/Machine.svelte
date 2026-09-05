@@ -1,8 +1,10 @@
 <script>
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy, tick } from 'svelte';
+	import { get } from 'svelte/store';
 	import {
 		phase,
 		sceneState,
+		monitorRect,
 		dobMonth,
 		dobDay,
 		dobYear,
@@ -21,11 +23,17 @@
 	// filling the frame with a window cut out of the middle, sized in the same
 	// ballpark as the decade TVs you end up inside.
 	//
-	// The window is a box-shadow spread over the whole viewport, so everything
-	// after it in the DOM paints on top of the chassis and the hole stays
-	// genuinely transparent — the field shows through the machine's own screen.
-	// That also makes the fly-through one transform: scale the machine about the
-	// window's centre and the hole grows past the frame.
+	// The chassis is a box-shadow spread over the whole viewport from an element
+	// the size of the window, so the window itself stays genuinely transparent
+	// and you see the scene through it. It is its own element rather than the
+	// window's own shadow so it can be faded independently — which is what the
+	// arrival below needs.
+	//
+	// Two moves, both one transform about the window's centre:
+	//   launching — scale up until the window is past the frame; you go through
+	//   arriving  — start scaled DOWN onto the room's monitor and grow to rest,
+	//               so "calculate again" comes back out of the screen you were
+	//               just looking at.
 	const LINES = [
 		'in the earth year 2000, human technology advanced',
 		'allowing all of mankind to calculate the song playing',
@@ -65,6 +73,13 @@
 	let timer;
 	let handoff;
 
+	// Set for one frame when the machine is arriving out of a room's monitor, so
+	// the browser has an initial transform to animate away from.
+	let machineEl;
+	let arriving = false; // the transform is on its way home; do not accept clicks
+	let bare = false; // body and furniture hidden, for the first frames only
+	let settle;
+
 	let power = 0;
 	let ticker;
 
@@ -80,7 +95,51 @@
 		? `${String($dobDay).padStart(2, '0')} ${MONTHS[$dobMonth - 1].toUpperCase()} ${$dobYear}`
 		: '-- --- ----';
 
+	// Grow out of the monitor we were just looking at: measure the window where
+	// it will come to rest, then start it mapped onto the glass and let the CSS
+	// transition carry it home. A plain FLIP.
+	const ARRIVE_MS = 1700; // matches the transition on .machine.arriving
+
+	async function arriveFromMonitor(rect) {
+		arriving = true;
+		bare = true;
+		await tick();
+		const win = machineEl?.querySelector('.hole')?.getBoundingClientRect();
+		if (!win || !win.width) {
+			arriving = bare = false;
+			return;
+		}
+		const s = rect.width / win.width;
+		const dx = rect.left + rect.width / 2 - (win.left + win.width / 2);
+		const dy = rect.top + rect.height / 2 - (win.top + win.height / 2);
+
+		// Set it straight on the element, not through Svelte: tick() flushes the
+		// framework's DOM writes, not the browser's style, so setting and clearing
+		// a bound style in the same frame collapses and nothing animates. Reading
+		// offsetWidth in between forces the start state to be adopted for real.
+		machineEl.style.transition = 'none';
+		machineEl.style.transform = `translate(${dx}px, ${dy}px) scale(${s})`;
+		void machineEl.offsetWidth;
+		machineEl.style.transition = '';
+		machineEl.style.transform = '';
+
+		// The body comes up behind it as it grows.
+		bare = false;
+		settle = setTimeout(() => (arriving = false), ARRIVE_MS);
+	}
+
 	onMount(() => {
+		// Coming back from a run: the machine's screen appears on the room's
+		// computer and grows out of it, and there is no manifesto to sit through
+		// a second time — the answers are still dialled in.
+		const rect = get(monitorRect);
+		if (rect) {
+			typed = true;
+			arriveFromMonitor(rect);
+			ticker = setInterval(() => (power = (power + 1) % 7), 420);
+			return;
+		}
+
 		let li = 0;
 		const step = () => {
 			if (li >= LINES.length) {
@@ -102,6 +161,7 @@
 	onDestroy(() => {
 		clearTimeout(timer);
 		clearTimeout(handoff);
+		clearTimeout(settle);
 		clearInterval(ticker);
 	});
 
@@ -165,8 +225,19 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div class="machine" class:launching on:click={skip}>
-	<!-- The hole. Its shadow is the chassis, and the field shows through it. -->
+<div
+	class="machine"
+	class:launching
+	class:arriving
+	class:bare
+	bind:this={machineEl}
+	on:click={skip}
+>
+	<!-- The body: one element the size of the window, spreading a shadow over
+	     everything outside it. -->
+	<div class="chassis" />
+
+	<!-- The window. -->
 	<div class="hole">
 		<div class="screen">
 			<div class="scanlines" />
@@ -298,6 +369,26 @@
 		pointer-events: none;
 	}
 
+	/* Arriving: only the screen exists at first, sitting in the room's monitor.
+	   The body and the furniture come up as it grows to fill the frame. */
+	.machine.arriving {
+		transition: transform 1.7s cubic-bezier(0.3, 0.7, 0.25, 1);
+		pointer-events: none;
+	}
+	.machine.bare .chassis,
+	.machine.bare .plate,
+	.machine.bare .lamps,
+	.machine.bare .dials,
+	.machine.bare .switches,
+	.machine.bare .controls,
+	.machine.bare .vent,
+	.machine.bare .grille,
+	.machine.bare .start,
+	.machine.bare .screw {
+		opacity: 0;
+		transition: none;
+	}
+
 	/* Clear the glass first, so what you fly through is the window rather than
 	   the words that were on it. */
 	.machine.launching .screen p,
@@ -312,6 +403,8 @@
 	}
 
 	/* ── The window, and the chassis that surrounds it ───────────────────── */
+	/* Same rect as .hole; the 9999px spread is the whole machine body. */
+	.chassis,
 	.hole {
 		position: absolute;
 		left: 50%;
@@ -320,10 +413,33 @@
 		aspect-ratio: 4 / 3;
 		transform: translate(-50%, -50%);
 		border-radius: 18px;
-		/* This spread is the machine's body. */
-		box-shadow: 0 0 0 9999px var(--machine), inset 0 0 0 9px var(--machine-dark),
-			inset 0 0 0 12px var(--machine-light), inset 0 14px 30px rgba(0, 0, 0, 0.55);
+	}
+
+	.chassis {
+		box-shadow: 0 0 0 9999px var(--machine);
+		/* Held back until the machine is nearly home. Until then you are looking
+		   at its screen sitting in the room's computer, with the room still
+		   around it — which is the whole point of the way back. */
+		transition: opacity 0.75s ease 1s;
+	}
+
+	.hole {
+		box-shadow: inset 0 0 0 9px var(--machine-dark), inset 0 0 0 12px var(--machine-light),
+			inset 0 14px 30px rgba(0, 0, 0, 0.55);
 		overflow: hidden;
+	}
+
+	/* The furniture comes up with the body. */
+	.plate,
+	.lamps,
+	.dials,
+	.switches,
+	.controls,
+	.vent,
+	.grille,
+	.start,
+	.screw {
+		transition: opacity 0.75s ease 1s;
 	}
 
 	.screen {

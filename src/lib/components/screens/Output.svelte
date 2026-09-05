@@ -1,5 +1,13 @@
 <script>
-	import { track, phase, conceived, edge, monitorRect, resetRun } from '$lib/store/store';
+	import {
+		track,
+		phase,
+		sceneState,
+		conceived,
+		edge,
+		monitorRect,
+		resetRun
+	} from '$lib/store/store';
 	import { formatDay, accuracyFor } from '$lib/functions/utils';
 	import { fade } from 'svelte/transition';
 
@@ -29,10 +37,15 @@
 	};
 
 	function restart() {
-		// One place clears everything a run wrote, so nothing can survive into the
-		// next one by being forgotten here.
+		// Clears what the run produced; the birthday and the spice stay dialled
+		// in, so a second go is one click.
 		resetRun();
+		// The machine's screen appears on the room's computer and the camera
+		// flies into it. The scene keeps the monitor rect until it gets home —
+		// the machine needs it to know where to grow from. With no room to fly
+		// out of (an out-of-range verdict) it is a straight cut instead.
 		phase.set('intro');
+		sceneState.set($monitorRect ? 5 : 0);
 	}
 </script>
 

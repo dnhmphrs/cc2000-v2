@@ -42,10 +42,15 @@ export const screenSize = writable({ width: 0, height: 0 });
 export const deviceType = writable('desktop');
 export const isPortrait = writable(false);
 
-// Scene state — a coarse command channel into the 3D.
-// 0 = reset/idle, 1 = calculate pressed (dive → open → search → zoom),
-// 4 = the scene has landed on a room.
+// Scene state — the only command channel into the 3D.
+//   0 = reset to idle          1 = calculate pressed (run the three scenes)
+//   4 = landed on a room       5 = calculate again (fly back into the monitor)
 export const sceneState = writable(0);
+
+// 'dark' | 'light' — what the active scene is clearing to, so copy drawn over
+// the canvas can pick a colour that reads. The ground swings from deep blue to
+// white part way through a run.
+export const sceneTone = writable('dark');
 
 // 0..1 — how hard the theta-field background is burning. The computation scene
 // owns this: it snaps up when the icosahedron opens, holds through the search,
@@ -54,22 +59,15 @@ export const sceneState = writable(0);
 // seen from the computation onwards.
 export const flare = writable(0);
 
-// Everything a run puts into the stores, cleared in one place. "Calculate
-// again" used to rely on components unmounting to forget their own state,
-// which is easy to get wrong and hard to see when it is.
+// Everything a run PRODUCED, cleared in one place — but not what the user
+// answered: going round again keeps the birthday and the spice they picked, so
+// a second run is one click. Nor the scene: the stage owns sceneState and the
+// monitor rect, and it is still using them to fly home when this is called.
 export function resetRun() {
-	dobMonth.set('');
-	dobDay.set('');
-	dobYear.set('');
-	date.set('2000-01-01');
-	spicy.set(4);
-	gender.set(null);
 	track.set(null);
 	decade.set(null);
 	conceived.set(null);
 	edge.set(null);
-	monitorRect.set(null);
 	fieldDecade.set(null);
 	flare.set(0);
-	sceneState.set(0);
 }
