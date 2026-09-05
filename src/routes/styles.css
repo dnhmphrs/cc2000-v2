@@ -16,6 +16,12 @@
 
 	--yellow: #ffd426;
 
+	/* The Conception Calculator's own chassis — the landing is the machine. */
+	--machine: #e6b52e;
+	--machine-light: #f6d564;
+	--machine-dark: #b8891a;
+	--machine-ink: #2a2413;
+
 	/* NB Architekt is the site's own face and carries the whole interface. */
 	--face: 'nb-architekt', ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
