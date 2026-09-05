@@ -1,7 +1,6 @@
 <script>
 	import { onMount, onDestroy, tick } from 'svelte';
 	import * as THREE from 'three';
-	import { get } from 'svelte/store';
 	import { phase, sceneState, flare, monitorRect } from '$lib/store/store';
 	import { clamp } from '$lib/functions/utils';
 	import SpermStage from './stages/SpermStage.svelte';
@@ -18,12 +17,10 @@
 	// The background shader is a sibling of this component, behind both.
 	//
 	// Running order:
-	//   idle      → nothing
-	//   fly       → sperm comes past the camera and settles at A     [Sperm]
-	//   hold      → spins at A while the intro text is read          [Sperm]
-	//   approach  → swims A → B, the egg comes out of the fog        [Sperm]
-	//   wait1     → holds at B while the birthday is asked           [Sperm]
-	//   approach2 → swims B → C, closer in                           [Sperm]
+	//   idle      → nothing; the machine is on screen over the top
+	//   fly       → sperm overtakes the camera and runs out to A     [Sperm]
+	//   wait1     → holds at A while the birthday is asked           [Sperm]
+	//   approach  → swims A → C, closing on the egg                  [Sperm]
 	//   wait2     → holds at C while the spice is asked              [Sperm]
 	//   pierce    → drives into the egg, and the screen goes white   [Sperm]
 	//   open      → the icosahedron resolves and comes apart         [Icosa]
@@ -72,12 +69,6 @@
 		mouse.y = (e.clientY / window.innerHeight) * 2 - 1;
 	}
 
-	// ── Cues from the UI ─────────────────────────────────────────────────────
-	function begin() {
-		if (stage !== 'idle') return;
-		setStage('fly');
-	}
-
 	// Cues from the UI, all of them tolerant of arriving early: requiring an
 	// exact stage meant a fast click during an animation dropped the cue on the
 	// floor and hung the whole thing.
@@ -97,10 +88,6 @@
 		monitorRect.set(null);
 		spermStage?.reset();
 		icosaStage?.reset();
-		// "calculate again" comes back through 'intro', so fly in again.
-		setTimeout(() => {
-			if (stage === 'idle' && get(phase) === 'intro') begin();
-		}, 250);
 	}
 
 	function animate() {
@@ -120,11 +107,10 @@
 		const spermDone = spermStage ? spermStage.update(dt, stage, stageT, mouse) : false;
 		const icosaDone = icosaStage ? icosaStage.update(dt, stage, stageT) : false;
 
-		if (stage === 'fly' && spermDone) setStage('hold');
-		else if (stage === 'approach' && spermDone) {
+		if (stage === 'fly' && spermDone) {
 			setStage('wait1');
-			phase.set('dob'); // the first question arrives once it has closed in
-		} else if (stage === 'approach2' && spermDone) {
+			phase.set('dob'); // the first question arrives once it has settled
+		} else if (stage === 'approach' && spermDone) {
 			setStage('wait2');
 			phase.set('spicy');
 		} else if (stage === 'pierce' && spermDone) setStage('open');
@@ -178,21 +164,21 @@
 
 		// 'intro' both opens a run and, after "calculate again", tears the last
 		// one down. The form hands over on sceneState → 1.
+		// 'intro' means the machine is on screen and the 3D is idle behind it —
+		// on a first load, and again after "calculate again".
 		unsubPhase = phase.subscribe((p) => {
-			if (p !== 'intro') return;
-			if (stage !== 'idle') resetScene();
-			else begin();
+			if (p === 'intro' && stage !== 'idle') resetScene();
 		});
-		// 1 = begin (swim in, egg appears), 2 = birthday answered (swim closer),
+		// 1 = start pressed on the machine (the camera goes through its window and
+		// the sperm overtakes it), 2 = birthday answered (swim closer),
 		// 3 = calculate (pierce).
 		unsubSceneState = sceneState.subscribe((s) => {
-			if (s === 1) cue('approach');
-			else if (s === 2) cue('approach2');
+			if (s === 1) cue('fly');
+			else if (s === 2) cue('approach');
 			else if (s === 3) cue('pierce');
 		});
 
 		animate();
-		if (get(phase) === 'intro' && stage === 'idle') begin();
 	});
 
 	onDestroy(() => {

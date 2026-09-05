@@ -2,7 +2,7 @@
 	import { phase } from '$lib/store/store';
 	import Background from '$lib/components/Background.svelte';
 	import Scene from '$lib/three/Scene.svelte';
-	import Intro from '$lib/components/screens/Intro.svelte';
+	import Machine from '$lib/components/screens/Machine.svelte';
 	import AskDob from '$lib/components/screens/AskDob.svelte';
 	import AskSpicy from '$lib/components/screens/AskSpicy.svelte';
 	import Transition from '$lib/components/screens/Transition.svelte';
@@ -17,8 +17,10 @@
 <!-- The sperm and egg, then the icosahedron and the rooms. -->
 <Scene />
 
+<!-- The machine is the landing: you look at it, then the camera goes through
+     its window and into the scene above. -->
 {#if $phase === 'intro'}
-	<Intro />
+	<Machine />
 {:else if $phase === 'dob'}
 	<AskDob />
 {:else if $phase === 'spicy'}

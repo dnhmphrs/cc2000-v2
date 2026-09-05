@@ -9,11 +9,9 @@
 	// this over the machine half.
 	//
 	// Stages it owns:
-	//   'fly'      — comes past the camera from behind it and settles at A
-	//   'hold'     — holds at A, spinning, while the intro text is read
-	//   'approach' — swims A → B; the egg comes out of the fog
-	//   'wait1'    — holds at B while the birthday is asked
-	//   'approach2'— swims B → C, closer in
+	//   'fly'      — overtakes the camera from behind and runs out ahead to A
+	//   'wait1'    — holds at A while the birthday is asked
+	//   'approach' — swims A → C, closing on the egg
 	//   'wait2'    — holds at C while the spice is asked
 	//   'pierce'   — drives into the egg
 
@@ -25,21 +23,20 @@
 	// the egg grows into the frame as it is closed on rather than sitting at a
 	// constant size.
 	const CAM_HOME = 6;
-	const CAM_AT_B = 4.6;
-	const CAM_AT_C = 2.7;
+	const CAM_AT_C = 3.0;
 	const CAM_AT_EGG = 1.0;
-	// It starts BEHIND the camera and comes past you into the frame, rather than
-	// receding away from you into it.
-	const FLY_FROM_Z = 8.6;
+	// Starts behind the camera and OFF the axis, so it sweeps past the corner of
+	// the frame and runs out ahead — 2001, not a dot growing in the middle.
+	// Passing exactly through the camera point is degenerate (distance zero, so
+	// one frame of infinite magnification), which is why it is offset.
+	const FLY_FROM = { x: 2.4, y: -1.15, z: 8.8 };
 	const STATION_A = 2.0;
-	const STATION_B = 0.8;
 	const STATION_C = -0.9;
 	const EGG_Z = -3.0;
 	const EGG_R = 1.5;
 
-	const FLY_DUR = 2.8;
-	const APPROACH_DUR = 1.6;
-	const APPROACH2_DUR = 1.4;
+	const FLY_DUR = 2.6;
+	const APPROACH_DUR = 1.7;
 	const PIERCE_DUR = 1.35;
 
 	// Clockwise as seen from the camera. Half a turn a second — two was a blur.
@@ -72,11 +69,8 @@
 	let hit = 0;
 
 	// Where it sits for each stage, so the approaches are one lerp each.
-	const stationOf = (stage) =>
-		stage === 'wait2' || stage === 'pierce' ? STATION_C : stage === 'wait1' ? STATION_B : STATION_A;
-
-	const camOf = (stage) =>
-		stage === 'wait2' || stage === 'pierce' ? CAM_AT_C : stage === 'wait1' ? CAM_AT_B : CAM_HOME;
+	const stationOf = (stage) => (stage === 'wait2' || stage === 'pierce' ? STATION_C : STATION_A);
+	const camOf = (stage) => (stage === 'wait2' || stage === 'pierce' ? CAM_AT_C : CAM_HOME);
 
 	// ── Materials ────────────────────────────────────────────────────────────
 	function createSpermMaterial() {
@@ -140,6 +134,30 @@
 	// takes the highlights. Inner is Lambert: matte, unlit-cheap, and it gives
 	// the shell something to sit in front of so it doesn't read as an empty
 	// bubble.
+	// The core's depth comes from a painted ramp rather than from bumps.
+	//
+	// Vertical, not radial: a sphere's UVs wrap in u, so any gradient that isn't
+	// symmetric across the texture's left and right edges leaves a seam running
+	// pole to pole. A top-to-bottom ramp has identical columns everywhere, so it
+	// wraps invisibly — and it reads as lit from above, which is what is wanted.
+	function gradientTexture() {
+		const c = document.createElement('canvas');
+		c.width = 4;
+		c.height = 256;
+		const g = c.getContext('2d');
+		const grad = g.createLinearGradient(0, 0, 0, 256);
+		grad.addColorStop(0, '#f4f7ff');
+		grad.addColorStop(0.3, '#d6dff6');
+		grad.addColorStop(0.62, '#93a4d4');
+		grad.addColorStop(1, '#333f72');
+		g.fillStyle = grad;
+		g.fillRect(0, 0, 4, 256);
+		const tex = new THREE.CanvasTexture(c);
+		tex.encoding = THREE.sRGBEncoding;
+		tex.wrapS = THREE.RepeatWrapping;
+		return tex;
+	}
+
 	function buildEgg() {
 		eggShellMat = new THREE.MeshPhysicalMaterial({
 			color: 0xdfe6ff,
@@ -154,7 +172,7 @@
 			fog: true
 		});
 		eggCoreMat = new THREE.MeshLambertMaterial({
-			color: 0x9fb2e8,
+			color: 0xffffff, // the gradient map carries the colour
 			transparent: true,
 			opacity: 0,
 			fog: true
@@ -162,25 +180,10 @@
 
 		eggShell = new THREE.Mesh(new THREE.SphereGeometry(EGG_R, 48, 32), eggShellMat);
 
-		// The core is displaced into a lumpy blob at build time. A perfect sphere
-		// rotating is invisible — there is nothing on it to move — so this is what
-		// makes the turn read, and it looks more like a cell than a ball besides.
-		const coreGeo = new THREE.SphereGeometry(EGG_R * 0.82, 64, 40);
-		const cp = coreGeo.attributes.position;
-		const v = new THREE.Vector3();
-		for (let i = 0; i < cp.count; i++) {
-			v.fromBufferAttribute(cp, i);
-			const n = v.clone().normalize();
-			const bump =
-				1 +
-				0.06 * Math.sin(n.x * 5.1 + 1.3) * Math.cos(n.y * 4.3) +
-				0.045 * Math.sin(n.z * 6.7 + 2.1) +
-				0.03 * Math.cos(n.x * 9.2 + n.y * 7.4);
-			v.multiplyScalar(bump);
-			cp.setXYZ(i, v.x, v.y, v.z);
-		}
-		coreGeo.computeVertexNormals();
-		eggCore = new THREE.Mesh(coreGeo, eggCoreMat);
+		// Smooth, not lumpy. The volume comes from the painted gradient instead —
+		// a bright pole falling away to a deep shadowed edge.
+		eggCoreMat.map = gradientTexture();
+		eggCore = new THREE.Mesh(new THREE.SphereGeometry(EGG_R * 0.82, 48, 32), eggCoreMat);
 
 		eggGroup = new THREE.Group();
 		eggGroup.add(eggCore);
@@ -286,33 +289,31 @@
 		spin -= dt * SPIN_HZ * Math.PI * 2;
 		if (spermSpin) spermSpin.rotation.z = spin;
 
-		const live = ['fly', 'hold', 'approach', 'wait1', 'approach2', 'wait2', 'pierce'].includes(
-			stage
-		);
+		const live = ['fly', 'approach', 'wait1', 'wait2', 'pierce'].includes(stage);
 		if (live && spermReady && spermPivot) spermPivot.visible = true;
 
 		let z = stationOf(stage);
 		let camZ = camOf(stage);
+		let flyX = 0;
+		let flyY = 0;
 		hit = 0;
 
 		if (stage === 'fly') {
 			const t = clamp(stageT / FLY_DUR, 0, 1);
-			// Ease-out: it comes past the camera fast, then settles.
-			z = lerp(FLY_FROM_Z, STATION_A, 1 - Math.pow(1 - t, 3));
-			spermFade = clamp((stageT - 0.15) / 0.7, 0, 1) * 0.9;
+			// Ease-out: it overtakes fast, then runs out ahead and settles.
+			const e = 1 - Math.pow(1 - t, 3);
+			z = lerp(FLY_FROM.z, STATION_A, e);
+			flyX = lerp(FLY_FROM.x, 0, e);
+			flyY = lerp(FLY_FROM.y, 0, e);
+			// Nothing to see until it is clear of the camera's near field.
+			spermFade = clamp((CAM_HOME - z - 0.7) / 1.6, 0, 1) * 0.9;
 			if (stageT >= FLY_DUR) done = true;
 		} else if (stage === 'approach') {
 			const t = clamp(stageT / APPROACH_DUR, 0, 1);
 			const e = t * t * (3 - 2 * t);
-			z = lerp(STATION_A, STATION_B, e);
-			camZ = lerp(CAM_HOME, CAM_AT_B, e);
+			z = lerp(STATION_A, STATION_C, e);
+			camZ = lerp(CAM_HOME, CAM_AT_C, e);
 			if (stageT >= APPROACH_DUR) done = true;
-		} else if (stage === 'approach2') {
-			const t = clamp(stageT / APPROACH2_DUR, 0, 1);
-			const e = t * t * (3 - 2 * t);
-			z = lerp(STATION_B, STATION_C, e);
-			camZ = lerp(CAM_AT_B, CAM_AT_C, e);
-			if (stageT >= APPROACH2_DUR) done = true;
 		} else if (stage === 'pierce') {
 			const t = clamp(stageT / PIERCE_DUR, 0, 1);
 			const eased = Math.pow(t, 1.7);
@@ -334,23 +335,25 @@
 			spermPivot.scale.setScalar(baseScale());
 			// A little life in the hold, and a nudge from the cursor. No wobble in
 			// the body itself — the spin carries the motion.
-			const idle = stage === 'hold' || stage === 'wait1' || stage === 'wait2';
+			const idle = stage === 'wait1' || stage === 'wait2';
 			const ax = idle ? Math.sin(driftT * 0.4) * 0.07 + (mouse?.x ?? 0) * 0.09 : 0;
 			const ay = idle ? Math.sin(driftT * 0.53) * 0.05 - (mouse?.y ?? 0) * 0.07 : 0;
-			spermPivot.position.set(ax, ay, z);
+			spermPivot.position.set(ax + flyX, ay + flyY, z);
 		}
 
 		// The egg comes out of the fog on the first approach and stays.
-		const eggWanted = ['approach', 'wait1', 'approach2', 'wait2', 'pierce'].includes(stage);
+		const eggWanted = ['wait1', 'approach', 'wait2', 'pierce'].includes(stage);
 		eggFade += ((eggWanted ? 1 : 0) - eggFade) * Math.min(1, dt * 1.6);
 		if (eggGroup) {
 			eggGroup.visible = eggFade > 0.01;
 			eggGroup.scale.setScalar(1 + hit * 0.12);
-			// The lumpy core turns; the glassy shell barely does. Two rates, so
-			// there is something moving in the frame that isn't the sperm.
+			// The graded core turns under the glassy shell: the gradient sweeping
+			// round is what shows the movement now the surface is smooth.
 			if (eggCore) {
-				eggCore.rotation.y += dt * 0.5;
-				eggCore.rotation.x += dt * 0.17;
+				// Tipping is what moves a vertical ramp; spinning about y would slide
+				// it along the seam-free axis and show nothing.
+				eggCore.rotation.z = Math.sin(driftT * 0.22) * 0.4;
+				eggCore.rotation.x = Math.sin(driftT * 0.17) * 0.3;
 			}
 			if (eggShell) eggShell.rotation.y -= dt * 0.09;
 		}

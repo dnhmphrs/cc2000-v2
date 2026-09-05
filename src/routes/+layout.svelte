@@ -42,6 +42,9 @@
 	}
 
 	/* No blanket pointer-events reset here: it used to re-enable hit-testing on
-	   every descendant, including the HUD and the console, which then sat on top
-	   of the 3D stage. Each interactive shell opts itself back in instead. */
+	   every descendant, which then sat on top of the 3D stage.
+	   CAREFUL: every screen that wants clicks must set pointer-events:auto on its
+	   own root. Forgetting it renders a perfectly visible control that nothing
+	   can press — it has caught the restart button and the machine's start
+	   button already, and it looks like a dead handler rather than a CSS miss. */
 </style>
