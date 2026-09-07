@@ -32,20 +32,33 @@
 	--ink: 3px;
 	--drop: 5px;
 
+	/* The two halves of the glass, each defined ONCE and used wherever glass is
+	   drawn — the CRT in the calculator and the full-screen sheet — because they
+	   are the same pane, seen from in front of it and then from inside it.
+	   Change the angle here and every gleam in the site turns with it. */
+	--glass: linear-gradient(
+		112deg,
+		transparent 0 16%,
+		rgba(255, 255, 255, 0.11) 16% 25%,
+		transparent 25% 30%,
+		rgba(255, 255, 255, 0.07) 30% 35%,
+		transparent 35%
+	);
+	--scanlines: repeating-linear-gradient(
+		to bottom,
+		rgba(255, 255, 255, 0.05) 0 1px,
+		transparent 1px 3px
+	);
+
 	/* Copy sits on the deep blue for the first half of a run and on white for
 	   the second, so it has two inks. Which one is in force is the sceneTone
 	   store's job — see scenes/Caption.svelte. */
 	--ink-on-light: #2b3350;
 
-	/* The calculator's chassis geometry. These are placeholders: config/layout.js
-	   overwrites all six on :root for the current aspect, on mount and on every
-	   resize. They are here so the markup still lays out before hydration. */
-	--win: clamp(250px, 30vw, 420px);
-	--win-aspect: 1.3333;
-	--win-y: 44%;
-	--controls-gap: 20px;
-	--controls-h: 92px;
-	--button-gap: 18px;
+	/* The calculator's chassis geometry is NOT here. They are generated from
+	   CHASSIS in config/layout.js and written into the document head by
+	   +layout.svelte, because a second copy in this file is a copy that goes
+	   stale — and a stale one is a visible jump on every load. */
 
 	/* NB Architekt is the site's own face and carries the whole interface. */
 	--face: 'nb-architekt', ui-sans-serif, system-ui, -apple-system, sans-serif;

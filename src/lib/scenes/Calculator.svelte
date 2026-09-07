@@ -276,7 +276,7 @@
 
 	<div class="window">
 		<div class="screen">
-			<div class="scanlines" />
+			<div class="gleam" />
 			{#if !typed}
 				{#each LINES as line, i}
 					<p class:lit={i === LINES.length - 1}>
@@ -528,22 +528,18 @@
 		overflow: hidden;
 	}
 
-	/* The glass: a drawn-on gleam over the scanlines. Two hard diagonal bands
-	   rather than a soft specular, because everything else on this machine is
-	   inked and a rendered highlight would be the one thing that is not. */
-	.scanlines {
+	/* The gleam on this machine's own glass. Two hard diagonal bands rather than
+	   a soft specular, because everything else here is inked and a rendered
+	   highlight would be the one thing that is not.
+	   
+	   The SCANLINES are not here: components/Glass.svelte lays them over the
+	   whole site for the whole run. Drawing them twice at the same 3px pitch —
+	   once here and once over the top — is a moiré, not a CRT. */
+	.gleam {
 		position: absolute;
 		inset: 0;
 		pointer-events: none;
-		background: linear-gradient(
-				112deg,
-				transparent 0 16%,
-				rgba(255, 255, 255, 0.11) 16% 25%,
-				transparent 25% 30%,
-				rgba(255, 255, 255, 0.07) 30% 35%,
-				transparent 35%
-			),
-			repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 3px);
+		background: var(--glass);
 	}
 
 	.screen p {
