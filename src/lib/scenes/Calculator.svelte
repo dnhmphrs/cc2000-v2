@@ -21,6 +21,7 @@
 	import { resolve } from '$lib/functions/answer';
 	import Dial from '$lib/components/Dial.svelte';
 	import Lever from '$lib/components/Lever.svelte';
+	import Tuner from '$lib/components/Tuner.svelte';
 
 	// ── Scene 1: the Conception Calculator 2000 ──────────────────────────────
 	// The machine IS the landing page, and it takes both answers.
@@ -325,9 +326,8 @@
 	</div>
 
 	{#if $aspect !== 'portrait'}
-		<!-- The chassis furniture: knobs and flip switches that do nothing,
-		     filling the run between the screen and the controls out on the rim.
-		     Decoration, so it flanks the thing being decorated. -->
+		<!-- The chassis furniture: knobs and flip switches that do nothing, out on
+		     the edges of the machine where decoration belongs. -->
 		<div class="trim left">
 			{#each [22, -48, 71, -14] as deg, i}
 				<span class="knob" style="--deg:{deg}deg; --d:{i * 0.7}s"><i /></span>
@@ -340,9 +340,9 @@
 		</div>
 	{/if}
 
-	<!-- The date on the left-hand edge of the chassis and the spicy level on the
-	     right. These ARE the controls where there is room down the sides; the
-	     panel below the window is the portrait fallback. They are swapped with
+	<!-- The controls sit BY THE SCREEN, and the decoration is out on the rim —
+	     what you reach for is next to what you are reading. The panel below the
+	     window is the portrait fallback. They are swapped with
 	     {#if} rather than CSS, so exactly one of each control EXISTS — hiding one
 	     leaves a second month/day/year in the document for anything that walks it
 	     rather than looks at it. -->
@@ -365,7 +365,11 @@
 				value={$dobDay}
 				on:change={(e) => dobDay.set(e.detail)}
 			/>
-			<Dial
+		</div>
+
+		<!-- The year, under the screen, as the band on a car radio. -->
+		<div class="tuner" on:click|stopPropagation>
+			<Tuner
 				label="year"
 				min={MIN_YEAR}
 				max={MAX_YEAR}
@@ -508,6 +512,7 @@
 	   because at monitor scale it is a few unreadable pixels. */
 	.controls,
 	.trim,
+	.tuner,
 	.dials,
 	.switches,
 	.go {
@@ -517,6 +522,7 @@
 	}
 	.calculator.realised .controls,
 	.calculator.realised .trim,
+	.calculator.realised .tuner,
 	.calculator.realised .dials,
 	.calculator.realised .switches,
 	.calculator.realised .go {
@@ -746,6 +752,14 @@
 	   tried and is worse: the machine IS the whole screen, and furniture huddled
 	   round the glass reads as a small object with a lot of blank around it
 	   rather than as a big panel. */
+	.tuner {
+		position: absolute;
+		left: 50%;
+		top: calc(var(--below) + var(--controls-gap));
+		transform: translateX(-50%);
+		width: min(var(--win), 92vw);
+	}
+
 	/* ── The trim ─────────────────────────────────────────────────────────
 	   Knobs and flip switches that do nothing, flanking the window — so the run
 	   between the screen and the controls out on the chassis rim is not just
@@ -759,11 +773,11 @@
 		align-items: center;
 	}
 	.trim.left {
-		right: calc(50% + var(--win) / 2 + clamp(16px, 2.4vw, 56px));
+		left: max(2.5vw, 16px);
 		gap: clamp(12px, 2.2vh, 26px);
 	}
 	.trim.right {
-		left: calc(50% + var(--win) / 2 + clamp(16px, 2.4vw, 56px));
+		right: max(2.5vw, 16px);
 		gap: clamp(10px, 1.8vh, 22px);
 	}
 
@@ -823,7 +837,7 @@
 
 	.dials {
 		position: absolute;
-		left: max(3vw, 18px);
+		right: calc(50% + var(--win) / 2 + clamp(16px, 2.4vw, 54px));
 		top: var(--win-y);
 		transform: translateY(-50%);
 		display: flex;
@@ -832,7 +846,7 @@
 	}
 	.switches {
 		position: absolute;
-		right: max(3vw, 18px);
+		left: calc(50% + var(--win) / 2 + clamp(16px, 2.4vw, 54px));
 		top: var(--win-y);
 		transform: translateY(-50%);
 		display: flex;
