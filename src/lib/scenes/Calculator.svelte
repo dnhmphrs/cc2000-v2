@@ -127,7 +127,12 @@
 				const x0 = live.left + (live.width - vw * s0) / 2;
 				const y0 = live.top + (live.height - vh * s0) / 2;
 				const u = 1 - t;
-				node.style.transform = `translate(${x0 * u}px, ${y0 * u}px) scale(${lerp(s0, 1, t)})`;
+				// Clear it outright at the end rather than leaving an identity
+				// matrix behind: a transform on a fixed, full-viewport element is
+				// a containing block and a stacking context for everything inside
+				// it, and there is no reason to keep one once it has landed.
+				node.style.transform =
+					t === 1 ? '' : `translate(${x0 * u}px, ${y0 * u}px) scale(${lerp(s0, 1, t)})`;
 				calcZoom.set(t);
 			}
 		};
