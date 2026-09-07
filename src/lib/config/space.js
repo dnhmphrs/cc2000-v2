@@ -63,7 +63,10 @@ export const CAM_END =
 // ── The icosahedron (scenes 2–3) ─────────────────────────────────────────────
 export const ICOSA = {
 	// Orthographic frustum HEIGHT at rest. Width follows the viewport aspect.
-	frustum: 13,
+	// Half what it was: the whole assembly — frame, sphere and rooms — reads at
+	// roughly twice the size on screen. Everything else in here is a world
+	// distance and unchanged, so only the framing moved.
+	frustum: 6.5,
 	camPos: [0, 0, 14],
 	near: 0.1,
 	far: 100,
@@ -102,6 +105,15 @@ export const ICOSA = {
 	// How far the panes travel out of the frame. Owned by GoldenRectangle.
 	paneReach: 6.4,
 
+	// What the frame drops to while the golden rectangles are drawn over it. Low
+	// enough that three warm rectangles are unmistakably the subject and the
+	// icosahedron is the thing they are drawn inside.
+	frameUnder: 0.2,
+
+	// How much the sphere opens out as the rooms come through it. It starts as
+	// the frame's exact circumsphere and only ever eases off that.
+	sphereGrow: 1.3,
+
 	// The attitude the search HOLDS while it is looking around. Each decade is
 	// turned round to the camera but deliberately not square to it, so the rooms
 	// stay at the angle they burst out of the frame at and you keep reading them
@@ -110,13 +122,11 @@ export const ICOSA = {
 	searchOblique: [0.18, -0.45, 0.04]
 };
 
-// The sphere the frame sits inside, from the conception onward. Deliberately
-// LARGER than the frame — expressed as a multiple of the circumradius so the
-// gap is the number, not a coincidence of two absolutes — because a
-// semi-transparent shell standing off the polyhedron is the thing that makes
-// this read as something held rather than something drawn on. It is not the
-// circumsphere and is not trying to be.
-export const ICOSA_SPHERE_R = CIRCUMRADIUS * 1.58;
+// The sphere the frame is drawn inside. It IS the circumsphere: the twelve
+// vertices sit exactly on it, which is the relationship the two shapes actually
+// have, so the conception opens on the frame and its sphere as one object.
+// ICOSA.sphereGrow then eases it off that as the rooms come through.
+export const ICOSA_SPHERE_R = CIRCUMRADIUS;
 
 // ── Aspect ───────────────────────────────────────────────────────────────────
 // Three shapes of screen, because the site has to sit in all of them: phones
