@@ -154,6 +154,9 @@
 		facing = null;
 		frustum = ICOSA.frustum;
 		world.applyFrustum(frustum);
+		// The panes are built on the raw vertex coordinates, so the frame has to be
+		// at that scale for them to emerge from its edges.
+		world.setWireScale(1);
 		world.setPanesVisible(true);
 		world.setSolid(1);
 		monitorRect.set(null);

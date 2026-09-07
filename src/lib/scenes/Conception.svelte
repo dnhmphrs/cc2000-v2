@@ -4,6 +4,7 @@
 	import {
 		SCENES,
 		span,
+		lerp,
 		clamp01,
 		smoothstep,
 		easeInOutCubic,
@@ -21,7 +22,13 @@
 	//   →  the pentagons turn  →  it settles
 	//
 	// The pentagons are drawn but they do not move on their own — the whole
-	// solid turns, as one thing.
+	// solid turns, as one thing, in a couple of small deliberate moves.
+	//
+	// It is drawn LARGER than its true size while it assembles, so it fills the
+	// sphere, and draws back to 1 as it settles. That matters: the decade panes
+	// are built on the same raw vertex coordinates and have to emerge from the
+	// solid's own edges, so the computation can only start once the frame is
+	// back at the scale they were built against.
 	//
 	// Everything here is a PURE FUNCTION of scene progress: the pose is
 	// recomputed from p each frame rather than accumulated. That is what lets
@@ -38,11 +45,22 @@
 	const spinQ = new THREE.Quaternion();
 	const spinE = new THREE.Euler();
 
+	// Total rotation after the completed moves plus whatever the current one has
+	// got through. A pure function of the window's progress, like the rest.
+	function turned(u) {
+		const n = T.spinSteps;
+		const done = Math.floor(u * n);
+		const local = u * n - done;
+		const partial = done < n ? easeInOutCubic(clamp01(local / T.spinHold)) : 0;
+		return (Math.min(done, n) + partial) * T.spinAngle;
+	}
+
 	let t = 0;
 
 	export function enter() {
 		t = 0;
 		world.reset();
+		world.setWireScale(ICOSA.wireBuild);
 		world.egg.setCore(0);
 		world.egg.setShell(0);
 		noiseWash.set(0);
@@ -69,9 +87,14 @@
 		// Away from the diagram's face-on view, and then onto the tilt the
 		// computation starts from — so the next scene picks the frame up exactly
 		// where this one puts it down.
-		spinE.set(0, easeInOutCubic(span(p, T.spin)) * T.spinTurns * Math.PI * 2, 0);
+		spinE.set(0, turned(span(p, T.spin)), 0);
 		world.frame.quaternion.copy(THREE_FOLD_VIEW).multiply(spinQ.setFromEuler(spinE));
-		world.frame.quaternion.slerp(TILT, easeInOutCubic(span(p, T.settle)));
+
+		// And draws back to the scale the panes are built against, ready to
+		// expand out of.
+		const settle = easeInOutCubic(span(p, T.settle));
+		world.frame.quaternion.slerp(TILT, settle);
+		world.setWireScale(lerp(ICOSA.wireBuild, 1, settle));
 
 		// ── Air ──────────────────────────────────────────────────────────────
 		noise.set(NOISE.calm);
