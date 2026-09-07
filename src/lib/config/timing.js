@@ -105,31 +105,25 @@ export const SCENES = scale({
 	},
 
 	// ── Conception ───────────────────────────────────────────────────────────
-	// White, a beat of nothing, a sphere, the icosahedron drawing itself on
-	// inside it, and then the six diagonals striking through the middle of it.
-	// Nothing turns.
+	// White, a beat of nothing, a sphere, and the icosahedron drawing itself on
+	// inside it. Nothing turns and nothing else is added: the frame finishes and
+	// the next thing that happens is the rooms coming out of it.
 	//
-	//   0     0.06    0.28        0.6        0.92    1.0
-	//   |hold | sphere |   wire    |   star   | rest |
+	//   0     0.06    0.3            0.86        1.0
+	//   |hold | sphere |     wire     |   rest    |
 	//
 	// The hold and the rest are the GAPS either side, not settings.
 	conception: {
-		duration: 4.8,
+		duration: 4.0,
 
 		// The sphere fades up out of the white, at the frame's exact circumradius
 		// — so what appears is one object, not a ball with something in it.
-		sphere: [0.06, 0.28],
+		sphere: [0.06, 0.3],
 
 		// The frame draws itself on inside it. Every edge at once — the stagger is
 		// gone, see world/lattice.js — so this only has to be long enough to see
 		// the strokes travel.
-		wire: [0.24, 0.6],
-
-		// Then the six long diagonals, vertex through the centre to antipode. They
-		// are the only lines in the figure that are not edges, so this is the beat
-		// where an outline becomes a solid with an inside — and it is what stands
-		// between the frame finishing and the rooms coming out of it.
-		star: [0.6, 0.92]
+		wire: [0.26, 0.86]
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────
@@ -154,12 +148,16 @@ export const SCENES = scale({
 		searchSteps: 4,
 		// Fraction of each step spent turning; the rest is the look. The last
 		// step is all turn, because the zoom follows it straight away.
-		searchSpin: 0.86,
-		// The turns are eased gently and take nearly the whole of each step, so the
-		// search reads as one continuous drift between decades rather than four
-		// snap-and-hold moves. Anything sharper than this — and extra revolutions
-		// were tried — reads as breakneck rather than as searching.
-		searchEase: 1.5,
+		searchSpin: 0.76,
+		// How the turn itself moves. A high power is a real acceleration out of
+		// rest and a real deceleration into the next decade, which is what stops
+		// this reading as a turntable; 1.0 would be a flat constant pivot.
+		searchEase: 2.6,
+		// How far off the direct arc each turn bows, in radians. The shortest path
+		// between two poses is the dullest one — this routes each turn through a
+		// control pose to the side of it, alternating which side, so the frame
+		// swings through the move rather than pivoting flatly across it.
+		searchBow: 0.5,
 
 		// Then in. Accelerates away from rest, then eases onto the final frame.
 		zoom: [0.8, 1.0],

@@ -1,7 +1,8 @@
 <script>
 	import { onMount, onDestroy, tick } from 'svelte';
+	import { get } from 'svelte/store';
 	import * as THREE from 'three';
-	import { scene as sceneStore, sceneTone, monitorRect } from '$lib/store/store';
+	import { scene as sceneStore, sceneTone, monitorRect, backdrop } from '$lib/store/store';
 	import { CANVAS_FADE, FLASH_DECAY, clamp01 } from '$lib/config';
 	import { createTunnel } from './world/tunnel';
 	import { createLattice } from './world/lattice';
@@ -18,7 +19,8 @@
 	//   enter()      you are the active scene — reset yourself
 	//   update(dt)   a frame; return true when your duration is up
 	//   render(r)    draw yourself
-	//   backdrop()   { color, alpha } for the renderer to clear to
+	//   backdrop()   { color, shader } — the colour the scene is on, and which
+	//                of three/shaders/ is drawn behind it
 	//   resize()     the window changed
 	//
 	// Which scene is active comes from the `scene` store, so the DOM screens and
@@ -117,7 +119,8 @@
 					}
 					held.stepReturn?.(dt);
 				}
-				ground(held.backdrop().color);
+				const hb = held.backdrop();
+				ground(hb.color, hb.shader);
 				held.render(renderer);
 				return;
 			}
@@ -130,22 +133,30 @@
 				tunnel.reset();
 				lattice.reset();
 			}
-			ground(tunnel.getAir());
+			ground(tunnel.getAir(), 'flat');
 			renderer.render(tunnel.scene, tunnel.camera);
 			return;
 		}
 
 		if (active.update(dt)) advance(name);
 
-		ground(active.backdrop().color);
+		const ab = active.backdrop();
+		ground(ab.color, ab.shader);
 		active.render(renderer);
 	}
 
-	// The ground swings from deep blue to white mid-run, so anything drawn over
-	// the canvas is told which it is on.
-	function ground(color) {
-		renderer.setClearColor(color, 1);
+	// The 3D no longer paints its own ground: it clears TRANSPARENT and the
+	// shader canvas behind it is what you see. What a scene used to hand over as
+	// a clear colour is now published instead — the flat shader paints it as a
+	// block, and the field shaders take it as their first colour stop.
+	//
+	// The tone still comes from that colour, because everything drawn over the
+	// canvas needs to know whether it is on the blue or on the white.
+	function ground(color, shader = 'flat') {
+		renderer.setClearColor(color, 0);
 		sceneTone.set(luma(color) > 0.55 ? 'light' : 'dark');
+		const b = get(backdrop);
+		if (b.shader !== shader || b.color !== color) backdrop.set({ shader, color });
 	}
 
 	// Rec. 709 on the clear colour — enough to choose dark type or light.

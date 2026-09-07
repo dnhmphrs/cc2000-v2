@@ -2,7 +2,7 @@
 	import { tick } from 'svelte';
 	import * as THREE from 'three';
 	import { get } from 'svelte/store';
-	import { decade, aspect, flare, fieldDecade, monitorRect } from '$lib/store/store';
+	import { decade, aspect, flare, fieldDecade, monitorRect, fieldRotation } from '$lib/store/store';
 	import {
 		SCENES,
 		span,
@@ -32,8 +32,12 @@
 	// mean "this is the one", and the rooms read better as faces of a solid than
 	// as slides anyway.
 	//
-	// The turns are gently eased and take nearly the whole of each step, so this
-	// drifts between decades rather than snapping and holding four times.
+	// Each turn takes a CURVED route, not the shortest arc: a control pose off to
+	// one side of the direct path, and two nested slerps tracing a quadratic
+	// Bézier through it. The side alternates, so the frame swings one way and
+	// then the other across the search instead of pivoting flatly four times.
+	// Config: searchBow is how far it bows, searchEase how hard it accelerates
+	// out of one decade and settles into the next.
 	//
 	// Like the conception, every value here is a pure function of scene progress
 	// — nothing integrates dt — so the scene can be reset or re-entered without
@@ -133,6 +137,24 @@
 	// square by ICOSA.searchOblique.
 	const OBLIQUE = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.searchOblique));
 
+	// Scratch for handing the frame's attitude to the backdrop shader as a mat3.
+	const ROT4 = new THREE.Matrix4();
+	const ROT3 = new THREE.Matrix3();
+
+	// Scratch for the curved route between decades. Reused rather than allocated,
+	// because this runs every frame of the search.
+	const BOW = new THREE.Quaternion();
+	const via = new THREE.Quaternion();
+	const legA = new THREE.Quaternion();
+	const legB = new THREE.Quaternion();
+	// Which way each turn bows. Four axes, so no two turns in a run arc the same.
+	const BOW_AXES = [
+		new THREE.Vector3(0, 1, 0),
+		new THREE.Vector3(1, 0, 0.3).normalize(),
+		new THREE.Vector3(0, 0, 1),
+		new THREE.Vector3(-0.5, 1, 0.3).normalize()
+	];
+
 	// The rotation that puts a pane's artwork square to the camera.
 	function landingQuatFor(i) {
 		const room = panes[i]?.getRoom?.();
@@ -228,9 +250,18 @@
 			const last = step === n - 1;
 
 			const turn = easeInOutPower(last ? local : clamp01(local / T.searchSpin), T.searchEase);
-			world.frame.quaternion
-				.copy(step === 0 ? searchFrom : searchQuats[step - 1])
-				.slerp(searchQuats[step], turn);
+			const from = step === 0 ? searchFrom : searchQuats[step - 1];
+			const to = searchQuats[step];
+
+			// The control pose: halfway along the direct arc, then rolled off it.
+			BOW.setFromAxisAngle(BOW_AXES[step % BOW_AXES.length], T.searchBow * (step % 2 ? -1 : 1));
+			via.copy(from).slerp(to, 0.5).premultiply(BOW);
+
+			// Quadratic Bezier on the sphere of rotations. Both ends are still
+			// exactly `from` and `to`; only the route between them is bent.
+			legA.copy(from).slerp(via, turn);
+			legB.copy(via).slerp(to, turn);
+			world.frame.quaternion.copy(legA).slerp(legB, turn);
 
 			const d = decadeAssignments[searchOrder[step]] ?? null;
 			if (d !== facing) {
@@ -238,6 +269,12 @@
 				fieldDecade.set(d);
 			}
 		}
+
+		// The backdrop turns with the solid. Same attitude, same coordinates — the
+		// field behind the scene is carried by the thing in front of it rather
+		// than sitting still behind it. See three/shaders/index.js (uRot).
+		ROT4.makeRotationFromQuaternion(world.frame.quaternion);
+		fieldRotation.set(ROT3.setFromMatrix4(ROT4).elements);
 
 		// ── The fall into the room ───────────────────────────────────────────
 		const zoom = span(p, T.zoom);
@@ -276,7 +313,7 @@
 	}
 
 	export function backdrop() {
-		return { color: WHITE, alpha: 1 };
+		return { color: WHITE, shader: 'theta' };
 	}
 
 	// ── The way back ────────────────────────────────────────────────────────
