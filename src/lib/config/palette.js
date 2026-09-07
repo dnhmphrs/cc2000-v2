@@ -28,7 +28,8 @@ export const MACHINE = {
 	// Two accents lifted off the room art — the red of the desk lamp and the
 	// teal of the shades — so the machine belongs to the same drawing.
 	red: '#e5372a',
-	teal: '#2fb3a6'
+	teal: '#2fb3a6',
+	orange: '#e8802a'
 };
 
 // ── The egg ──────────────────────────────────────────────────────────────────

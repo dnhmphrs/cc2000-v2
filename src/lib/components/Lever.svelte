@@ -13,8 +13,6 @@
 	export let min = 1;
 	export let max = 10;
 	export let value = min;
-	export let low = '';
-	export let high = '';
 
 	const dispatch = createEventDispatcher();
 
@@ -73,7 +71,6 @@
 </script>
 
 <div class="unit">
-	<span class="cap">{high}</span>
 	<div
 		class="track"
 		bind:this={track}
@@ -94,7 +91,6 @@
 		<i class="slot" />
 		<i class="handle"><b>{value}</b></i>
 	</div>
-	<span class="cap">{low}</span>
 </div>
 
 <style>
@@ -154,15 +150,5 @@
 		font-family: var(--tech);
 		font-size: calc(var(--dial) * 0.24);
 		color: #fff5ec;
-	}
-
-	.cap {
-		font-family: var(--tech);
-		font-size: 9px;
-		font-weight: 700;
-		letter-spacing: 0.2em;
-		text-transform: uppercase;
-		color: var(--machine-ink);
-		opacity: 0.75;
 	}
 </style>

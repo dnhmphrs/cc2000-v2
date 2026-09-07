@@ -2,9 +2,9 @@
 // One full-screen fragment shader per 3D scene, each in its own file:
 //
 //   flat.js    a block colour           — the fly-in
-//   theta.js   the Riemann theta field  — the conception and the computation
-//   white.js   plain white              — the spare, when a shader is being
-//                                         swapped out or is misbehaving
+//   theta.js   the Riemann theta field  — spare; loud on a white ground
+//   static.js  a set being tuned        — the computation, while it searches
+//   white.js   plain white              — the conception, and the spare
 //
 // A scene picks one by name from its backdrop(): `{ color, shader }`. The Stage
 // publishes that, components/Background.svelte compiles it and draws it behind
@@ -19,13 +19,16 @@
 //   uRot                     mat3   a rotation to carry the field with the
 //                                   scene — the computation feeds it the
 //                                   icosahedron's own attitude
+//   uTime                    float   seconds since the page loaded
+//   uFlare                   float   0..1, the scene's own `flare` eased
 //
 // vUv is 0..1 across the viewport.
 import { FLAT } from './flat';
 import { THETA } from './theta';
+import { STATIC } from './static';
 import { WHITE } from './white';
 
-export const SHADERS = { flat: FLAT, theta: THETA, white: WHITE };
+export const SHADERS = { flat: FLAT, theta: THETA, static: STATIC, white: WHITE };
 
 // One oversized triangle; vUv is reconstructed from the clip position.
 export const VERT = `
@@ -48,6 +51,8 @@ export const PRELUDE = `
 	uniform vec2 mouse;
 	uniform float aspectRatio;
 	uniform mat3 uRot;
+	uniform float uTime;
+	uniform float uFlare;
 
 	float hSinh(float x) { return 0.5 * (exp(x) - exp(-x)); }
 	float hCosh(float x) { return 0.5 * (exp(x) + exp(-x)); }
