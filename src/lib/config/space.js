@@ -72,7 +72,18 @@ export const ICOSA = {
 	// drawn in: the silhouette is a hexagon and every edge is visible.
 	// See geometry/icosahedron.js — THREE_FOLD_VIEW.
 	// The computation adds its own tilt on top so the panes read as solid.
-	tilt: [-0.32, 0.55, 0],
+	// The resting orientation, and it is worth being fussy about. Looked at down
+	// any of its symmetry axes an icosahedron collapses: pairs of edges land on
+	// top of each other in projection and the thing reads as a flat star. This
+	// pose was picked by maximising the smallest gap between any two of the twelve
+	// vertices on screen — 0.40 of the circumradius, against 0.05 for the old
+	// near-2-fold view — so all thirty edges are separately visible and the shape
+	// reads as a solid before it has even moved.
+	//
+	// The third angle is a rotation about the view axis: it spins the picture in
+	// the frame and changes nothing about which edges overlap, so it is free, and
+	// it is set purely for composition.
+	tilt: [0.785, 0, 0.821],
 
 	// NOTE, and it has bitten once: the wireframe is built at the RAW vertex
 	// scale — circumradius √(1+φ²) ≈ 1.902 — and must stay there. The decade
@@ -81,22 +92,24 @@ export const ICOSA = {
 	// the geometry and the panes no longer line up with the shape they emerge
 	// from.
 
-	// How solid the sphere is while the conception draws the frame inside it.
-	// The computation shrinks it away rather than thinning it, so the rooms are
-	// never seen through a wash.
+	// How solid the sphere is while the conception draws the frame inside it,
+	// and what it thins to for the computation — it stays for the whole run, a
+	// semi-transparent shell around the frame, but it must not be a wash over
+	// the rooms once they are out.
 	shellSolid: 0.85,
+	shellFaint: 0.4,
 
 	// How far the panes travel out of the frame. Owned by GoldenRectangle.
 	paneReach: 6.4
 };
 
-// The sphere the conception draws the frame inside. DERIVED, not chosen: the
-// icosahedron is INSCRIBED in it, so the twelve vertices sit exactly ON the
-// surface. That is the relationship the two shapes actually have, and it is
-// what makes the frame read as the structure OF the sphere rather than as an
-// ornament floating inside one. The lattice builds at raw vertex scale, so the
-// circumradius simply is the radius. The computation shrinks it away.
-export const ICOSA_SPHERE_R = CIRCUMRADIUS;
+// The sphere the frame sits inside, from the conception onward. Deliberately
+// LARGER than the frame — expressed as a multiple of the circumradius so the
+// gap is the number, not a coincidence of two absolutes — because a
+// semi-transparent shell standing off the polyhedron is the thing that makes
+// this read as something held rather than something drawn on. It is not the
+// circumsphere and is not trying to be.
+export const ICOSA_SPHERE_R = CIRCUMRADIUS * 1.58;
 
 // ── Aspect ───────────────────────────────────────────────────────────────────
 // Three shapes of screen, because the site has to sit in all of them: phones
