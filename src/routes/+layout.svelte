@@ -2,7 +2,7 @@
 	import './styles.css';
 	import { onMount } from 'svelte';
 	import { screenSize, aspect } from '$lib/store/store';
-	import { aspectKind, applyChassisVars } from '$lib/config';
+	import { aspectKind, applyChassisVars, chassisCss } from '$lib/config';
 	import { palette, applyCssVars } from '$lib/theme';
 
 	// Keep the UI ink (CSS custom properties) in sync with the active palette.
@@ -38,6 +38,15 @@
 		name="description"
 		content="Calculate the song playing at your exact moment of conception."
 	/>
+	<!-- The chassis, generated from CHASSIS itself, so the very first paint lays
+	     the machine out at the size JS is about to confirm rather than at a
+	     hard-coded guess that then has to be corrected. See config/layout.js.
+
+	     The @html is safe: chassisCss() is built entirely from those constants
+	     and no input of any kind reaches it. A plain <style> element cannot be
+	     used here — Svelte hoists it as this component's own stylesheet. -->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	{@html `<style>${chassisCss()}</style>`}
 </svelte:head>
 
 <main>

@@ -9,8 +9,10 @@
 //   space.js    3D distances and cameras
 //   layout.js   screen-space sizes        (monitor glass, chassis)
 //   palette.js  colour
+//   dev.js      the dev harness switch (off in production)
 export * from './timing';
 export * from './ease';
 export * from './space';
 export * from './layout';
 export * from './palette';
+export * from './dev';

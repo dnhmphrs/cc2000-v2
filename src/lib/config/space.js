@@ -20,11 +20,17 @@ export const EGG_CORE_RATIO = 0.82;
 
 // ── The tunnel (scenes 1–2) ──────────────────────────────────────────────────
 export const TUNNEL = {
-	fov: 30,
-	// Dial these apart to warp the lens through the fly-in. Equal = constant,
-	// which is where it starts; widening on the way in exaggerates the rush.
-	fovStart: 30,
-	fovEnd: 30,
+	// The lens WARPS through the fly-in: narrow and compressed at the start, so
+	// the egg reads as a long way off through the fog, opening out as the camera
+	// closes on it. Widening on the way in is what exaggerates the rush, and it
+	// also brings the camera nearer the egg to stop on — which is why the end of
+	// the scene is clear of fog rather than fogged at the very moment it matters.
+	//
+	// fov is the resting value the camera is BUILT at; fovEnd is what the framing
+	// is derived from, because that is the lens the scene finishes on.
+	fov: 22,
+	fovStart: 22,
+	fovEnd: 38,
 
 	near: 0.5,
 	far: 400,
@@ -56,9 +62,11 @@ export const TUNNEL = {
 };
 
 // Where the camera has to stop for the shell to fill EGG_SCREEN of the frame's
-// half-height. Derived, never typed.
+// half-height. Derived, never typed — and derived from fovEnd, because that is
+// the lens in force when the camera gets there. Using the resting fov here was
+// harmless only while the three were equal.
 export const CAM_END =
-	TUNNEL.eggZ + TUNNEL.shellR / (EGG_SCREEN * Math.tan((TUNNEL.fov * Math.PI) / 360));
+	TUNNEL.eggZ + TUNNEL.shellR / (EGG_SCREEN * Math.tan((TUNNEL.fovEnd * Math.PI) / 360));
 
 // ── The icosahedron (scenes 2–3) ─────────────────────────────────────────────
 export const ICOSA = {

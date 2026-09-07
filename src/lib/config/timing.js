@@ -77,8 +77,12 @@ export const SCENES = scale({
 		// the 3D should draw attention until this is over.
 		warp: [0.0, 0.25],
 
-		// The egg resolving out of the fog.
-		eggIn: [0.04, 0.52],
+		// The egg resolving out of the fog. It starts LATE on purpose: the fog is
+		// what is supposed to reveal it, and an opacity ramp that opens at 0.04
+		// simply puts the egg on screen from the first second and leaves the fog
+		// nothing to do. By the time this opens the camera has closed enough
+		// distance for the fog to be thinning on its own, so the two agree.
+		eggIn: [0.3, 0.74],
 
 		// The sperm comes from behind the camera, overtakes, and is ahead of it.
 		spermIn: [0.14, 0.26],

@@ -1,3 +1,4 @@
+import { ASPECT } from './space';
 // ── Layout ───────────────────────────────────────────────────────────────────
 // Screen-space sizes: the room monitors the result is drawn into, and the
 // calculator's own chassis.
@@ -66,16 +67,48 @@ export const CHASSIS = {
 	}
 };
 
+// The custom properties one chassis becomes. Everything that writes these goes
+// through here, so there is exactly one list.
+function vars(kind) {
+	const c = CHASSIS[kind] || CHASSIS.landscape;
+	return {
+		'--win': c.win,
+		'--win-aspect': String(c.winAspect),
+		'--win-y': `${c.winY * 100}%`,
+		'--controls-gap': c.controlsGap,
+		'--controls-h': c.controlsHeight,
+		'--button-gap': c.buttonGap
+	};
+}
+
 // Written onto :root so the CSS can lay the chassis out from the same numbers
 // the 3D uses. Called on mount and on every resize.
 export function applyChassisVars(kind) {
 	if (typeof document === 'undefined') return;
-	const c = CHASSIS[kind] || CHASSIS.landscape;
 	const root = document.documentElement.style;
-	root.setProperty('--win', c.win);
-	root.setProperty('--win-aspect', String(c.winAspect));
-	root.setProperty('--win-y', `${c.winY * 100}%`);
-	root.setProperty('--controls-gap', c.controlsGap);
-	root.setProperty('--controls-h', c.controlsHeight);
-	root.setProperty('--button-gap', c.buttonGap);
+	for (const [k, v] of Object.entries(vars(kind))) root.setProperty(k, v);
+}
+
+// The same three sets as plain CSS, guarded by the same thresholds aspectKind()
+// uses, for +layout.svelte to put in the document head.
+//
+// This exists because the chassis has to be RIGHT ON THE FIRST PAINT. The vars
+// above are only written once JS has run, so anything hard-coded as a fallback
+// is a second copy of these numbers that silently goes stale — which is exactly
+// what happened: styles.css still held a 420px 4:3 window long after the config
+// had moved on, and every load visibly jumped from one to the other. Generated
+// from CHASSIS, it cannot drift, and it covers all three shapes with no JS at
+// all, so there is nothing left to snap.
+export function chassisCss() {
+	const block = (kind) =>
+		Object.entries(vars(kind))
+			.map(([k, v]) => `${k}:${v}`)
+			.join(';');
+	// Least specific first: a portrait viewport matches the square query too, so
+	// portrait has to come last to win.
+	return [
+		`:root{${block('landscape')}}`,
+		`@media (max-aspect-ratio:${ASPECT.landscapeAbove * 5}/5){:root{${block('square')}}}`,
+		`@media (max-aspect-ratio:${ASPECT.portraitBelow * 100}/100){:root{${block('portrait')}}}`
+	].join('');
 }
