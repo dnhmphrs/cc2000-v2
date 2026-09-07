@@ -94,8 +94,8 @@
 	// Cold until it has actually landed. On the way home the machine is a picture
 	// inside somebody's monitor, a few dozen pixels across — nothing it could say
 	// would be readable, and a live screen zooming at you is the thing that gives
-	// away that this is a web page rather than a machine. So it shows its own
-	// mark, and turns on when it is set.
+	// away that this is a web page rather than a machine. So the glass stays dark
+	// and comes on when it is set.
 	let booting = !!arrivingFrom;
 	let timer;
 	let controlsTimer;
@@ -281,11 +281,7 @@
 		<div class="screen">
 			<div class="scanlines" />
 			{#if booting}
-				<!-- Not on yet. -->
-				<div class="boot">
-					<p class="mark">CC<span>2K</span></p>
-					<p class="tag">conception calculator</p>
-				</div>
+				<!-- Not on yet. Nothing at all until it has landed. -->
 			{:else if !typed}
 				{#each LINES as line, i}
 					<p class:lit={i === LINES.length - 1}>
@@ -403,30 +399,6 @@
 		   for the current aspect. --below is the chassis line under the glass. */
 		--winh: calc(var(--win) / var(--win-aspect));
 		--below: calc(var(--win-y) + var(--winh) / 2);
-	}
-
-	/* The cold screen on the way home. Sized in the same units as everything
-	   else in the machine, so it scales down with it inside the monitor. */
-	.boot {
-		margin: auto;
-		text-align: center;
-	}
-	.boot .mark {
-		margin: 0;
-		font-size: 30px;
-		font-weight: 700;
-		letter-spacing: 0.18em;
-		color: var(--yellow);
-	}
-	.boot .mark span {
-		color: var(--ink);
-	}
-	.boot .tag {
-		margin: 7px 0 0;
-		font-size: 8px;
-		letter-spacing: 0.36em;
-		text-transform: uppercase;
-		color: var(--ink-dim);
 	}
 
 	/* Everything that is not the cartoon machine waits until it is nearly home,

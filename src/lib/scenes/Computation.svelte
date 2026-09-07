@@ -130,6 +130,17 @@
 	// square by ICOSA.searchOblique.
 	const OBLIQUE = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.searchOblique));
 
+	// The axes the extra revolutions go round, one per step in turn. Four
+	// different ones, so no two turns in a run take the same route.
+	const TAU = Math.PI * 2;
+	const WHIRL = new THREE.Quaternion();
+	const WHIRL_AXES = [
+		new THREE.Vector3(0, 1, 0),
+		new THREE.Vector3(1, 0, 0.35).normalize(),
+		new THREE.Vector3(0, 0, 1),
+		new THREE.Vector3(-0.6, 1, 0.4).normalize()
+	];
+
 	// The rotation that puts a pane's artwork square to the camera.
 	function landingQuatFor(i) {
 		const room = panes[i]?.getRoom?.();
@@ -197,12 +208,16 @@
 		const open = easeInOutCubic(span(p, T.open));
 		panes.forEach((pane) => pane && pane.updateProjection(open));
 
-		// The sphere stays — it is what the frame is held inside, and losing it
-		// would leave the rooms coming off a bare wireframe — but it thins so the
-		// artwork is not seen through a wash. The frame is not touched: the same
-		// weight the conception drew it at, all the way to the fall.
+		// The sphere stays — it is what the frame is held inside — but it thins so
+		// the artwork is not seen through a wash, and it opens out off the frame
+		// it was skin-tight on, so the rooms come THROUGH it rather than out from
+		// under it. The frame itself is not touched: the same weight the
+		// conception drew it at, all the way to the fall.
 		const thin = easeInOutCubic(span(p, T.shellThin));
 		world.egg.setShell(lerp(ICOSA.shellSolid, ICOSA.shellFaint, thin));
+		world.egg.group.scale.setScalar(
+			lerp(1, ICOSA.sphereGrow, easeInOutCubic(span(p, T.sphereGrow)))
+		);
 
 		// ── The search ───────────────────────────────────────────────────────
 		// One slot per decade visited. Most of a slot is the turn onto that
@@ -225,12 +240,21 @@
 				.copy(step === 0 ? searchFrom : searchQuats[step - 1])
 				.slerp(searchQuats[step], turn);
 
-			const look = last
-				? 0
-				: Math.sin(clamp01((local - T.searchSpin) / (1 - T.searchSpin)) * Math.PI);
-			panes.forEach((pane, i) => {
-				if (pane) pane.setDim(i === searchOrder[step] ? 1 : lerp(1, T.searchDim, look));
-			});
+			// The route, not the destination. A whole number of extra revolutions
+			// is the identity at both ends, so the poses either side are exactly
+			// as measured — but between them the frame tumbles instead of taking
+			// the shortest arc, about a different axis and the other way round
+			// each step. The turn onto the answer takes none of it: after four
+			// whirls, one clean move is what reads as arriving.
+			if (!last && T.searchWhirl) {
+				const dir = step % 2 ? -1 : 1;
+				world.frame.quaternion.premultiply(
+					WHIRL.setFromAxisAngle(
+						WHIRL_AXES[step % WHIRL_AXES.length],
+						turn * TAU * T.searchWhirl * dir
+					)
+				);
+			}
 
 			const d = decadeAssignments[searchOrder[step]] ?? null;
 			if (d !== facing) {

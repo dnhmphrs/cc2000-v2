@@ -109,35 +109,32 @@ export const SCENES = scale({
 	},
 
 	// ── Conception ───────────────────────────────────────────────────────────
-	// The holy one, and the plainest. White, a beat of nothing, a sphere, and the
-	// icosahedron drawing itself on inside it — then a couple of turns, and out.
+	// White, a beat of nothing, and then three things in order: the sphere, the
+	// frame inside it, and the figure the frame is built on. Nothing turns.
 	//
-	//   0     0.05    0.28        0.46            0.94    1.0
-	//   |hold | sphere |   wire    |     spin      | rest |
-	//   |white| fades  | one stroke| two full turns| lands|
-	//   |     | up     | all edges | and settles   |      |
+	//   0     0.05    0.26      0.48         0.84       1.0
+	//   |hold | sphere |  wire   |   rects    |  rest    |
+	//   |white| fades  | all 30  | the three  | the whole|
+	//   |     | up     | at once | golden ones| figure   |
 	//
 	// The hold and the rest are the GAPS either side, not settings — the three
 	// windows below are the whole scene.
 	conception: {
-		duration: 4.4,
+		duration: 4.6,
 
-		// The sphere fades up out of the white, and stays for the rest of the run.
-		sphere: [0.05, 0.28],
+		// The sphere fades up out of the white, at the frame's exact circumradius
+		// — so what appears is one object, not a ball with something in it.
+		sphere: [0.05, 0.26],
 
 		// The frame draws itself on inside it. Every edge at once — the stagger is
 		// gone, see world/lattice.js — so this only has to be long enough to see
 		// the strokes travel.
-		wire: [0.22, 0.44],
+		wire: [0.22, 0.48],
 
-		// Then it turns, so the shape is read as a solid rather than a drawing.
-		// TWO axes, because one is just a spin: turning about the screen's
-		// vertical and its horizontal at once traces a tumble, and the shape
-		// shows more of itself doing one turn each way than two turns one way.
-		// Whole numbers on both, so it settles back onto exactly its resting pose
-		// — which is the pose the computation then turns away from.
-		spin: [0.46, 0.94],
-		spinTurns: [1, 1]
+		// Then the three golden rectangles, one after another. This is the beat
+		// that says what the shape is made of, and the rooms come off these very
+		// rectangles in the next scene.
+		rects: [0.5, 0.84]
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────
@@ -150,6 +147,9 @@ export const SCENES = scale({
 		// it: same weight, no fill.
 		open: [0.0, 0.18],
 		shellThin: [0.04, 0.22],
+		// And the sphere opens out off the frame it was skin-tight on, so the
+		// rooms come THROUGH it rather than out from under it.
+		sphereGrow: [0.0, 0.34],
 
 		// The search: turn a decade square to camera, look at it, turn to the
 		// next. The point is not to fake a search — it is that each turn shows
@@ -159,9 +159,15 @@ export const SCENES = scale({
 		searchSteps: 4,
 		// Fraction of each step spent turning; the rest is the look. The last
 		// step is all turn, because the zoom follows it straight away.
-		searchSpin: 0.62,
-		// How far the rooms that are not being looked at step back.
-		searchDim: 0.45,
+		searchSpin: 0.7,
+		// Whole extra revolutions folded into each turn BETWEEN decades, about a
+		// different axis every time. A whole number is the identity at both ends,
+		// so the poses either side are untouched and only the route between them
+		// changes — from the shortest arc to a tumble, which is what stops four
+		// turns in a row from being the same turn four times. The turn onto the
+		// ANSWER takes none of this: it is the one clean move, and that is what
+		// makes it land.
+		searchWhirl: 1,
 
 		// Then in. Accelerates away from rest, then eases onto the final frame.
 		zoom: [0.8, 1.0],
