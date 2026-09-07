@@ -1,6 +1,5 @@
 <script>
 	import * as THREE from 'three';
-	import { noise, noiseGhost, noiseWash } from '$lib/store/store';
 	import {
 		SCENES,
 		span,
@@ -11,14 +10,13 @@
 		smoothstep,
 		TUNNEL,
 		CAM_END,
-		DARK,
-		WHITE,
-		NOISE
+		DEEP_BLUE,
+		WHITE
 	} from '$lib/config';
 
 	// ── Scene 2: the fly in ──────────────────────────────────────────────────
-	// Near-black air, static, and a run at the egg. The calculator is still on
-	// screen for the first quarter of this, being pushed into the lens; by the
+	// Deep blue air, and a run at the egg. The calculator is still on screen
+	// for the first quarter of this, being pushed into the lens; by the
 	// time it has gone the sperm has come past the camera from behind and is
 	// out in front, and the egg is coming up out of the fog.
 	//
@@ -35,7 +33,7 @@
 
 	const T = SCENES.flyIn;
 
-	const dark = new THREE.Color(DARK);
+	const blue = new THREE.Color(DEEP_BLUE);
 	const white = new THREE.Color(WHITE);
 	const air = new THREE.Color();
 
@@ -47,8 +45,6 @@
 	export function enter() {
 		t = 0;
 		world.reset();
-		noiseWash.set(0);
-		noiseGhost.set(0);
 	}
 
 	export function update(dt) {
@@ -99,11 +95,9 @@
 		world.egg.setCore(eggIn);
 		world.egg.setShell(eggIn);
 
-		// ── The air, and the static ──────────────────────────────────────────
-		air.copy(dark).lerp(white, easeInOutPower(span(p, T.whiten), 1.6));
+		// ── The air ──────────────────────────────────────────────────────────
+		air.copy(blue).lerp(white, easeInOutPower(span(p, T.whiten), 1.6));
 		world.setAir(air.getHex());
-
-		noise.set(lerp(NOISE.base, NOISE.peak, span(p, T.noise)));
 
 		return t >= T.duration;
 	}

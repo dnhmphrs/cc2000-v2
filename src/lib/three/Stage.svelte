@@ -1,7 +1,7 @@
 <script>
 	import { onMount, onDestroy, tick } from 'svelte';
 	import * as THREE from 'three';
-	import { scene as sceneStore, sceneTone, sceneGround, monitorRect } from '$lib/store/store';
+	import { scene as sceneStore, sceneTone, monitorRect } from '$lib/store/store';
 	import { CANVAS_FADE, FLASH_DECAY, clamp01 } from '$lib/config';
 	import { createTunnel } from './world/tunnel';
 	import { createLattice } from './world/lattice';
@@ -56,6 +56,8 @@
 	// is on top of it.
 	let entered = null;
 	let held = null;
+	// True while the held scene is flying back into its own monitor.
+	let returning = false;
 
 	function sync(name) {
 		const next = SCENE_OF[name]?.();
@@ -104,10 +106,22 @@
 			// until the calculator has flown back out of that room's monitor, so
 			// it is exactly the window in which the room must stay on screen.
 			if (held && $monitorRect) {
+				// On the way home the room is not merely held — the camera flies
+				// into its monitor while the calculator grows out of it. Two sides
+				// of one move, so they are driven from the same duration and the
+				// calculator locks itself to the rect this republishes.
+				if (name === 'calculator') {
+					if (!returning) {
+						returning = true;
+						held.beginReturn?.();
+					}
+					held.stepReturn?.(dt);
+				}
 				ground(held.backdrop().color);
 				held.render(renderer);
 				return;
 			}
+			returning = false;
 			// Otherwise we are between runs: the calculator is on screen and the
 			// tunnel idles behind it, so its window has something to look at.
 			if (held) {
@@ -127,13 +141,10 @@
 		active.render(renderer);
 	}
 
-	// The ground is painted by the static layer BEHIND the canvas, so the 3D
-	// always clears transparent and only says what colour it is sitting on. The
-	// ground swings from near-black to white mid-run, so anything drawn over the
-	// canvas is told which it is on too.
+	// The ground swings from deep blue to white mid-run, so anything drawn over
+	// the canvas is told which it is on.
 	function ground(color) {
-		renderer.setClearColor(color, 0);
-		sceneGround.set(color);
+		renderer.setClearColor(color, 1);
 		sceneTone.set(luma(color) > 0.55 ? 'light' : 'dark');
 	}
 

@@ -1,7 +1,6 @@
 <script>
 	import { scene } from '$lib/store/store';
 	import Background from '$lib/components/Background.svelte';
-	import NoiseField from '$lib/components/NoiseField.svelte';
 	import Stage from '$lib/three/Stage.svelte';
 	import Calculator from '$lib/scenes/Calculator.svelte';
 	import Caption from '$lib/scenes/Caption.svelte';
@@ -11,7 +10,6 @@
 	//
 	//   0  Background   the theta field, off behind one switch
 	//   1  Stage        the three 3D scenes
-	//   3  NoiseField   static, over the picture
 	//   4  (flash)      the moment of conception, thrown by the Stage
 	//   10 the screens  the calculator, the caption, the room
 	//
@@ -21,7 +19,6 @@
 
 <Background />
 <Stage />
-<NoiseField />
 
 {#if $scene === 'calculator'}
 	<Calculator />

@@ -2,13 +2,12 @@
 @import '$lib/styles/fonts.css';
 
 :root {
-	/* The ground is near-black, and the machine's yellow is the colour event on
-	   it. Kept in step with DARK in config/palette.js — the 3D paints the same
-	   value through the static layer, so a mismatch shows as a seam. */
+	/* The ground is the deep blue, and the machine's yellow is the colour event
+	   on it. Kept in step with DEEP_BLUE in config/palette.js. */
 	--ink-rgb: 240, 242, 248;
 
-	--bg: #0b0c0f;
-	--panel: rgba(10, 11, 15, 0.92);
+	--bg: #0a246a;
+	--panel: rgba(5, 18, 60, 0.92);
 
 	--ink: rgba(var(--ink-rgb), 1);
 	--ink-dim: rgba(var(--ink-rgb), 0.66);

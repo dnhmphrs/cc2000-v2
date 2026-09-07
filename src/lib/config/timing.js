@@ -100,41 +100,21 @@ export const SCENES = scale({
 		// the camera easing off while the sperm accelerates is what sells it.
 		approachPower: 1.35,
 
-		// Static. It is on from the calculator onward; here it climbs.
-		noise: [0.0, 1.0],
-
 		// Deep blue turning white, under the blow-out that ends the scene.
 		whiten: [0.84, 1.0]
 	},
 
 	// ── Conception ───────────────────────────────────────────────────────────
-	// The holy one. White, and built up a layer at a time.
+	// The holy one, and deliberately the plainest: a sphere forms out of the
+	// white, and the icosahedron appears inside it. Nothing turns, nothing
+	// extends. This is the beat to build into.
 	conception: {
-		duration: 10.5,
+		duration: 4.5,
 
 		// A sphere forms in the middle of the white.
-		sphere: [0.0, 0.13],
-		// The icosahedron's wireframe appears inside it.
-		wire: [0.12, 0.3],
-		// Lines extend from the vertices, carrying the geometric content.
-		extend: [0.24, 0.46],
-		// Then the whole solid turns — a couple of small, deliberate moves rather
-		// than a revolution: turn a little, hold, turn a little, hold.
-		spin: [0.42, 0.88],
-		spinSteps: 2,
-		spinAngle: 0.62, // radians per move
-		spinHold: 0.55, // fraction of each move spent turning; the rest holds
-
-		// Everything draws back to a still frame before the panes come out.
-		settle: [0.88, 1.0],
-
-		// Dreamlike flashes of the run's imagery through the static. Off by
-		// default — raise `ghostAmount` to bring them in.
-		ghost: [0.2, 0.95],
-		ghostAmount: 0.0,
-
-		// Static holds low and steady here; this is the calm one.
-		noise: [0.0, 1.0]
+		sphere: [0.0, 0.22],
+		// The icosahedron's wireframe appears inside it, and the yolk goes.
+		wire: [0.18, 0.78]
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────
@@ -167,14 +147,11 @@ export const SCENES = scale({
 	},
 
 	// ── Room ─────────────────────────────────────────────────────────────────
-	// Waits for the operator. `again` is the way back: static floods, and the
-	// calculator is already drawn inside the monitor behind it.
+	// Waits for the operator. The way back is calculator.arrive, because the two
+	// halves of it — the camera flying into the monitor and the calculator
+	// growing out of it — are one move and must share one duration.
 	room: {
-		resultIn: 0.45,
-		again: 2.1,
-		// Fraction of `again` spent flooding with static before the calculator
-		// starts flying out of the monitor.
-		againStatic: 0.34
+		resultIn: 0.45
 	}
 });
 
