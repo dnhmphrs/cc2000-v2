@@ -6,7 +6,6 @@ import {
 	PENTAGONS,
 	PENTAGON_PAIRS,
 	CIRCUMRADIUS,
-	RECTANGLES,
 	edgePositions
 } from '../geometry/icosahedron';
 import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, WHITE } from '$lib/config';
@@ -195,51 +194,6 @@ export function createLattice() {
 	const edges = new THREE.LineSegments(edgeGeo, edgeMat);
 	wire.add(edges);
 
-	// ── The three golden rectangles ──────────────────────────────────────────
-	// The figure the whole thing is built on: three identical golden rectangles,
-	// mutually perpendicular, whose twelve corners ARE the icosahedron's twelve
-	// vertices. Not decoration — the computation projects each decade room off
-	// one of these very rectangles, so drawing them is showing the panes' own
-	// geometry a beat before they use it.
-	//
-	// Delayed a rectangle at a time (four segments each), so they arrive one
-	// after another rather than as one cage.
-	const rectSegs = [];
-	RECTANGLES.forEach(({ indices }) => {
-		for (let i = 0; i < indices.length; i++) {
-			rectSegs.push([indices[i], indices[(i + 1) % indices.length]]);
-		}
-	});
-	const rectPos = [];
-	rectSegs.forEach(([a, b]) => {
-		rectPos.push(...VERTICES[a].map((n) => n * S), ...VERTICES[b].map((n) => n * S));
-	});
-	const rectGeo = new THREE.BufferGeometry();
-	rectGeo.setAttribute('position', new THREE.Float32BufferAttribute(rectPos, 3));
-	const rectMat = growLineMaterial(ICOSA_INK.rect);
-	// Less depth fade than the frame gets. A rectangle only reads as a rectangle
-	// if all four sides are there, and at the frame's back floor the far two are
-	// gone — which leaves three bent lines rather than three rectangles.
-	rectMat.uniforms.uBack.value = 0.4;
-	const growRects = grower(
-		rectMat,
-		segmentAttributes(rectGeo, rectSegs.length, (i) => Math.floor(i / 4))
-	);
-	const rects = new THREE.LineSegments(rectGeo, rectMat);
-	rects.visible = false;
-	wire.add(rects);
-
-	// Line weight is two numbers, not one: a global fade and the frame's own
-	// standing. Both go through here so neither can overwrite the other.
-	let lineOpacity = 1;
-	let edgeBase = 1;
-	function applyLines() {
-		edgeMat.uniforms.uOpacity.value = lineOpacity * edgeBase;
-		rectMat.uniforms.uOpacity.value = lineOpacity;
-		spokeMat.uniforms.uOpacity.value = lineOpacity * 0.55;
-		pentagons.forEach((pn) => (pn.mat.uniforms.uOpacity.value = lineOpacity * 0.9));
-	}
-
 	// ── The spokes ───────────────────────────────────────────────────────────
 	// Every vertex to every neighbour, drawn straight through the middle.
 	// This is the geometric content the diagram carries: the internal star you
@@ -337,11 +291,6 @@ export function createLattice() {
 			growEdges(v);
 			edges.visible = v > 0.001;
 		},
-		// 0..1 — how much of the golden-rectangle figure has drawn itself on.
-		setRectangles(v) {
-			growRects(v);
-			rects.visible = v > 0.001;
-		},
 		setSpokes(v) {
 			growSpokes(v);
 			spokes.visible = v > 0.001;
@@ -352,19 +301,10 @@ export function createLattice() {
 				pn.line.visible = v > 0.001;
 			});
 		},
-		// The global fade, used by the fall into the room.
 		setLineOpacity(v) {
-			lineOpacity = v;
-			applyLines();
-		},
-		// How much the frame itself is worth, independently of that. The
-		// conception drops it while the golden rectangles are drawn over the top,
-		// so what you are looking at in that beat is the construction rather than
-		// more line-work; it stays where the conception left it, so the cut into
-		// the computation does not pop it back.
-		setEdgeOpacity(v) {
-			edgeBase = v;
-			applyLines();
+			edgeMat.uniforms.uOpacity.value = v;
+			spokeMat.uniforms.uOpacity.value = v * 0.55;
+			pentagons.forEach((pn) => (pn.mat.uniforms.uOpacity.value = v * 0.9));
 		},
 		setPanesVisible(v) {
 			paneGroup.visible = v;
@@ -398,10 +338,8 @@ export function createLattice() {
 			frame.quaternion.copy(TILT);
 			pentagons.forEach((pn) => (pn.spinner.rotation.z = 0));
 			this.setGrow(0);
-			this.setRectangles(0);
 			this.setSpokes(0);
 			this.setPentagons(0);
-			this.setEdgeOpacity(1);
 			this.setLineOpacity(1);
 			egg.setCore(0);
 			egg.setShell(0);
@@ -415,7 +353,6 @@ export function createLattice() {
 		dispose() {
 			egg.dispose();
 			edgeGeo.dispose();
-			rectGeo.dispose();
 			edgeMat.dispose();
 			spokeGeo.dispose();
 			spokeMat.dispose();
