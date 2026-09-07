@@ -1,6 +1,6 @@
 <script>
 	import { fade } from 'svelte/transition';
-	import { track, conceived, edge, monitorRect } from '$lib/store/store';
+	import { track, conceived, monitorRect } from '$lib/store/store';
 	import { SCENES } from '$lib/config';
 	import { formatDay, accuracyFor } from '$lib/functions/utils';
 	import { again } from './director';
@@ -11,11 +11,12 @@
 	// and this fills it. Everything inside scales with the glass, so the same
 	// markup reads whether the monitor is a portrait CRT or a widescreen.
 	//
-	// Two fallbacks, both centred cards: an out-of-range verdict, which never
-	// reaches a room at all, and a run whose room art failed to measure.
+	// One fallback, a centred card, for a run whose room art failed to measure.
+	// Out-of-range dates never get here at all — the calculator reports those on
+	// its own screen and stays put.
 	//
-	// "calculate again" hands back to the director, which floods the frame with
-	// static and lets the calculator fly out of this very monitor.
+	// "calculate again" hands back to the director. The camera then flies into
+	// this monitor while the calculator grows out of it — see the Stage.
 
 	$: uri = $track?.spotify_uri?.substring(14) ?? '';
 	$: src = uri ? `https://open.spotify.com/embed/track/${uri}?utm_source=generator` : '';
@@ -26,30 +27,9 @@
 	$: s = $monitorRect ? Math.max(0.55, Math.min(1.35, $monitorRect.width / 420)) : 1;
 
 	const IN = { duration: SCENES.room.resultIn * 1000 };
-
-	const EDGE = {
-		past: {
-			gif: '/gifs/the-past.gif',
-			line: 'you were born in the time of dinosaurs, there was no music.'
-		},
-		future: {
-			gif: '/gifs/the-future.gif',
-			line:
-				'you were born in the After Time. those lucky enough to be born were conceived to ' +
-				'"Baby" by Justin Bieber, as it is the only remaining music allowed by The Council.'
-		}
-	};
 </script>
 
-{#if $edge}
-	<div class="stage" in:fade={IN}>
-		<div class="col card">
-			<img src={EDGE[$edge].gif} alt="" />
-			<p class="msg">{EDGE[$edge].line}</p>
-			<button class="go" on:click={again}>calculate again</button>
-		</div>
-	</div>
-{:else if src && $monitorRect}
+{#if src && $monitorRect}
 	<!-- In the monitor. -->
 	<div
 		class="glass"
@@ -172,7 +152,7 @@
 		color: var(--bg);
 	}
 
-	/* Fallback / out-of-range card. */
+	/* Fallback card, when the room art could not be measured. */
 	.card .when {
 		font-size: 13px;
 	}

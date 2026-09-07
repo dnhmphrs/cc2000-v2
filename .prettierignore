@@ -11,3 +11,7 @@ node_modules
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
+
+# 4.8MB of generated chart data — not source, and reformatting it would
+# rewrite the whole file.
+src/lib/data/cc2000_data.json

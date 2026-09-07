@@ -155,6 +155,11 @@
 		world.applyFrustum(frustum);
 		world.setPanesVisible(true);
 		world.setSolid(1);
+		// Whatever the conception left, the sphere starts here at full strength
+		// and its true size, and only ever thins from there.
+		world.egg.setCore(0);
+		world.egg.setShell(ICOSA.shellSolid);
+		world.egg.group.scale.setScalar(1);
 		monitorRect.set(null);
 		panes.forEach((p) => {
 			if (!p) return;
@@ -175,13 +180,12 @@
 		const open = easeInOutCubic(span(p, T.open));
 		panes.forEach((pane) => pane && pane.updateProjection(open));
 
-		// The sphere draws in behind them and stays as a bubble.
-		const drawIn = easeInOutCubic(span(p, T.shellDrawIn));
-		world.egg.setCore(1 - drawIn);
-		world.egg.group.scale.setScalar(lerp(1, ICOSA.shellSettled, drawIn));
-		world.egg.setShell(lerp(1, ICOSA.shellFaint, drawIn));
-		// The wireframe is the solid's now; the conception's line-work fades.
-		world.setLineOpacity(1 - drawIn * 0.75);
+		// The sphere does not move — the conception left it at its final size —
+		// it only thins, so the rooms coming out of it are not seen through a
+		// wash. The line-work fades with it: the solid is the shape now.
+		const thin = easeInOutCubic(span(p, T.shellThin));
+		world.egg.setShell(lerp(ICOSA.shellSolid, ICOSA.shellFaint, thin));
+		world.setLineOpacity(1 - thin * 0.75);
 
 		// ── The search ───────────────────────────────────────────────────────
 		// One slot per decade visited. Most of a slot is the turn onto that

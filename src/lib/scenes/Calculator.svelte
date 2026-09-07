@@ -16,7 +16,7 @@
 		calcZoom
 	} from '$lib/store/store';
 	import { SCENES, lerp, easeInOutPower } from '$lib/config';
-	import { begin, skipToVerdict, settled } from './director';
+	import { begin, settled } from './director';
 	import { conceptionDate, previousDay, dateToDecade } from '$lib/functions/utils';
 	import data from '$lib/data/cc2000_data.json';
 
@@ -68,6 +68,22 @@
 	];
 	const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MAX_YEAR - i);
 
+	// The two dates the archive cannot answer for. Reported here rather than
+	// anywhere else, because neither one has a room to fall into.
+	const EDGE = {
+		past: {
+			head: 'error — out of range',
+			line: 'you were born in the time of dinosaurs. there was no music.'
+		},
+		future: {
+			head: 'error — out of range',
+			line:
+				'you were born in the After Time. those lucky enough to be born were ' +
+				'conceived to "Baby" by Justin Bieber, as it is the only remaining ' +
+				'music allowed by The Council.'
+		}
+	};
+
 	// Whether this mount is a return trip. Read once: monitorRect is cleared as
 	// soon as the arrival finishes.
 	const arrivingFrom = get(monitorRect);
@@ -88,6 +104,9 @@
 	// day of 29–31 and leave the button dead with no explanation.
 	$: if ($dobDay && Number($dobDay) > maxDay) dobDay.set(maxDay);
 	$: complete = $dobMonth && $dobDay && $dobYear;
+	// Any change to the dials clears the last verdict — the machine is being
+	// asked a new question.
+	$: if ($dobMonth || $dobDay || $dobYear || $spicy) edge.set(null);
 	$: readout = complete
 		? `${String($dobDay).padStart(2, '0')} ${MONTHS[$dobMonth - 1].toUpperCase()} ${$dobYear}`
 		: '-- --- ----';
@@ -204,15 +223,10 @@
 		const today = new Date().toISOString().slice(0, 10);
 
 		// The archive starts in 1958 and nobody has been conceived after today.
-		// Neither verdict has a room to fall into, so both skip the cinematic.
-		if (cd <= '1958-06-01') {
-			edge.set('past');
-			return skipToVerdict();
-		}
-		if (get(date) >= today) {
-			edge.set('future');
-			return skipToVerdict();
-		}
+		// Neither verdict has a room to fall into, so neither one goes anywhere:
+		// the machine reports it on its own screen and waits to be asked again.
+		if (cd <= '1958-06-01') return edge.set('past');
+		if (get(date) >= today) return edge.set('future');
 
 		let found = null;
 		for (let i = 0; i < 400; i++) {
@@ -225,10 +239,7 @@
 			}
 			cd = previousDay(cd);
 		}
-		if (!found) {
-			edge.set('past');
-			return skipToVerdict();
-		}
+		if (!found) return edge.set('past');
 
 		edge.set(null);
 		track.set(found);
@@ -267,6 +278,12 @@
 							/>{/if}
 					</p>
 				{/each}
+			{:else if $edge}
+				<!-- Out of range. The machine says so and stays where it is. -->
+				<div class="verdict">
+					<p class="err">{EDGE[$edge].head}</p>
+					<p class="msg">{EDGE[$edge].line}</p>
+				</div>
 			{:else}
 				<dl class="readout">
 					<div>
@@ -532,6 +549,22 @@
 	}
 	.readout dd.ready {
 		color: var(--yellow);
+	}
+
+	.verdict p {
+		margin: 0;
+	}
+	.verdict .err {
+		font-size: clamp(7px, 0.72vw, 9px);
+		letter-spacing: 0.24em;
+		text-transform: uppercase;
+		color: var(--machine-lamp);
+		margin-bottom: 0.7em;
+	}
+	.verdict .msg {
+		font-size: clamp(9px, 0.95vw, 12px);
+		line-height: 1.5;
+		color: rgba(240, 242, 248, 0.85);
 	}
 
 	/* ── Fascia ──────────────────────────────────────────────────────────── */

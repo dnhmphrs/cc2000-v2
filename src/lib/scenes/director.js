@@ -21,6 +21,10 @@ import {
 //        ▲                                                            │
 //        └──────────────────────── again() ───────────────────────────┘
 //
+// An out-of-range birthday never leaves the calculator at all: it sets `edge`
+// and stays put, so the operator can change the date and go again without the
+// site having flown them anywhere first.
+//
 // The stage advances the three 3D scenes itself as each one finishes (they know
 // their own durations); the two ends of the loop are driven from the DOM.
 
@@ -47,12 +51,6 @@ export function advance(from) {
 	const i = ORDER.indexOf(from);
 	if (i < 0 || !is(from)) return;
 	scene.set(ORDER[Math.min(i + 1, ORDER.length - 1)]);
-}
-
-// An out-of-range birthday never reaches a room, so it skips the whole
-// cinematic and goes straight to the verdict.
-export function skipToVerdict() {
-	scene.set('room');
 }
 
 // Going round again. The calculator is drawn inside the room's monitor and the
