@@ -24,8 +24,10 @@
 // The keys still work while it is set, and jumping with 1–5 changes which scene
 // is pinned rather than fighting it.
 export const DEV = {
-	// The whole switch. Everything else here is inert while this is false.
-	on: false,
+	// The whole switch. Everything else here is inert while this is false —
+	// components/Dev.svelte returns before it binds a listener. ON while the site
+	// is being built; turn it off before it ships.
+	on: true,
 
 	// SPACE and 1–5. Turn off if they get in the way of testing real input.
 	keys: true,

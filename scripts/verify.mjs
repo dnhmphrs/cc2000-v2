@@ -34,28 +34,50 @@ const until = async (fn, max = 120) => {
 	return false;
 };
 
+// The machine takes its date on three rotary dials in landscape and on selects
+// in portrait, so the checks below drive whichever is actually there. Both are
+// sliders/selects with the same aria-labels, which is the point of the labels.
+const dial = async (label, presses) => {
+	await p.focus(`[role=slider][aria-label=${label}]`);
+	await p.keyboard.press('Home');
+	for (let i = 0; i < presses; i++) await p.keyboard.press('ArrowUp');
+};
+const setDate = async (month, day, year) => {
+	if (await p.$('select[aria-label=month]')) {
+		await p.selectOption('select[aria-label=month]', String(month));
+		await p.selectOption('select[aria-label=day]', String(day));
+		await p.selectOption('select[aria-label=year]', String(year));
+	} else {
+		// Home puts each dial on its minimum: month 1, day 1, year MIN_YEAR.
+		const minYear = await p.evaluate(
+			() => +document.querySelector('[aria-label=year]').getAttribute('aria-valuemin')
+		);
+		await dial('month', month - 1);
+		await dial('day', day - 1);
+		await dial('year', year - minYear);
+	}
+	await p.waitForTimeout(300);
+};
+
 await p.goto(`${BASE}/?speed=6`, { waitUntil: 'networkidle' });
-await p.selectOption('select[aria-label=month]', '7');
-await p.selectOption('select[aria-label=day]', '14');
-await p.selectOption('select[aria-label=year]', '1986');
-await p.waitForTimeout(300);
+await setDate(7, 14, 1986);
 
 // An out-of-range date is reported in place and must not fly anywhere. The
 // earliest year the machine offers is always before the charts start.
 const earliest = await p.evaluate(() => {
-	// The list runs newest first, so the last option is the earliest year.
-	const o = document.querySelector('select[aria-label=year]').options;
-	return o[o.length - 1].value;
+	const sel = document.querySelector('select[aria-label=year]');
+	// The select runs newest first, so its last option is the earliest year;
+	// the dial states its own minimum.
+	if (sel) return +sel.options[sel.options.length - 1].value;
+	return +document.querySelector('[aria-label=year]').getAttribute('aria-valuemin');
 });
-await p.selectOption('select[aria-label=year]', earliest);
-await p.selectOption('select[aria-label=month]', '1');
+await setDate(1, 14, earliest);
 await p.click('.go');
 ok(
 	'error stays on the calculator',
 	await until(() => !!document.querySelector('.verdict .err'), 20)
 );
-await p.selectOption('select[aria-label=year]', '1986');
-await p.waitForTimeout(200);
+await setDate(7, 14, 1986);
 ok('error clears on a new date', await p.evaluate(() => !document.querySelector('.verdict')));
 
 // The run.
