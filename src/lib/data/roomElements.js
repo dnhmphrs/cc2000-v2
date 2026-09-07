@@ -118,12 +118,9 @@ export const LAYERS = [
 // Detected as the largest uniform-colour region in each PNG, except the 50s,
 // whose screen fill is too close to its own casing for that to work — measured
 // off the artwork by hand instead.
-export const SCREEN_GLASS = {
-	'50s': { cx: 0.545, cy: 0.42, w: 0.73, h: 0.58 },
-	'60s': { cx: 0.382, cy: 0.391, w: 0.64, h: 0.65 },
-	'90s': { cx: 0.352, cy: 0.436, w: 0.51, h: 0.63 },
-	'10s': { cx: 0.498, cy: 0.319, w: 0.94, h: 0.6 }
-};
+// Moved to config/layout.js, where every other screen-space size lives.
+// Re-exported so nothing that already imports it from here has to change.
+export { SCREEN_GLASS, GLASS_SAFETY } from '$lib/config';
 
 // The palettes the background field takes while the search turns through the
 // decades. All of them sit in the site's blue/yellow pairing — the era shifts

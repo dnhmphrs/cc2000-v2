@@ -1,21 +1,18 @@
 import * as THREE from 'three';
+import { EGG, EGG_CORE_RATIO } from '$lib/config';
 
 // ── The egg ──────────────────────────────────────────────────────────────────
 // Built once here and used by BOTH the tunnel (scenes 1–2, perspective) and the
 // computation (scene 3, orthographic), so the cut between them cannot move it.
 //
 // Nothing here is lit. A shaded sphere would need matching lights in two very
-// different scenes and would still differ between a perspective and an
+// different scenes and would STILL differ between a perspective and an
 // orthographic camera; instead the core carries a painted gradient and the
-// shell a view-space rim, both of which resolve identically under either
-// camera. That is what makes the three scenes line up.
-
-// How much of the frame's HALF-height the shell spans when it is at rest.
-// The fly-in derives its camera distance from this, and the computation
-// derives its sphere radius from it, so the two agree by construction.
-export const EGG_SCREEN = 0.78;
-
-const CORE_RATIO = 0.82;
+// shell a view-space rim, both of which resolve identically under either.
+// That is what makes the scenes line up.
+//
+// Sizes are in config/space.js — EGG_SCREEN is the one number both cameras
+// derive from.
 
 // Vertical, not radial: a sphere's UVs wrap in u, so anything not symmetric
 // across the texture's left and right edges seams from pole to pole. Identical
@@ -26,10 +23,8 @@ function gradientTexture() {
 	c.height = 256;
 	const g = c.getContext('2d');
 	const grad = g.createLinearGradient(0, 0, 0, 256);
-	grad.addColorStop(0, '#ffffff');
-	grad.addColorStop(0.32, '#e4ecff');
-	grad.addColorStop(0.68, '#a8bce6');
-	grad.addColorStop(1, '#6f86bd');
+	const stops = EGG.coreStops;
+	stops.forEach((hex, i) => grad.addColorStop(i / (stops.length - 1), hex));
 	g.fillStyle = grad;
 	g.fillRect(0, 0, 4, 256);
 	const tex = new THREE.CanvasTexture(c);
@@ -40,16 +35,17 @@ function gradientTexture() {
 
 // The rim. `1 - |n.z|` in VIEW space is the silhouette however the camera is
 // projected, so this is the one fresnel that is the same under both cameras.
+// Front faces only: drawing both hemispheres double-blends at the silhouette,
+// where the geometry is edge-on, and bands there.
 function shellMaterial() {
 	return new THREE.ShaderMaterial({
 		transparent: true,
 		depthWrite: false,
-		// Front faces only. Drawing both hemispheres double-blends at the
-		// silhouette, where the geometry is edge-on, and bands there.
 		side: THREE.FrontSide,
 		uniforms: {
-			uColor: { value: new THREE.Color(0xdfe8ff).convertSRGBToLinear() },
-			uRim: { value: new THREE.Color(0x8fa6dc).convertSRGBToLinear() },
+			uColor: { value: new THREE.Color(EGG.shell).convertSRGBToLinear() },
+			uRim: { value: new THREE.Color(EGG.rim).convertSRGBToLinear() },
+			uPower: { value: EGG.rimPower },
 			uOpacity: { value: 1 }
 		},
 		vertexShader: `
@@ -62,13 +58,12 @@ function shellMaterial() {
 		fragmentShader: `
 			uniform vec3 uColor;
 			uniform vec3 uRim;
+			uniform float uPower;
 			uniform float uOpacity;
 			varying vec3 vN;
 			void main() {
-				float f = pow(1.0 - abs(normalize(vN).z), 1.7);
-				vec3 col = mix(uColor, uRim, f);
-				float a = (0.16 + f * 0.72) * uOpacity;
-				gl_FragColor = vec4(col, a);
+				float f = pow(1.0 - abs(normalize(vN).z), uPower);
+				gl_FragColor = vec4(mix(uColor, uRim, f), (0.16 + f * 0.72) * uOpacity);
 			}
 		`
 	});
@@ -85,8 +80,8 @@ export function createEgg(radius) {
 	});
 	const shellMat = shellMaterial();
 
-	const core = new THREE.Mesh(new THREE.SphereGeometry(radius * CORE_RATIO, 64, 48), coreMat);
-	const shell = new THREE.Mesh(new THREE.SphereGeometry(radius, 64, 48), shellMat);
+	const core = new THREE.Mesh(new THREE.SphereGeometry(radius * EGG_CORE_RATIO, 48, 32), coreMat);
+	const shell = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 32), shellMat);
 	// Both sit at the same point, so distance sorting cannot separate them: say
 	// it outright. Anything inside the egg is left on the default order, behind.
 	core.renderOrder = 1;
@@ -99,6 +94,7 @@ export function createEgg(radius) {
 		group,
 		core,
 		shell,
+		radius,
 		// 0..1 each, so a scene can dissolve the yolk without touching the shell.
 		setCore(o) {
 			coreMat.opacity = o;

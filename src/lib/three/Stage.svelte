@@ -1,122 +1,130 @@
 <script>
 	import { onMount, onDestroy, tick } from 'svelte';
 	import * as THREE from 'three';
-	import { sceneState, sceneTone, flare, monitorRect } from '$lib/store/store';
-	import { clamp } from '$lib/functions/utils';
+	import { scene as sceneStore, sceneTone, monitorRect } from '$lib/store/store';
+	import { CANVAS_FADE, FLASH_DECAY, clamp01 } from '$lib/config';
 	import { createTunnel } from './world/tunnel';
-	import FlyIn from './scenes/FlyIn.svelte';
-	import Conception from './scenes/Conception.svelte';
-	import Computation from './scenes/Computation.svelte';
+	import { createLattice } from './world/lattice';
+	import { advance } from '$lib/scenes/director';
+	import FlyIn from '$lib/scenes/FlyIn.svelte';
+	import Conception from '$lib/scenes/Conception.svelte';
+	import Computation from '$lib/scenes/Computation.svelte';
 
 	// ── The stage ────────────────────────────────────────────────────────────
-	// One canvas, one renderer, one clock, and three scenes played in order:
+	// One canvas, one renderer, one clock. It runs the three 3D scenes and
+	// nothing else: it does not know what any of them contains, only that each
+	// one answers the same five calls.
 	//
-	//   1. FlyIn        the corridor, the sperm, the egg          [world/tunnel]
-	//   2. Conception   holds on the egg                          [world/tunnel]
-	//   3. Computation  the icosahedron, the search, the room     [own scene]
-	//
-	// Every scene answers the same five calls, so this file never needs to know
-	// what any of them contains:
-	//
-	//   enter()      becomes the active scene — reset yourself
-	//   update(dt)   a frame; return true when you are finished
+	//   enter()      you are the active scene — reset yourself
+	//   update(dt)   a frame; return true when your duration is up
 	//   render(r)    draw yourself
 	//   backdrop()   { color, alpha } for the renderer to clear to
 	//   resize()     the window changed
 	//
-	// Scenes 1 and 2 share a world (world/tunnel.js), and scene 3 builds its egg
-	// from the same factory at the same on-screen size, so all three line up and
-	// only ONE cut is visible — the white blow-out at the end of the fly-in,
-	// which is also where the air turns from deep blue to white.
+	// Which scene is active comes from the `scene` store, so the DOM screens and
+	// the 3D are never out of step — there is one answer to "where are we" and
+	// both halves read it.
 	//
-	// The whole run is driven by sceneState alone:
-	//   0  reset to idle          5  calculate again → fly back into the machine
-	//   1  calculate → run        4  landed (raised here, read by the UI)
+	// TWO WORLDS, THREE SCENES. The fly-in has the tunnel to itself; the
+	// conception and the computation share the lattice, which is why the
+	// icosahedron the conception assembles is the one the computation projects
+	// panes off. Both worlds size their egg from the same EGG_SCREEN, so the one
+	// cut between them cannot move it — which is why there is exactly one
+	// visible transition in the whole run: the white blow-out that ends the
+	// fly-in, thrown here.
 
 	let canvasElement;
 	let renderer;
 	let clock;
 	let animationFrameId;
-	let world;
+	let tunnel, lattice;
 	let flyIn, conception, computation;
 	let mounted = false;
 
-	// -1 = idle: scene 1 is on screen but held at its start, with the machine
-	// over the top of it. The run begins when the machine says so.
-	let index = -1;
-	// A plain lookup rather than a reactive `$:`, because advance() runs inside
-	// requestAnimationFrame and needs the new scene on the same tick.
-	const sceneAt = (i) => [flyIn, conception, computation][Math.max(i, 0)];
+	const SCENE_OF = {
+		flyIn: () => flyIn,
+		conception: () => conception,
+		computation: () => computation
+	};
 
-	// Canvas fade-in from mount.
 	let canvasFadeStart = null;
-	const CANVAS_FADE = 1.2;
-
-	// The white bloom over the cut from the tunnel into the icosahedron.
 	let flashEl;
 	let flash = 0;
-	const BLOOM_DECAY = 2.4;
 
-	// True once the last scene has landed, so the run only ends once.
-	let landed = false;
-	// True while flying back into the room's monitor on "calculate again".
-	let returning = false;
+	// Which scene we last handed control to, so entering happens exactly once,
+	// and the last 3D scene to run, whose final frame is HELD while a DOM scene
+	// is on top of it.
+	let entered = null;
+	let held = null;
 
-	function advance() {
-		index += 1;
-		if (index === 1) flash = 1; // conception: the one blow-out in the run
-		sceneAt(index)?.enter();
-	}
-
-	function resetScene() {
-		index = -1;
-		landed = false;
-		returning = false;
-		flash = 0;
-		if (flashEl) flashEl.style.opacity = '0';
-		flare.set(0);
-		monitorRect.set(null);
-		flyIn?.reset();
-		conception?.reset();
-		computation?.reset();
-		// Fade back in, so the room does not simply cut to the empty tunnel
-		// behind the machine that has just grown out of it.
-		canvasFadeStart = performance.now() / 1000;
+	function sync(name) {
+		const next = SCENE_OF[name]?.();
+		// 'calculator' and 'room' have no 3D of their own — they are DOM screens
+		// over whatever the 3D last drew. Leave it alone.
+		if (!next) return;
+		if (entered === name) return;
+		// The one blow-out in the run: through the flash, the air goes from deep
+		// blue to white and the world changes underneath it.
+		if (name === 'conception') flash = 1;
+		entered = name;
+		held = next;
+		next.enter();
 	}
 
 	function handleResize() {
 		if (!renderer) return;
 		renderer.setSize(window.innerWidth, window.innerHeight);
-		// All three, not just the active one: the icosahedron has to be the right
-		// shape before its turn comes round.
 		flyIn?.resize();
 		conception?.resize();
 		computation?.resize();
-		if (index === 2) computation?.remeasureMonitor();
+		if (entered === 'computation') computation?.remeasureMonitor();
 	}
 
 	function animate() {
 		animationFrameId = requestAnimationFrame(animate);
-		const active = sceneAt(index);
-		if (!clock || !renderer || !active) return;
-		// Clamped so a one-off hitch (a GLTF parse, a texture upload) can't jump
+		if (!clock || !renderer) return;
+
+		const name = $sceneStore;
+		sync(name);
+		const active = SCENE_OF[name]?.();
+
+		// Clamped so a one-off hitch (a GLTF parse, a texture upload) cannot jump
 		// the animation forward.
 		const dt = Math.min(clock.getDelta(), 0.05);
 
 		const since = canvasFadeStart != null ? performance.now() / 1000 - canvasFadeStart - 0.2 : 0;
-		canvasElement.style.opacity = clamp(since / CANVAS_FADE, 0, 1).toFixed(4);
+		canvasElement.style.opacity = clamp01(since / CANVAS_FADE).toFixed(4);
 
-		if (active.update(dt)) {
-			if (index < 2) advance();
-			else if (returning) sceneState.set(0); // home; the cue runs the reset
-			else if (!landed) {
-				landed = true;
-				sceneState.set(4); // the room has settled; the result screen takes over
+		flash = Math.max(0, flash - dt * FLASH_DECAY);
+		if (flashEl) flashEl.style.opacity = flash.toFixed(4);
+
+		if (!active) {
+			// A DOM screen is up. Which frame sits behind it depends on whether a
+			// run has left one: monitorRect is set from the moment a room lands
+			// until the calculator has flown back out of that room's monitor, so
+			// it is exactly the window in which the room must stay on screen.
+			if (held && $monitorRect) {
+				const b = held.backdrop();
+				renderer.setClearColor(b.color, b.alpha);
+				sceneTone.set(luma(b.color) > 0.55 ? 'light' : 'dark');
+				held.render(renderer);
+				return;
 			}
+			// Otherwise we are between runs: the calculator is on screen and the
+			// tunnel idles behind it, so its window has something to look at.
+			if (held) {
+				held = null;
+				entered = null;
+				tunnel.reset();
+				lattice.reset();
+			}
+			renderer.setClearColor(tunnel.getAir(), 1);
+			sceneTone.set('dark');
+			renderer.render(tunnel.scene, tunnel.camera);
+			return;
 		}
 
-		flash = Math.max(0, flash - dt * BLOOM_DECAY);
-		if (flashEl) flashEl.style.opacity = flash.toFixed(4);
+		if (active.update(dt)) advance(name);
 
 		// The ground swings from deep blue to white mid-run, so anything drawn
 		// over the canvas is told which it is on.
@@ -126,15 +134,13 @@
 		active.render(renderer);
 	}
 
-	// Rec. 709 on the clear colour — good enough to decide black text or white.
+	// Rec. 709 on the clear colour — enough to choose dark type or light.
 	function luma(hex) {
 		const r = ((hex >> 16) & 255) / 255;
 		const g = ((hex >> 8) & 255) / 255;
 		const b = (hex & 255) / 255;
 		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 	}
-
-	let unsubSceneState;
 
 	onMount(async () => {
 		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true, alpha: true });
@@ -143,52 +149,39 @@
 		renderer.outputEncoding = THREE.sRGBEncoding;
 		clock = new THREE.Clock();
 
-		world = createTunnel();
+		tunnel = createTunnel();
+		lattice = createLattice();
+		tunnel.reset();
+		lattice.reset();
 
 		mounted = true;
 		await tick(); // let the scene components exist
 
 		await computation.init();
-		flyIn.enter();
 		handleResize();
 
 		canvasElement.style.opacity = '0';
 		canvasFadeStart = performance.now() / 1000;
-
 		window.addEventListener('resize', handleResize);
-
-		unsubSceneState = sceneState.subscribe((s) => {
-			if (s === 0) {
-				if (index !== -1) resetScene();
-			} else if (s === 1 && index === -1) {
-				index = 0;
-				flyIn.launch();
-			} else if (s === 5 && index === 2 && !returning) {
-				// Back out through the monitor. The room stays on screen and grows
-				// while the machine grows out of its glass.
-				returning = true;
-				computation.beginReturn();
-			}
-		});
 
 		animate();
 	});
 
 	onDestroy(() => {
 		if (typeof window === 'undefined') return;
-		unsubSceneState?.();
 		if (animationFrameId) cancelAnimationFrame(animationFrameId);
 		window.removeEventListener('resize', handleResize);
 		computation?.dispose();
-		world?.dispose();
+		tunnel?.dispose();
+		lattice?.dispose();
 		renderer?.dispose();
 	});
 </script>
 
 {#if mounted}
-	<FlyIn bind:this={flyIn} {world} />
-	<Conception bind:this={conception} {world} />
-	<Computation bind:this={computation} {renderer} />
+	<FlyIn bind:this={flyIn} world={tunnel} />
+	<Conception bind:this={conception} world={lattice} />
+	<Computation bind:this={computation} world={lattice} {renderer} />
 {/if}
 
 <canvas bind:this={canvasElement} />
@@ -205,11 +198,11 @@
 		opacity: 0;
 	}
 
-	/* The cut into the icosahedron. Over the 3D, under the UI. */
+	/* The moment of conception. Over the 3D and the static, under the UI. */
 	.flash {
 		position: fixed;
 		inset: 0;
-		z-index: 2;
+		z-index: 4;
 		background: #fff;
 		opacity: 0;
 		pointer-events: none;

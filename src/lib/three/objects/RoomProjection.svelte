@@ -1,6 +1,7 @@
 <script>
 	import * as THREE from 'three';
-	import { LAYERS, SCREEN_GLASS, elementUrl } from '$lib/data/roomElements';
+	import { LAYERS, elementUrl } from '$lib/data/roomElements';
+	import { SCREEN_GLASS, GLASS_SAFETY } from '$lib/config';
 
 	// Lives in the same worldGroup as everything else so it rotates together.
 	export let group;
@@ -219,8 +220,8 @@
 		// while image y runs down, hence the flip on cy.
 		// Pulled in a little from the measured rect. The glass edges are drawn, not
 		// crisp, and a few percent of overhang puts the panel onto the casing —
-		// far more noticeable than a slightly small panel.
-		const SAFETY = 0.86;
+		// far more noticeable than a slightly small panel. config/layout.js.
+		const SAFETY = GLASS_SAFETY;
 		const lx = glass.cx - 0.5;
 		const ly = 0.5 - glass.cy;
 		const hw = (glass.w * SAFETY) / 2;

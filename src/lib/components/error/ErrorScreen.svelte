@@ -2,11 +2,11 @@
 	export let status = 500;
 	export let message = '';
 
-	import { phase } from '$lib/store/store';
+	import { scene } from '$lib/store/store';
 	import { goto } from '$app/navigation';
 
 	function goHome() {
-		phase.set('intro');
+		scene.set('calculator');
 		goto('/', { replaceState: true });
 	}
 </script>
