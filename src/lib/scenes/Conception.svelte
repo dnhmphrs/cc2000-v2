@@ -2,8 +2,8 @@
 	import { SCENES, span, clamp01, smoothstep, WHITE, ICOSA } from '$lib/config';
 
 	// ── Scene 3: conception ──────────────────────────────────────────────────
-	// White, a held beat of nothing, a sphere, and the icosahedron drawing itself
-	// on inside it. Nothing turns, and nothing else is added.
+	// White, a held beat of nothing, a sphere, the icosahedron drawing itself on
+	// inside it, and the six diagonals striking through the middle. Nothing turns.
 	//
 	// The fly-in ends by blowing the frame out to white, and this OPENS on that
 	// white and stays there for a moment before anything happens. The pause is
@@ -15,15 +15,15 @@
 	// rather than a ball with something floating in it. The computation eases it
 	// off that as the rooms come through.
 	//
-	// The golden-ratio construction is deliberately NOT here. It belongs to the
-	// rectangles themselves, and the computation projects it out of the frame as
-	// its opening beat — which is a better answer to "why this shape" than
-	// drawing it flat inside the frame, because you watch it come out.
+	// The star is the last beat, and it is the one that hands over to the
+	// computation. Everything up to it is outline; the six diagonals are the only
+	// lines in the figure that are not edges, so they are what turn the frame from
+	// a drawing of a shape into a shape with an inside — and then the rooms come
+	// out of it.
 	//
 	// What is built and simply never turned on, when you come to fill this out —
 	// see world/lattice.js:
 	//
-	//   world.setSpokes(v)    the internal star through the middle of the frame
 	//   world.setPentagons(v) the twelve vertex figures…
 	//   world.pentagons[i].spinner   …each on its own spin axis
 
@@ -49,6 +49,10 @@
 		// strokes travelling is the whole of the movement, and easing the clock
 		// only makes them stall at both ends.
 		world.setGrow(span(p, T.wire));
+
+		// Then the six diagonals, staggered — the stagger is in world/lattice.js,
+		// same as the edges'.
+		world.setSpokes(span(p, T.star));
 
 		return t >= T.duration;
 	}

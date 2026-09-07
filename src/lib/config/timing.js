@@ -66,11 +66,7 @@ export const SCENES = scale({
 
 		// Coming back the other way: the whole calculator is drawn 1:1 inside the
 		// room's monitor and then flown out of it.
-		arrive: 2.1,
-		// Below this much of the final size the fiddly controls are hidden — at
-		// monitor scale they are unreadable and unclickable, so the screen shows
-		// only its cartoon self until it is nearly home.
-		controlsAt: 0.55
+		arrive: 2.1
 	},
 
 	// ── FlyIn ────────────────────────────────────────────────────────────────
@@ -109,51 +105,51 @@ export const SCENES = scale({
 	},
 
 	// ── Conception ───────────────────────────────────────────────────────────
-	// White, a beat of nothing, a sphere, and the icosahedron drawing itself on
-	// inside it. Nothing turns, and nothing else is added — the construction the
-	// shape is built on is the computation's opening beat, not this one's.
+	// White, a beat of nothing, a sphere, the icosahedron drawing itself on
+	// inside it, and then the six diagonals striking through the middle of it.
+	// Nothing turns.
 	//
-	//   0     0.06    0.3            0.8         1.0
-	//   |hold | sphere |     wire     |   rest    |
+	//   0     0.06    0.28        0.6        0.92    1.0
+	//   |hold | sphere |   wire    |   star   | rest |
 	//
 	// The hold and the rest are the GAPS either side, not settings.
 	conception: {
-		duration: 3.9,
+		duration: 4.8,
 
 		// The sphere fades up out of the white, at the frame's exact circumradius
 		// — so what appears is one object, not a ball with something in it.
-		sphere: [0.06, 0.3],
+		sphere: [0.06, 0.28],
 
 		// The frame draws itself on inside it. Every edge at once — the stagger is
 		// gone, see world/lattice.js — so this only has to be long enough to see
 		// the strokes travel.
-		wire: [0.26, 0.8]
+		wire: [0.24, 0.6],
+
+		// Then the six long diagonals, vertex through the centre to antipode. They
+		// are the only lines in the figure that are not edges, so this is the beat
+		// where an outline becomes a solid with an inside — and it is what stands
+		// between the frame finishing and the rooms coming out of it.
+		star: [0.6, 0.92]
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────
 	computation: {
-		duration: 9.2,
+		duration: 8.0,
 
 		// The panes come out of the frame. The sphere stays — it is the thing the
 		// frame is held inside — but thins to shellFaint so the rooms are not seen
 		// through a wash. The frame itself is left exactly as the conception drew
 		// it: same weight, no fill.
-		open: [0.0, 0.2],
+		open: [0.0, 0.18],
 		shellThin: [0.04, 0.22],
 		// And the sphere opens out off the frame it was skin-tight on, so the
 		// rooms come THROUGH it rather than out from under it.
 		sphereGrow: [0.0, 0.34],
 
-		// The panes come out as PURE GEOMETRY — the golden spiral, the subdivision
-		// squares, the 1:φ bar — and are left alone for a beat with nothing on
-		// them. Only then do the decades arrive over the construction. That order
-		// is the whole point: the rooms sit on the ratio, not the other way round.
-		rooms: [0.3, 0.44],
-
 		// The search: turn a decade square to camera, look at it, turn to the
 		// next. The point is not to fake a search — it is that each turn shows
 		// another decade's artwork, which is otherwise built and never seen.
-		search: [0.44, 0.8],
+		search: [0.14, 0.8],
 		// Three decades visited before the answer, then the answer itself.
 		searchSteps: 4,
 		// Fraction of each step spent turning; the rest is the look. The last

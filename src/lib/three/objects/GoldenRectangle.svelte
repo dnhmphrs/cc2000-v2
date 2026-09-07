@@ -25,15 +25,14 @@
 	export let renderer = null;
 
 	// The drafting layer: dimension lines and ticks, the 1:φ ratio bar, the golden
-	// spiral, the subdivision squares and the dashed trace lines. This is the
-	// construction the whole shape is built on, and it is what the computation
-	// now projects out on its own before any room is on it — which is the beat it
-	// was missing when it was switched off for reading as clutter.
-	const DRAFTING_DETAIL = true;
+	// spiral, the subdivision squares and the dashed trace lines. Beautiful up
+	// close, and clutter at the speed the panes actually open — and giving it a
+	// beat of its own only made the run wait on it. Flip to true to see it.
+	const DRAFTING_DETAIL = false;
 
 	// How far the pane (and its room) travels out from the icosahedron centre at
 	// full projection, and how deep the room's parallax runs behind the frame.
-	const PANE_REACH = 5.2;
+	const PANE_REACH = 6.4;
 	const ROOM_DEPTH = 3.0;
 
 	let rectangleGroup;
@@ -45,7 +44,6 @@
 	let schematicBaseOpacity = 1.0;
 	let dimFactor = 1; // fades everything (line-work + room)
 	let lineDim = 1; // fades only the golden line-work
-	let roomDim = 1; // fades only the room
 	let lastProjection = 0;
 
 	let fillMaterial;
@@ -379,14 +377,7 @@
 	export function setDim(f) {
 		dimFactor = f;
 		updateOpacities(lastProjection);
-		if (roomComponent) roomComponent.setDim(f * roomDim);
-	}
-
-	// Fade only the room, keeping the construction — the computation opens on the
-	// bare golden-ratio geometry and brings the decades in over it afterwards.
-	export function setRoomDim(f) {
-		roomDim = f;
-		if (roomComponent) roomComponent.setDim(dimFactor * roomDim);
+		if (roomComponent) roomComponent.setDim(f);
 	}
 
 	// Fade only the golden line-work, keeping the room (used on the zoom target).

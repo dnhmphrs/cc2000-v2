@@ -32,10 +32,11 @@
 	//   launching  is pushed into the lens with real perspective, so the frame
 	//              warps outward as it goes rather than flatly scaling.
 	//
-	// Because arriving draws the WHOLE page at monitor scale, the form controls
-	// would be a few unreadable pixels. They are held back until it is most of
-	// the way home (SCENES.calculator.controlsAt); what you see in the monitor
-	// until then is the machine's own cartoon self, which is the point.
+	// Because arriving draws the WHOLE page at monitor scale, the chassis, the
+	// dials and the glass would each be a handful of unreadable pixels, and all
+	// of them zooming at you at once is noise. So nothing is drawn on the way
+	// home: what flies out of the monitor is one flat yellow panel, and the
+	// machine cross-fades in on top of it once it is at screen size.
 	//
 	// Layout comes from config/layout.js via CSS custom properties that
 	// +layout.svelte writes for the current aspect, so the same markup lays out
@@ -92,13 +93,24 @@
 	let typed = !!arrivingFrom; // no manifesto second time round
 	let realised = !arrivingFrom; // are the real controls allowed on screen yet
 	// Cold until it has actually landed. On the way home the machine is a picture
-	// inside somebody's monitor, a few dozen pixels across — nothing it could say
-	// would be readable, and a live screen zooming at you is the thing that gives
-	// away that this is a web page rather than a machine. So the glass stays dark
-	// and comes on when it is set.
+	// inside somebody's monitor, a few dozen pixels across: the chassis, the
+	// dials and the glass are a handful of unreadable pixels each, and all of it
+	// zooming at you at once is noise. So what flies out of the monitor is one
+	// flat yellow panel, and the machine cross-fades in on top of it once it is
+	// at screen size.
 	let booting = !!arrivingFrom;
+
+	// The machine comes on. Taken from the transition's own end where possible,
+	// with the timer below as the fallback if it is ever interrupted.
+	let landed = false;
+	function land() {
+		if (landed) return;
+		landed = true;
+		booting = false;
+		realised = true;
+		settled();
+	}
 	let timer;
-	let controlsTimer;
 	let power = 0;
 	let ticker;
 
@@ -158,7 +170,7 @@
 				node.style.transform = t === 1 ? '' : `translate(${x}px, ${y}px) scale(${k})`;
 				// The end of the move IS the moment it comes on, so it is taken
 				// from here rather than from a timer that could drift off it.
-				if (t === 1) booting = false;
+				if (t === 1) land();
 				calcZoom.set(t);
 			}
 		};
@@ -183,15 +195,11 @@
 		ticker = setInterval(() => (power = (power + 1) % 7), 420);
 
 		if (arrivingFrom) {
-			// Let the real controls in once it is most of the way home, and hand
-			// the room back to the stage.
-			controlsTimer = setTimeout(() => {
-				realised = true;
-			}, T.arrive * T.controlsAt * 1000);
-			timer = setTimeout(() => {
-				booting = false;
-				settled();
-			}, T.arrive * 1000);
+			// Nothing is on screen but a yellow panel until the move lands, so the
+			// controls arrive with everything else rather than on a clock of their
+			// own — and .calculator.realised .controls would out-rank the cold rule
+			// and show them over the panel if they did not.
+			timer = setTimeout(land, T.arrive * 1000);
 			return;
 		}
 
@@ -212,7 +220,6 @@
 
 	onDestroy(() => {
 		clearTimeout(timer);
-		clearTimeout(controlsTimer);
 		clearInterval(ticker);
 	});
 
@@ -262,6 +269,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
 	class="calculator"
+	class:cold={booting}
 	class:realised
 	in:outOfMonitor={{ rect: arrivingFrom }}
 	out:intoLens
@@ -280,9 +288,7 @@
 	<div class="window">
 		<div class="screen">
 			<div class="scanlines" />
-			{#if booting}
-				<!-- Not on yet. Nothing at all until it has landed. -->
-			{:else if !typed}
+			{#if !typed}
 				{#each LINES as line, i}
 					<p class:lit={i === LINES.length - 1}>
 						{line.slice(0, shown[i])}{#if shown[i] > 0 && shown[i] < line.length}<span
@@ -399,6 +405,25 @@
 		   for the current aspect. --below is the chassis line under the glass. */
 		--winh: calc(var(--win) / var(--win-aspect));
 		--below: calc(var(--win-y) + var(--winh) / 2);
+	}
+
+	/* Coming home, the whole machine is one flat yellow panel until the move has
+	   landed, and then cross-fades into itself. The background goes with it —
+	   without that, dropping .cold would punch the transparent window through to
+	   the 3D behind a machine that has not been drawn yet. */
+	.calculator {
+		transition: background-color 0.5s ease 0.06s;
+	}
+	.calculator > :global(*) {
+		transition: opacity 0.5s ease 0.06s;
+	}
+	.calculator.cold {
+		background: var(--machine);
+		transition: none;
+	}
+	.calculator.cold > :global(*) {
+		opacity: 0;
+		transition: none;
 	}
 
 	/* Everything that is not the cartoon machine waits until it is nearly home,

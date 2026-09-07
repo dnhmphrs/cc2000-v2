@@ -195,14 +195,18 @@ export function createLattice() {
 	wire.add(edges);
 
 	// ── The spokes ───────────────────────────────────────────────────────────
-	// Every vertex to every neighbour, drawn straight through the middle.
-	// This is the geometric content the diagram carries: the internal star you
-	// only see when the hidden edges are drawn too.
+	// The six long diagonals, each running from a vertex straight through the
+	// centre to its antipode. These are the only lines in the figure that are NOT
+	// edges — they are the five-fold axes — so this is the one piece of geometry
+	// that shows the solid has an inside.
+	//
+	// It used to build apex-to-ring pairs, which are every one of the thirty
+	// edges over again in a lighter ink: the comment claimed an internal star and
+	// the geometry drew the outline twice.
 	const spokeSegs = [];
-	PENTAGONS.forEach(({ apex, ring }) => {
-		ring.forEach((i) => {
-			if (i > apex) spokeSegs.push([apex, i]);
-		});
+	VERTICES.forEach((v, a) => {
+		const b = VERTICES.findIndex((w) => w.every((n, k) => Math.abs(n + v[k]) < 1e-9));
+		if (b > a) spokeSegs.push([a, b]);
 	});
 	const spokePos = [];
 	spokeSegs.forEach(([a, b]) => {
@@ -210,7 +214,11 @@ export function createLattice() {
 	});
 	const spokeGeo = new THREE.BufferGeometry();
 	spokeGeo.setAttribute('position', new THREE.Float32BufferAttribute(spokePos, 3));
-	const spokeMat = growLineMaterial(ICOSA_INK.inner, 0.55);
+	const spokeMat = growLineMaterial(ICOSA_INK.inner, 0.85);
+	// These run from the front of the solid to the back through the middle, so at
+	// the frame's depth floor the far half of every one of them disappears and
+	// six diagonals read as six short stubs. Lifted so they carry all the way.
+	spokeMat.uniforms.uBack.value = 0.34;
 	const growSpokes = grower(
 		spokeMat,
 		segmentAttributes(spokeGeo, spokeSegs.length, (i) => i)
@@ -303,7 +311,7 @@ export function createLattice() {
 		},
 		setLineOpacity(v) {
 			edgeMat.uniforms.uOpacity.value = v;
-			spokeMat.uniforms.uOpacity.value = v * 0.55;
+			spokeMat.uniforms.uOpacity.value = v * 0.85;
 			pentagons.forEach((pn) => (pn.mat.uniforms.uOpacity.value = v * 0.9));
 		},
 		setPanesVisible(v) {

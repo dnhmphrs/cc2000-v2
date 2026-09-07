@@ -185,7 +185,6 @@
 			if (!p) return;
 			p.setDim(1);
 			p.setLineDim(1);
-			p.setRoomDim(0);
 			p.updateProjection(0);
 		});
 	}
@@ -198,16 +197,8 @@
 		const p = clamp01(t / T.duration);
 
 		// ── The panes come out ───────────────────────────────────────────────
-		// As pure geometry first: the golden spiral, the subdivision squares, the
-		// 1:φ bar. They are left alone with nothing on them for a beat, and only
-		// then do the decades arrive over the construction.
 		const open = easeInOutCubic(span(p, T.open));
-		const rooms = easeInOutCubic(span(p, T.rooms));
-		panes.forEach((pane) => {
-			if (!pane) return;
-			pane.updateProjection(open);
-			pane.setRoomDim(rooms);
-		});
+		panes.forEach((pane) => pane && pane.updateProjection(open));
 
 		// The sphere stays — it is what the frame is held inside — but it thins so
 		// the artwork is not seen through a wash, and it opens out off the frame
@@ -372,7 +363,6 @@
 			if (!pane) return;
 			pane.setDim(1);
 			pane.setLineDim(1);
-			pane.setRoomDim(0);
 			pane.updateProjection(0);
 		});
 	}
