@@ -130,9 +130,7 @@
 			c3: gl.getUniformLocation(program, 'color3'),
 			mouse: gl.getUniformLocation(program, 'mouse'),
 			aspect: gl.getUniformLocation(program, 'aspectRatio'),
-			rot: gl.getUniformLocation(program, 'uRot'),
-			time: gl.getUniformLocation(program, 'uTime'),
-			flare: gl.getUniformLocation(program, 'uFlare')
+			rot: gl.getUniformLocation(program, 'uRot')
 		};
 		if (uni.aspect) gl.uniform1f(uni.aspect, window.innerWidth / window.innerHeight);
 	}
@@ -210,8 +208,6 @@
 		if (uni.c3) gl.uniform3f(uni.c3, stops[2][0], stops[2][1], stops[2][2]);
 		// Written in place by the computation each frame; identity everywhere else.
 		if (uni.rot) gl.uniformMatrix3fv(uni.rot, false, fieldRotation);
-		if (uni.time) gl.uniform1f(uni.time, t);
-		if (uni.flare) gl.uniform1f(uni.flare, flareEase);
 
 		gl.drawArrays(gl.TRIANGLES, 0, 3);
 

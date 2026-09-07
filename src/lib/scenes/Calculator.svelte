@@ -178,18 +178,7 @@
 				node.style.setProperty('--edge', `${(EDGE_PX / Math.max(k, 0.02)).toFixed(2)}px`);
 				// The end of the move IS the moment it comes on, so it is taken
 				// from here rather than from a timer that could drift off it.
-				if (t === 1) {
-					// Clear everything the move wrote — the custom property, the
-					// origin and the transform alike — so a second time round leaves
-					// the machine in byte-for-byte the state a fresh load does. A
-					// transform on a fixed, full-viewport element is a containing
-					// block and a stacking context for everything inside it, and
-					// there is no reason to keep one, or its origin, once it has
-					// landed.
-					node.style.removeProperty('--edge');
-					node.style.removeProperty('transform-origin');
-					land();
-				}
+				if (t === 1) land();
 				calcZoom.set(t);
 			}
 		};
@@ -312,7 +301,7 @@
 						<dd>{readout}</dd>
 					</div>
 					<div>
-						<dt>how spicy are your parents?</dt>
+						<dt>resonance</dt>
 						<dd>{String($spicy).padStart(2, '0')} / 10</dd>
 					</div>
 					<div>
@@ -335,15 +324,10 @@
 		{/each}
 	</div>
 
-	<!-- The date on the left-hand edge of the chassis and the spicy level on the
-	     right. These ARE the controls where there is room down the sides; the
-	     panel below the window is the portrait fallback. They are swapped with
-	     {#if} rather than CSS, so exactly one of each control EXISTS — hiding one
-	     leaves a second month/day/year in the document for anything that walks it
-	     rather than looks at it. -->
 	{#if $aspect !== 'portrait'}
-		<!-- The chassis furniture, back out on the edges where it belongs: it is
-		     decoration, and decoration wants the corners. -->
+		<!-- The chassis furniture: knobs and flip switches that do nothing,
+		     filling the run between the screen and the controls out on the rim.
+		     Decoration, so it flanks the thing being decorated. -->
 		<div class="trim left">
 			{#each [22, -48, 71, -14] as deg, i}
 				<span class="knob" style="--deg:{deg}deg; --d:{i * 0.7}s"><i /></span>
@@ -354,44 +338,54 @@
 				<span class="flip" class:up><i /></span>
 			{/each}
 		</div>
+	{/if}
 
-		<!-- And the real controls INBOARD of it, between the trim and the screen,
-		     each in a panel of its own so they read as two instruments on the
-		     machine rather than as more furniture. -->
-		<div class="panel date" on:click|stopPropagation>
-			<span class="title">date of birth</span>
-			<div class="rack">
-				<Dial
-					label="month"
-					min={1}
-					max={12}
-					start={6}
-					value={$dobMonth}
-					format={(v) => MONTHS[v - 1].toUpperCase()}
-					on:change={(e) => dobMonth.set(e.detail)}
-				/>
-				<Dial
-					label="day"
-					min={1}
-					max={maxDay}
-					start={15}
-					value={$dobDay}
-					on:change={(e) => dobDay.set(e.detail)}
-				/>
-				<Dial
-					label="year"
-					min={MIN_YEAR}
-					max={MAX_YEAR}
-					start={1990}
-					value={$dobYear}
-					on:change={(e) => dobYear.set(e.detail)}
-				/>
-			</div>
+	<!-- The date on the left-hand edge of the chassis and the spicy level on the
+	     right. These ARE the controls where there is room down the sides; the
+	     panel below the window is the portrait fallback. They are swapped with
+	     {#if} rather than CSS, so exactly one of each control EXISTS — hiding one
+	     leaves a second month/day/year in the document for anything that walks it
+	     rather than looks at it. -->
+	{#if $aspect !== 'portrait'}
+		<div class="dials" on:click|stopPropagation>
+			<Dial
+				label="month"
+				min={1}
+				max={12}
+				start={6}
+				value={$dobMonth}
+				format={(v) => MONTHS[v - 1].toUpperCase()}
+				on:change={(e) => dobMonth.set(e.detail)}
+			/>
+			<Dial
+				label="day"
+				min={1}
+				max={maxDay}
+				start={15}
+				value={$dobDay}
+				on:change={(e) => dobDay.set(e.detail)}
+			/>
+			<Dial
+				label="year"
+				min={MIN_YEAR}
+				max={MAX_YEAR}
+				start={1990}
+				value={$dobYear}
+				on:change={(e) => dobYear.set(e.detail)}
+			/>
 		</div>
 
-		<div class="panel spice" on:click|stopPropagation>
-			<span class="title">how spicy are<br />your parents?</span>
-			<Lever label="spicy" min={1} max={10} value={$spicy} on:change={(e) => spicy.set(e.detail)} />
+		<!-- And how spicy, on the right. -->
+		<div class="switches" on:click|stopPropagation>
+			<Lever
+				label="spicy"
+				min={1}
+				max={10}
+				low="sweet"
+				high="filthy"
+				value={$spicy}
+				on:change={(e) => spicy.set(e.detail)}
+			/>
 		</div>
 	{/if}
 
@@ -485,7 +479,7 @@
 		inset: 0;
 		border: var(--edge, 3px) solid var(--machine-orange);
 		/* Curved, and by the same scale-compensated number, so the corners keep
-		   their radius rather than going square as it grows. */
+		   their radius rather than going square as the frame grows. */
 		border-radius: calc(var(--edge, 3px) * 3);
 		pointer-events: none;
 		z-index: 5;
@@ -514,7 +508,8 @@
 	   because at monitor scale it is a few unreadable pixels. */
 	.controls,
 	.trim,
-	.panel,
+	.dials,
+	.switches,
 	.go {
 		opacity: 0;
 		transition: opacity 0.4s ease;
@@ -522,7 +517,8 @@
 	}
 	.calculator.realised .controls,
 	.calculator.realised .trim,
-	.calculator.realised .panel,
+	.calculator.realised .dials,
+	.calculator.realised .switches,
 	.calculator.realised .go {
 		opacity: 1;
 		pointer-events: auto;
@@ -751,8 +747,9 @@
 	   round the glass reads as a small object with a lot of blank around it
 	   rather than as a big panel. */
 	/* ── The trim ─────────────────────────────────────────────────────────
-	   Knobs and flip switches that do nothing, out on the edges of the chassis
-	   where decoration belongs. */
+	   Knobs and flip switches that do nothing, flanking the window — so the run
+	   between the screen and the controls out on the chassis rim is not just
+	   empty yellow. */
 	.trim {
 		position: absolute;
 		top: var(--win-y);
@@ -762,17 +759,17 @@
 		align-items: center;
 	}
 	.trim.left {
-		left: max(2.5vw, 16px);
+		right: calc(50% + var(--win) / 2 + clamp(16px, 2.4vw, 56px));
 		gap: clamp(12px, 2.2vh, 26px);
 	}
 	.trim.right {
-		right: max(2.5vw, 16px);
+		left: calc(50% + var(--win) / 2 + clamp(16px, 2.4vw, 56px));
 		gap: clamp(10px, 1.8vh, 22px);
 	}
 
 	.knob {
-		width: clamp(34px, 3.4vw, 54px);
-		height: clamp(34px, 3.4vw, 54px);
+		width: clamp(30px, 3vw, 48px);
+		height: clamp(30px, 3vw, 48px);
 		border-radius: 50%;
 		background: var(--machine-light);
 		border: var(--ink) solid var(--machine-ink);
@@ -803,8 +800,8 @@
 	}
 
 	.flip {
-		width: 26px;
-		height: 42px;
+		width: 24px;
+		height: 38px;
 		border-radius: 8px;
 		background: var(--machine-dark);
 		border: var(--ink) solid var(--machine-ink);
@@ -824,46 +821,23 @@
 		background: var(--machine-teal);
 	}
 
-	/* ── The two instruments ──────────────────────────────────────────────
-	   Between the trim and the screen. A ground and a title of their own, so
-	   the things you actually operate are picked out from everything bolted to
-	   the chassis around them. */
-	.panel {
+	.dials {
 		position: absolute;
+		left: max(3vw, 18px);
 		top: var(--win-y);
 		transform: translateY(-50%);
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		gap: 12px;
-		padding: 16px clamp(12px, 1.4vw, 22px) 18px;
-		background: var(--machine-dark);
-		border: var(--ink) solid var(--machine-ink);
-		border-radius: 20px;
-		box-shadow: 0 var(--drop) 0 var(--machine-ink);
+		gap: clamp(14px, 2.6vh, 30px);
 	}
-	.panel.date {
-		right: calc(50% + var(--win) / 2 + clamp(14px, 2.2vw, 46px));
-	}
-	.panel.spice {
-		left: calc(50% + var(--win) / 2 + clamp(14px, 2.2vw, 46px));
-	}
-
-	.rack {
+	.switches {
+		position: absolute;
+		right: max(3vw, 18px);
+		top: var(--win-y);
+		transform: translateY(-50%);
 		display: flex;
 		flex-direction: column;
-		gap: clamp(12px, 2vh, 26px);
-	}
-
-	.title {
-		font-family: var(--tech);
-		font-size: 10px;
-		font-weight: 700;
-		letter-spacing: 0.18em;
-		line-height: 1.5;
-		text-transform: uppercase;
-		text-align: center;
-		color: var(--machine-ink);
+		gap: clamp(10px, 1.8vh, 22px);
 	}
 	.controls {
 		position: absolute;
@@ -1055,15 +1029,6 @@
 	@media (max-height: 860px) and (min-aspect-ratio: 85 / 100) {
 		.vent,
 		.grille {
-			display: none;
-		}
-	}
-
-	/* A square screen has the instruments almost out to the edges already — the
-	   window is wide and there is nothing left over for decoration. Measured:
-	   the trim and the date panel collide by 1px at 1024x1024. */
-	@media (max-aspect-ratio: 6 / 5) {
-		.trim {
 			display: none;
 		}
 	}

@@ -224,7 +224,86 @@ input[type='range']::-moz-range-thumb {
 	color: var(--bg);
 }
 
-/* NOTE: the .shell / .panel block that used to live here is gone. It styled the
-   two separate question screens from an early design and nothing has matched it
-   since — and its `.panel { max-width: 340px }` silently sized the calculator's
-   own instrument panels, which is how it was found. */
+/* ── Question panel ────────────────────────────────────────────────────────
+   Shared by the two question screens, which are separate components because
+   the sperm swims between them. */
+.shell {
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+	display: flex;
+	/* Bottom-left, echoing the intro text, and — more to the point — off the
+	   middle of the frame, where the sperm is closing on the egg. A centred
+	   panel sat straight on top of the thing it is asking about. */
+	align-items: flex-end;
+	justify-content: flex-start;
+	padding: clamp(24px, 6vh, 58px) clamp(24px, 4vw, 56px);
+	pointer-events: none;
+}
+
+.panel {
+	width: 100%;
+	max-width: 340px;
+	background: var(--panel);
+	border: 1px solid rgba(var(--ink-rgb), 0.22);
+	padding: 24px 24px 22px;
+	pointer-events: auto;
+	backdrop-filter: blur(6px);
+}
+
+.panel .q {
+	font-size: 17px;
+	color: var(--ink);
+	margin: 0 0 14px;
+}
+
+.panel .dob {
+	display: grid;
+	grid-template-columns: 1.5fr 1fr 1fr;
+	gap: 6px;
+}
+
+.panel select {
+	font-family: var(--face);
+	font-size: 14px;
+	background: transparent;
+	border: 1px solid rgba(var(--ink-rgb), 0.28);
+	color: var(--ink);
+	padding: 10px 8px;
+	outline: none;
+	border-radius: 0;
+	-webkit-appearance: none;
+	appearance: none;
+	cursor: pointer;
+}
+.panel select:focus {
+	border-color: var(--yellow);
+}
+.panel select option {
+	background: #0a246a;
+	color: var(--ink);
+}
+
+.panel .dial {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.panel .ends {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	font-size: 12px;
+	color: var(--ink-dim);
+}
+.panel .num {
+	font-size: 22px;
+	font-weight: 700;
+	color: var(--yellow);
+}
+
+.panel button.go {
+	margin-top: 22px;
+	width: 100%;
+}
