@@ -36,18 +36,18 @@ export const GLASS_SAFETY = 0.92;
 // through the vents. Measured at 1440x720 that overlap was 22px before this.
 export const CHASSIS = {
 	landscape: {
-		win: 'clamp(300px, min(38vw, 56vh), 620px)',
-		winAspect: 4 / 3,
+		win: 'clamp(300px, min(46vw, 66vh), 980px)',
+		winAspect: 3 / 2,
 		// Vertical centre of the window, as a fraction of the viewport. Above
 		// centre, because the panel and the button hang below it.
-		winY: 0.42,
+		winY: 0.44,
 		controlsGap: '20px',
 		controlsHeight: '92px',
 		buttonGap: '18px',
 		stack: false
 	},
 	square: {
-		win: 'clamp(280px, min(50vw, 58vh), 620px)',
+		win: 'clamp(280px, min(62vw, 58vh), 700px)',
 		winAspect: 4 / 3,
 		winY: 0.4,
 		controlsGap: '20px',
