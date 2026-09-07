@@ -85,7 +85,9 @@ export const SCENES = scale({
 		eggIn: [0.3, 0.74],
 
 		// The sperm comes from behind the camera, overtakes, and is ahead of it.
-		spermIn: [0.14, 0.26],
+		// A long window on purpose: this is the one moment it is close enough to
+		// see, and rushing the pass throws away the only look you get at it.
+		spermIn: [0.12, 0.36],
 		// And then it is leaving, from that moment on — the window opens where
 		// spermIn closes so there is no stretch where it holds station and then
 		// bolts. `power` is the whole character of it. Measure it as the gap
@@ -95,7 +97,7 @@ export const SCENES = scale({
 		// gone by the halfway mark. At 3.2 it rides in front of the lens for a
 		// beat and then the gap grows by more every step of the way to the egg,
 		// which is what speeding up actually looks like.
-		spermRun: [0.26, 0.98],
+		spermRun: [0.36, 0.98],
 		spermRunPower: 3.2,
 		// It is inside the shell by the end of this.
 		spermGone: [0.9, 0.99],
@@ -118,7 +120,7 @@ export const SCENES = scale({
 	//
 	// The hold and the rest are the GAPS either side, not settings.
 	conception: {
-		duration: 4.0,
+		duration: 3.2,
 
 		// The sphere fades up out of the white, at the frame's exact circumradius
 		// — so what appears is one object, not a ball with something in it.

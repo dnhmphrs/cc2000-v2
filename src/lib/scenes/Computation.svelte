@@ -313,10 +313,10 @@
 	}
 
 	export function backdrop() {
-		// 'white' by default. 'theta' is the field in three/shaders/theta.js and
-		// is a one-word swap — it is loud on a white ground and it does compete
-		// with the line-work, so it is off until it earns its place.
-		return { color: WHITE, shader: 'white' };
+		// The set tunes across channels while the search runs — three/shaders/
+		// static.js, driven by the same `flare` this scene already publishes, so
+		// it comes up with the search and settles as the camera lands.
+		return { color: WHITE, shader: 'static' };
 	}
 
 	// ── The way back ────────────────────────────────────────────────────────
