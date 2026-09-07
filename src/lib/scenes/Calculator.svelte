@@ -17,8 +17,7 @@
 	} from '$lib/store/store';
 	import { SCENES } from '$lib/config';
 	import { begin, settled } from './director';
-	import { conceptionDate, previousDay, dateToDecade } from '$lib/functions/utils';
-	import data from '$lib/data/cc2000_data.json';
+	import { resolve } from '$lib/functions/answer';
 
 	// ── Scene 1: the Conception Calculator 2000 ──────────────────────────────
 	// The machine IS the landing page, and it takes both answers.
@@ -242,32 +241,16 @@
 			`${$dobYear}-${String($dobMonth).padStart(2, '0')}-${String($dobDay).padStart(2, '0')}`
 		);
 
-		let cd = conceptionDate(get(date));
-		const today = new Date().toISOString().slice(0, 10);
-
-		// The archive starts in 1958 and nobody has been conceived after today.
-		// Neither verdict has a room to fall into, so neither one goes anywhere:
-		// the machine reports it on its own screen and waits to be asked again.
-		if (cd <= '1958-06-01') return edge.set('past');
-		if (get(date) >= today) return edge.set('future');
-
-		let found = null;
-		for (let i = 0; i < 400; i++) {
-			// Each day holds 10 tracks ordered spicy 10 → 1 (index 0 → 9), so the
-			// track matching the chosen level is at index (10 - spicy).
-			const d = data[cd];
-			if (d && d[10 - $spicy]) {
-				found = d[10 - $spicy];
-				break;
-			}
-			cd = previousDay(cd);
-		}
-		if (!found) return edge.set('past');
+		// The archive is consulted in functions/answer.js. Neither out-of-range
+		// verdict has a room to fall into, so neither one goes anywhere: the
+		// machine reports it on its own screen and waits to be asked again.
+		const found = resolve(get(date), $spicy);
+		if (found.edge) return edge.set(found.edge);
 
 		edge.set(null);
-		track.set(found);
-		conceived.set(cd);
-		decade.set(dateToDecade(cd));
+		track.set(found.track);
+		conceived.set(found.conceived);
+		decade.set(found.decade);
 		begin();
 	}
 </script>
@@ -411,24 +394,21 @@
 		   for the current aspect. --below is the chassis line under the glass. */
 		--winh: calc(var(--win) / var(--win-aspect));
 		--below: calc(var(--win-y) + var(--winh) / 2);
-		--vent-w: clamp(70px, 9vw, 150px);
 	}
 
-	/* The machine's own edge, and it is drawn to a constant width ON SCREEN
-	   rather than a constant width in the layout.
+	/* The machine's edge, and ONLY on the way home. A machine that fills the
+	   screen has no need of a frame — but the same machine drawn inside the
+	   room's monitor at a fifth of the size is a flat yellow rectangle floating
+	   in the glass, and that does. So it is on .cold, which is exactly the window
+	   in which the calculator is small and yellow, and gone the moment it lands.
 	   
-	   At full size it is a 3px hairline on the rim of a whole viewport, which is
-	   as close to invisible as makes no difference. Coming home the machine is
-	   drawn inside the room's monitor at a fifth of the size, where a plain 3px
-	   border would be less than one — so outOfMonitor divides --edge by the scale
-	   it is fitting at, and it holds that same 3px all the way in. Which means it
-	   reads as a real frame around the small machine and as nothing at all around
-	   the full-size one.
+	   The width is constant ON SCREEN rather than in the layout: at a fifth scale
+	   a plain 3px border renders as less than one, so outOfMonitor divides --edge
+	   by the scale it is fitting at and it holds its weight all the way in.
 	   
-	   A pseudo-element rather than a border on .calculator itself, so it survives
-	   .cold — which blanks the real children, and is exactly when this is wanted
-	   most: the flat yellow panel is the thing that needs an edge. */
-	.calculator::after {
+	   A pseudo-element because .cold blanks the real children, and this has to
+	   survive that. */
+	.calculator.cold::after {
 		content: '';
 		position: absolute;
 		inset: 0;
@@ -692,13 +672,13 @@
 		background: var(--machine-red);
 	}
 
-	/* Bolted to the window, not to the corners of the screen. Anchoring these to
-	   the viewport edge is what left a big machine reading as a small one adrift
-	   in a field of yellow: the wider the screen, the further the furniture ran
-	   away from the thing it belongs to. Now the whole assembly grows together. */
+	/* Out at the edges of the chassis. Pulling these in to flank the window was
+	   tried and is worse: the machine IS the whole screen, and furniture huddled
+	   round the glass reads as a small object with a lot of blank around it
+	   rather than as a big panel. */
 	.dials {
 		position: absolute;
-		right: calc(50% + var(--win) / 2 + clamp(18px, 3vw, 64px));
+		left: max(3vw, 18px);
 		top: var(--win-y);
 		transform: translateY(-50%);
 		display: flex;
@@ -739,7 +719,7 @@
 
 	.switches {
 		position: absolute;
-		left: calc(50% + var(--win) / 2 + clamp(18px, 3vw, 64px));
+		right: max(3vw, 18px);
 		top: var(--win-y);
 		transform: translateY(-50%);
 		display: flex;
@@ -838,7 +818,7 @@
 	.vent {
 		position: absolute;
 		bottom: max(5vh, 28px);
-		width: var(--vent-w);
+		width: clamp(70px, 9vw, 120px);
 		height: 38px;
 		border-radius: 10px;
 		border: var(--ink) solid var(--machine-ink);
@@ -849,14 +829,12 @@
 			var(--machine-light) 4px 9px
 		);
 	}
-	/* Outer edges flush with the window's, so the bottom of the machine lines up
-	   with the top of it however wide the screen is. */
 	.vent.left {
-		right: calc(50% + var(--win) / 2 - var(--vent-w));
+		left: max(3vw, 18px);
 		transform: rotate(-1.6deg);
 	}
 	.vent.right {
-		left: calc(50% + var(--win) / 2 - var(--vent-w));
+		right: max(3vw, 18px);
 		transform: rotate(1.6deg);
 	}
 
@@ -962,18 +940,6 @@
 		.vent,
 		.grille {
 			display: none;
-		}
-	}
-
-	/* The panel spans the window rather than being sized by its own contents. A
-	   content-width panel under a wide screen reads as the machine narrowing
-	   toward the bottom; this squares the composition up. Landscape and square
-	   only — portrait stacks the panel and has no width to give. */
-	@media (min-aspect-ratio: 85 / 100) {
-		.controls {
-			width: min(var(--win), 92vw);
-			box-sizing: border-box;
-			justify-content: space-between;
 		}
 	}
 

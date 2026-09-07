@@ -3,7 +3,7 @@
 	import { get } from 'svelte/store';
 	import * as THREE from 'three';
 	import { scene as sceneStore, sceneTone, monitorRect, backdrop } from '$lib/store/store';
-	import { CANVAS_FADE, FLASH_DECAY, clamp01 } from '$lib/config';
+	import { CANVAS_FADE, FLASH_DECAY, clamp01, DEV } from '$lib/config';
 	import { createTunnel } from './world/tunnel';
 	import { createLattice } from './world/lattice';
 	import { advance } from '$lib/scenes/director';
@@ -138,7 +138,14 @@
 			return;
 		}
 
-		if (active.update(dt)) advance(name);
+		// A scene that has run out hands on to the next — unless the dev harness
+		// has pinned this one, in which case it simply runs again. Looping here
+		// rather than in the director keeps the director describing the site's
+		// real control flow and nothing else.
+		if (active.update(dt)) {
+			if (DEV.on && DEV.only === name) active.enter();
+			else advance(name);
+		}
 
 		const ab = active.backdrop();
 		ground(ab.color, ab.shader);
