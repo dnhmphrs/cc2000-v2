@@ -26,7 +26,7 @@ is up.
 | 1 | **Calculator** | The machine. Takes both answers. DOM. | `src/lib/scenes/Calculator.svelte` |
 | 2 | **FlyIn** | Through the screen, down deep-blue air to the egg. 3D. | `src/lib/scenes/FlyIn.svelte` |
 | 3 | **Conception** | The icosahedron assembling itself, on white. 3D. | `src/lib/scenes/Conception.svelte` |
-| 4 | **Computation** | Panes out, tumble through the decades, fall into a room. 3D. | `src/lib/scenes/Computation.svelte` |
+| 4 | **Computation** | Panes out, search the decades, fall into a room. 3D. | `src/lib/scenes/Computation.svelte` |
 | 5 | **Room** | The answer, in that room's monitor. DOM. | `src/lib/scenes/Room.svelte` |
 
 Scenes 1 and 5 are DOM screens with no 3D of their own; 2–4 are 3D with a line
@@ -83,7 +83,7 @@ flyIn: {
   duration: 6.4,
   eggIn:   [0.04, 0.52],   // the egg resolving out of the fog
   spermIn: [0.14, 0.26],   // it comes past the camera from behind
-  whiten:  [0.84, 1.0]     // deep blue turning white under the flash
+  whiten:  [0.84, 1.0]     // the dark turning white under the flash
 }
 ```
 
@@ -107,8 +107,8 @@ the beat you are working on without sitting through the run.
 ### Pure functions of progress
 
 Scenes 3 and 4 recompute their whole state from `p` every frame rather than
-accumulating. Every pentagon's angle is a sum over the turns that have touched
-it; the tumble is a function of the scene's progress. Nothing integrates `dt`.
+accumulating. The conception's pose and the computation's search step are both
+functions of the scene's progress alone. Nothing integrates `dt`.
 
 That is why they can be reset, re-entered or scrubbed without drifting, and it
 is worth keeping if you add to them.
@@ -133,7 +133,7 @@ resize()     // the window changed
 Scenes are the *motion*. Worlds are the *look* — every object, material and
 dimension. A scene never builds anything.
 
-- **`world/tunnel.js`** is scene 2: deep blue air, fog, the egg at the far end,
+- **`world/tunnel.js`** is scene 2: near-black air, fog, the egg at the far end,
   the sperm.
 - **`world/lattice.js`** is scenes 3 and 4: white, an orthographic camera, the
   egg, and the icosahedron. Sharing it is why the wireframe the conception
@@ -181,9 +181,9 @@ so the pieces cannot drift out of agreement:
   hexagon and every edge is visible. The view the reference diagram is drawn in.
 
 A fifth of a turn about a vertex axis maps the solid onto itself — it is a
-generator of the icosahedral group. Turning pentagons in overlapping waves is
-what makes the conception read as a combinatorial calculation rather than a list
-of animations.
+generator of the icosahedral group. The pentagons are drawn as their own
+objects, each able to turn on its own axis, though the conception currently
+turns the whole solid as one thing rather than spinning them individually.
 
 **The vertex ORDER is load-bearing.** The three golden rectangles are indices
 `[0,1,3,2]`, `[4,5,7,6]` and `[8,9,11,10]`, and the decade panes are built on
@@ -199,14 +199,17 @@ only say how much:
 
 | Store | Meaning |
 |---|---|
+| `sceneGround` | the ground colour, from the active scene's `backdrop()` |
 | `noise` | how much grain |
-| `noiseWash` | 0 = grain over the picture, 1 = static *instead of* it |
+| `noiseWash` | 0 = the ground, textured; 1 = static *instead of* it |
 | `noiseGhost` | how much structure clumps out of it |
 
-Grain composites with `mix-blend-mode: overlay`, which is why the shader sits at
-mid grey — one layer then works over both the deep blue of the fly-in and the
-white of everything after it. The wash switches the blend off, because a flood
-has to replace the picture rather than tint it.
+The static is the **background**, not a film over the picture: it paints
+`sceneGround` — the active scene's own ground colour, which swings from
+near-black to white part way through the run — and deviates either side of it,
+and the 3D canvas is composited on top with a transparent clear. So the grain
+sits behind everything in the scene. The wash replaces the ground with raw
+static instead, for the wipe home.
 
 **Ghosts** are the dreamlike flashes. Raise `SCENES.conception.ghostAmount`
 above 0 to bring them in. With no texture bound they make soft drifting blooms;
@@ -264,6 +267,10 @@ Going round again deliberately **keeps** the birthday and the spice —
 
 - **The egg's materials write no depth.** A transparent material that writes
   depth hides whatever is inside it — which is the icosahedron.
+
+- **The 3D canvas always clears transparent.** The ground is painted by the
+  static layer behind it; a scene's `backdrop()` only says what colour that is.
+  Clearing opaque would hide the grain entirely.
 
 ---
 

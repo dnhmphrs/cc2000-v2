@@ -8,7 +8,9 @@
 // `sceneTone` store carries.
 
 // ── Ground ───────────────────────────────────────────────────────────────────
-export const DEEP_BLUE = 0x0a246a;
+// The run walks from near-black to white: the machine and the fly-in sit on the
+// dark, everything from the conception onward on the white.
+export const DARK = 0x0b0c0f;
 export const WHITE = 0xffffff;
 
 // ── The machine ──────────────────────────────────────────────────────────────
@@ -42,26 +44,28 @@ export const ICOSA_INK = {
 	// frame stays legible under it.
 	inner: 0x8390b5,
 	pentagon: 0x2b3350,
-	// The pentagon currently turning.
-	pentagonLive: 0xd08a2a,
-	solid: 0x0a246a
+	// The solid faces, which are only ever seen on the white.
+	solid: 0x14224e
 };
 
 // ── Static ───────────────────────────────────────────────────────────────────
-// Grain sits at mid grey and deviates either way, so one shader works over both
-// the deep blue and the white.
+// The static IS the background. It paints the active scene's ground colour and
+// deviates either side of it, and the 3D is composited on top — so the grain is
+// behind everything in the scene rather than a film over it.
 export const NOISE = {
 	// Resting level, on the calculator. Light — texture, not signal loss.
-	base: 0.05,
+	base: 0.06,
 	// Peak, as the egg fills the frame.
-	peak: 0.2,
+	peak: 0.16,
 	// While the icosahedron is working. The calmest the run gets.
 	calm: 0.05,
 	// Flooding the frame on the way back to the start.
 	flood: 0.9,
-	// Grain size in device pixels; larger reads as older equipment. The field
-	// renders below native (see SCALES in NoiseField), so this multiplies up.
-	grain: 1.5,
+	// Grain cell size in BACKING-STORE pixels. The field renders a little below
+	// native (SCALES in NoiseField), so a cell is roughly this over that scale
+	// in CSS pixels — 1.0 at 0.85 is a shade over one pixel, which is as fine as
+	// it can usefully be.
+	grain: 1.0,
 	// Frames a second the grain re-rolls at. Below the display rate on purpose:
 	// full-rate static shimmers, slower static crawls.
 	rate: 24

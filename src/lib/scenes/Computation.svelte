@@ -11,7 +11,6 @@
 		smoothstep,
 		easeInOutCubic,
 		easeInOutPower,
-		bump,
 		ICOSA,
 		NOISE,
 		WHITE
@@ -21,18 +20,17 @@
 	import { RECTANGLES, VERTICES } from '$lib/three/geometry/icosahedron';
 
 	// ── Scene 4: the computation ─────────────────────────────────────────────
-	// The panes come out of the sphere, the whole thing tumbles through the
-	// decades, it settles on the answer, and the camera falls into that room.
+	// The panes come out of the sphere, the search turns through the decades,
+	// and the camera falls into the room that holds the answer.
 	//
-	// The tumble is ONE continuous motion, not a sequence of turns and pauses.
-	// Two axes turning at incommensurate rates plus a slow wobble is what makes
-	// it kanter rather than spin like a turntable, and panes lean out toward the
-	// viewer as they swing past the front so each decade gets its moment without
-	// the camera ever stopping.
+	// The search is stepped, not continuous: turn a decade square to camera,
+	// look at it, turn to the next, and the last turn lands on the answer. The
+	// point is not to fake a search — it is that each turn shows another
+	// decade's artwork, which is otherwise built and never seen.
 	//
 	// Like the conception, every value here is a pure function of scene progress
 	// — nothing integrates dt — so the scene can be reset or re-entered without
-	// drifting. The one exception is the landing quaternion, which is measured
+	// drifting. The one exception is the landing quaternions, which are measured
 	// once the rooms exist and then held.
 	//
 	// The icosahedron itself is world/lattice.js, shared with the conception, so
@@ -60,22 +58,23 @@
 	let frustum = ICOSA.frustum;
 	let landFrustum = 8;
 	let target = -1;
-	let landingQuat = new THREE.Quaternion();
-	let tumbleStartQuat = new THREE.Quaternion();
+	// The panes the search visits, in order, and the pose that puts each square
+	// to camera. The last is the answer.
+	let searchOrder = [];
+	let searchQuats = [];
+	let searchFrom = new THREE.Quaternion();
 	let measured = false;
 	// One-shot latches. A `if (progress < 0.02)` test is not one: at any normal
 	// frame rate a short window advances further than that in a single frame and
 	// the branch is stepped straight over.
-	let settleLatched = false;
+	let searchLatched = false;
 	let zoomLatched = false;
 
-	// Which decade is facing front right now, so anything tinted by era can
-	// follow the tumble. Only recomputed when it changes.
+	// Which decade the search is looking at, so anything tinted by era can
+	// follow it. Only republished when it changes.
 	let facing = null;
 
 	let t = 0;
-	const q = new THREE.Quaternion();
-	const e = new THREE.Euler();
 
 	// ── Build ────────────────────────────────────────────────────────────────
 	export async function init() {
@@ -98,8 +97,23 @@
 		const preferred = candidates.filter((c) => c.d === want);
 		const pool = preferred.length ? preferred : candidates;
 		target = shuffle(pool)[0].i;
-		landingQuat = landingQuatFor(target);
+		searchOrder = [...previsits(candidates), target];
+		searchQuats = searchOrder.map(landingQuatFor);
 		measured = true;
+	}
+
+	// A few DISTINCT decades to visit before the answer — one pane per decade,
+	// shuffled, and never the answer's own.
+	function previsits(candidates) {
+		const byDecade = {};
+		candidates.forEach(({ i, d }) => {
+			if (!byDecade[d]) byDecade[d] = [];
+			byDecade[d].push(i);
+		});
+		return shuffle(Object.keys(byDecade))
+			.map((d) => byDecade[d][0])
+			.filter((i) => i !== target)
+			.slice(0, Math.max(0, T.searchSteps - 1));
 	}
 
 	// The rotation that puts a pane's artwork square to the camera.
@@ -135,13 +149,11 @@
 	export function enter() {
 		t = 0;
 		measured = false;
-		settleLatched = false;
+		searchLatched = false;
 		zoomLatched = false;
 		facing = null;
 		frustum = ICOSA.frustum;
 		world.applyFrustum(frustum);
-		// The conception left the frame on ICOSA.tilt; the tumble starts there.
-		tumbleStartQuat.copy(world.frame.quaternion);
 		world.setPanesVisible(true);
 		world.setSolid(1);
 		monitorRect.set(null);
@@ -163,13 +175,7 @@
 
 		// ── The panes come out ───────────────────────────────────────────────
 		const open = easeInOutCubic(span(p, T.open));
-		// Each pane leans further out as it swings past the front, so a decade
-		// presents itself without the tumble ever pausing.
-		const bulgeAmt = T.passBulge * bump(span(p, T.tumble));
-		panes.forEach((pane, i) => {
-			if (!pane) return;
-			pane.updateProjection(open * (1 + bulgeAmt * frontness(i)));
-		});
+		panes.forEach((pane) => pane && pane.updateProjection(open));
 
 		// The sphere draws in behind them and stays as a bubble.
 		const drawIn = easeInOutCubic(span(p, T.shellDrawIn));
@@ -179,23 +185,39 @@
 		// The wireframe is the solid's now; the conception's line-work fades.
 		world.setLineOpacity(1 - drawIn * 0.75);
 
-		// ── The tumble ───────────────────────────────────────────────────────
-		const spin = span(p, T.tumble);
-		const settle = span(p, T.settle);
-		if (settle <= 0) {
-			// Three incommensurate rates, so it never repeats a pose.
-			const a = spin * T.tumbleTurns * Math.PI * 2;
-			e.set(Math.sin(a * T.tumbleWobble) * 0.5, a, Math.sin(a * T.tumbleKanter) * 0.42);
-			world.frame.quaternion.copy(tumbleStartQuat).multiply(q.setFromEuler(e));
-			trackFacing();
-		} else if (measured) {
-			// It stops tumbling by sliding, not stopping: whatever pose the tumble
-			// was in when the window opened slerps onto the answer.
-			if (!settleLatched) {
-				settleLatched = true;
-				tumbleStartQuat.copy(world.frame.quaternion);
+		// ── The search ───────────────────────────────────────────────────────
+		// One slot per decade visited. Most of a slot is the turn onto that
+		// decade; the rest is the look, during which the other rooms step back
+		// so the artwork this exists to show is what you are seeing. The last
+		// slot is all turn, because the zoom follows it straight away.
+		const u = span(p, T.search);
+		if (u > 0 && measured && searchQuats.length) {
+			if (!searchLatched) {
+				searchLatched = true;
+				searchFrom.copy(world.frame.quaternion);
 			}
-			world.frame.quaternion.copy(tumbleStartQuat).slerp(landingQuat, easeInOutCubic(settle));
+			const n = searchQuats.length;
+			const step = Math.min(Math.floor(u * n), n - 1);
+			const local = u * n - step;
+			const last = step === n - 1;
+
+			const turn = easeInOutCubic(last ? local : clamp01(local / T.searchSpin));
+			world.frame.quaternion
+				.copy(step === 0 ? searchFrom : searchQuats[step - 1])
+				.slerp(searchQuats[step], turn);
+
+			const look = last
+				? 0
+				: Math.sin(clamp01((local - T.searchSpin) / (1 - T.searchSpin)) * Math.PI);
+			panes.forEach((pane, i) => {
+				if (pane) pane.setDim(i === searchOrder[step] ? 1 : lerp(1, T.searchDim, look));
+			});
+
+			const d = decadeAssignments[searchOrder[step]] ?? null;
+			if (d !== facing) {
+				facing = d;
+				fieldDecade.set(d);
+			}
 		}
 
 		// ── The fall into the room ───────────────────────────────────────────
@@ -237,31 +259,6 @@
 		return false;
 	}
 
-	// How square-on a pane is to the camera right now, 0..1. Drives the lean.
-	const paneNormal = new THREE.Vector3();
-	function frontness(i) {
-		const cfg = paneConfigs[i];
-		paneNormal.copy(cfg.axis).multiplyScalar(cfg.direction).applyQuaternion(world.frame.quaternion);
-		return Math.max(0, paneNormal.z);
-	}
-
-	function trackFacing() {
-		let best = -1;
-		let bestF = 0;
-		panes.forEach((_, i) => {
-			const f = frontness(i);
-			if (f > bestF) {
-				bestF = f;
-				best = i;
-			}
-		});
-		const d = decadeAssignments[best] ?? null;
-		if (d !== facing) {
-			facing = d;
-			fieldDecade.set(d);
-		}
-	}
-
 	export function backdrop() {
 		return { color: WHITE, alpha: 1 };
 	}
@@ -282,9 +279,11 @@
 	export function reset() {
 		t = 0;
 		measured = false;
-		settleLatched = false;
+		searchLatched = false;
 		zoomLatched = false;
 		target = -1;
+		searchOrder = [];
+		searchQuats = [];
 		frustum = ICOSA.frustum;
 		fieldDecade.set(null);
 		monitorRect.set(null);

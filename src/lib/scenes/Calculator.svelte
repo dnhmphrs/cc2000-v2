@@ -433,12 +433,14 @@
 		inset: 12px;
 		border-radius: 10px;
 		/* A vignette, not a colour: the window looks straight onto the scene
-		   behind it, so it only needs darkening at the edges to read as glass. */
+		   behind it, so it only needs darkening at the edges to read as glass.
+		   Light, because the ground behind it is already near-black — any more
+		   and the static in the window is crushed away. */
 		background: radial-gradient(
 			ellipse at 50% 40%,
-			rgba(0, 0, 0, 0.34) 0%,
-			rgba(0, 0, 0, 0.5) 68%,
-			rgba(0, 0, 0, 0.72) 100%
+			rgba(0, 0, 0, 0) 0%,
+			rgba(0, 0, 0, 0.18) 68%,
+			rgba(0, 0, 0, 0.46) 100%
 		);
 		padding: 14px 16px;
 		display: flex;

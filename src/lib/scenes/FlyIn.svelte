@@ -11,13 +11,13 @@
 		smoothstep,
 		TUNNEL,
 		CAM_END,
-		DEEP_BLUE,
+		DARK,
 		WHITE,
 		NOISE
 	} from '$lib/config';
 
 	// ── Scene 2: the fly in ──────────────────────────────────────────────────
-	// Deep blue air, static, and a run at the egg. The calculator is still on
+	// Near-black air, static, and a run at the egg. The calculator is still on
 	// screen for the first quarter of this, being pushed into the lens; by the
 	// time it has gone the sperm has come past the camera from behind and is
 	// out in front, and the egg is coming up out of the fog.
@@ -35,7 +35,7 @@
 
 	const T = SCENES.flyIn;
 
-	const blue = new THREE.Color(DEEP_BLUE);
+	const dark = new THREE.Color(DARK);
 	const white = new THREE.Color(WHITE);
 	const air = new THREE.Color();
 
@@ -100,7 +100,7 @@
 		world.egg.setShell(eggIn);
 
 		// ── The air, and the static ──────────────────────────────────────────
-		air.copy(blue).lerp(white, easeInOutPower(span(p, T.whiten), 1.6));
+		air.copy(dark).lerp(white, easeInOutPower(span(p, T.whiten), 1.6));
 		world.setAir(air.getHex());
 
 		noise.set(lerp(NOISE.base, NOISE.peak, span(p, T.noise)));

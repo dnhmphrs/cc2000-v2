@@ -1,33 +1,32 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
-	import { noise, noiseWash, noiseGhost } from '$lib/store/store';
+	import { noise, noiseWash, noiseGhost, sceneGround } from '$lib/store/store';
 	import { NOISE } from '$lib/config';
 	import { NOISE_VERT, NOISE_FRAG } from '$lib/three/shaders/noise';
 
 	// ── The static layer ─────────────────────────────────────────────────────
-	// Hosts three/shaders/noise.js on its own WebGL canvas, over the 3D and
-	// under the UI. It is on for the whole run — the scenes only say how much.
+	// The site's BACKGROUND. It paints the active scene's ground colour and
+	// textures it, and the 3D canvas is composited on top with a transparent
+	// clear — so the grain is behind everything in the scene rather than a film
+	// over it. It is always drawing; the scenes only say how much.
 	//
+	//   sceneGround      the ground colour, from the active scene's backdrop()
 	//   noise      0..1  how much grain
-	//   noiseWash  0..1  0 = grain over the picture, 1 = static instead of it
+	//   noiseWash  0..1  0 = the ground, textured; 1 = static instead of it
 	//   noiseGhost 0..1  how much structure clumps out of it
-	//
-	// Grain composites with `mix-blend-mode: overlay`, which is why the shader
-	// sits at mid grey: one layer then works over both the deep blue of the
-	// fly-in and the white of everything after it. The wash switches the blend
-	// off, because a flood has to replace the picture, not tint it.
 
-	// Backing-store ladder. Static does not want to be sharp, so even the top
-	// rung is below native — and it steps down further if frames get long.
-	const SCALES = [0.6, 0.42, 0.3];
+	// Backing-store ladder. Near native at the top, because the grain wants to
+	// be fine now that it is not being blended over anything — it steps down if
+	// frames get long.
+	const SCALES = [0.85, 0.6, 0.4];
 
 	let canvas;
 	let gl;
 	let frame;
 	let scaleIdx = 0;
 
-	let uRes, uTime, uAmount, uGrain, uWash, uGhost, uGhostTex, uHasGhostTex;
+	let uRes, uGround, uTime, uAmount, uGrain, uWash, uGhost, uGhostTex, uHasGhostTex;
 	let ghostTexture = null;
 	let hasGhost = 0;
 
@@ -35,6 +34,16 @@
 	let amount = 0;
 	let wash = 0;
 	let ghost = 0;
+	// Eased toward the scene's ground, so the swing from near-black to white is
+	// a fade rather than a cut behind the flash.
+	const ground = [0, 0, 0];
+
+	// Straight to 0..1 in DISPLAY space. This canvas is shown as sRGB and so is
+	// the three.js one composited over it (outputEncoding = sRGB), so the two
+	// only agree if the ground is passed through unconverted.
+	function toRGB(hex) {
+		return [16, 8, 0].map((sh) => ((hex >> sh) & 255) / 255);
+	}
 
 	// Externally settable: hand this an image or a canvas and the ghost flashes
 	// sample it instead of inventing blooms. Render a scene to an offscreen
@@ -93,6 +102,7 @@
 		gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
 		uRes = gl.getUniformLocation(program, 'uRes');
+		uGround = gl.getUniformLocation(program, 'uGround');
 		uTime = gl.getUniformLocation(program, 'uTime');
 		uAmount = gl.getUniformLocation(program, 'uAmount');
 		uGrain = gl.getUniformLocation(program, 'uGrain');
@@ -130,10 +140,10 @@
 		wash += (get(noiseWash) - wash) * Math.min(1, dt * 5);
 		ghost += (get(noiseGhost) - ghost) * Math.min(1, dt * 3);
 
-		// Nothing to draw and nothing to see: skip the work entirely.
-		const live = amount > 0.002 || wash > 0.002;
-		canvas.style.opacity = live ? '1' : '0';
-		if (!live) return;
+		const want = toRGB(get(sceneGround));
+		const k = Math.min(1, dt * 5);
+		for (let i = 0; i < 3; i++) ground[i] += (want[i] - ground[i]) * k;
+		if (uGround) gl.uniform3f(uGround, ground[0], ground[1], ground[2]);
 
 		// Quantised: the grain re-rolls at NOISE.rate, not at the display rate.
 		// Full-rate static shimmers; slower static crawls, which reads as
@@ -187,7 +197,7 @@
 	});
 </script>
 
-<canvas bind:this={canvas} class:flood={$noiseWash > 0.5} />
+<canvas bind:this={canvas} />
 
 <style>
 	canvas {
@@ -196,18 +206,9 @@
 		width: 100vw;
 		height: 100vh;
 		display: block;
-		/* Over the 3D, under the flash and the UI. */
-		z-index: 3;
-		opacity: 0;
+		/* BEHIND the 3D, which clears transparent over it. This layer is the
+		   ground the whole site sits on. */
+		z-index: 0;
 		pointer-events: none;
-		/* Mid grey is neutral under overlay, so the grain darkens and lightens
-		   whatever is beneath it without tinting it. */
-		mix-blend-mode: overlay;
-		transition: opacity 0.2s linear;
-	}
-
-	/* A flood has to replace the picture, not tint it. */
-	canvas.flood {
-		mix-blend-mode: normal;
 	}
 </style>

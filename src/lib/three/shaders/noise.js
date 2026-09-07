@@ -7,12 +7,15 @@
 // file so it can be dropped into anything. NoiseField.svelte is one host for
 // it; a three.js ShaderMaterial would be another.
 //
-// Two modes, both driven from the same source:
+// It is the BACKGROUND, not a film over the picture: it paints uGround — the
+// active scene's own ground colour — and deviates either side of it, and the 3D
+// is composited on top with a transparent clear. So the grain sits behind
+// everything in the scene rather than over it.
 //
-//   GRAIN (uWash = 0)  output sits at mid grey and deviates either way, so the
-//                      host can composite it with `mix-blend-mode: overlay` and
-//                      one shader works over both the deep blue and the white.
-//   FLOOD (uWash = 1)  output is opaque static, for the wipe home.
+// Two modes:
+//
+//   GRAIN (uWash = 0)  the ground, textured.
+//   FLOOD (uWash = 1)  opaque static instead of it, for the wipe home.
 //
 // Ghosts. uGhost lets low-frequency shapes clump out of the noise — faint,
 // dreamlike. Bind a texture to uGhostTex and raise uHasGhostTex to flash real
@@ -34,6 +37,7 @@ export const NOISE_FRAG = `
 	varying vec2 vUv;
 
 	uniform vec2 uRes;        // canvas size in device pixels
+	uniform vec3 uGround;     // the active scene's ground colour, sRGB 0..1
 	uniform float uTime;      // ALREADY quantised by the host to uRate
 	uniform float uAmount;    // 0..1, how much grain
 	uniform float uGrain;     // grain cell size, device pixels
@@ -92,16 +96,21 @@ export const NOISE_FRAG = `
 		vec2 c = vUv - 0.5;
 		float vig = 1.0 + dot(c, c) * 1.3;
 
-		float grain = 0.5 + (g - 0.5) * clamp(uAmount * vig, 0.0, 1.0);
-		float flood = g;
+		// Deviate either side of the ground. Partly scaled by how light the ground
+		// is, so the same amount reads on near-black and on white rather than
+		// washing out on one — but only partly, because scaling it fully would
+		// leave nothing at all on a near-black ground.
+		float lift = 0.5 + 0.5 * max(max(uGround.r, uGround.g), uGround.b);
+		vec3 grain = uGround + (g - 0.5) * clamp(uAmount * vig, 0.0, 1.0) * lift;
 
-		gl_FragColor = vec4(vec3(mix(grain, flood, uWash)), 1.0);
+		gl_FragColor = vec4(mix(grain, vec3(g), uWash), 1.0);
 	}
 `;
 
 // Uniform names, so a host can loop rather than hand-listing them.
 export const NOISE_UNIFORMS = [
 	'uRes',
+	'uGround',
 	'uTime',
 	'uAmount',
 	'uGrain',

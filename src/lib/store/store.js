@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { NOISE } from '$lib/config';
+import { NOISE, DARK } from '$lib/config';
 
 // ── State ────────────────────────────────────────────────────────────────────
 // Every store the site has. Writers are named in each comment; if you find
@@ -62,6 +62,11 @@ export const fieldDecade = writable(null);
 export const flare = writable(0);
 
 // ── The static ───────────────────────────────────────────────────────────────
+// The static paints the BACKGROUND, so it has to know what colour the active
+// scene's ground is — the run goes from near-black to white part way through.
+// Written by: three/Stage.svelte.
+export const sceneGround = writable(DARK);
+
 // Read by components/NoiseField.svelte, written by whichever scene is running.
 //   noise       how much grain
 //   noiseWash   0 = grain over the picture, 1 = static instead of it

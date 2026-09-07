@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createEgg } from './egg';
-import { TUNNEL, DEEP_BLUE } from '$lib/config';
+import { TUNNEL, DARK } from '$lib/config';
 
 // ── The tunnel ───────────────────────────────────────────────────────────────
 // The place the fly-in happens: deep blue air with the egg waiting at the far
@@ -18,8 +18,8 @@ import { TUNNEL, DEEP_BLUE } from '$lib/config';
 
 export function createTunnel() {
 	const scene = new THREE.Scene();
-	scene.fog = new THREE.FogExp2(DEEP_BLUE, TUNNEL.fogDensity);
-	let air = DEEP_BLUE;
+	scene.fog = new THREE.FogExp2(DARK, TUNNEL.fogDensity);
+	let air = DARK;
 
 	const camera = new THREE.PerspectiveCamera(
 		TUNNEL.fov,
@@ -94,7 +94,7 @@ export function createTunnel() {
 		},
 
 		reset() {
-			this.setAir(DEEP_BLUE);
+			this.setAir(DARK);
 			this.setFov(TUNNEL.fovStart);
 			camera.position.z = TUNNEL.camStart;
 			sperm.position.set(
