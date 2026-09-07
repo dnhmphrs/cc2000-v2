@@ -63,10 +63,11 @@ export const CAM_END =
 // ── The icosahedron (scenes 2–3) ─────────────────────────────────────────────
 export const ICOSA = {
 	// Orthographic frustum HEIGHT at rest. Width follows the viewport aspect.
-	// Half what it was: the whole assembly — frame, sphere and rooms — reads at
-	// roughly twice the size on screen. Everything else in here is a world
-	// distance and unchanged, so only the framing moved.
-	frustum: 6.5,
+	// 8.7 rather than the 13 this started at: the whole assembly — frame, sphere,
+	// construction and rooms — reads at about 1.5x the size it used to. Every
+	// other number in here is a world distance and unchanged, so only the framing
+	// moves when this does.
+	frustum: 8.7,
 	camPos: [0, 0, 14],
 	near: 0.1,
 	far: 100,
@@ -102,13 +103,11 @@ export const ICOSA = {
 	shellSolid: 0.85,
 	shellFaint: 0.4,
 
-	// How far the panes travel out of the frame. Owned by GoldenRectangle.
-	paneReach: 6.4,
-
-	// What the frame drops to while the golden rectangles are drawn over it. Low
-	// enough that three warm rectangles are unmistakably the subject and the
-	// icosahedron is the thing they are drawn inside.
-	frameUnder: 0.2,
+	// How far the panes travel out of the frame. Owned by GoldenRectangle, and
+	// pulled in from 6.4 when the framing tightened: at 1.5x the old scale the
+	// construction is the thing this beat exists to show, and at the old reach
+	// most of it was outside the frame.
+	paneReach: 5.2,
 
 	// How much the sphere opens out as the rooms come through it. It starts as
 	// the frame's exact circumsphere and only ever eases off that.

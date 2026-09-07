@@ -109,65 +109,61 @@ export const SCENES = scale({
 	},
 
 	// ── Conception ───────────────────────────────────────────────────────────
-	// White, a beat of nothing, and then three things in order: the sphere, the
-	// frame inside it, and the figure the frame is built on. Nothing turns.
+	// White, a beat of nothing, a sphere, and the icosahedron drawing itself on
+	// inside it. Nothing turns, and nothing else is added — the construction the
+	// shape is built on is the computation's opening beat, not this one's.
 	//
-	//   0     0.05    0.26      0.48         0.84       1.0
-	//   |hold | sphere |  wire   |   rects    |  rest    |
-	//   |white| fades  | all 30  | the three  | the whole|
-	//   |     | up     | at once | golden ones| figure   |
+	//   0     0.06    0.3            0.8         1.0
+	//   |hold | sphere |     wire     |   rest    |
 	//
-	// The hold and the rest are the GAPS either side, not settings — the three
-	// windows below are the whole scene.
+	// The hold and the rest are the GAPS either side, not settings.
 	conception: {
-		duration: 4.6,
+		duration: 3.9,
 
 		// The sphere fades up out of the white, at the frame's exact circumradius
 		// — so what appears is one object, not a ball with something in it.
-		sphere: [0.05, 0.26],
+		sphere: [0.06, 0.3],
 
 		// The frame draws itself on inside it. Every edge at once — the stagger is
 		// gone, see world/lattice.js — so this only has to be long enough to see
 		// the strokes travel.
-		wire: [0.22, 0.48],
-
-		// Then the three golden rectangles, one after another. This is the beat
-		// that says what the shape is made of, and the rooms come off these very
-		// rectangles in the next scene.
-		rects: [0.5, 0.84]
+		wire: [0.26, 0.8]
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────
 	computation: {
-		duration: 8.0,
+		duration: 9.2,
 
 		// The panes come out of the frame. The sphere stays — it is the thing the
 		// frame is held inside — but thins to shellFaint so the rooms are not seen
 		// through a wash. The frame itself is left exactly as the conception drew
 		// it: same weight, no fill.
-		open: [0.0, 0.18],
+		open: [0.0, 0.2],
 		shellThin: [0.04, 0.22],
 		// And the sphere opens out off the frame it was skin-tight on, so the
 		// rooms come THROUGH it rather than out from under it.
 		sphereGrow: [0.0, 0.34],
 
+		// The panes come out as PURE GEOMETRY — the golden spiral, the subdivision
+		// squares, the 1:φ bar — and are left alone for a beat with nothing on
+		// them. Only then do the decades arrive over the construction. That order
+		// is the whole point: the rooms sit on the ratio, not the other way round.
+		rooms: [0.3, 0.44],
+
 		// The search: turn a decade square to camera, look at it, turn to the
 		// next. The point is not to fake a search — it is that each turn shows
 		// another decade's artwork, which is otherwise built and never seen.
-		search: [0.14, 0.8],
+		search: [0.44, 0.8],
 		// Three decades visited before the answer, then the answer itself.
 		searchSteps: 4,
 		// Fraction of each step spent turning; the rest is the look. The last
 		// step is all turn, because the zoom follows it straight away.
-		searchSpin: 0.7,
-		// Whole extra revolutions folded into each turn BETWEEN decades, about a
-		// different axis every time. A whole number is the identity at both ends,
-		// so the poses either side are untouched and only the route between them
-		// changes — from the shortest arc to a tumble, which is what stops four
-		// turns in a row from being the same turn four times. The turn onto the
-		// ANSWER takes none of this: it is the one clean move, and that is what
-		// makes it land.
-		searchWhirl: 1,
+		searchSpin: 0.86,
+		// The turns are eased gently and take nearly the whole of each step, so the
+		// search reads as one continuous drift between decades rather than four
+		// snap-and-hold moves. Anything sharper than this — and extra revolutions
+		// were tried — reads as breakneck rather than as searching.
+		searchEase: 1.5,
 
 		// Then in. Accelerates away from rest, then eases onto the final frame.
 		zoom: [0.8, 1.0],

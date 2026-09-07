@@ -32,6 +32,9 @@
 	// mean "this is the one", and the rooms read better as faces of a solid than
 	// as slides anyway.
 	//
+	// The turns are gently eased and take nearly the whole of each step, so this
+	// drifts between decades rather than snapping and holding four times.
+	//
 	// Like the conception, every value here is a pure function of scene progress
 	// — nothing integrates dt — so the scene can be reset or re-entered without
 	// drifting. The one exception is the landing quaternions, which are measured
@@ -130,17 +133,6 @@
 	// square by ICOSA.searchOblique.
 	const OBLIQUE = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.searchOblique));
 
-	// The axes the extra revolutions go round, one per step in turn. Four
-	// different ones, so no two turns in a run take the same route.
-	const TAU = Math.PI * 2;
-	const WHIRL = new THREE.Quaternion();
-	const WHIRL_AXES = [
-		new THREE.Vector3(0, 1, 0),
-		new THREE.Vector3(1, 0, 0.35).normalize(),
-		new THREE.Vector3(0, 0, 1),
-		new THREE.Vector3(-0.6, 1, 0.4).normalize()
-	];
-
 	// The rotation that puts a pane's artwork square to the camera.
 	function landingQuatFor(i) {
 		const room = panes[i]?.getRoom?.();
@@ -193,6 +185,7 @@
 			if (!p) return;
 			p.setDim(1);
 			p.setLineDim(1);
+			p.setRoomDim(0);
 			p.updateProjection(0);
 		});
 	}
@@ -205,8 +198,16 @@
 		const p = clamp01(t / T.duration);
 
 		// ── The panes come out ───────────────────────────────────────────────
+		// As pure geometry first: the golden spiral, the subdivision squares, the
+		// 1:φ bar. They are left alone with nothing on them for a beat, and only
+		// then do the decades arrive over the construction.
 		const open = easeInOutCubic(span(p, T.open));
-		panes.forEach((pane) => pane && pane.updateProjection(open));
+		const rooms = easeInOutCubic(span(p, T.rooms));
+		panes.forEach((pane) => {
+			if (!pane) return;
+			pane.updateProjection(open);
+			pane.setRoomDim(rooms);
+		});
 
 		// The sphere stays — it is what the frame is held inside — but it thins so
 		// the artwork is not seen through a wash, and it opens out off the frame
@@ -235,26 +236,10 @@
 			const local = u * n - step;
 			const last = step === n - 1;
 
-			const turn = easeInOutCubic(last ? local : clamp01(local / T.searchSpin));
+			const turn = easeInOutPower(last ? local : clamp01(local / T.searchSpin), T.searchEase);
 			world.frame.quaternion
 				.copy(step === 0 ? searchFrom : searchQuats[step - 1])
 				.slerp(searchQuats[step], turn);
-
-			// The route, not the destination. A whole number of extra revolutions
-			// is the identity at both ends, so the poses either side are exactly
-			// as measured — but between them the frame tumbles instead of taking
-			// the shortest arc, about a different axis and the other way round
-			// each step. The turn onto the answer takes none of it: after four
-			// whirls, one clean move is what reads as arriving.
-			if (!last && T.searchWhirl) {
-				const dir = step % 2 ? -1 : 1;
-				world.frame.quaternion.premultiply(
-					WHIRL.setFromAxisAngle(
-						WHIRL_AXES[step % WHIRL_AXES.length],
-						turn * TAU * T.searchWhirl * dir
-					)
-				);
-			}
 
 			const d = decadeAssignments[searchOrder[step]] ?? null;
 			if (d !== facing) {
@@ -387,6 +372,7 @@
 			if (!pane) return;
 			pane.setDim(1);
 			pane.setLineDim(1);
+			pane.setRoomDim(0);
 			pane.updateProjection(0);
 		});
 	}

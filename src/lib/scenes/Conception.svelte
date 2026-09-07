@@ -1,10 +1,9 @@
 <script>
-	import { SCENES, span, lerp, clamp01, smoothstep, WHITE, ICOSA } from '$lib/config';
+	import { SCENES, span, clamp01, smoothstep, WHITE, ICOSA } from '$lib/config';
 
 	// ── Scene 3: conception ──────────────────────────────────────────────────
-	// White, a held beat of nothing, and then three things in order: a sphere,
-	// the icosahedron drawing itself on inside it, and the three golden
-	// rectangles the whole figure is built on. Nothing turns.
+	// White, a held beat of nothing, a sphere, and the icosahedron drawing itself
+	// on inside it. Nothing turns, and nothing else is added.
 	//
 	// The fly-in ends by blowing the frame out to white, and this OPENS on that
 	// white and stays there for a moment before anything happens. The pause is
@@ -16,11 +15,10 @@
 	// rather than a ball with something floating in it. The computation eases it
 	// off that as the rooms come through.
 	//
-	// The rectangles are the point of the last beat. Three golden rectangles,
-	// mutually perpendicular, whose twelve corners are the vertices — and the
-	// decade rooms in the next scene are projected off those very rectangles. So
-	// this is not an ornament: it is the answer to "why this shape", shown just
-	// before the shape is used.
+	// The golden-ratio construction is deliberately NOT here. It belongs to the
+	// rectangles themselves, and the computation projects it out of the frame as
+	// its opening beat — which is a better answer to "why this shape" than
+	// drawing it flat inside the frame, because you watch it come out.
 	//
 	// What is built and simply never turned on, when you come to fill this out —
 	// see world/lattice.js:
@@ -51,14 +49,6 @@
 		// strokes travelling is the whole of the movement, and easing the clock
 		// only makes them stall at both ends.
 		world.setGrow(span(p, T.wire));
-
-		// Then the figure it is built on, a rectangle at a time — the stagger for
-		// that is in world/lattice.js, same as the edges'. The frame steps back
-		// while they are drawn, or this beat is just more line-work on top of
-		// thirty lines rather than the thing the shape is made of.
-		const r = span(p, T.rects);
-		world.setRectangles(r);
-		world.setEdgeOpacity(lerp(1, ICOSA.frameUnder, smoothstep(0, 1, r)));
 
 		return t >= T.duration;
 	}

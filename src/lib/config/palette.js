@@ -44,9 +44,6 @@ export const ICOSA_INK = {
 	// frame stays legible under it.
 	inner: 0x8390b5,
 	pentagon: 0x2b3350,
-	// The three golden rectangles. The one warm line in the scene, because it is
-	// the one piece of the figure that is about the ratio rather than the solid.
-	rect: 0xa8823c,
 	// The solid faces, which are only ever seen on the white.
 	solid: 0x14224e
 };
