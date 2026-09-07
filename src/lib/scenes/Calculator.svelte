@@ -13,11 +13,9 @@
 		conceived,
 		edge,
 		monitorRect,
-		calcZoom,
-		noise,
-		noiseWash
+		calcZoom
 	} from '$lib/store/store';
-	import { SCENES, NOISE, clamp01, lerp, easeInOutPower } from '$lib/config';
+	import { SCENES, lerp, easeInOutPower } from '$lib/config';
 	import { begin, skipToVerdict, settled } from './director';
 	import { conceptionDate, previousDay, dateToDecade } from '$lib/functions/utils';
 	import data from '$lib/data/cc2000_data.json';
@@ -99,37 +97,38 @@
 	// stays mounted for exactly as long as its move takes and no flag has to be
 	// kept in step with a timer.
 
-	// Out of the room's monitor. `tick` rather than `css` because the zoom level
-	// is published as it goes, and a css-driven transition is compiled to
-	// keyframes up front and cannot report progress.
+	// Out of the room's monitor — the other half of the move the camera is
+	// making into that same monitor.
 	//
-	// The easing HOLDS it small before rushing it home, which is what makes the
-	// beat read in the right order: the static clears first, so you see the
-	// whole calculator sitting in the room's computer for a moment, and only
-	// then are you pulled into it.
+	// It reads the LIVE monitor rect every frame rather than a snapshot, so it
+	// stays locked to the glass while the scene zooms into it; without that the
+	// screen grows and the room behind it sits still, which is exactly what it
+	// should not look like. The blend toward identity is what lands it square on
+	// the viewport at the end, where the glass alone would not.
+	//
+	// `tick` rather than `css` because the zoom level is published as it goes,
+	// and a css-driven transition is compiled to keyframes up front and can
+	// neither read a moving rect nor report progress.
 	function outOfMonitor(node, { rect }) {
 		if (!rect) return { duration: 0 };
-		const vw = window.innerWidth;
-		const vh = window.innerHeight;
-		// Fit the whole page inside the glass, whichever way round it is, and
-		// centre it in the leftover — the monitor's shape and the viewport's are
-		// not the same, and a page pinned to the glass's corner reads as a
-		// mistake rather than as a screen.
-		const s0 = Math.min(rect.width / vw, rect.height / vh);
-		const x0 = rect.left + (rect.width - vw * s0) / 2;
-		const y0 = rect.top + (rect.height - vh * s0) / 2;
 		node.style.transformOrigin = '0 0';
 		return {
 			duration: T.arrive * 1000,
 			easing: (t) => easeInOutPower(t, 1.9),
 			tick: (t) => {
+				const live = get(monitorRect) ?? rect;
+				const vw = window.innerWidth;
+				const vh = window.innerHeight;
+				// Fit the whole page inside the glass, whichever way round it is,
+				// and centre it in the leftover — the monitor's shape and the
+				// viewport's are not the same, and a page pinned to the glass's
+				// corner reads as a mistake rather than as a screen.
+				const s0 = Math.min(live.width / vw, live.height / vh);
+				const x0 = live.left + (live.width - vw * s0) / 2;
+				const y0 = live.top + (live.height - vh * s0) / 2;
 				const u = 1 - t;
 				node.style.transform = `translate(${x0 * u}px, ${y0 * u}px) scale(${lerp(s0, 1, t)})`;
 				calcZoom.set(t);
-				// The flood clears over the first third, uncovering the room with
-				// the machine already on its screen.
-				noiseWash.set(clamp01(1 - t * 3.2));
-				noise.set(lerp(NOISE.base, NOISE.flood, clamp01(1 - t * 2.4)));
 			}
 		};
 	}
@@ -162,7 +161,6 @@
 			return;
 		}
 
-		noise.set(NOISE.base);
 		let li = 0;
 		const step = () => {
 			if (li >= LINES.length) return (typed = true);
@@ -424,14 +422,23 @@
 		transform: translate(-50%, -50%);
 		border-radius: 18px;
 		box-shadow: inset 0 0 0 9px var(--machine-dark), inset 0 0 0 12px var(--machine-light),
-			inset 0 14px 30px rgba(0, 0, 0, 0.55);
+			inset 0 14px 30px rgba(0, 0, 0, 0.55),
+			/* And an outward spread that fills the four corners the four body
+			   bars leave open — they meet at a square corner, this window is
+			   rounded, and the difference is scene. An element's OWN outer
+			   shadow is not clipped by its own overflow, so this works from
+			   here. */
+				0 0 0 20px var(--machine);
 		overflow: hidden;
 	}
 
 	.screen {
 		position: absolute;
 		inset: 12px;
-		border-radius: 10px;
+		/* The window's own radius LESS its inset, so the glass follows the inner
+		   edge of the bezel exactly. Any more and the corners open up and the
+		   scene shows through the gap; the bezel is 12px and the window is 18. */
+		border-radius: 6px;
 		/* A vignette, not a colour: the window looks straight onto the scene
 		   behind it, so it only needs darkening at the edges to read as glass.
 		   Light, because the ground behind it is already near-black — any more

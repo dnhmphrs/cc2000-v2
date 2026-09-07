@@ -6,7 +6,6 @@ import {
 	FACES,
 	PENTAGONS,
 	PENTAGON_PAIRS,
-	THREE_FOLD_VIEW,
 	edgePositions,
 	facePositions
 } from '../geometry/icosahedron';
@@ -82,6 +81,8 @@ function segmentAttributes(geo, count, delayOf) {
 	geo.setAttribute('aDelay', new THREE.BufferAttribute(aDelay, 1));
 }
 
+const TILT = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.tilt));
+
 export function createLattice() {
 	const scene = new THREE.Scene();
 	const aspect = window.innerWidth / window.innerHeight;
@@ -101,12 +102,12 @@ export function createLattice() {
 	const egg = createEgg(ICOSA_EGG_R);
 	scene.add(egg.group);
 
-	// Everything that turns. The conception starts it face-on down a 3-fold
-	// axis — the view the reference diagram is drawn in, where the silhouette
-	// is a hexagon and every edge is visible — and hands it over to the
-	// computation already rotated onto ICOSA.tilt.
+	// Everything that turns. It rests on ICOSA.tilt, which is where the
+	// computation's search starts from; the conception leaves it alone.
+	// THREE_FOLD_VIEW is exported from the geometry if you ever want the
+	// face-on view the reference diagram is drawn in.
 	const frame = new THREE.Group();
-	frame.quaternion.copy(THREE_FOLD_VIEW);
+	frame.quaternion.copy(TILT);
 	scene.add(frame);
 
 	// The line-work and the solid, in a group of their own. Built at the raw
@@ -259,12 +260,6 @@ export function createLattice() {
 			spokeMat.uniforms.uOpacity.value = v * 0.55;
 			pentagons.forEach((pn) => (pn.mat.uniforms.uOpacity.value = v * 0.9));
 		},
-		// How much bigger than its true size the frame is drawn. 1 is the scale
-		// the panes are built against; anything else is the conception showing it
-		// off before it hands over.
-		setWireScale(v) {
-			wire.scale.setScalar(v);
-		},
 		setSolid(v) {
 			solidMat.opacity = v;
 			solid.visible = v > 0.002;
@@ -298,8 +293,7 @@ export function createLattice() {
 
 		reset() {
 			paneGroup.visible = false;
-			wire.scale.setScalar(1);
-			frame.quaternion.copy(THREE_FOLD_VIEW);
+			frame.quaternion.copy(TILT);
 			pentagons.forEach((pn) => (pn.spinner.rotation.z = 0));
 			this.setGrow(0);
 			this.setSpokes(0);

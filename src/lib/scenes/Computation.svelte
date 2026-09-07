@@ -2,7 +2,7 @@
 	import { tick } from 'svelte';
 	import * as THREE from 'three';
 	import { get } from 'svelte/store';
-	import { decade, aspect, flare, fieldDecade, monitorRect, noise } from '$lib/store/store';
+	import { decade, aspect, flare, fieldDecade, monitorRect } from '$lib/store/store';
 	import {
 		SCENES,
 		span,
@@ -12,7 +12,6 @@
 		easeInOutCubic,
 		easeInOutPower,
 		ICOSA,
-		NOISE,
 		WHITE
 	} from '$lib/config';
 	import { assignDecades, shuffle } from '$lib/data/roomElements';
@@ -154,13 +153,9 @@
 		facing = null;
 		frustum = ICOSA.frustum;
 		world.applyFrustum(frustum);
-		// The panes are built on the raw vertex coordinates, so the frame has to be
-		// at that scale for them to emerge from its edges.
-		world.setWireScale(1);
 		world.setPanesVisible(true);
 		world.setSolid(1);
 		monitorRect.set(null);
-		noise.set(NOISE.calm);
 		panes.forEach((p) => {
 			if (!p) return;
 			p.setDim(1);
@@ -251,8 +246,6 @@
 			flare.set(smoothstep(T.flare[0], T.flare[1], p));
 		}
 
-		noise.set(NOISE.calm);
-
 		if (t >= T.duration) {
 			publishMonitor();
 			flare.set(0);
@@ -264,6 +257,36 @@
 
 	export function backdrop() {
 		return { color: WHITE, alpha: 1 };
+	}
+
+	// ── The way back ─────────────────────────────────────────────────────────
+	// "Calculate again" is ONE move seen from two sides: the camera flies into
+	// the room's monitor while the calculator grows out of it. This half is the
+	// camera. The stage drives it, because the scene is no longer running — it
+	// is being held on screen — and the calculator locks itself to the glass
+	// rect this republishes, so the two halves cannot drift apart.
+	const RETURN_DUR = SCENES.calculator.arrive;
+	let rt = 0;
+	let returnFrom = 0;
+	let returnTo = 0;
+
+	export function beginReturn() {
+		const rect = get(monitorRect);
+		if (!rect) return;
+		rt = 0;
+		returnFrom = frustum;
+		// Far enough in that the glass fills the frame. The frustum is a height,
+		// so it scales by the glass's share of the viewport's height.
+		returnTo = Math.max(frustum * (rect.height / window.innerHeight), 0.05);
+	}
+
+	export function stepReturn(dt) {
+		if (!returnFrom) return;
+		rt = Math.min(rt + dt, RETURN_DUR);
+		// The same easing the calculator arrives on, so they move as one thing.
+		frustum = lerp(returnFrom, returnTo, easeInOutPower(rt / RETURN_DUR, 1.9));
+		world.applyFrustum(frustum);
+		publishMonitor();
 	}
 
 	export function render(r) {
@@ -287,6 +310,8 @@
 		target = -1;
 		searchOrder = [];
 		searchQuats = [];
+		rt = 0;
+		returnFrom = 0;
 		frustum = ICOSA.frustum;
 		fieldDecade.set(null);
 		monitorRect.set(null);

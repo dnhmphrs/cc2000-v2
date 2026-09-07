@@ -25,7 +25,7 @@ is up.
 |---|-------|-----------|-------|
 | 1 | **Calculator** | The machine. Takes both answers. DOM. | `src/lib/scenes/Calculator.svelte` |
 | 2 | **FlyIn** | Through the screen, down deep-blue air to the egg. 3D. | `src/lib/scenes/FlyIn.svelte` |
-| 3 | **Conception** | The icosahedron assembling itself, on white. 3D. | `src/lib/scenes/Conception.svelte` |
+| 3 | **Conception** | A sphere forms, the icosahedron appears inside it. 3D. | `src/lib/scenes/Conception.svelte` |
 | 4 | **Computation** | Panes out, search the decades, fall into a room. 3D. | `src/lib/scenes/Computation.svelte` |
 | 5 | **Room** | The answer, in that room's monitor. DOM. | `src/lib/scenes/Room.svelte` |
 
@@ -59,12 +59,9 @@ src/lib/
       egg.js            the egg itself, shared by both worlds
     geometry/
       icosahedron.js    vertices, edges, faces, pentagons, golden rectangles
-    shaders/
-      noise.js          the static, as plain GLSL with no dependencies
     objects/            the decade panes and their room artwork
 
   components/
-    NoiseField.svelte   hosts the static shader over the whole site
     Background.svelte   the theta field — OFF behind one switch (FIELD_ON)
 ```
 
@@ -181,9 +178,11 @@ so the pieces cannot drift out of agreement:
   hexagon and every edge is visible. The view the reference diagram is drawn in.
 
 A fifth of a turn about a vertex axis maps the solid onto itself — it is a
-generator of the icosahedral group. The pentagons are drawn as their own
-objects, each able to turn on its own axis, though the conception currently
-turns the whole solid as one thing rather than spinning them individually.
+generator of the icosahedral group, so a spinning pentagon is the visible form
+of a step in the calculation. The pentagons are built as their own objects with
+their own spin axes for exactly that reason, but the conception is deliberately
+plain at the moment and never turns any of them on. `world.setSpokes()`,
+`world.setPentagons()` and `world.pentagons[i].spinner` are all waiting.
 
 **The vertex ORDER is load-bearing.** The three golden rectangles are indices
 `[0,1,3,2]`, `[4,5,7,6]` and `[8,9,11,10]`, and the decade panes are built on
@@ -200,51 +199,30 @@ and draws that back to 1 before handing over.
 
 ---
 
-## The static
-
-`three/shaders/noise.js` is plain WebGL 1 with no dependencies;
-`components/NoiseField.svelte` hosts it on its own canvas over the 3D. Scenes
-only say how much:
-
-| Store | Meaning |
-|---|---|
-| `sceneGround` | the ground colour, from the active scene's `backdrop()` |
-| `noise` | how much grain |
-| `noiseWash` | 0 = the ground, textured; 1 = static *instead of* it |
-| `noiseGhost` | how much structure clumps out of it |
-
-The static is the **background**, not a film over the picture: it paints
-`sceneGround` — the active scene's own ground colour, which swings from
-near-black to white part way through the run — and deviates either side of it,
-and the 3D canvas is composited on top with a transparent clear. So the grain
-sits behind everything in the scene. The wash replaces the ground with raw
-static instead, for the wipe home.
-
-**Ghosts** are the dreamlike flashes. Raise `SCENES.conception.ghostAmount`
-above 0 to bring them in. With no texture bound they make soft drifting blooms;
-call `NoiseField.setGhostSource(canvasOrImage)` to flash real imagery through
-the static instead — render a scene to an offscreen canvas and hand it over.
-
----
-
 ## The loop home
 
 "Calculate again" is the one piece of choreography that spans DOM and 3D.
 
-1. `director.again()` floods the frame with static and sets the scene back to
-   `calculator`.
-2. The Calculator mounts and reads `monitorRect` — the room's screen glass,
-   published by the Computation in CSS pixels.
-3. Its `outOfMonitor` transition draws the **whole page** at that size, fitted
-   inside the glass, and grows it to fill the viewport.
-4. The static clears over the first third, so you see the machine sitting on the
-   room's computer before you are pulled into it. The controls are held back
-   until it is nearly home (`SCENES.calculator.controlsAt`) — at monitor scale
-   they are a few unreadable pixels.
-5. `director.settled()` releases the room.
+It is **one move seen from two sides**, and both sides share one duration
+(`SCENES.calculator.arrive`):
 
-The Stage holds the room's last frame on screen for exactly as long as
-`monitorRect` is set, which is precisely that window.
+- The **camera** flies into the room's monitor. `Computation.stepReturn()` walks
+  the frustum down until the glass fills the frame, republishing `monitorRect`
+  every step. The Stage drives it, because by then the scene is not running —
+  it is being held on screen.
+- The **calculator** grows out of that monitor. Its `outOfMonitor` transition
+  reads the **live** `monitorRect` every frame rather than a snapshot, so it
+  stays locked to the glass while the glass is moving, and blends toward
+  identity so it lands square on the viewport at the end.
+
+Reading a snapshot instead is the bug it looks like: the screen zooms and the
+room behind it sits still.
+
+The controls are held back until it is nearly home
+(`SCENES.calculator.controlsAt`) — at monitor scale they are a few unreadable
+pixels. `director.settled()` then releases the room, and the Stage holds the
+room's last frame for exactly as long as `monitorRect` is set, which is
+precisely that window.
 
 Going round again deliberately **keeps** the birthday and the spice —
 `director.clearResult()` clears only what the run produced.
@@ -276,10 +254,6 @@ Going round again deliberately **keeps** the birthday and the spice —
 
 - **The egg's materials write no depth.** A transparent material that writes
   depth hides whatever is inside it — which is the icosahedron.
-
-- **The 3D canvas always clears transparent.** The ground is painted by the
-  static layer behind it; a scene's `backdrop()` only says what colour that is.
-  Clearing opaque would hide the grain entirely.
 
 ---
 

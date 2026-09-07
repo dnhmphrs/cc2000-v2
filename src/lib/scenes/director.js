@@ -9,12 +9,8 @@ import {
 	monitorRect,
 	fieldDecade,
 	flare,
-	noise,
-	noiseWash,
-	noiseGhost,
 	calcZoom
 } from '$lib/store/store';
-import { NOISE } from '$lib/config';
 
 // ── The director ─────────────────────────────────────────────────────────────
 // The five scenes in order, and the four things that can happen between them.
@@ -59,14 +55,12 @@ export function skipToVerdict() {
 	scene.set('room');
 }
 
-// Going round again. The static floods, the calculator is already drawn inside
-// the monitor behind it, and it flies out. The operator's ANSWERS are kept on
-// purpose — only what the run produced is cleared.
+// Going round again. The calculator is drawn inside the room's monitor and the
+// camera flies into that monitor while it grows out of it. The operator's
+// ANSWERS are kept on purpose — only what the run produced is cleared.
 export function again() {
 	if (!is('room')) return;
 	clearResult();
-	noiseWash.set(1);
-	noise.set(NOISE.flood);
 	calcZoom.set(0);
 	scene.set('calculator');
 }
@@ -80,13 +74,10 @@ export function clearResult() {
 	edge.set(null);
 	fieldDecade.set(null);
 	flare.set(0);
-	noiseGhost.set(0);
 }
 
 // The calculator is home and settled. Now the room can be let go of.
 export function settled() {
 	monitorRect.set(null);
-	noiseWash.set(0);
-	noise.set(NOISE.base);
 	calcZoom.set(1);
 }

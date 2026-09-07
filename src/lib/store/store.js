@@ -1,5 +1,4 @@
 import { writable } from 'svelte/store';
-import { NOISE, DARK } from '$lib/config';
 
 // ── State ────────────────────────────────────────────────────────────────────
 // Every store the site has. Writers are named in each comment; if you find
@@ -60,20 +59,6 @@ export const fieldDecade = writable(null);
 // 0..1 — how hard the theta field is burning, if it is switched on at all.
 // Written by: Computation.
 export const flare = writable(0);
-
-// ── The static ───────────────────────────────────────────────────────────────
-// The static paints the BACKGROUND, so it has to know what colour the active
-// scene's ground is — the run goes from near-black to white part way through.
-// Written by: three/Stage.svelte.
-export const sceneGround = writable(DARK);
-
-// Read by components/NoiseField.svelte, written by whichever scene is running.
-//   noise       how much grain
-//   noiseWash   0 = grain over the picture, 1 = static instead of it
-//   noiseGhost  how much structure clumps out of it
-export const noise = writable(NOISE.base);
-export const noiseWash = writable(0);
-export const noiseGhost = writable(0);
 
 // ── The calculator's own transform ───────────────────────────────────────────
 // 0 = drawn 1:1 inside the room's monitor, 1 = filling the viewport. Both ends
