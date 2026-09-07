@@ -86,13 +86,14 @@ export const SCENES = scale({
 
 		// The sperm comes from behind the camera, overtakes, and is ahead of it.
 		spermIn: [0.14, 0.26],
-		// Then it leaves the camera behind and accelerates into the egg. The
-		// power is what makes it read as speeding up rather than travelling —
-		// it holds station in front of the lens, then goes. Opening this window
-		// earlier or dropping the power turns it into a dot very quickly, because
-		// the egg is 150 units away and it is heading for all of that.
-		spermRun: [0.45, 0.98],
-		spermRunPower: 3.2,
+		// And then it is leaving, from that moment on — the window opens where
+		// spermIn closes so there is no stretch where it holds station and then
+		// bolts. It pulls away gradually and keeps gaining, which is what reads
+		// as speeding up. `power` is the whole character of it: 1 is a constant
+		// departure, and much above 2.5 it hangs and then whooshes, which is the
+		// thing this is arranged to avoid.
+		spermRun: [0.26, 0.98],
+		spermRunPower: 2.2,
 		// It is inside the shell by the end of this.
 		spermGone: [0.9, 0.99],
 
@@ -105,26 +106,42 @@ export const SCENES = scale({
 	},
 
 	// ── Conception ───────────────────────────────────────────────────────────
-	// The holy one, and deliberately the plainest: a sphere forms out of the
-	// white, and the icosahedron appears inside it. Nothing turns, nothing
-	// extends. This is the beat to build into.
+	// The holy one, and the plainest. White, a held beat of nothing, a sphere,
+	// and the icosahedron drawing itself on inside it. Nothing turns.
+	//
+	//   0        0.12          0.30                        0.86        1.0
+	//   |  hold   |   sphere    |          wire             |   rest    |
+	//   |  white  |  fades up   |  five bands, near vertex  |  finished |
+	//   |         |             |  outward to the far one   |           |
+	//
+	// The hold and the rest are the GAPS either side, not settings — the two
+	// windows below are the whole scene. Both gaps are load-bearing: the hold is
+	// what separates this from the white-out that ends the fly-in, and the rest
+	// is the beat where the finished frame is simply looked at. This scene is
+	// the one the run is named after and it should never feel hurried; the build
+	// is 58% of it on purpose, about a second per band.
 	conception: {
-		duration: 4.5,
+		duration: 9.0,
 
-		// A sphere forms in the middle of the white.
-		sphere: [0.0, 0.22],
-		// The icosahedron's wireframe appears inside it, and the yolk goes.
-		wire: [0.18, 0.78]
+		// The sphere fades up out of the white, at the size it keeps for the rest
+		// of the run.
+		sphere: [0.12, 0.3],
+
+		// Then the frame draws itself on inside it. Linear, and left to the
+		// per-edge stagger in world/lattice.js for its shape — the five bands and
+		// the breaths between them are set by uSpan there, not by anything here.
+		wire: [0.28, 0.86]
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────
 	computation: {
 		duration: 8.0,
 
-		// The panes come out of the sphere.
+		// The panes come out of the sphere. The sphere itself does not move — the
+		// conception already left it at its final size — it only thins, so the
+		// rooms coming out of it are not seen through a wash.
 		open: [0.0, 0.18],
-		// The sphere draws in behind them and stays as a bubble.
-		shellDrawIn: [0.06, 0.2],
+		shellThin: [0.04, 0.22],
 
 		// The search: turn a decade square to camera, look at it, turn to the
 		// next. The point is not to fake a search — it is that each turn shows

@@ -21,13 +21,13 @@ is up.
          └──────────────────────────── calculate again ────────────────────────────────┘
 ```
 
-| # | Scene | What it is | Where |
-|---|-------|-----------|-------|
-| 1 | **Calculator** | The machine. Takes both answers. DOM. | `src/lib/scenes/Calculator.svelte` |
-| 2 | **FlyIn** | Through the screen, down deep-blue air to the egg. 3D. | `src/lib/scenes/FlyIn.svelte` |
-| 3 | **Conception** | A sphere forms, the icosahedron appears inside it. 3D. | `src/lib/scenes/Conception.svelte` |
-| 4 | **Computation** | Panes out, search the decades, fall into a room. 3D. | `src/lib/scenes/Computation.svelte` |
-| 5 | **Room** | The answer, in that room's monitor. DOM. | `src/lib/scenes/Room.svelte` |
+| #   | Scene           | What it is                                             | Where                               |
+| --- | --------------- | ------------------------------------------------------ | ----------------------------------- |
+| 1   | **Calculator**  | The machine. Takes both answers. DOM.                  | `src/lib/scenes/Calculator.svelte`  |
+| 2   | **FlyIn**       | Through the screen, down deep-blue air to the egg. 3D. | `src/lib/scenes/FlyIn.svelte`       |
+| 3   | **Conception**  | A sphere forms, the icosahedron appears inside it. 3D. | `src/lib/scenes/Conception.svelte`  |
+| 4   | **Computation** | Panes out, search the decades, fall into a room. 3D.   | `src/lib/scenes/Computation.svelte` |
+| 5   | **Room**        | The answer, in that room's monitor. DOM.               | `src/lib/scenes/Room.svelte`        |
 
 Scenes 1 and 5 are DOM screens with no 3D of their own; 2–4 are 3D with a line
 of copy over them (`Caption.svelte`). `src/lib/scenes/director.js` owns every
@@ -86,8 +86,8 @@ flyIn: {
 
 ```js
 // scenes/FlyIn.svelte
-const p = clamp01(t / T.duration);          // 0..1 through the scene
-const eggIn = span(p, T.eggIn);             // 0..1 through that beat
+const p = clamp01(t / T.duration); // 0..1 through the scene
+const eggIn = span(p, T.eggIn); // 0..1 through that beat
 world.egg.setShell(eggIn);
 ```
 
@@ -116,18 +116,18 @@ Every 3D scene answers exactly five calls, and `Stage.svelte` knows nothing else
 about them:
 
 ```js
-enter()      // you are the active scene — reset yourself
-update(dt)   // one frame; return true when your duration is up
-render(r)    // draw yourself
-backdrop()   // { color, alpha } for the renderer to clear to
-resize()     // the window changed
+enter(); // you are the active scene — reset yourself
+update(dt); // one frame; return true when your duration is up
+render(r); // draw yourself
+backdrop(); // { color, alpha } for the renderer to clear to
+resize(); // the window changed
 ```
 
 ---
 
 ## Two worlds, and why the cuts are invisible
 
-Scenes are the *motion*. Worlds are the *look* — every object, material and
+Scenes are the _motion_. Worlds are the _look_ — every object, material and
 dimension. A scene never builds anything.
 
 - **`world/tunnel.js`** is scene 2: near-black air, fog, the egg at the far end,
@@ -143,9 +143,9 @@ Both derive one from a single number:
 
 ```js
 // config/space.js
-export const EGG_SCREEN = 0.78;   // fraction of the frame's HALF-height
+export const EGG_SCREEN = 0.78; // fraction of the frame's HALF-height
 
-export const CAM_END = TUNNEL.eggZ + TUNNEL.shellR / (EGG_SCREEN * tan(fov/2));
+export const CAM_END = TUNNEL.eggZ + TUNNEL.shellR / (EGG_SCREEN * tan(fov / 2));
 export const ICOSA_EGG_R = (EGG_SCREEN * ICOSA.frustum) / 2;
 ```
 
@@ -162,7 +162,7 @@ identical under either camera. See `world/egg.js`.
 ## The icosahedron
 
 `three/geometry/icosahedron.js`. Not `THREE.IcosahedronGeometry` — that gives
-you triangles, and the conception needs the *structure*.
+you triangles, and the conception needs the _structure_.
 
 Only the twelve vertices are typed. Everything else is derived at module load,
 so the pieces cannot drift out of agreement:
@@ -263,11 +263,11 @@ Three shapes of screen, decided in one place (`config/space.js`, `aspectKind`)
 and published as the `aspect` store plus CSS custom properties that
 `+layout.svelte` writes onto `:root` from `config/layout.js`:
 
-| Kind | When | What changes |
-|---|---|---|
-| `landscape` | ratio > 1.2 | window ~30vw, controls side by side |
-| `square` | between | window ~46vw |
-| `portrait` | ratio < 0.85 | window ~86vw, controls stacked, side furniture hidden |
+| Kind        | When         | What changes                                          |
+| ----------- | ------------ | ----------------------------------------------------- |
+| `landscape` | ratio > 1.2  | window ~30vw, controls side by side                   |
+| `square`    | between      | window ~46vw                                          |
+| `portrait`  | ratio < 0.85 | window ~86vw, controls stacked, side furniture hidden |
 
 Nothing else measures the viewport for itself.
 

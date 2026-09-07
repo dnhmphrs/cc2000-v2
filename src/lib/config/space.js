@@ -9,7 +9,9 @@
 // aspect ratio without anyone having to keep two numbers in step.
 
 // ── The egg ──────────────────────────────────────────────────────────────────
-// How much of the frame's HALF-height the shell spans when it is at rest.
+// How much of the frame's HALF-height the fly-in's egg spans when the camera
+// parks in front of it. Only the fly-in reads this now — the run white-outs
+// between that scene and the next, so nothing downstream has to agree with it.
 export const EGG_SCREEN = 0.78;
 // The yolk, as a fraction of the shell.
 export const EGG_CORE_RATIO = 0.82;
@@ -78,17 +80,22 @@ export const ICOSA = {
 	// from, and the solid outgrows the sphere it is supposed to sit softly
 	// inside.
 
-	// The shell, once the panes are out: it draws in to this and thins to that,
-	// so it reads as a bubble around the polyhedron rather than a blue wash.
-	shellSettled: 0.6,
+	// How solid the sphere is. It never changes size — see ICOSA_SPHERE_R — and
+	// only thins, so it reads as a bubble around the polyhedron rather than a
+	// wash over the rooms once they are out.
+	shellSolid: 0.85,
 	shellFaint: 0.4,
 
 	// How far the panes travel out of the sphere. Owned by GoldenRectangle.
 	paneReach: 6.4
 };
 
-// The sphere radius scene 3 must build to land on scene 2's egg exactly.
-export const ICOSA_EGG_R = (EGG_SCREEN * ICOSA.frustum) / 2;
+// The sphere the icosahedron sits inside, from the conception onward. A fixed
+// size: it appears at this and never grows or shrinks again. Comfortably larger
+// than the wireframe's circumradius (√(1+φ²) ≈ 1.902) and comfortably inside
+// the frustum's half-height (ICOSA.frustum / 2), which is what makes it read as
+// something the solid is held in rather than something wrapped around it.
+export const ICOSA_SPHERE_R = 3.0;
 
 // ── Aspect ───────────────────────────────────────────────────────────────────
 // Three shapes of screen, because the site has to sit in all of them: phones

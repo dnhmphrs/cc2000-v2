@@ -9,7 +9,7 @@ import {
 	edgePositions,
 	facePositions
 } from '../geometry/icosahedron';
-import { ICOSA, ICOSA_EGG_R, ICOSA_INK, WHITE } from '$lib/config';
+import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, WHITE } from '$lib/config';
 
 // ── The lattice ──────────────────────────────────────────────────────────────
 // The place the conception and the computation both happen in: white, an
@@ -20,15 +20,20 @@ import { ICOSA, ICOSA_EGG_R, ICOSA_INK, WHITE } from '$lib/config';
 // conception assembles the wireframe inside the egg; the computation projects
 // panes off the very same frame. Neither builds it.
 //
-// It also lands on the fly-in exactly: the egg here is createEgg(ICOSA_EGG_R),
-// and ICOSA_EGG_R is derived from the same EGG_SCREEN the fly-in derives its
-// stopping distance from. Neither scene picks a size, so they cannot disagree.
+// It does NOT continue the fly-in's egg. That scene ends in a white-out and a
+// hold on empty white; the sphere here appears fresh, at ICOSA_SPHERE_R, and
+// keeps that size for the whole of the rest of the run.
 //
 // Sizes live in config/space.js (ICOSA); colour in config/palette.js.
 
 // Lines that draw themselves on. `aT` runs 0→1 along each segment and `aDelay`
 // staggers when each one is allowed to start, so the structure spreads out of
 // the vertices instead of switching on all at once.
+//
+// uSpan is how long ONE segment takes, as a fraction of the whole build. It is
+// the single number that decides whether this reads as five distinct beats or
+// as one continuous smear: the edge delays land in five bands (see below), and
+// a span much wider than the gap between bands blends them into each other.
 function growLineMaterial(color, opacity = 1) {
 	return new THREE.ShaderMaterial({
 		transparent: true,
@@ -36,7 +41,7 @@ function growLineMaterial(color, opacity = 1) {
 		uniforms: {
 			uColor: { value: new THREE.Color(color).convertSRGBToLinear() },
 			uGrow: { value: 0 },
-			uSpan: { value: 0.45 },
+			uSpan: { value: 0.24 },
 			uOpacity: { value: opacity }
 		},
 		vertexShader: `
@@ -67,18 +72,45 @@ function growLineMaterial(color, opacity = 1) {
 }
 
 // Per-segment attributes for a flat [x,y,z, x,y,z, ...] pair list.
-function segmentAttributes(geo, count, delayOf) {
+//
+// `aDelay` is NORMALISED here to exactly 0..1 — 0 starts with the build, 1
+// starts last — whatever scale delayOf() happens to return. The growers below
+// depend on that range being exactly this, and returning `spread` is how they
+// learn it: 1 when the delays vary, 0 when every segment starts together.
+//
+// `flipOf(i)` swaps which end of a segment is aT=0. That end is the one it
+// grows FROM, so it decides the direction each line draws in.
+function segmentAttributes(geo, count, delayOf, flipOf = () => false) {
+	const raw = Array.from({ length: count }, (_, i) => delayOf(i));
+	const lo = Math.min(...raw);
+	const range = Math.max(...raw) - lo;
+	const spread = range > 1e-6 ? 1 : 0;
+
 	const aT = new Float32Array(count * 2);
 	const aDelay = new Float32Array(count * 2);
 	for (let i = 0; i < count; i++) {
-		aT[i * 2] = 0;
-		aT[i * 2 + 1] = 1;
-		const d = delayOf(i);
+		const flip = flipOf(i);
+		aT[i * 2] = flip ? 1 : 0;
+		aT[i * 2 + 1] = flip ? 0 : 1;
+		const d = spread ? (raw[i] - lo) / range : 0;
 		aDelay[i * 2] = d;
 		aDelay[i * 2 + 1] = d;
 	}
 	geo.setAttribute('aT', new THREE.BufferAttribute(aT, 1));
 	geo.setAttribute('aDelay', new THREE.BufferAttribute(aDelay, 1));
+	return spread;
+}
+
+// The clock behind setGrow() and friends.
+//
+// A segment is only FULLY drawn once uGrow reaches its own delay plus uSpan, so
+// a clock that stops at 1 leaves everything late part-drawn and the very last
+// band never drawn at all — which is exactly how this frame used to end up
+// permanently unfinished. Each grower therefore runs its uniform out to the
+// reach its own delays actually need, and takes a plain 0..1 from the caller.
+function grower(mat, spread) {
+	const reach = spread + mat.uniforms.uSpan.value;
+	return (v) => (mat.uniforms.uGrow.value = v * reach);
 }
 
 const TILT = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.tilt));
@@ -98,8 +130,10 @@ export function createLattice() {
 	camera.up.set(0, 1, 0);
 	camera.lookAt(0, 0, 0);
 
-	// The egg. Same factory and same derived radius as the tunnel's.
-	const egg = createEgg(ICOSA_EGG_R);
+	// The sphere. Same factory as the tunnel's egg, but only ever the shell —
+	// the yolk would hide the wireframe, which is the whole point of it.
+	const egg = createEgg(ICOSA_SPHERE_R);
+	egg.setCore(0);
 	scene.add(egg.group);
 
 	// Everything that turns. It rests on ICOSA.tilt, which is where the
@@ -119,17 +153,43 @@ export function createLattice() {
 	const S = 1;
 
 	// ── The 30 edges ─────────────────────────────────────────────────────────
-	// Delays run outward from the vertex nearest the camera, so the frame draws
-	// itself from one corner rather than everywhere at once.
+	// This is the build the whole conception scene exists to show, so it is
+	// worth knowing what the numbers below actually produce.
+	//
+	// Delaying each edge by how far its midpoint lies from ONE seed vertex sorts
+	// all thirty into five bands — which is not a coincidence, it is the
+	// icosahedron seen from a corner:
+	//
+	//     delay 0.00   5 edges   the star at the near vertex
+	//           0.19   5         the pentagon that star spans
+	//           0.50  10         the belt around the middle
+	//           0.81   5         the far pentagon
+	//           1.00   5         the star closing on the far vertex
+	//
+	// With uSpan at 0.24 each band very nearly lands before the next begins, so
+	// the frame assembles in five readable beats with a breath between them. Widen
+	// uSpan and they smear into one wave; narrow it and the breaths become stalls.
 	const edgeGeo = new THREE.BufferGeometry();
 	edgeGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions(S), 3));
 	const seed = new THREE.Vector3(...VERTICES[0]).normalize();
-	segmentAttributes(edgeGeo, EDGES.length, (i) => {
-		const [a, b] = EDGES[i];
-		const mid = new THREE.Vector3(...VERTICES[a]).add(new THREE.Vector3(...VERTICES[b]));
-		return (1 - mid.normalize().dot(seed)) / 2;
-	});
+	const reachOf = VERTICES.map((v) => (1 - new THREE.Vector3(...v).normalize().dot(seed)) / 2);
 	const edgeMat = growLineMaterial(ICOSA_INK.line);
+	const edgeSpread = segmentAttributes(
+		edgeGeo,
+		EDGES.length,
+		(i) => {
+			const [a, b] = EDGES[i];
+			const mid = new THREE.Vector3(...VERTICES[a]).add(new THREE.Vector3(...VERTICES[b]));
+			return (1 - mid.normalize().dot(seed)) / 2;
+		},
+		// Grow away from the seed. EDGES is ordered by vertex index, which has
+		// nothing to do with the wave, so without this half the frame draws
+		// backwards INTO it — the single thing that made the assembly look messy
+		// rather than propagating. The two pentagon bands are genuine ties (both
+		// ends equally far) and keep their natural order.
+		(i) => reachOf[EDGES[i][1]] < reachOf[EDGES[i][0]]
+	);
+	const growEdges = grower(edgeMat, edgeSpread);
 	const edges = new THREE.LineSegments(edgeGeo, edgeMat);
 	wire.add(edges);
 
@@ -149,8 +209,11 @@ export function createLattice() {
 	});
 	const spokeGeo = new THREE.BufferGeometry();
 	spokeGeo.setAttribute('position', new THREE.Float32BufferAttribute(spokePos, 3));
-	segmentAttributes(spokeGeo, spokeSegs.length, (i) => (i / spokeSegs.length) * 0.55);
 	const spokeMat = growLineMaterial(ICOSA_INK.inner, 0.55);
+	const growSpokes = grower(
+		spokeMat,
+		segmentAttributes(spokeGeo, spokeSegs.length, (i) => i)
+	);
 	const spokes = new THREE.LineSegments(spokeGeo, spokeMat);
 	wire.add(spokes);
 
@@ -185,14 +248,16 @@ export function createLattice() {
 		}
 		const geo = new THREE.BufferGeometry();
 		geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-		segmentAttributes(geo, local.length, () => 0);
+		// All five sides at once: a vertex figure reads as one closed shape, not
+		// as a line chasing itself round. spread 0, so its whole clock is uSpan.
+		const spread = segmentAttributes(geo, local.length, () => 0);
 
 		const mat = growLineMaterial(ICOSA_INK.pentagon, 0.9);
 		const line = new THREE.LineSegments(geo, mat);
 		spinner.add(line);
 		wire.add(holder);
 
-		return { holder, spinner, line, mat, axis: p.axis, apex: p.apex };
+		return { holder, spinner, line, mat, grow: grower(mat, spread), axis: p.axis, apex: p.apex };
 	});
 
 	// ── The solid ────────────────────────────────────────────────────────────
@@ -240,18 +305,20 @@ export function createLattice() {
 		faceCount: FACES.length,
 		scale: S,
 
-		// 0..1 — how much of the wireframe has drawn itself on.
+		// 0..1 — how much of the wireframe has drawn itself on. 1 means FINISHED:
+		// every grower maps this onto the clock its own delays need, so the caller
+		// never has to know that a staggered build has to run past its own end.
 		setGrow(v) {
-			edgeMat.uniforms.uGrow.value = v;
+			growEdges(v);
 			edges.visible = v > 0.001;
 		},
 		setSpokes(v) {
-			spokeMat.uniforms.uGrow.value = v;
+			growSpokes(v);
 			spokes.visible = v > 0.001;
 		},
 		setPentagons(v) {
 			pentagons.forEach((pn) => {
-				pn.mat.uniforms.uGrow.value = v;
+				pn.grow(v);
 				pn.line.visible = v > 0.001;
 			});
 		},
@@ -300,8 +367,8 @@ export function createLattice() {
 			this.setPentagons(0);
 			this.setLineOpacity(1);
 			this.setSolid(0);
-			egg.setCore(1);
-			egg.setShell(1);
+			egg.setCore(0);
+			egg.setShell(0);
 			egg.group.scale.setScalar(1);
 			camera.position.set(...ICOSA.camPos);
 			camera.up.set(0, 1, 0);
