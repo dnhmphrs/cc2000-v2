@@ -100,7 +100,14 @@ export const ICOSA = {
 	shellFaint: 0.4,
 
 	// How far the panes travel out of the frame. Owned by GoldenRectangle.
-	paneReach: 6.4
+	paneReach: 6.4,
+
+	// The attitude the search HOLDS while it is looking around. Each decade is
+	// turned round to the camera but deliberately not square to it, so the rooms
+	// stay at the angle they burst out of the frame at and you keep reading them
+	// as faces of a solid rather than as slides. Only the answer's own turn
+	// squares up — which is what makes that last turn land.
+	searchOblique: [0.18, -0.45, 0.04]
 };
 
 // The sphere the frame sits inside, from the conception onward. Deliberately

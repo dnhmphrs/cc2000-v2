@@ -88,12 +88,15 @@ export const SCENES = scale({
 		spermIn: [0.14, 0.26],
 		// And then it is leaving, from that moment on — the window opens where
 		// spermIn closes so there is no stretch where it holds station and then
-		// bolts. It pulls away gradually and keeps gaining, which is what reads
-		// as speeding up. `power` is the whole character of it: 1 is a constant
-		// departure, and much above 2.5 it hangs and then whooshes, which is the
-		// thing this is arranged to avoid.
+		// bolts. `power` is the whole character of it. Measure it as the gap
+		// between sperm and camera rather than guessing: at 2.2 that gap opened
+		// at a near-constant rate from a fifth of the way in, so it read as
+		// travelling away rather than accelerating, and it was a third of the way
+		// gone by the halfway mark. At 3.2 it rides in front of the lens for a
+		// beat and then the gap grows by more every step of the way to the egg,
+		// which is what speeding up actually looks like.
 		spermRun: [0.26, 0.98],
-		spermRunPower: 2.2,
+		spermRunPower: 3.2,
 		// It is inside the shell by the end of this.
 		spermGone: [0.9, 0.99],
 
@@ -128,10 +131,13 @@ export const SCENES = scale({
 		wire: [0.22, 0.44],
 
 		// Then it turns, so the shape is read as a solid rather than a drawing.
-		// Eased at both ends and a whole number of turns, so it accelerates away
-		// from its resting pose and settles back onto exactly that pose.
+		// TWO axes, because one is just a spin: turning about the screen's
+		// vertical and its horizontal at once traces a tumble, and the shape
+		// shows more of itself doing one turn each way than two turns one way.
+		// Whole numbers on both, so it settles back onto exactly its resting pose
+		// — which is the pose the computation then turns away from.
 		spin: [0.46, 0.94],
-		spinTurns: 2
+		spinTurns: [1, 1]
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────

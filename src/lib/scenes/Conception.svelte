@@ -13,10 +13,10 @@
 	//
 	// The turns are the point of the scene as much as the build is. A wireframe
 	// polyhedron sitting still is a drawing; the same wireframe turning is a
-	// solid, and two turns is enough to say so without becoming a spinning logo.
-	// They are eased at both ends and land on a whole number, so the frame comes
-	// to rest on exactly the pose it started from — which is the pose the
-	// computation then turns away from.
+	// solid. It tumbles about two axes rather than spinning about one, which
+	// shows more of the shape for less rotation, and it lands on a whole number
+	// of turns on both — so the frame comes to rest on exactly the pose it
+	// started from, which is the pose the computation then turns away from.
 	//
 	// What is already built and simply never turned on, when you come to fill
 	// this out — see world/lattice.js:
@@ -28,7 +28,7 @@
 	export let world;
 
 	const T = SCENES.conception;
-	const TURN = Math.PI * 2 * T.spinTurns;
+	const TAU = Math.PI * 2;
 
 	let t = 0;
 
@@ -49,8 +49,10 @@
 		// only makes them stall at both ends.
 		world.setGrow(span(p, T.wire));
 
-		// Then it turns.
-		world.setSpin(easeInOutCubic(span(p, T.spin)) * TURN);
+		// Then it tumbles: one turn about the screen's vertical and one about its
+		// horizontal, driven off the same eased clock so they arrive together.
+		const turn = easeInOutCubic(span(p, T.spin));
+		world.setSpin(turn * TAU * T.spinTurns[0], turn * TAU * T.spinTurns[1]);
 
 		return t >= T.duration;
 	}

@@ -22,10 +22,15 @@
 	// The panes come out of the sphere, the search turns through the decades,
 	// and the camera falls into the room that holds the answer.
 	//
-	// The search is stepped, not continuous: turn a decade square to camera,
-	// look at it, turn to the next, and the last turn lands on the answer. The
-	// point is not to fake a search — it is that each turn shows another
-	// decade's artwork, which is otherwise built and never seen.
+	// The search is stepped, not continuous: turn a decade to camera, look at it,
+	// turn to the next, and the last turn lands on the answer. The point is not
+	// to fake a search — it is that each turn shows another decade's artwork,
+	// which is otherwise built and never seen.
+	//
+	// The intermediate turns hold an OBLIQUE attitude and only the answer's turn
+	// comes square. Squaring up four times over spends the one move that should
+	// mean "this is the one", and the rooms read better as faces of a solid than
+	// as slides anyway.
 	//
 	// Like the conception, every value here is a pure function of scene progress
 	// — nothing integrates dt — so the scene can be reset or re-entered without
@@ -97,7 +102,13 @@
 		const pool = preferred.length ? preferred : candidates;
 		target = shuffle(pool)[0].i;
 		searchOrder = [...previsits(candidates), target];
-		searchQuats = searchOrder.map(landingQuatFor);
+		// Every turn but the last holds the oblique attitude. The answer is the
+		// only one that comes square to the camera, so squaring up IS the arrival
+		// rather than something that has already happened four times over.
+		const last = searchOrder.length - 1;
+		searchQuats = searchOrder.map((i, k) =>
+			k === last ? landingQuatFor(i) : OBLIQUE.clone().multiply(landingQuatFor(i))
+		);
 		measured = true;
 	}
 
@@ -114,6 +125,10 @@
 			.filter((i) => i !== target)
 			.slice(0, Math.max(0, T.searchSteps - 1));
 	}
+
+	// Applied on top of a landing rotation, in world space, to knock it off
+	// square by ICOSA.searchOblique.
+	const OBLIQUE = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.searchOblique));
 
 	// The rotation that puts a pane's artwork square to the camera.
 	function landingQuatFor(i) {
