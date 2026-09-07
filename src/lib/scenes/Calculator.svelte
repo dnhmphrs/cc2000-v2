@@ -178,7 +178,18 @@
 				node.style.setProperty('--edge', `${(EDGE_PX / Math.max(k, 0.02)).toFixed(2)}px`);
 				// The end of the move IS the moment it comes on, so it is taken
 				// from here rather than from a timer that could drift off it.
-				if (t === 1) land();
+				if (t === 1) {
+					// Clear everything the move wrote — the custom property, the
+					// origin and the transform alike — so a second time round leaves
+					// the machine in byte-for-byte the state a fresh load does. A
+					// transform on a fixed, full-viewport element is a containing
+					// block and a stacking context for everything inside it, and
+					// there is no reason to keep one, or its origin, once it has
+					// landed.
+					node.style.removeProperty('--edge');
+					node.style.removeProperty('transform-origin');
+					land();
+				}
 				calcZoom.set(t);
 			}
 		};
@@ -301,7 +312,7 @@
 						<dd>{readout}</dd>
 					</div>
 					<div>
-						<dt>resonance</dt>
+						<dt>how spicy are your parents?</dt>
 						<dd>{String($spicy).padStart(2, '0')} / 10</dd>
 					</div>
 					<div>
