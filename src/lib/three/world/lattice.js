@@ -3,11 +3,10 @@ import { createEgg } from './egg';
 import {
 	VERTICES,
 	EDGES,
-	FACES,
 	PENTAGONS,
 	PENTAGON_PAIRS,
-	edgePositions,
-	facePositions
+	CIRCUMRADIUS,
+	edgePositions
 } from '../geometry/icosahedron';
 import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, WHITE } from '$lib/config';
 
@@ -30,10 +29,12 @@ import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, WHITE } from '$lib/config';
 // staggers when each one is allowed to start, so the structure spreads out of
 // the vertices instead of switching on all at once.
 //
-// uSpan is how long ONE segment takes, as a fraction of the whole build. It is
-// the single number that decides whether this reads as five distinct beats or
-// as one continuous smear: the edge delays land in five bands (see below), and
-// a span much wider than the gap between bands blends them into each other.
+// The lines also carry their own depth. Thirty edges all drawn at one weight is
+// a flat tangle — there is no way to tell which corner is nearest — so each
+// fragment fades toward uBack as it goes away from the camera. That is the
+// whole 3D read: no fill, no hidden-line removal, every edge still there, but
+// the near ones come forward and the shape resolves. It is also live, so the
+// object turning in the computation reads as turning rather than as a flicker.
 function growLineMaterial(color, opacity = 1) {
 	return new THREE.ShaderMaterial({
 		transparent: true,
@@ -41,18 +42,30 @@ function growLineMaterial(color, opacity = 1) {
 		uniforms: {
 			uColor: { value: new THREE.Color(color).convertSRGBToLinear() },
 			uGrow: { value: 0 },
-			uSpan: { value: 0.24 },
-			uOpacity: { value: opacity }
+			uSpan: { value: 0.4 },
+			uOpacity: { value: opacity },
+			// Half-depth of the object, so vFront lands on ±1 at its poles.
+			uRadius: { value: CIRCUMRADIUS },
+			// What is left of a line at the very back.
+			uBack: { value: 0.16 }
 		},
 		vertexShader: `
 			attribute float aT;
 			attribute float aDelay;
+			uniform float uRadius;
 			varying float vT;
 			varying float vDelay;
+			varying float vFront;
 			void main() {
 				vT = aT;
 				vDelay = aDelay;
-				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+				vec4 mv = modelViewMatrix * vec4(position, 1.0);
+				// Depth measured from the object's OWN centre, not the camera's,
+				// so it does not change when the camera dollies or the frustum
+				// closes on the way home. +1 nearest, -1 furthest.
+				vec4 centre = modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+				vFront = clamp((mv.z - centre.z) / uRadius, -1.0, 1.0);
+				gl_Position = projectionMatrix * mv;
 			}
 		`,
 		fragmentShader: `
@@ -60,12 +73,14 @@ function growLineMaterial(color, opacity = 1) {
 			uniform float uGrow;
 			uniform float uSpan;
 			uniform float uOpacity;
+			uniform float uBack;
 			varying float vT;
 			varying float vDelay;
+			varying float vFront;
 			void main() {
 				float local = clamp((uGrow - vDelay) / max(uSpan, 0.0001), 0.0, 1.0);
 				if (vT > local) discard;
-				gl_FragColor = vec4(uColor, uOpacity);
+				gl_FragColor = vec4(uColor, uOpacity * mix(uBack, 1.0, vFront * 0.5 + 0.5));
 			}
 		`
 	});
@@ -144,10 +159,9 @@ export function createLattice() {
 	frame.quaternion.copy(TILT);
 	scene.add(frame);
 
-	// The line-work and the solid, in a group of their own. Built at the raw
+	// The line-work, in a group of its own. Built at the raw
 	// vertex scale so the panes — which GoldenRectangle builds from the same raw
-	// coordinates — sit exactly on the solid's edges at projection 0. The
-	// conception scales THIS group, not the geometry, and not the panes.
+	// coordinates — sit exactly on the frame's own edges at projection 0.
 	const wire = new THREE.Group();
 	frame.add(wire);
 	const S = 1;
@@ -166,9 +180,10 @@ export function createLattice() {
 	//           0.81   5         the far pentagon
 	//           1.00   5         the star closing on the far vertex
 	//
-	// With uSpan at 0.24 each band very nearly lands before the next begins, so
-	// the frame assembles in five readable beats with a breath between them. Widen
-	// uSpan and they smear into one wave; narrow it and the breaths become stalls.
+	// uSpan (0.4) is how long one edge takes within that. It is set so the bands
+	// overlap slightly and something is always drawing — the structure still
+	// spreads corner to corner, but as one continuous sweep. Narrowing it puts
+	// gaps between the bands, and the build stalls five times on its way round.
 	const edgeGeo = new THREE.BufferGeometry();
 	edgeGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions(S), 3));
 	const seed = new THREE.Vector3(...VERTICES[0]).normalize();
@@ -194,7 +209,7 @@ export function createLattice() {
 	wire.add(edges);
 
 	// ── The spokes ───────────────────────────────────────────────────────────
-	// Every vertex to every neighbour, drawn through the middle of the solid.
+	// Every vertex to every neighbour, drawn straight through the middle.
 	// This is the geometric content the diagram carries: the internal star you
 	// only see when the hidden edges are drawn too.
 	const spokeSegs = [];
@@ -260,26 +275,6 @@ export function createLattice() {
 		return { holder, spinner, line, mat, grow: grower(mat, spread), axis: p.axis, apex: p.apex };
 	});
 
-	// ── The solid ────────────────────────────────────────────────────────────
-	// Off through the conception, on for the computation, where the panes need
-	// something opaque to come off.
-	const solidGeo = new THREE.BufferGeometry();
-	solidGeo.setAttribute('position', new THREE.Float32BufferAttribute(facePositions(S), 3));
-	solidGeo.computeVertexNormals();
-	const solidMat = new THREE.MeshBasicMaterial({
-		color: new THREE.Color(ICOSA_INK.solid).convertSRGBToLinear(),
-		transparent: true,
-		opacity: 0,
-		side: THREE.DoubleSide,
-		// Push faces back so the wireframe always wins on the shared edges.
-		polygonOffset: true,
-		polygonOffsetFactor: 1,
-		polygonOffsetUnits: 1
-	});
-	const solid = new THREE.Mesh(solidGeo, solidMat);
-	solid.visible = false;
-	wire.add(solid);
-
 	// Where the computation mounts its decade panes. Hidden until then: they are
 	// six rooms' worth of geometry and there is no reason to draw them while the
 	// conception is assembling the frame in front of them.
@@ -301,8 +296,6 @@ export function createLattice() {
 		// is here (PENTAGON_PAIRS groups the antipodal ones).
 		pentagons,
 		pentagonPairs: PENTAGON_PAIRS,
-		solid,
-		faceCount: FACES.length,
 		scale: S,
 
 		// 0..1 — how much of the wireframe has drawn itself on. 1 means FINISHED:
@@ -326,10 +319,6 @@ export function createLattice() {
 			edgeMat.uniforms.uOpacity.value = v;
 			spokeMat.uniforms.uOpacity.value = v * 0.55;
 			pentagons.forEach((pn) => (pn.mat.uniforms.uOpacity.value = v * 0.9));
-		},
-		setSolid(v) {
-			solidMat.opacity = v;
-			solid.visible = v > 0.002;
 		},
 		setPanesVisible(v) {
 			paneGroup.visible = v;
@@ -366,7 +355,6 @@ export function createLattice() {
 			this.setSpokes(0);
 			this.setPentagons(0);
 			this.setLineOpacity(1);
-			this.setSolid(0);
 			egg.setCore(0);
 			egg.setShell(0);
 			egg.group.scale.setScalar(1);
@@ -382,8 +370,6 @@ export function createLattice() {
 			edgeMat.dispose();
 			spokeGeo.dispose();
 			spokeMat.dispose();
-			solidGeo.dispose();
-			solidMat.dispose();
 			pentagons.forEach((pn) => {
 				pn.line.geometry.dispose();
 				pn.mat.dispose();

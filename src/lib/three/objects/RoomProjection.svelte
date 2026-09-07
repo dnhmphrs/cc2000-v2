@@ -250,6 +250,17 @@
 		return { left: minX, top: minY, width: maxX - minX, height: maxY - minY };
 	}
 
+	// World-space centre of this room's monitor glass — where the camera aims on
+	// the way home. The same sub-rectangle screenRect() measures, but left in the
+	// world instead of projected.
+	export function glassCentre() {
+		const entry = layers.find((l) => l.cfg.key === 'screen');
+		if (!entry || !entry.mesh || !entry.mat.map) return null;
+		const glass = SCREEN_GLASS[decadeKey] || SCREEN_GLASS['90s'];
+		entry.mesh.updateWorldMatrix(true, false);
+		return entry.mesh.localToWorld(new THREE.Vector3(glass.cx - 0.5, 0.5 - glass.cy, 0));
+	}
+
 	// Local-space (pre-group-transform) orthonormal frame of this room's plane —
 	// used to compute the group orientation that lands this room facing camera.
 	export function localFrame() {
