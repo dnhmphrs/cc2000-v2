@@ -129,6 +129,8 @@ function grower(mat, spread) {
 }
 
 const TILT = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.tilt));
+const UP = new THREE.Vector3(0, 1, 0);
+const SPIN = new THREE.Quaternion();
 
 export function createLattice() {
 	const scene = new THREE.Scene();
@@ -167,44 +169,30 @@ export function createLattice() {
 	const S = 1;
 
 	// ── The 30 edges ─────────────────────────────────────────────────────────
-	// This is the build the whole conception scene exists to show, so it is
-	// worth knowing what the numbers below actually produce.
-	//
-	// Delaying each edge by how far its midpoint lies from ONE seed vertex sorts
-	// all thirty into five bands — which is not a coincidence, it is the
-	// icosahedron seen from a corner:
-	//
-	//     delay 0.00   5 edges   the star at the near vertex
-	//           0.19   5         the pentagon that star spans
-	//           0.50  10         the belt around the middle
-	//           0.81   5         the far pentagon
-	//           1.00   5         the star closing on the far vertex
-	//
-	// uSpan (0.4) is how long one edge takes within that. It is set so the bands
-	// overlap slightly and something is always drawing — the structure still
-	// spreads corner to corner, but as one continuous sweep. Narrowing it puts
-	// gaps between the bands, and the build stalls five times on its way round.
+	// All thirty draw at once. They used to come on in five staggered bands —
+	// the star at the near vertex, its pentagon, the belt, and so on outward —
+	// which is a real feature of the solid but takes five times as long to watch,
+	// and the whole point of this scene is the shape, not the order it arrives
+	// in. One delay for every edge, so the frame simply draws itself on.
 	const edgeGeo = new THREE.BufferGeometry();
 	edgeGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions(S), 3));
-	const seed = new THREE.Vector3(...VERTICES[0]).normalize();
-	const reachOf = VERTICES.map((v) => (1 - new THREE.Vector3(...v).normalize().dot(seed)) / 2);
 	const edgeMat = growLineMaterial(ICOSA_INK.line);
-	const edgeSpread = segmentAttributes(
-		edgeGeo,
-		EDGES.length,
-		(i) => {
-			const [a, b] = EDGES[i];
-			const mid = new THREE.Vector3(...VERTICES[a]).add(new THREE.Vector3(...VERTICES[b]));
-			return (1 - mid.normalize().dot(seed)) / 2;
-		},
-		// Grow away from the seed. EDGES is ordered by vertex index, which has
-		// nothing to do with the wave, so without this half the frame draws
-		// backwards INTO it — the single thing that made the assembly look messy
-		// rather than propagating. The two pentagon bands are genuine ties (both
-		// ends equally far) and keep their natural order.
-		(i) => reachOf[EDGES[i][1]] < reachOf[EDGES[i][0]]
+	const growEdges = grower(
+		edgeMat,
+		// Each edge still grows outward from the end nearer the seed vertex, so
+		// the strokes agree with each other instead of firing off in thirty
+		// directions. EDGES is ordered by vertex index, which is not that.
+		(() => {
+			const seed = new THREE.Vector3(...VERTICES[0]).normalize();
+			const reachOf = VERTICES.map((v) => 1 - new THREE.Vector3(...v).normalize().dot(seed));
+			return segmentAttributes(
+				edgeGeo,
+				EDGES.length,
+				() => 0,
+				(i) => reachOf[EDGES[i][1]] < reachOf[EDGES[i][0]]
+			);
+		})()
 	);
-	const growEdges = grower(edgeMat, edgeSpread);
 	const edges = new THREE.LineSegments(edgeGeo, edgeMat);
 	wire.add(edges);
 
@@ -314,6 +302,12 @@ export function createLattice() {
 				pn.grow(v);
 				pn.line.visible = v > 0.001;
 			});
+		},
+		// Turn the whole assembly about the screen's vertical, on top of the
+		// resting tilt. A whole number of turns lands back on exactly ICOSA.tilt,
+		// which is where the computation picks the frame up.
+		setSpin(rad) {
+			frame.quaternion.copy(TILT).premultiply(SPIN.setFromAxisAngle(UP, rad));
 		},
 		setLineOpacity(v) {
 			edgeMat.uniforms.uOpacity.value = v;

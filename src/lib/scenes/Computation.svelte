@@ -182,12 +182,12 @@
 		const open = easeInOutCubic(span(p, T.open));
 		panes.forEach((pane) => pane && pane.updateProjection(open));
 
-		// The sphere goes as the turn begins. It was the thing the frame was drawn
-		// inside; now the frame is the subject, so the sphere shrinks away to
-		// nothing rather than hanging around as a wash over the rooms.
-		const out = easeInOutCubic(span(p, T.sphereOut));
-		world.egg.group.scale.setScalar(Math.max(1 - out, 1e-4));
-		world.egg.setShell(ICOSA.shellSolid * (1 - out));
+		// The sphere stays — it is what the frame is held inside, and losing it
+		// would leave the rooms coming off a bare wireframe — but it thins so the
+		// artwork is not seen through a wash. The frame is not touched: the same
+		// weight the conception drew it at, all the way to the fall.
+		const thin = easeInOutCubic(span(p, T.shellThin));
+		world.egg.setShell(lerp(ICOSA.shellSolid, ICOSA.shellFaint, thin));
 
 		// ── The search ───────────────────────────────────────────────────────
 		// One slot per decade visited. Most of a slot is the turn onto that
@@ -239,6 +239,7 @@
 			// Everything that is not the answer gets out of the way.
 			const fade = 1 - smoothstep(0.1, 0.75, z);
 			world.setLineOpacity(fade);
+			world.egg.setShell(ICOSA.shellFaint * (1 - smoothstep(0, 0.4, z)));
 			panes.forEach((pane, i) => {
 				if (!pane) return;
 				if (i === target) pane.setLineDim(1 - smoothstep(0.15, 0.7, z));

@@ -106,42 +106,44 @@ export const SCENES = scale({
 	},
 
 	// ── Conception ───────────────────────────────────────────────────────────
-	// The holy one, and the plainest. White, a held beat of nothing, a sphere,
-	// and the icosahedron drawing itself on inside it. Nothing turns.
+	// The holy one, and the plainest. White, a beat of nothing, a sphere, and the
+	// icosahedron drawing itself on inside it — then a couple of turns, and out.
 	//
-	//   0      0.10        0.30                    0.78          1.0
-	//   | hold |  sphere    |        wire           |    rest     |
-	//   | white| fades up   | one sweep, near corner| finished and|
-	//   |      |            | outward to the far one| looked at   |
+	//   0     0.05    0.28        0.46            0.94    1.0
+	//   |hold | sphere |   wire    |     spin      | rest |
+	//   |white| fades  | one stroke| two full turns| lands|
+	//   |     | up     | all edges | and settles   |      |
 	//
-	// The hold and the rest are the GAPS either side, not settings — the two
-	// windows below are the whole scene. Both are load-bearing: the hold is what
-	// separates this from the white-out that ends the fly-in, and the rest is the
-	// beat where the finished frame is simply looked at.
+	// The hold and the rest are the GAPS either side, not settings — the three
+	// windows below are the whole scene.
 	conception: {
-		duration: 5.6,
+		duration: 4.4,
 
-		// The sphere fades up out of the white. The frame is inscribed in it, so
-		// this is also the size the frame will fill.
-		sphere: [0.1, 0.3],
+		// The sphere fades up out of the white, and stays for the rest of the run.
+		sphere: [0.05, 0.28],
 
-		// Then the frame draws itself on inside it, corner to corner, in one
-		// continuous sweep. Linear here on purpose: the per-edge stagger in
-		// world/lattice.js is what gives this its shape, and easing the clock on
-		// top of that only makes the sweep stall at both ends.
-		wire: [0.26, 0.78]
+		// The frame draws itself on inside it. Every edge at once — the stagger is
+		// gone, see world/lattice.js — so this only has to be long enough to see
+		// the strokes travel.
+		wire: [0.22, 0.44],
+
+		// Then it turns, so the shape is read as a solid rather than a drawing.
+		// Eased at both ends and a whole number of turns, so it accelerates away
+		// from its resting pose and settles back onto exactly that pose.
+		spin: [0.46, 0.94],
+		spinTurns: 2
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────
 	computation: {
 		duration: 8.0,
 
-		// The panes come out of the frame, and the sphere goes as the turn begins:
-		// it has done its job, and the frame the conception just drew is what the
-		// rest of this scene is about. Shrunk away rather than thinned, so the
-		// rooms are never seen through a wash.
+		// The panes come out of the frame. The sphere stays — it is the thing the
+		// frame is held inside — but thins to shellFaint so the rooms are not seen
+		// through a wash. The frame itself is left exactly as the conception drew
+		// it: same weight, no fill.
 		open: [0.0, 0.18],
-		sphereOut: [0.02, 0.2],
+		shellThin: [0.04, 0.22],
 
 		// The search: turn a decade square to camera, look at it, turn to the
 		// next. The point is not to fake a search — it is that each turn shows
