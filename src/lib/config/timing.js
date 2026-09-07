@@ -31,8 +31,8 @@ function scale(scenes) {
 	const out = {};
 	for (const [name, s] of Object.entries(scenes)) {
 		out[name] = { ...s };
-		// pentagonTurn/Stagger are fractions of a duration that is itself being
-		// scaled, so they must NOT be scaled again — only true seconds are.
+		// Only true seconds are scaled; every window is a fraction of a duration
+		// that is itself being scaled, so scaling those too would double up.
 		for (const k of [
 			'duration',
 			'charInterval',
@@ -118,15 +118,9 @@ export const SCENES = scale({
 		wire: [0.12, 0.3],
 		// Lines extend from the vertices, carrying the geometric content.
 		extend: [0.24, 0.46],
-		// The pentagons turn. Not all at once and not one by one: overlapping
-		// waves, so it reads as a combinatorial calculation rather than a list.
-		pentagons: [0.44, 0.9],
-		// How long one pentagon takes to turn its fifth, as a fraction of the
-		// whole scene, and how far apart the starts of consecutive turns are.
-		pentagonTurn: 0.075,
-		pentagonStagger: 0.028,
-		// How many turns happen in total. More than 12 means some turn twice.
-		pentagonTurns: 22,
+		// Then the whole solid turns, as one thing.
+		spin: [0.42, 0.9],
+		spinTurns: 1.15,
 
 		// Everything draws back to a still frame before the panes come out.
 		settle: [0.88, 1.0],
@@ -142,27 +136,24 @@ export const SCENES = scale({
 
 	// ── Computation ──────────────────────────────────────────────────────────
 	computation: {
-		duration: 12.0,
+		duration: 8.0,
 
 		// The panes come out of the sphere.
-		open: [0.0, 0.24],
+		open: [0.0, 0.18],
 		// The sphere draws in behind them and stays as a bubble.
-		shellDrawIn: [0.08, 0.26],
+		shellDrawIn: [0.06, 0.2],
 
-		// One continuous kantering tumble through the decades — not a sequence
-		// of turns and pauses. `turns` is how many whole revolutions of the
-		// dominant axis it makes in that window.
-		tumble: [0.18, 0.7],
-		tumbleTurns: 2.35,
-		// The secondary axis, which is what stops it reading as a turntable.
-		tumbleKanter: 0.62,
-		tumbleWobble: 0.19,
-		// Panes lean out toward the viewer as they swing past the front. Much
-		// above 0.2 and the leading room starts leaving the frame.
-		passBulge: 0.18,
-
-		// It stops tumbling and slides the answer square to camera.
-		settle: [0.64, 0.82],
+		// The search: turn a decade square to camera, look at it, turn to the
+		// next. The point is not to fake a search — it is that each turn shows
+		// another decade's artwork, which is otherwise built and never seen.
+		search: [0.14, 0.8],
+		// Three decades visited before the answer, then the answer itself.
+		searchSteps: 4,
+		// Fraction of each step spent turning; the rest is the look. The last
+		// step is all turn, because the zoom follows it straight away.
+		searchSpin: 0.62,
+		// How far the rooms that are not being looked at step back.
+		searchDim: 0.45,
 
 		// Then in. Accelerates away from rest, then eases onto the final frame.
 		zoom: [0.8, 1.0],

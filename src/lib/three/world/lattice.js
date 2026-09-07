@@ -223,6 +223,9 @@ export function createLattice() {
 		paneGroup,
 		edges,
 		spokes,
+		// Each pentagon is its own object with its own spin axis, so a scene can
+		// turn them individually — nothing does at the moment, but the structure
+		// is here (PENTAGON_PAIRS groups the antipodal ones).
 		pentagons,
 		pentagonPairs: PENTAGON_PAIRS,
 		solid,

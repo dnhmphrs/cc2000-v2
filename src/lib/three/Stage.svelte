@@ -1,7 +1,7 @@
 <script>
 	import { onMount, onDestroy, tick } from 'svelte';
 	import * as THREE from 'three';
-	import { scene as sceneStore, sceneTone, monitorRect } from '$lib/store/store';
+	import { scene as sceneStore, sceneTone, sceneGround, monitorRect } from '$lib/store/store';
 	import { CANVAS_FADE, FLASH_DECAY, clamp01 } from '$lib/config';
 	import { createTunnel } from './world/tunnel';
 	import { createLattice } from './world/lattice';
@@ -104,9 +104,7 @@
 			// until the calculator has flown back out of that room's monitor, so
 			// it is exactly the window in which the room must stay on screen.
 			if (held && $monitorRect) {
-				const b = held.backdrop();
-				renderer.setClearColor(b.color, b.alpha);
-				sceneTone.set(luma(b.color) > 0.55 ? 'light' : 'dark');
+				ground(held.backdrop().color);
 				held.render(renderer);
 				return;
 			}
@@ -118,20 +116,25 @@
 				tunnel.reset();
 				lattice.reset();
 			}
-			renderer.setClearColor(tunnel.getAir(), 1);
-			sceneTone.set('dark');
+			ground(tunnel.getAir());
 			renderer.render(tunnel.scene, tunnel.camera);
 			return;
 		}
 
 		if (active.update(dt)) advance(name);
 
-		// The ground swings from deep blue to white mid-run, so anything drawn
-		// over the canvas is told which it is on.
-		const { color, alpha } = active.backdrop();
-		renderer.setClearColor(color, alpha);
-		sceneTone.set(luma(color) > 0.55 ? 'light' : 'dark');
+		ground(active.backdrop().color);
 		active.render(renderer);
+	}
+
+	// The ground is painted by the static layer BEHIND the canvas, so the 3D
+	// always clears transparent and only says what colour it is sitting on. The
+	// ground swings from near-black to white mid-run, so anything drawn over the
+	// canvas is told which it is on too.
+	function ground(color) {
+		renderer.setClearColor(color, 0);
+		sceneGround.set(color);
+		sceneTone.set(luma(color) > 0.55 ? 'light' : 'dark');
 	}
 
 	// Rec. 709 on the clear colour — enough to choose dark type or light.

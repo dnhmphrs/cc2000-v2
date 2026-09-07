@@ -2,13 +2,13 @@
 @import '$lib/styles/fonts.css';
 
 :root {
-	/* Windows blue and yellow. The ground is the blue — the brief's launch
-	   sequence is "a blue background (think Windows 2000)" and the 404 lives on
-	   the blue screen of death, so the whole machine sits on it. */
+	/* The ground is near-black, and the machine's yellow is the colour event on
+	   it. Kept in step with DARK in config/palette.js — the 3D paints the same
+	   value through the static layer, so a mismatch shows as a seam. */
 	--ink-rgb: 240, 242, 248;
 
-	--bg: #0a246a; /* Windows 2000 title-bar blue */
-	--panel: rgba(5, 18, 60, 0.92);
+	--bg: #0b0c0f;
+	--panel: rgba(10, 11, 15, 0.92);
 
 	--ink: rgba(var(--ink-rgb), 1);
 	--ink-dim: rgba(var(--ink-rgb), 0.66);
@@ -50,14 +50,6 @@ body {
 	width: 100%;
 	height: 100%;
 	background: var(--bg);
-	background-image: radial-gradient(
-		ellipse 74% 66% at 50% 48%,
-		#1b3f96 0%,
-		#123274 34%,
-		#0a246a 62%,
-		#05123c 100%
-	);
-	background-attachment: fixed;
 	color: var(--ink);
 	font-family: var(--face);
 	font-size: 15px;
