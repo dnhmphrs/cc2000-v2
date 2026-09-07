@@ -28,20 +28,26 @@ export const GLASS_SAFETY = 0.92;
 // Three sets, because the site has to work in all three shapes of screen: a
 // laptop, a phone, and the square-ish middle a tablet lands in. Keys match
 // aspectKind() in ./space.
+//
+// `win` is capped on HEIGHT as well as width, and that is the load-bearing part.
+// What limits this window is not how wide the screen is — it is the fixed stack
+// underneath it: the panel, the button and the vents along the bottom are all
+// px-sized, so on a short laptop a width-only cap runs the button straight
+// through the vents. Measured at 1440x720 that overlap was 22px before this.
 export const CHASSIS = {
 	landscape: {
-		win: 'clamp(250px, 30vw, 420px)',
+		win: 'clamp(300px, min(38vw, 56vh), 620px)',
 		winAspect: 4 / 3,
 		// Vertical centre of the window, as a fraction of the viewport. Above
 		// centre, because the panel and the button hang below it.
-		winY: 0.44,
+		winY: 0.42,
 		controlsGap: '20px',
 		controlsHeight: '92px',
 		buttonGap: '18px',
 		stack: false
 	},
 	square: {
-		win: 'clamp(260px, 46vw, 460px)',
+		win: 'clamp(280px, min(50vw, 58vh), 620px)',
 		winAspect: 4 / 3,
 		winY: 0.4,
 		controlsGap: '20px',
@@ -50,7 +56,7 @@ export const CHASSIS = {
 		stack: false
 	},
 	portrait: {
-		win: 'min(86vw, 420px)',
+		win: 'min(92vw, 62vh, 560px)',
 		winAspect: 4 / 3,
 		winY: 0.36,
 		controlsGap: '18px',

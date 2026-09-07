@@ -147,6 +147,9 @@
 	// `tick` rather than `css` because the rect is moving and the zoom level is
 	// published as it goes; a css transition is compiled to keyframes up front
 	// and can do neither.
+	// On-screen width of the chassis edge, in real pixels, at any scale.
+	const EDGE_PX = 10;
+
 	function outOfMonitor(node, { rect }) {
 		if (!rect) return { duration: 0 };
 		node.style.transformOrigin = '0 0';
@@ -168,6 +171,9 @@
 				// containing block and a stacking context for everything inside it,
 				// and there is no reason to keep one once it has landed.
 				node.style.transform = t === 1 ? '' : `translate(${x}px, ${y}px) scale(${k})`;
+				// Undo the scale for the chassis edge, so it is the same number of
+				// real pixels wide the whole way home. See .calculator::after.
+				node.style.setProperty('--edge', `${(EDGE_PX / Math.max(k, 0.02)).toFixed(2)}px`);
 				// The end of the move IS the moment it comes on, so it is taken
 				// from here rather than from a timer that could drift off it.
 				if (t === 1) land();
@@ -405,6 +411,28 @@
 		   for the current aspect. --below is the chassis line under the glass. */
 		--winh: calc(var(--win) / var(--win-aspect));
 		--below: calc(var(--win-y) + var(--winh) / 2);
+	}
+
+	/* The machine's own edge, and it is drawn to a constant width ON SCREEN
+	   rather than a constant width in the layout.
+	   
+	   At full size it is 10px on a whole viewport and sits right on the rim,
+	   which is as close to invisible as makes no difference. Coming home the
+	   machine is drawn inside the room's monitor at a fifth of the size, where a
+	   plain 10px border would render as two — so outOfMonitor divides --edge by
+	   the scale it is fitting at, and the frame holds its weight all the way in.
+	   Small machine, bold frame; full-size machine, a hairline at the edge.
+	   
+	   A pseudo-element rather than a border on .calculator itself, so it survives
+	   .cold — which blanks the real children, and is exactly when this is wanted
+	   most: the flat yellow panel is the thing that needs an edge. */
+	.calculator::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border: var(--edge, 10px) solid var(--machine-ink);
+		pointer-events: none;
+		z-index: 5;
 	}
 
 	/* Coming home, the whole machine is one flat yellow panel until the move has
@@ -916,6 +944,17 @@
 	.screw.br {
 		right: 16px;
 		bottom: 16px;
+	}
+
+	/* A short laptop has the same problem portrait does, in the other direction:
+	   the stack under the window is fixed px, so on anything under ~780 tall the
+	   button reaches the vents. They are decoration and the window is not, so
+	   they go and the window keeps its size. */
+	@media (max-height: 780px) and (min-aspect-ratio: 85 / 100) {
+		.vent,
+		.grille {
+			display: none;
+		}
 	}
 
 	/* Portrait has no room either side of the window, and the panel stacks. */
