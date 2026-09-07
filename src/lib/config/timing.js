@@ -118,9 +118,12 @@ export const SCENES = scale({
 		wire: [0.12, 0.3],
 		// Lines extend from the vertices, carrying the geometric content.
 		extend: [0.24, 0.46],
-		// Then the whole solid turns, as one thing.
-		spin: [0.42, 0.9],
-		spinTurns: 1.15,
+		// Then the whole solid turns — a couple of small, deliberate moves rather
+		// than a revolution: turn a little, hold, turn a little, hold.
+		spin: [0.42, 0.88],
+		spinSteps: 2,
+		spinAngle: 0.62, // radians per move
+		spinHold: 0.55, // fraction of each move spent turning; the rest holds
 
 		// Everything draws back to a still frame before the panes come out.
 		settle: [0.88, 1.0],

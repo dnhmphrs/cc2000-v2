@@ -70,9 +70,15 @@ export const ICOSA = {
 	// The computation adds its own tilt on top so the panes read as solid.
 	tilt: [-0.32, 0.55, 0],
 
-	// The wireframe's own scale. The raw vertices have circumradius √(1+φ²);
-	// this puts it comfortably inside the shell.
-	wireScale: 1.0,
+	// The wireframe is built at the RAW vertex scale — circumradius √(1+φ²) ≈
+	// 1.902 — and must stay there, because the decade panes are built on those
+	// same raw coordinates and have to emerge from the solid's own edges. Scale
+	// the geometry and the panes no longer line up with the shape they come out
+	// of, and the solid outgrows the sphere it is supposed to sit softly inside.
+	//
+	// The conception is the exception: it shows the frame larger while it
+	// assembles, so it fills the sphere, and draws it back to 1 as it hands over.
+	wireBuild: 2.1,
 
 	// The shell, once the panes are out: it draws in to this and thins to that,
 	// so it reads as a bubble around the polyhedron rather than a blue wash.

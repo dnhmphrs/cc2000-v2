@@ -189,6 +189,15 @@ turns the whole solid as one thing rather than spinning them individually.
 `[0,1,3,2]`, `[4,5,7,6]` and `[8,9,11,10]`, and the decade panes are built on
 them. Do not re-order the vertex list.
 
+**The SCALE is load-bearing too.** The raw vertices have circumradius √(1+φ²) ≈
+1.902, and `GoldenRectangle` builds the decade panes from those same raw
+coordinates — so at projection 0 a pane sits exactly on the solid's own edges
+and appears to come out of it. Scale the geometry and the panes no longer line
+up with the shape they emerge from, and the solid outgrows the sphere it is
+supposed to sit softly inside. The conception shows it larger while it
+assembles by scaling the `wire` GROUP (`ICOSA.wireBuild`), never the geometry,
+and draws that back to 1 before handing over.
+
 ---
 
 ## The static

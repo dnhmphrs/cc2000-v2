@@ -109,7 +109,13 @@ export function createLattice() {
 	frame.quaternion.copy(THREE_FOLD_VIEW);
 	scene.add(frame);
 
-	const S = ICOSA_EGG_R * 0.42 * ICOSA.wireScale;
+	// The line-work and the solid, in a group of their own. Built at the raw
+	// vertex scale so the panes — which GoldenRectangle builds from the same raw
+	// coordinates — sit exactly on the solid's edges at projection 0. The
+	// conception scales THIS group, not the geometry, and not the panes.
+	const wire = new THREE.Group();
+	frame.add(wire);
+	const S = 1;
 
 	// ── The 30 edges ─────────────────────────────────────────────────────────
 	// Delays run outward from the vertex nearest the camera, so the frame draws
@@ -124,7 +130,7 @@ export function createLattice() {
 	});
 	const edgeMat = growLineMaterial(ICOSA_INK.line);
 	const edges = new THREE.LineSegments(edgeGeo, edgeMat);
-	frame.add(edges);
+	wire.add(edges);
 
 	// ── The spokes ───────────────────────────────────────────────────────────
 	// Every vertex to every neighbour, drawn through the middle of the solid.
@@ -145,7 +151,7 @@ export function createLattice() {
 	segmentAttributes(spokeGeo, spokeSegs.length, (i) => (i / spokeSegs.length) * 0.55);
 	const spokeMat = growLineMaterial(ICOSA_INK.inner, 0.55);
 	const spokes = new THREE.LineSegments(spokeGeo, spokeMat);
-	frame.add(spokes);
+	wire.add(spokes);
 
 	// ── The 12 pentagons ─────────────────────────────────────────────────────
 	// Each vertex figure as its own object, oriented so a plain rotation about
@@ -183,7 +189,7 @@ export function createLattice() {
 		const mat = growLineMaterial(ICOSA_INK.pentagon, 0.9);
 		const line = new THREE.LineSegments(geo, mat);
 		spinner.add(line);
-		frame.add(holder);
+		wire.add(holder);
 
 		return { holder, spinner, line, mat, axis: p.axis, apex: p.apex };
 	});
@@ -206,7 +212,7 @@ export function createLattice() {
 	});
 	const solid = new THREE.Mesh(solidGeo, solidMat);
 	solid.visible = false;
-	frame.add(solid);
+	wire.add(solid);
 
 	// Where the computation mounts its decade panes. Hidden until then: they are
 	// six rooms' worth of geometry and there is no reason to draw them while the
@@ -220,6 +226,7 @@ export function createLattice() {
 		camera,
 		egg,
 		frame,
+		wire,
 		paneGroup,
 		edges,
 		spokes,
@@ -251,6 +258,12 @@ export function createLattice() {
 			edgeMat.uniforms.uOpacity.value = v;
 			spokeMat.uniforms.uOpacity.value = v * 0.55;
 			pentagons.forEach((pn) => (pn.mat.uniforms.uOpacity.value = v * 0.9));
+		},
+		// How much bigger than its true size the frame is drawn. 1 is the scale
+		// the panes are built against; anything else is the conception showing it
+		// off before it hands over.
+		setWireScale(v) {
+			wire.scale.setScalar(v);
 		},
 		setSolid(v) {
 			solidMat.opacity = v;
@@ -285,6 +298,7 @@ export function createLattice() {
 
 		reset() {
 			paneGroup.visible = false;
+			wire.scale.setScalar(1);
 			frame.quaternion.copy(THREE_FOLD_VIEW);
 			pentagons.forEach((pn) => (pn.spinner.rotation.z = 0));
 			this.setGrow(0);
