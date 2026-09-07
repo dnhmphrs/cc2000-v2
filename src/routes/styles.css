@@ -17,11 +17,20 @@
 
 	/* The Conception Calculator's own chassis — the landing is the machine.
 	   Kept in step with config/palette.js MACHINE. */
-	--machine: #e6b52e;
-	--machine-light: #f6d564;
-	--machine-dark: #b8891a;
-	--machine-ink: #2a2413;
-	--machine-lamp: #ff6a3c;
+	--machine: #f2b427;
+	--machine-light: #ffdc63;
+	--machine-dark: #c9820f;
+	--machine-ink: #17120c;
+	--machine-lamp: #ff4d1f;
+	--machine-red: #e5372a;
+	--machine-teal: #2fb3a6;
+
+	/* The machine is DRAWN, not rendered: one heavy ink weight and one hard,
+	   unblurred drop, used on everything bolted to the chassis. Keeping both as
+	   single variables is what stops it becoming a pile of unrelated ornament —
+	   every part is outlined by the same pen and lit from the same direction. */
+	--ink: 3px;
+	--drop: 5px;
 
 	/* Copy sits on the deep blue for the first half of a run and on white for
 	   the second, so it has two inks. Which one is in force is the sceneTone

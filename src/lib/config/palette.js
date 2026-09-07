@@ -14,13 +14,21 @@ export const DEEP_BLUE = 0x0a246a;
 export const WHITE = 0xffffff;
 
 // ── The machine ──────────────────────────────────────────────────────────────
+// Drawn like the bedrooms it flies into: flat saturated fills and a heavy black
+// ink outline, not a rendered plastic panel. `ink` is a near-black rather than a
+// brown, because the room artwork outlines in near-black and the machine has to
+// look like it came off the same pen.
 export const MACHINE = {
-	body: '#e6b52e',
-	light: '#f6d564',
-	dark: '#b8891a',
-	ink: '#2a2413',
-	lamp: '#ff6a3c',
-	crt: '#0a1330'
+	body: '#f2b427',
+	light: '#ffdc63',
+	dark: '#c9820f',
+	ink: '#17120c',
+	lamp: '#ff4d1f',
+	crt: '#0a1330',
+	// Two accents lifted off the room art — the red of the desk lamp and the
+	// teal of the shades — so the machine belongs to the same drawing.
+	red: '#e5372a',
+	teal: '#2fb3a6'
 };
 
 // ── The egg ──────────────────────────────────────────────────────────────────

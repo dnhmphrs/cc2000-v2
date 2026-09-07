@@ -57,7 +57,10 @@
 	}
 
 	export function backdrop() {
-		return { color: WHITE, shader: 'theta' };
+		// 'white' by default. 'theta' is the field in three/shaders/theta.js and
+		// is a one-word swap — it is loud on a white ground and it does compete
+		// with the line-work, so it is off until it earns its place.
+		return { color: WHITE, shader: 'white' };
 	}
 
 	export function render(r) {

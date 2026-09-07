@@ -479,9 +479,11 @@
 		width: var(--win);
 		aspect-ratio: var(--win-aspect);
 		transform: translate(-50%, -50%);
-		border-radius: 18px;
-		box-shadow: inset 0 0 0 9px var(--machine-dark), inset 0 0 0 12px var(--machine-light),
-			inset 0 14px 30px rgba(0, 0, 0, 0.55),
+		border-radius: 22px;
+		/* Outside in: ink, a fat band of light yellow, ink again. The glass is
+		   drawn ONTO the chassis rather than recessed into it. */
+		box-shadow: inset 0 0 0 4px var(--machine-ink), inset 0 0 0 15px var(--machine-light),
+			inset 0 0 0 19px var(--machine-ink), inset 0 16px 26px rgba(0, 0, 0, 0.45),
 			/* And an outward spread that fills the four corners the four body
 			   bars leave open — they meet at a square corner, this window is
 			   rounded, and the difference is scene. An element's OWN outer
@@ -493,11 +495,11 @@
 
 	.screen {
 		position: absolute;
-		inset: 12px;
+		inset: 19px;
 		/* The window's own radius LESS its inset, so the glass follows the inner
 		   edge of the bezel exactly. Any more and the corners open up and the
-		   scene shows through the gap; the bezel is 12px and the window is 18. */
-		border-radius: 6px;
+		   scene shows through the gap; the bezel is 19px and the window is 22. */
+		border-radius: 3px;
 		/* A vignette, not a colour: the window looks straight onto the scene
 		   behind it, so it only needs darkening at the edges to read as glass.
 		   Light, because the ground behind it is already near-black — any more
@@ -516,15 +518,22 @@
 		overflow: hidden;
 	}
 
+	/* The glass: a drawn-on gleam over the scanlines. Two hard diagonal bands
+	   rather than a soft specular, because everything else on this machine is
+	   inked and a rendered highlight would be the one thing that is not. */
 	.scanlines {
 		position: absolute;
 		inset: 0;
 		pointer-events: none;
-		background: repeating-linear-gradient(
-			to bottom,
-			rgba(255, 255, 255, 0.05) 0 1px,
-			transparent 1px 3px
-		);
+		background: linear-gradient(
+				112deg,
+				transparent 0 16%,
+				rgba(255, 255, 255, 0.11) 16% 25%,
+				transparent 25% 30%,
+				rgba(255, 255, 255, 0.07) 30% 35%,
+				transparent 35%
+			),
+			repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 3px);
 	}
 
 	.screen p {
@@ -609,16 +618,17 @@
 		position: absolute;
 		left: 50%;
 		top: max(4vh, 20px);
-		transform: translateX(-50%);
+		/* Stuck on by hand, so it is not quite straight. */
+		transform: translateX(-50%) rotate(-1.4deg);
 		text-align: center;
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
-		padding: 10px clamp(14px, 2.4vw, 26px);
+		padding: 12px clamp(18px, 2.8vw, 32px);
 		background: var(--machine-light);
-		border: 2px solid var(--machine-dark);
-		border-radius: 6px;
-		box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.12);
+		border: var(--ink) solid var(--machine-ink);
+		border-radius: 14px;
+		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		white-space: nowrap;
 	}
 	.model {
@@ -639,18 +649,17 @@
 		top: calc(var(--win-y) - var(--winh) / 2 - 28px);
 		transform: translateX(-50%);
 		display: flex;
-		gap: 7px;
+		gap: 9px;
 	}
 	.lamps i {
-		width: 9px;
-		height: 9px;
+		width: 13px;
+		height: 13px;
 		border-radius: 50%;
 		background: var(--machine-dark);
-		box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+		border: 2px solid var(--machine-ink);
 	}
 	.lamps i.on {
-		background: var(--machine-lamp);
-		box-shadow: 0 0 8px rgba(255, 106, 60, 0.8);
+		background: var(--machine-red);
 	}
 
 	.dials {
@@ -663,11 +672,12 @@
 		gap: clamp(12px, 2.2vh, 26px);
 	}
 	.dial {
-		width: clamp(30px, 3.6vw, 52px);
-		height: clamp(30px, 3.6vw, 52px);
+		width: clamp(36px, 4.2vw, 60px);
+		height: clamp(36px, 4.2vw, 60px);
 		border-radius: 50%;
-		background: radial-gradient(circle at 34% 30%, var(--machine-light), var(--machine-dark));
-		border: 2px solid var(--machine-ink);
+		background: var(--machine-light);
+		border: var(--ink) solid var(--machine-ink);
+		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		display: grid;
 		place-items: center;
 		transform: rotate(var(--deg));
@@ -676,10 +686,11 @@
 	}
 	.dial i {
 		display: block;
-		width: 2px;
-		height: 42%;
+		width: 4px;
+		height: 40%;
+		border-radius: 2px;
 		background: var(--machine-ink);
-		transform: translateY(-28%);
+		transform: translateY(-30%);
 	}
 
 	@keyframes nudge {
@@ -702,11 +713,12 @@
 		gap: clamp(10px, 1.8vh, 22px);
 	}
 	.sw {
-		width: 24px;
-		height: 40px;
-		border-radius: 5px;
+		width: 28px;
+		height: 46px;
+		border-radius: 8px;
 		background: var(--machine-dark);
-		border: 2px solid var(--machine-ink);
+		border: var(--ink) solid var(--machine-ink);
+		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		display: flex;
 		align-items: flex-end;
 		padding: 3px;
@@ -717,9 +729,9 @@
 	.sw i {
 		display: block;
 		width: 100%;
-		height: 45%;
-		border-radius: 3px;
-		background: var(--machine-light);
+		height: 52%;
+		border-radius: 5px;
+		background: var(--machine-teal);
 	}
 
 	/* ── The panel: both questions live on the machine ───────────────────── */
@@ -731,11 +743,11 @@
 		display: flex;
 		align-items: flex-start;
 		gap: clamp(16px, 2.6vw, 34px);
-		padding: 12px clamp(14px, 2vw, 22px) 14px;
+		padding: 14px clamp(16px, 2.2vw, 26px) 16px;
 		background: var(--machine-dark);
-		border: 2px solid var(--machine-ink);
-		border-radius: 8px;
-		box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.18), 0 3px 0 rgba(0, 0, 0, 0.18);
+		border: var(--ink) solid var(--machine-ink);
+		border-radius: 16px;
+		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 	}
 
 	.ctl {
@@ -745,10 +757,11 @@
 	}
 
 	.lab {
-		font-size: 9px;
-		letter-spacing: 0.24em;
+		font-size: 10px;
+		font-weight: 700;
+		letter-spacing: 0.22em;
 		text-transform: uppercase;
-		opacity: 0.78;
+		color: var(--machine-ink);
 	}
 
 	.dob {
@@ -760,60 +773,68 @@
 		font-family: var(--tech);
 		font-size: 13px;
 		letter-spacing: 0.04em;
-		padding: 6px 8px;
+		font-weight: 700;
+		padding: 7px 9px;
 		color: var(--machine-ink);
 		background: var(--machine-light);
-		border: 2px solid var(--machine-ink);
-		border-radius: 4px;
-		box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.14);
+		border: var(--ink) solid var(--machine-ink);
+		border-radius: 9px;
+		box-shadow: 0 3px 0 var(--machine-ink);
 		cursor: pointer;
 	}
 
 	input[type='range'] {
 		width: clamp(130px, 15vw, 200px);
-		margin: 5px 0 0;
-		accent-color: var(--machine-lamp);
+		margin: 7px 0 0;
+		accent-color: var(--machine-red);
 		cursor: pointer;
 	}
 
 	.ends {
 		display: flex;
 		justify-content: space-between;
-		font-size: 8px;
-		letter-spacing: 0.2em;
+		font-size: 9px;
+		font-weight: 700;
+		letter-spacing: 0.18em;
 		text-transform: uppercase;
-		opacity: 0.7;
+		color: var(--machine-ink);
+		opacity: 0.75;
 	}
 
 	.vent {
 		position: absolute;
 		bottom: max(5vh, 28px);
 		width: clamp(70px, 9vw, 120px);
-		height: 34px;
-		border-radius: 4px;
+		height: 38px;
+		border-radius: 10px;
+		border: var(--ink) solid var(--machine-ink);
+		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		background: repeating-linear-gradient(
 			to bottom,
-			var(--machine-dark) 0 3px,
-			transparent 3px 7px
+			var(--machine-ink) 0 4px,
+			var(--machine-light) 4px 9px
 		);
 	}
 	.vent.left {
 		left: max(3vw, 18px);
+		transform: rotate(-1.6deg);
 	}
 	.vent.right {
 		right: max(3vw, 18px);
+		transform: rotate(1.6deg);
 	}
 
 	.grille {
 		position: absolute;
 		left: 50%;
 		bottom: max(5vh, 28px);
-		transform: translateX(-50%);
+		transform: translateX(-50%) rotate(0.8deg);
 		width: clamp(90px, 11vw, 150px);
-		height: 40px;
-		border-radius: 6px;
-		background: radial-gradient(circle, var(--machine-dark) 1.1px, transparent 1.3px) 0 0 / 7px 7px;
-		border: 2px solid var(--machine-dark);
+		height: 44px;
+		border-radius: 12px;
+		background: radial-gradient(circle, var(--machine-ink) 2px, transparent 2.2px) 0 0 / 9px 9px;
+		border: var(--ink) solid var(--machine-ink);
+		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 	}
 
 	.go {
@@ -822,55 +843,62 @@
 		top: calc(var(--below) + var(--controls-gap) + var(--controls-h) + var(--button-gap));
 		transform: translateX(-50%);
 		font-family: var(--tech);
-		font-size: 14px;
-		letter-spacing: 0.22em;
+		font-size: 17px;
+		font-weight: 700;
+		letter-spacing: 0.2em;
 		text-transform: uppercase;
-		padding: 14px 46px;
-		border-radius: 8px;
-		border: 3px solid var(--machine-ink);
+		padding: 17px 52px;
+		border-radius: 18px;
+		border: 4px solid var(--machine-ink);
 		background: var(--machine-dark);
 		color: var(--machine-ink);
-		box-shadow: 0 5px 0 var(--machine-ink);
+		box-shadow: 0 7px 0 var(--machine-ink);
 		cursor: default;
 	}
 	.calculator.realised .go {
 		opacity: 0.55;
 	}
 	.calculator.realised .go.armed {
-		background: var(--machine-lamp);
+		background: var(--machine-red);
 		color: #fff5ec;
 		opacity: 1;
 		cursor: pointer;
-		animation: pulse 1.6s ease-in-out infinite;
+		animation: pulse 1.5s ease-in-out infinite;
 	}
+	/* A real press: the whole button travels down onto its own shadow. */
 	.go.armed:active {
-		transform: translate(-50%, 4px);
-		box-shadow: 0 1px 0 var(--machine-ink);
+		transform: translate(-50%, 7px);
+		box-shadow: 0 0 0 var(--machine-ink);
+		animation: none;
 	}
 
+	/* Blinks rather than glowing: a glow is a rendered effect and this machine is
+	   drawn. It must not animate transform or size — an element whose box never
+	   settles is one a pointer can never be sure it has hit, and it fails every
+	   actionability check going. Colour alone moves nothing. */
 	@keyframes pulse {
 		0%,
 		100% {
-			box-shadow: 0 5px 0 var(--machine-ink), 0 0 0 rgba(255, 106, 60, 0);
+			background: var(--machine-red);
 		}
 		50% {
-			box-shadow: 0 5px 0 var(--machine-ink), 0 0 22px rgba(255, 106, 60, 0.65);
+			background: #ff7a4a;
 		}
 	}
 
 	.screw {
 		position: absolute;
-		width: 13px;
-		height: 13px;
+		width: 18px;
+		height: 18px;
 		border-radius: 50%;
-		background: radial-gradient(circle at 35% 32%, var(--machine-light), var(--machine-dark));
-		border: 1px solid var(--machine-ink);
+		background: var(--machine-light);
+		border: var(--ink) solid var(--machine-ink);
 	}
 	.screw::after {
 		content: '';
 		position: absolute;
-		inset: 3px 2px;
-		border-top: 1px solid var(--machine-ink);
+		inset: 4px 1px;
+		border-top: 3px solid var(--machine-ink);
 		transform: rotate(28deg);
 	}
 	.screw.tl {
