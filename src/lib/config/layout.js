@@ -37,23 +37,28 @@ export const GLASS_SAFETY = 0.92;
 // through the vents. Measured at 1440x720 that overlap was 22px before this.
 export const CHASSIS = {
 	landscape: {
-		win: 'clamp(300px, min(46vw, 66vh), 980px)',
+		win: 'clamp(300px, min(46vw, 70vh), 980px)',
 		winAspect: 3 / 2,
-		// Vertical centre of the window, as a fraction of the viewport. Above
-		// centre, because the panel and the button hang below it.
-		winY: 0.44,
-		controlsGap: '20px',
-		controlsHeight: '92px',
-		buttonGap: '18px',
+		// Vertical centre of the window, as a fraction of the viewport. Only just
+		// above centre now: with the panel gone from this shape the space under
+		// the window went spare, and the plate above it is what the window runs
+		// out of room against — so it sits lower than it used to.
+		winY: 0.47,
+		controlsGap: '0px',
+		// The panel under the window is portrait-only now: the date is on the
+		// dials down the left of the chassis and the spicy level is the lever on
+		// the right. Nothing sits between the window and the button here.
+		controlsHeight: '0px',
+		buttonGap: '30px',
 		stack: false
 	},
 	square: {
 		win: 'clamp(280px, min(62vw, 58vh), 700px)',
 		winAspect: 4 / 3,
 		winY: 0.4,
-		controlsGap: '20px',
-		controlsHeight: '96px',
-		buttonGap: '18px',
+		controlsGap: '0px',
+		controlsHeight: '0px',
+		buttonGap: '30px',
 		stack: false
 	},
 	portrait: {

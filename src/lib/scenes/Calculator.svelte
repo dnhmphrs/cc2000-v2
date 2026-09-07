@@ -6,6 +6,7 @@
 		dobMonth,
 		dobDay,
 		dobYear,
+		aspect,
 		date,
 		spicy,
 		track,
@@ -18,6 +19,8 @@
 	import { SCENES } from '$lib/config';
 	import { begin, settled } from './director';
 	import { resolve } from '$lib/functions/answer';
+	import Dial from '$lib/components/Dial.svelte';
+	import Lever from '$lib/components/Lever.svelte';
 
 	// ── Scene 1: the Conception Calculator 2000 ──────────────────────────────
 	// The machine IS the landing page, and it takes both answers.
@@ -321,44 +324,83 @@
 		{/each}
 	</div>
 
-	<div class="dials">
-		{#each [22, -48, 71, -14] as deg, i}
-			<span class="dial" style="--deg:{deg}deg; --d:{i * 0.7}s"><i /></span>
-		{/each}
-	</div>
+	<!-- The date on the left-hand edge of the chassis and the spicy level on the
+	     right. These ARE the controls where there is room down the sides; the
+	     panel below the window is the portrait fallback. They are swapped with
+	     {#if} rather than CSS, so exactly one of each control EXISTS — hiding one
+	     leaves a second month/day/year in the document for anything that walks it
+	     rather than looks at it. -->
+	{#if $aspect !== 'portrait'}
+		<div class="dials" on:click|stopPropagation>
+			<Dial
+				label="month"
+				min={1}
+				max={12}
+				start={6}
+				value={$dobMonth}
+				format={(v) => MONTHS[v - 1].toUpperCase()}
+				on:change={(e) => dobMonth.set(e.detail)}
+			/>
+			<Dial
+				label="day"
+				min={1}
+				max={maxDay}
+				start={15}
+				value={$dobDay}
+				on:change={(e) => dobDay.set(e.detail)}
+			/>
+			<Dial
+				label="year"
+				min={MIN_YEAR}
+				max={MAX_YEAR}
+				start={1990}
+				value={$dobYear}
+				on:change={(e) => dobYear.set(e.detail)}
+			/>
+		</div>
 
-	<div class="switches">
-		{#each [1, 0, 1, 1, 0] as up}
-			<span class="sw" class:up><i /></span>
-		{/each}
-	</div>
+		<!-- And how spicy, on the right. -->
+		<div class="switches" on:click|stopPropagation>
+			<Lever
+				label="spicy"
+				min={1}
+				max={10}
+				low="sweet"
+				high="filthy"
+				value={$spicy}
+				on:change={(e) => spicy.set(e.detail)}
+			/>
+		</div>
+	{/if}
 
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
-	<div class="controls" on:click|stopPropagation>
-		<div class="ctl">
-			<span class="lab">date of birth</span>
-			<div class="dob">
-				<select bind:value={$dobMonth} aria-label="month">
-					<option value="" disabled>mth</option>
-					{#each MONTHS as m, i}<option value={i + 1}>{m}</option>{/each}
-				</select>
-				<select bind:value={$dobDay} aria-label="day">
-					<option value="" disabled>day</option>
-					{#each days as d}<option value={d}>{d}</option>{/each}
-				</select>
-				<select bind:value={$dobYear} aria-label="year">
-					<option value="" disabled>year</option>
-					{#each YEARS as y}<option value={y}>{y}</option>{/each}
-				</select>
+	{#if $aspect === 'portrait'}
+		<div class="controls" on:click|stopPropagation>
+			<div class="ctl">
+				<span class="lab">date of birth</span>
+				<div class="dob">
+					<select bind:value={$dobMonth} aria-label="month">
+						<option value="" disabled>mth</option>
+						{#each MONTHS as m, i}<option value={i + 1}>{m}</option>{/each}
+					</select>
+					<select bind:value={$dobDay} aria-label="day">
+						<option value="" disabled>day</option>
+						{#each days as d}<option value={d}>{d}</option>{/each}
+					</select>
+					<select bind:value={$dobYear} aria-label="year">
+						<option value="" disabled>year</option>
+						{#each YEARS as y}<option value={y}>{y}</option>{/each}
+					</select>
+				</div>
+			</div>
+
+			<div class="ctl">
+				<span class="lab">how spicy do you like it?</span>
+				<input type="range" bind:value={$spicy} min="1" max="10" aria-label="spicy" />
+				<div class="ends"><span>sweet</span><span>filthy</span></div>
 			</div>
 		</div>
-
-		<div class="ctl">
-			<span class="lab">how spicy do you like it?</span>
-			<input type="range" bind:value={$spicy} min="1" max="10" aria-label="spicy" />
-			<div class="ends"><span>sweet</span><span>filthy</span></div>
-		</div>
-	</div>
+	{/if}
 
 	<div class="vent left" />
 	<div class="vent right" />
@@ -394,6 +436,10 @@
 		   for the current aspect. --below is the chassis line under the glass. */
 		--winh: calc(var(--win) / var(--win-aspect));
 		--below: calc(var(--win-y) + var(--winh) / 2);
+		/* The two real controls on the chassis edges. Big, because they are meant
+		   to be grabbed and turned rather than aimed at. */
+		--dial: clamp(58px, 7vw, 104px);
+		--lever-h: clamp(150px, 22vh, 260px);
 	}
 
 	/* The machine's edge, and ONLY on the way home. A machine that fills the
@@ -439,12 +485,16 @@
 	/* Everything that is not the cartoon machine waits until it is nearly home,
 	   because at monitor scale it is a few unreadable pixels. */
 	.controls,
+	.dials,
+	.switches,
 	.go {
 		opacity: 0;
 		transition: opacity 0.4s ease;
 		pointer-events: none;
 	}
 	.calculator.realised .controls,
+	.calculator.realised .dials,
+	.calculator.realised .switches,
 	.calculator.realised .go {
 		opacity: 1;
 		pointer-events: auto;
@@ -679,40 +729,8 @@
 		transform: translateY(-50%);
 		display: flex;
 		flex-direction: column;
-		gap: clamp(12px, 2.2vh, 26px);
+		gap: clamp(14px, 2.6vh, 30px);
 	}
-	.dial {
-		width: clamp(36px, 4.2vw, 60px);
-		height: clamp(36px, 4.2vw, 60px);
-		border-radius: 50%;
-		background: var(--machine-light);
-		border: var(--ink) solid var(--machine-ink);
-		box-shadow: 0 var(--drop) 0 var(--machine-ink);
-		display: grid;
-		place-items: center;
-		transform: rotate(var(--deg));
-		animation: nudge 5.5s ease-in-out infinite;
-		animation-delay: var(--d);
-	}
-	.dial i {
-		display: block;
-		width: 4px;
-		height: 40%;
-		border-radius: 2px;
-		background: var(--machine-ink);
-		transform: translateY(-30%);
-	}
-
-	@keyframes nudge {
-		0%,
-		100% {
-			transform: rotate(var(--deg));
-		}
-		50% {
-			transform: rotate(calc(var(--deg) + 16deg));
-		}
-	}
-
 	.switches {
 		position: absolute;
 		right: max(3vw, 18px);
@@ -722,29 +740,6 @@
 		flex-direction: column;
 		gap: clamp(10px, 1.8vh, 22px);
 	}
-	.sw {
-		width: 28px;
-		height: 46px;
-		border-radius: 8px;
-		background: var(--machine-dark);
-		border: var(--ink) solid var(--machine-ink);
-		box-shadow: 0 var(--drop) 0 var(--machine-ink);
-		display: flex;
-		align-items: flex-end;
-		padding: 3px;
-	}
-	.sw.up {
-		align-items: flex-start;
-	}
-	.sw i {
-		display: block;
-		width: 100%;
-		height: 52%;
-		border-radius: 5px;
-		background: var(--machine-teal);
-	}
-
-	/* ── The panel: both questions live on the machine ───────────────────── */
 	.controls {
 		position: absolute;
 		left: 50%;
@@ -939,10 +934,9 @@
 		}
 	}
 
-	/* Portrait has no room either side of the window, and the panel stacks. */
+	/* Portrait keeps the panel and has no chassis controls — the selects and the
+	   range input are the right thing on a phone anyway. The panel stacks. */
 	@media (max-aspect-ratio: 85 / 100) {
-		.dials,
-		.switches,
 		.vent,
 		.grille {
 			display: none;

@@ -44,10 +44,14 @@
 		rgba(255, 255, 255, 0.07) 30% 35%,
 		transparent 35%
 	);
+	/* Dark lines rather than light ones, and a strong line plus a weak one over a
+	   4px pitch: that pairing is what reads as tape rather than as a faint
+	   texture. Heavier than a CRT would really be, on purpose. */
 	--scanlines: repeating-linear-gradient(
 		to bottom,
-		rgba(255, 255, 255, 0.05) 0 1px,
-		transparent 1px 3px
+		rgba(0, 0, 0, 0.22) 0 1px,
+		rgba(0, 0, 0, 0.07) 1px 2px,
+		transparent 2px 4px
 	);
 
 	/* Copy sits on the deep blue for the first half of a run and on white for
