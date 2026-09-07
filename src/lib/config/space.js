@@ -12,6 +12,8 @@
 // How much of the frame's HALF-height the fly-in's egg spans when the camera
 // parks in front of it. Only the fly-in reads this now — the run white-outs
 // between that scene and the next, so nothing downstream has to agree with it.
+import { CIRCUMRADIUS } from '$lib/three/geometry/icosahedron';
+
 export const EGG_SCREEN = 0.78;
 // The yolk, as a fraction of the shell.
 export const EGG_CORE_RATIO = 0.82;
@@ -75,27 +77,26 @@ export const ICOSA = {
 	// NOTE, and it has bitten once: the wireframe is built at the RAW vertex
 	// scale — circumradius √(1+φ²) ≈ 1.902 — and must stay there. The decade
 	// panes are built on those same raw coordinates, so at projection 0 a pane
-	// sits exactly on the solid's own edges and appears to come out of it. Scale
+	// sits exactly on the frame's own edges and appears to come out of it. Scale
 	// the geometry and the panes no longer line up with the shape they emerge
-	// from, and the solid outgrows the sphere it is supposed to sit softly
-	// inside.
+	// from.
 
-	// How solid the sphere is. It never changes size — see ICOSA_SPHERE_R — and
-	// only thins, so it reads as a bubble around the polyhedron rather than a
-	// wash over the rooms once they are out.
+	// How solid the sphere is while the conception draws the frame inside it.
+	// The computation shrinks it away rather than thinning it, so the rooms are
+	// never seen through a wash.
 	shellSolid: 0.85,
-	shellFaint: 0.4,
 
-	// How far the panes travel out of the sphere. Owned by GoldenRectangle.
+	// How far the panes travel out of the frame. Owned by GoldenRectangle.
 	paneReach: 6.4
 };
 
-// The sphere the icosahedron sits inside, from the conception onward. A fixed
-// size: it appears at this and never grows or shrinks again. Comfortably larger
-// than the wireframe's circumradius (√(1+φ²) ≈ 1.902) and comfortably inside
-// the frustum's half-height (ICOSA.frustum / 2), which is what makes it read as
-// something the solid is held in rather than something wrapped around it.
-export const ICOSA_SPHERE_R = 3.0;
+// The sphere the conception draws the frame inside. DERIVED, not chosen: the
+// icosahedron is INSCRIBED in it, so the twelve vertices sit exactly ON the
+// surface. That is the relationship the two shapes actually have, and it is
+// what makes the frame read as the structure OF the sphere rather than as an
+// ornament floating inside one. The lattice builds at raw vertex scale, so the
+// circumradius simply is the radius. The computation shrinks it away.
+export const ICOSA_SPHERE_R = CIRCUMRADIUS;
 
 // ── Aspect ───────────────────────────────────────────────────────────────────
 // Three shapes of screen, because the site has to sit in all of them: phones

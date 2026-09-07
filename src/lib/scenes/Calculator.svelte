@@ -15,7 +15,7 @@
 		monitorRect,
 		calcZoom
 	} from '$lib/store/store';
-	import { SCENES, lerp, easeInOutPower } from '$lib/config';
+	import { SCENES } from '$lib/config';
 	import { begin, settled } from './director';
 	import { conceptionDate, previousDay, dateToDecade } from '$lib/functions/utils';
 	import data from '$lib/data/cc2000_data.json';
@@ -116,42 +116,40 @@
 	// stays mounted for exactly as long as its move takes and no flag has to be
 	// kept in step with a timer.
 
-	// Out of the room's monitor — the other half of the move the camera is
-	// making into that same monitor.
+	// Out of the room's monitor — the OTHER HALF of nothing, because there is
+	// only one move and the camera is making it.
 	//
-	// It reads the LIVE monitor rect every frame rather than a snapshot, so it
-	// stays locked to the glass while the scene zooms into it; without that the
-	// screen grows and the room behind it sits still, which is exactly what it
-	// should not look like. The blend toward identity is what lands it square on
-	// the viewport at the end, where the glass alone would not.
+	// This paints the page into the monitor glass and does no more than that: it
+	// reads the live rect every frame and fits itself to it. The growth is
+	// entirely the camera's dolly-zoom onto that glass (Computation.stepReturn),
+	// so the two cannot be two different moves — which is exactly what a scale
+	// of its own here used to make them. By the time the camera lands, the glass
+	// covers the viewport and this fit is the identity of its own accord.
 	//
-	// `tick` rather than `css` because the zoom level is published as it goes,
-	// and a css-driven transition is compiled to keyframes up front and can
-	// neither read a moving rect nor report progress.
+	// `tick` rather than `css` because the rect is moving and the zoom level is
+	// published as it goes; a css transition is compiled to keyframes up front
+	// and can do neither.
 	function outOfMonitor(node, { rect }) {
 		if (!rect) return { duration: 0 };
 		node.style.transformOrigin = '0 0';
 		return {
 			duration: T.arrive * 1000,
-			easing: (t) => easeInOutPower(t, 1.9),
 			tick: (t) => {
 				const live = get(monitorRect) ?? rect;
 				const vw = window.innerWidth;
 				const vh = window.innerHeight;
-				// Fit the whole page inside the glass, whichever way round it is,
-				// and centre it in the leftover — the monitor's shape and the
-				// viewport's are not the same, and a page pinned to the glass's
-				// corner reads as a mistake rather than as a screen.
-				const s0 = Math.min(live.width / vw, live.height / vh);
-				const x0 = live.left + (live.width - vw * s0) / 2;
-				const y0 = live.top + (live.height - vh * s0) / 2;
-				const u = 1 - t;
-				// Clear it outright at the end rather than leaving an identity
-				// matrix behind: a transform on a fixed, full-viewport element is
-				// a containing block and a stacking context for everything inside
-				// it, and there is no reason to keep one once it has landed.
-				node.style.transform =
-					t === 1 ? '' : `translate(${x0 * u}px, ${y0 * u}px) scale(${lerp(s0, 1, t)})`;
+				// Fit inside the glass whichever way round it is, and centre in the
+				// leftover — the monitor's shape and the viewport's are not the
+				// same, and a page pinned to the glass's corner reads as a mistake
+				// rather than as a screen.
+				const k = Math.min(live.width / vw, live.height / vh);
+				const x = live.left + (live.width - vw * k) / 2;
+				const y = live.top + (live.height - vh * k) / 2;
+				// Cleared outright at the end rather than left as an identity
+				// matrix: a transform on a fixed, full-viewport element is a
+				// containing block and a stacking context for everything inside it,
+				// and there is no reason to keep one once it has landed.
+				node.style.transform = t === 1 ? '' : `translate(${x}px, ${y}px) scale(${k})`;
 				calcZoom.set(t);
 			}
 		};

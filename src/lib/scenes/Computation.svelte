@@ -154,12 +154,14 @@
 		frustum = ICOSA.frustum;
 		world.applyFrustum(frustum);
 		world.setPanesVisible(true);
-		world.setSolid(1);
-		// Whatever the conception left, the sphere starts here at full strength
-		// and its true size, and only ever thins from there.
+		world.setLineOpacity(1);
+		// The sphere picks up exactly where the conception left it and shrinks
+		// away from there. The frame is NOT touched: what turns here is the same
+		// wireframe that just drew itself, at the same weight.
 		world.egg.setCore(0);
 		world.egg.setShell(ICOSA.shellSolid);
 		world.egg.group.scale.setScalar(1);
+		world.camera.position.set(...ICOSA.camPos);
 		monitorRect.set(null);
 		panes.forEach((p) => {
 			if (!p) return;
@@ -180,12 +182,12 @@
 		const open = easeInOutCubic(span(p, T.open));
 		panes.forEach((pane) => pane && pane.updateProjection(open));
 
-		// The sphere does not move — the conception left it at its final size —
-		// it only thins, so the rooms coming out of it are not seen through a
-		// wash. The line-work fades with it: the solid is the shape now.
-		const thin = easeInOutCubic(span(p, T.shellThin));
-		world.egg.setShell(lerp(ICOSA.shellSolid, ICOSA.shellFaint, thin));
-		world.setLineOpacity(1 - thin * 0.75);
+		// The sphere goes as the turn begins. It was the thing the frame was drawn
+		// inside; now the frame is the subject, so the sphere shrinks away to
+		// nothing rather than hanging around as a wash over the rooms.
+		const out = easeInOutCubic(span(p, T.sphereOut));
+		world.egg.group.scale.setScalar(Math.max(1 - out, 1e-4));
+		world.egg.setShell(ICOSA.shellSolid * (1 - out));
 
 		// ── The search ───────────────────────────────────────────────────────
 		// One slot per decade visited. Most of a slot is the turn onto that
@@ -236,9 +238,7 @@
 
 			// Everything that is not the answer gets out of the way.
 			const fade = 1 - smoothstep(0.1, 0.75, z);
-			world.setSolid(fade);
-			world.setLineOpacity(fade * 0.25);
-			world.egg.setShell(ICOSA.shellFaint * (1 - smoothstep(0, 0.4, z)));
+			world.setLineOpacity(fade);
 			panes.forEach((pane, i) => {
 				if (!pane) return;
 				if (i === target) pane.setLineDim(1 - smoothstep(0.15, 0.7, z));
@@ -263,32 +263,56 @@
 		return { color: WHITE, alpha: 1 };
 	}
 
-	// ── The way back ─────────────────────────────────────────────────────────
-	// "Calculate again" is ONE move seen from two sides: the camera flies into
-	// the room's monitor while the calculator grows out of it. This half is the
-	// camera. The stage drives it, because the scene is no longer running — it
-	// is being held on screen — and the calculator locks itself to the glass
-	// rect this republishes, so the two halves cannot drift apart.
+	// ── The way back ────────────────────────────────────────────────────────
+	// "Calculate again" is ONE move, and the camera makes all of it: it flies
+	// into the room's monitor while the calculator is painted into that same
+	// glass. The calculator does not zoom — it just tracks the rect this
+	// republishes — so there is no second move to drift out of step with.
+	//
+	// Getting there needs both halves of a dolly-zoom onto the glass:
+	//
+	//   POSITION  the monitor is somewhere in a bedroom, not in the middle of
+	//             the frame. Zooming on the frustum alone drives into the centre
+	//             of the room and leaves the monitor sliding off the edge, which
+	//             is what made this read as two separate zooms. The camera is
+	//             axis-aligned and looks down -Z, and applyFrustum never re-aims
+	//             it, so centring the glass is a truck in x and y.
+	//
+	//   FRUSTUM   far enough in that the glass covers the viewport in BOTH
+	//             directions. The frustum is a height, so matching only the
+	//             height leaves the calculator to make up the rest with a scale
+	//             of its own; the tighter of the two ratios is the one to use.
 	const RETURN_DUR = SCENES.calculator.arrive;
 	let rt = 0;
 	let returnFrom = 0;
 	let returnTo = 0;
+	const camFrom = new THREE.Vector3();
+	const camTo = new THREE.Vector3();
 
 	export function beginReturn() {
 		const rect = get(monitorRect);
 		if (!rect) return;
 		rt = 0;
 		returnFrom = frustum;
-		// Far enough in that the glass fills the frame. The frustum is a height,
-		// so it scales by the glass's share of the viewport's height.
-		returnTo = Math.max(frustum * (rect.height / window.innerHeight), 0.05);
+		camFrom.copy(world.camera.position);
+		// If the glass cannot be located the zoom still runs, just not centred —
+		// better than a calculator that never leaves the monitor.
+		const centre = panes[target]?.getRoom?.()?.glassCentre?.();
+		camTo.copy(centre ?? camFrom).setZ(camFrom.z);
+		returnTo = Math.max(
+			frustum * Math.min(rect.width / window.innerWidth, rect.height / window.innerHeight),
+			0.05
+		);
 	}
 
 	export function stepReturn(dt) {
 		if (!returnFrom) return;
 		rt = Math.min(rt + dt, RETURN_DUR);
-		// The same easing the calculator arrives on, so they move as one thing.
-		frustum = lerp(returnFrom, returnTo, easeInOutPower(rt / RETURN_DUR, 1.9));
+		// The one easing in the move. The calculator has none of its own.
+		const k = easeInOutPower(rt / RETURN_DUR, 1.9);
+		frustum = lerp(returnFrom, returnTo, k);
+		world.camera.position.x = lerp(camFrom.x, camTo.x, k);
+		world.camera.position.y = lerp(camFrom.y, camTo.y, k);
 		world.applyFrustum(frustum);
 		publishMonitor();
 	}

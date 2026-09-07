@@ -109,39 +109,39 @@ export const SCENES = scale({
 	// The holy one, and the plainest. White, a held beat of nothing, a sphere,
 	// and the icosahedron drawing itself on inside it. Nothing turns.
 	//
-	//   0        0.12          0.30                        0.86        1.0
-	//   |  hold   |   sphere    |          wire             |   rest    |
-	//   |  white  |  fades up   |  five bands, near vertex  |  finished |
-	//   |         |             |  outward to the far one   |           |
+	//   0      0.10        0.30                    0.78          1.0
+	//   | hold |  sphere    |        wire           |    rest     |
+	//   | white| fades up   | one sweep, near corner| finished and|
+	//   |      |            | outward to the far one| looked at   |
 	//
 	// The hold and the rest are the GAPS either side, not settings — the two
-	// windows below are the whole scene. Both gaps are load-bearing: the hold is
-	// what separates this from the white-out that ends the fly-in, and the rest
-	// is the beat where the finished frame is simply looked at. This scene is
-	// the one the run is named after and it should never feel hurried; the build
-	// is 58% of it on purpose, about a second per band.
+	// windows below are the whole scene. Both are load-bearing: the hold is what
+	// separates this from the white-out that ends the fly-in, and the rest is the
+	// beat where the finished frame is simply looked at.
 	conception: {
-		duration: 9.0,
+		duration: 5.6,
 
-		// The sphere fades up out of the white, at the size it keeps for the rest
-		// of the run.
-		sphere: [0.12, 0.3],
+		// The sphere fades up out of the white. The frame is inscribed in it, so
+		// this is also the size the frame will fill.
+		sphere: [0.1, 0.3],
 
-		// Then the frame draws itself on inside it. Linear, and left to the
-		// per-edge stagger in world/lattice.js for its shape — the five bands and
-		// the breaths between them are set by uSpan there, not by anything here.
-		wire: [0.28, 0.86]
+		// Then the frame draws itself on inside it, corner to corner, in one
+		// continuous sweep. Linear here on purpose: the per-edge stagger in
+		// world/lattice.js is what gives this its shape, and easing the clock on
+		// top of that only makes the sweep stall at both ends.
+		wire: [0.26, 0.78]
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────
 	computation: {
 		duration: 8.0,
 
-		// The panes come out of the sphere. The sphere itself does not move — the
-		// conception already left it at its final size — it only thins, so the
-		// rooms coming out of it are not seen through a wash.
+		// The panes come out of the frame, and the sphere goes as the turn begins:
+		// it has done its job, and the frame the conception just drew is what the
+		// rest of this scene is about. Shrunk away rather than thinned, so the
+		// rooms are never seen through a wash.
 		open: [0.0, 0.18],
-		shellThin: [0.04, 0.22],
+		sphereOut: [0.02, 0.2],
 
 		// The search: turn a decade square to camera, look at it, turn to the
 		// next. The point is not to fake a search — it is that each turn shows
