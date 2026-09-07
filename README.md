@@ -281,4 +281,16 @@ npm run build      production build
 npm run lint       prettier --check + eslint
 npm run format     prettier --write
 npm run check      svelte-check
+npm run verify     drive the real site in a browser (needs dev running)
 ```
+
+`npm run verify` is the walk-through, automated — `scripts/verify.mjs`. It runs
+the whole thing in Chromium at landscape, square and portrait, does both
+out-of-range verdicts, drives the loop home and asserts the calculator grows out
+of the monitor monotonically, double-clicks "calculate again", resizes mid-run,
+runs `?speed=` at both extremes, and hit-tests the Spotify player and the restart
+button — that last one because `main { pointer-events: none }` has silently
+killed a visible control three times now. It exits non-zero on any failure and
+drops screenshots in `.verify/`.
+
+`BASE`, `CHROMIUM` and `OUT` are all overridable from the environment.
