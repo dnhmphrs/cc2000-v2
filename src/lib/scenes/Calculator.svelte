@@ -148,7 +148,7 @@
 	// published as it goes; a css transition is compiled to keyframes up front
 	// and can do neither.
 	// On-screen width of the chassis edge, in real pixels, at any scale.
-	const EDGE_PX = 10;
+	const EDGE_PX = 3;
 
 	function outOfMonitor(node, { rect }) {
 		if (!rect) return { duration: 0 };
@@ -411,17 +411,19 @@
 		   for the current aspect. --below is the chassis line under the glass. */
 		--winh: calc(var(--win) / var(--win-aspect));
 		--below: calc(var(--win-y) + var(--winh) / 2);
+		--vent-w: clamp(70px, 9vw, 150px);
 	}
 
 	/* The machine's own edge, and it is drawn to a constant width ON SCREEN
 	   rather than a constant width in the layout.
 	   
-	   At full size it is 10px on a whole viewport and sits right on the rim,
-	   which is as close to invisible as makes no difference. Coming home the
-	   machine is drawn inside the room's monitor at a fifth of the size, where a
-	   plain 10px border would render as two — so outOfMonitor divides --edge by
-	   the scale it is fitting at, and the frame holds its weight all the way in.
-	   Small machine, bold frame; full-size machine, a hairline at the edge.
+	   At full size it is a 3px hairline on the rim of a whole viewport, which is
+	   as close to invisible as makes no difference. Coming home the machine is
+	   drawn inside the room's monitor at a fifth of the size, where a plain 3px
+	   border would be less than one — so outOfMonitor divides --edge by the scale
+	   it is fitting at, and it holds that same 3px all the way in. Which means it
+	   reads as a real frame around the small machine and as nothing at all around
+	   the full-size one.
 	   
 	   A pseudo-element rather than a border on .calculator itself, so it survives
 	   .cold — which blanks the real children, and is exactly when this is wanted
@@ -430,7 +432,7 @@
 		content: '';
 		position: absolute;
 		inset: 0;
-		border: var(--edge, 10px) solid var(--machine-ink);
+		border: var(--edge, 3px) solid var(--machine-ink);
 		pointer-events: none;
 		z-index: 5;
 	}
@@ -690,9 +692,13 @@
 		background: var(--machine-red);
 	}
 
+	/* Bolted to the window, not to the corners of the screen. Anchoring these to
+	   the viewport edge is what left a big machine reading as a small one adrift
+	   in a field of yellow: the wider the screen, the further the furniture ran
+	   away from the thing it belongs to. Now the whole assembly grows together. */
 	.dials {
 		position: absolute;
-		left: max(3vw, 18px);
+		right: calc(50% + var(--win) / 2 + clamp(18px, 3vw, 64px));
 		top: var(--win-y);
 		transform: translateY(-50%);
 		display: flex;
@@ -733,7 +739,7 @@
 
 	.switches {
 		position: absolute;
-		right: max(3vw, 18px);
+		left: calc(50% + var(--win) / 2 + clamp(18px, 3vw, 64px));
 		top: var(--win-y);
 		transform: translateY(-50%);
 		display: flex;
@@ -832,7 +838,7 @@
 	.vent {
 		position: absolute;
 		bottom: max(5vh, 28px);
-		width: clamp(70px, 9vw, 120px);
+		width: var(--vent-w);
 		height: 38px;
 		border-radius: 10px;
 		border: var(--ink) solid var(--machine-ink);
@@ -843,12 +849,14 @@
 			var(--machine-light) 4px 9px
 		);
 	}
+	/* Outer edges flush with the window's, so the bottom of the machine lines up
+	   with the top of it however wide the screen is. */
 	.vent.left {
-		left: max(3vw, 18px);
+		right: calc(50% + var(--win) / 2 - var(--vent-w));
 		transform: rotate(-1.6deg);
 	}
 	.vent.right {
-		right: max(3vw, 18px);
+		left: calc(50% + var(--win) / 2 - var(--vent-w));
 		transform: rotate(1.6deg);
 	}
 
@@ -947,13 +955,25 @@
 	}
 
 	/* A short laptop has the same problem portrait does, in the other direction:
-	   the stack under the window is fixed px, so on anything under ~780 tall the
-	   button reaches the vents. They are decoration and the window is not, so
+	   the stack under the window is fixed px, so once the screen is short enough
+	   the button reaches the vents. They are decoration and the window is not, so
 	   they go and the window keeps its size. */
-	@media (max-height: 780px) and (min-aspect-ratio: 85 / 100) {
+	@media (max-height: 860px) and (min-aspect-ratio: 85 / 100) {
 		.vent,
 		.grille {
 			display: none;
+		}
+	}
+
+	/* The panel spans the window rather than being sized by its own contents. A
+	   content-width panel under a wide screen reads as the machine narrowing
+	   toward the bottom; this squares the composition up. Landscape and square
+	   only — portrait stacks the panel and has no width to give. */
+	@media (min-aspect-ratio: 85 / 100) {
+		.controls {
+			width: min(var(--win), 92vw);
+			box-sizing: border-box;
+			justify-content: space-between;
 		}
 	}
 
