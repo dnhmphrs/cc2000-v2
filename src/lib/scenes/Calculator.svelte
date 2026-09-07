@@ -1,10 +1,8 @@
 <script>
-	import { onMount, onDestroy, tick } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
+	import { cubicIn } from 'svelte/easing';
 	import {
-		phase,
-		sceneState,
-		monitorRect,
 		dobMonth,
 		dobDay,
 		dobYear,
@@ -13,37 +11,46 @@
 		track,
 		decade,
 		conceived,
-		edge
+		edge,
+		monitorRect,
+		calcZoom,
+		noise,
+		noiseWash
 	} from '$lib/store/store';
+	import { SCENES, NOISE, clamp01, lerp, easeInOutPower } from '$lib/config';
+	import { begin, skipToVerdict, settled } from './director';
 	import { conceptionDate, previousDay, dateToDecade } from '$lib/functions/utils';
 	import data from '$lib/data/cc2000_data.json';
 
-	// ── The Conception Calculator 2000 ───────────────────────────────────────
-	// The landing IS the machine, and it takes BOTH answers: a yellow chassis
-	// filling the frame with a window cut out of the middle, sized in the same
-	// ballpark as the decade TVs you end up inside.
+	// ── Scene 1: the Conception Calculator 2000 ──────────────────────────────
+	// The machine IS the landing page, and it takes both answers.
 	//
-	// The chassis is a box-shadow spread over the whole viewport from an element
-	// the size of the window, so the window itself stays genuinely transparent
-	// and you see the scene through it. It is its own element rather than the
-	// window's own shadow so it can be faded independently — which is what the
-	// arrival below needs.
+	// It is one element, always laid out at full viewport size, and BOTH ends of
+	// the loop are a transform on that one element:
 	//
-	// Two moves, both one transform about the window's centre:
-	//   launching — scale up until the window is past the frame; you go through
-	//   arriving  — start scaled DOWN onto the room's monitor and grow to rest,
-	//               so "calculate again" comes back out of the screen you were
-	//               just looking at.
+	//   arriving   starts drawn 1:1 inside the room's monitor — the whole page,
+	//              shrunk, exactly as it looks on your screen — and grows out of
+	//              it until it fills the viewport.
+	//   launching  is pushed into the lens with real perspective, so the frame
+	//              warps outward as it goes rather than flatly scaling.
+	//
+	// Because arriving draws the WHOLE page at monitor scale, the form controls
+	// would be a few unreadable pixels. They are held back until it is most of
+	// the way home (SCENES.calculator.controlsAt); what you see in the monitor
+	// until then is the machine's own cartoon self, which is the point.
+	//
+	// Layout comes from config/layout.js via CSS custom properties that
+	// +layout.svelte writes for the current aspect, so the same markup lays out
+	// in landscape, portrait and the square middle a tablet lands in.
+
+	const T = SCENES.calculator;
+
 	const LINES = [
 		'in the earth year 2000, human technology advanced',
 		'allowing all of mankind to calculate the song playing',
 		'at their exact moment of conception',
 		'with the statistical accuracy only the internet can provide'
 	];
-
-	const CHAR_MS = 22;
-	const LINE_GAP = 220;
-	const START_DELAY = 600;
 
 	const MIN_YEAR = 1958;
 	const MAX_YEAR = new Date().getFullYear();
@@ -63,23 +70,15 @@
 	];
 	const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MAX_YEAR - i);
 
-	// The chassis flies at the camera for this long before the transition screen
-	// takes over — matched to the .machine transform transition below.
-	const LAUNCH_MS = 1500;
+	// Whether this mount is a return trip. Read once: monitorRect is cleared as
+	// soon as the arrival finishes.
+	const arrivingFrom = get(monitorRect);
 
 	let shown = LINES.map(() => 0);
-	let typed = false;
-	let launching = false;
+	let typed = !!arrivingFrom; // no manifesto second time round
+	let realised = !arrivingFrom; // are the real controls allowed on screen yet
 	let timer;
-	let handoff;
-
-	// Set for one frame when the machine is arriving out of a room's monitor, so
-	// the browser has an initial transform to animate away from.
-	let machineEl;
-	let arriving = false; // the transform is on its way home; do not accept clicks
-	let bare = false; // body and furniture hidden, for the first frames only
-	let settle;
-
+	let controlsTimer;
 	let power = 0;
 	let ticker;
 
@@ -95,102 +94,121 @@
 		? `${String($dobDay).padStart(2, '0')} ${MONTHS[$dobMonth - 1].toUpperCase()} ${$dobYear}`
 		: '-- --- ----';
 
-	// Grow out of the monitor we were just looking at: measure the window where
-	// it will come to rest, then start it mapped onto the glass and let the CSS
-	// transition carry it home. A plain FLIP.
-	const ARRIVE_MS = 1700; // matches the transition on .machine.arriving
+	// ── The two moves ────────────────────────────────────────────────────────
+	// Both are Svelte transitions rather than hand-rolled state, so the element
+	// stays mounted for exactly as long as its move takes and no flag has to be
+	// kept in step with a timer.
 
-	async function arriveFromMonitor(rect) {
-		arriving = true;
-		bare = true;
-		await tick();
-		const win = machineEl?.querySelector('.hole')?.getBoundingClientRect();
-		if (!win || !win.width) {
-			arriving = bare = false;
-			return;
-		}
-		const s = rect.width / win.width;
-		const dx = rect.left + rect.width / 2 - (win.left + win.width / 2);
-		const dy = rect.top + rect.height / 2 - (win.top + win.height / 2);
+	// Out of the room's monitor. `tick` rather than `css` because the zoom level
+	// is published as it goes, and a css-driven transition is compiled to
+	// keyframes up front and cannot report progress.
+	//
+	// The easing HOLDS it small before rushing it home, which is what makes the
+	// beat read in the right order: the static clears first, so you see the
+	// whole calculator sitting in the room's computer for a moment, and only
+	// then are you pulled into it.
+	function outOfMonitor(node, { rect }) {
+		if (!rect) return { duration: 0 };
+		const vw = window.innerWidth;
+		const vh = window.innerHeight;
+		// Fit the whole page inside the glass, whichever way round it is, and
+		// centre it in the leftover — the monitor's shape and the viewport's are
+		// not the same, and a page pinned to the glass's corner reads as a
+		// mistake rather than as a screen.
+		const s0 = Math.min(rect.width / vw, rect.height / vh);
+		const x0 = rect.left + (rect.width - vw * s0) / 2;
+		const y0 = rect.top + (rect.height - vh * s0) / 2;
+		node.style.transformOrigin = '0 0';
+		return {
+			duration: T.arrive * 1000,
+			easing: (t) => easeInOutPower(t, 1.9),
+			tick: (t) => {
+				const u = 1 - t;
+				node.style.transform = `translate(${x0 * u}px, ${y0 * u}px) scale(${lerp(s0, 1, t)})`;
+				calcZoom.set(t);
+				// The flood clears over the first third, uncovering the room with
+				// the machine already on its screen.
+				noiseWash.set(clamp01(1 - t * 3.2));
+				noise.set(lerp(NOISE.base, NOISE.flood, clamp01(1 - t * 2.4)));
+			}
+		};
+	}
 
-		// Set it straight on the element, not through Svelte: tick() flushes the
-		// framework's DOM writes, not the browser's style, so setting and clearing
-		// a bound style in the same frame collapses and nothing animates. Reading
-		// offsetWidth in between forces the start state to be adopted for real.
-		machineEl.style.transition = 'none';
-		machineEl.style.transform = `translate(${dx}px, ${dy}px) scale(${s})`;
-		void machineEl.offsetWidth;
-		machineEl.style.transition = '';
-		machineEl.style.transform = '';
-
-		// The body comes up behind it as it grows.
-		bare = false;
-		settle = setTimeout(() => (arriving = false), ARRIVE_MS);
+	// Into the lens. Real perspective, so the frame warps outward as it goes —
+	// being sucked in, rather than a picture being scaled up.
+	function intoLens(node) {
+		node.style.transformOrigin = '50% var(--win-y)';
+		return {
+			duration: T.launch * 1000,
+			easing: cubicIn,
+			tick: (t, u) => {
+				node.style.transform = `perspective(760px) translateZ(${u * 700}px)`;
+				node.style.opacity = String(1 - u * u * u);
+				calcZoom.set(1 + u);
+			}
+		};
 	}
 
 	onMount(() => {
-		// Coming back from a run: the machine's screen appears on the room's
-		// computer and grows out of it, and there is no manifesto to sit through
-		// a second time — the answers are still dialled in.
-		const rect = get(monitorRect);
-		if (rect) {
-			typed = true;
-			arriveFromMonitor(rect);
-			ticker = setInterval(() => (power = (power + 1) % 7), 420);
+		ticker = setInterval(() => (power = (power + 1) % 7), 420);
+
+		if (arrivingFrom) {
+			// Let the real controls in once it is most of the way home, and hand
+			// the room back to the stage.
+			controlsTimer = setTimeout(() => {
+				realised = true;
+			}, T.arrive * T.controlsAt * 1000);
+			timer = setTimeout(settled, T.arrive * 1000);
 			return;
 		}
 
+		noise.set(NOISE.base);
 		let li = 0;
 		const step = () => {
-			if (li >= LINES.length) {
-				typed = true;
-				return;
-			}
+			if (li >= LINES.length) return (typed = true);
 			if (shown[li] >= LINES[li].length) {
 				li += 1;
-				timer = setTimeout(step, LINE_GAP);
+				timer = setTimeout(step, T.lineGap * 1000);
 				return;
 			}
 			shown[li] += 1;
 			shown = shown;
-			timer = setTimeout(step, CHAR_MS);
+			timer = setTimeout(step, T.charInterval * 1000);
 		};
-		timer = setTimeout(step, START_DELAY);
-		ticker = setInterval(() => (power = (power + 1) % 7), 420);
+		timer = setTimeout(step, T.typeDelay * 1000);
 	});
+
 	onDestroy(() => {
 		clearTimeout(timer);
-		clearTimeout(handoff);
-		clearTimeout(settle);
+		clearTimeout(controlsTimer);
 		clearInterval(ticker);
 	});
 
 	function skip() {
-		if (typed || launching) return;
+		if (typed) return;
 		clearTimeout(timer);
 		shown = LINES.map((l) => l.length);
 		typed = true;
 	}
 
 	function calculate() {
-		if (!complete || launching) return;
+		if (!complete) return;
 		date.set(
 			`${$dobYear}-${String($dobMonth).padStart(2, '0')}-${String($dobDay).padStart(2, '0')}`
 		);
 
-		let cd = conceptionDate($date);
+		let cd = conceptionDate(get(date));
 		const today = new Date().toISOString().slice(0, 10);
 
 		// The archive starts in 1958 and nobody has been conceived after today.
+		// Neither verdict has a room to fall into, so both skip the cinematic.
 		if (cd <= '1958-06-01') {
 			edge.set('past');
-			phase.set('output');
-			return;
+			return skipToVerdict();
 		}
-		if ($date >= today) {
+		if (get(date) >= today) {
 			edge.set('future');
-			phase.set('output');
-			return;
+			return skipToVerdict();
 		}
 
 		let found = null;
@@ -206,39 +224,36 @@
 		}
 		if (!found) {
 			edge.set('past');
-			phase.set('output');
-			return;
+			return skipToVerdict();
 		}
 
 		edge.set(null);
 		track.set(found);
 		conceived.set(cd);
 		decade.set(dateToDecade(cd));
-
-		// The camera goes through the window and straight on into the egg — one
-		// move, no stops. The dive starts now, behind the chassis; the machine
-		// hands over to the transition once it has flown past the lens.
-		launching = true;
-		sceneState.set(1);
-		handoff = setTimeout(() => phase.set('processing'), LAUNCH_MS);
+		begin();
 	}
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
-	class="machine"
-	class:launching
-	class:arriving
-	class:bare
-	bind:this={machineEl}
+	class="calculator"
+	class:realised
+	in:outOfMonitor={{ rect: arrivingFrom }}
+	out:intoLens
 	on:click={skip}
 >
-	<!-- The body: one element the size of the window, spreading a shadow over
-	     everything outside it. -->
-	<div class="chassis" />
+	<!-- The body. Four bars around the window rather than one element spreading
+	     a shadow: a shadow scales with its element, so a machine drawn at monitor
+	     size would still flood the whole frame with yellow. This way the window
+	     stays truly transparent AND the machine can be a small object sitting
+	     inside the room's screen. -->
+	<div class="body top" />
+	<div class="body bottom" />
+	<div class="body left" />
+	<div class="body right" />
 
-	<!-- The window. -->
-	<div class="hole">
+	<div class="window">
 		<div class="screen">
 			<div class="scanlines" />
 			{#if !typed}
@@ -250,8 +265,6 @@
 					</p>
 				{/each}
 			{:else}
-				<!-- Once it has said its piece the screen becomes a read-out of what
-				     the operator has dialled in. -->
 				<dl class="readout">
 					<div>
 						<dt>subject dob</dt>
@@ -270,7 +283,6 @@
 		</div>
 	</div>
 
-	<!-- Everything below paints on top of the chassis. -->
 	<div class="plate">
 		<span class="model">model cc-2000</span>
 		<span class="name">Conception Calculator</span>
@@ -294,7 +306,6 @@
 		{/each}
 	</div>
 
-	<!-- Both questions, on the panel. -->
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<div class="controls" on:click|stopPropagation>
 		<div class="ctl">
@@ -327,7 +338,7 @@
 	<div class="grille" />
 
 	<button
-		class="start"
+		class="go"
 		class:armed={complete}
 		on:click|stopPropagation={calculate}
 		disabled={!complete}
@@ -342,113 +353,87 @@
 </div>
 
 <style>
-	.machine {
+	.calculator {
 		position: fixed;
 		inset: 0;
 		z-index: 20;
 		/* main is pointer-events:none so the 3D shows through the UI layer; any
 		   screen that wants clicks has to opt back in. */
 		pointer-events: auto;
-		/* One source of truth for the window, so everything bolted around it
-		   moves when it does. --below is the chassis line under the glass. */
-		--win: clamp(250px, 31vw, 400px);
-		--winh: calc(var(--win) * 0.75); /* 4:3 */
-		--below: calc(46% + var(--winh) / 2);
-		--ctl-h: 86px;
-		/* The window is centred, so the fly-through scales about the middle. */
-		transform-origin: 50% 46%;
-		transition: transform 1.5s cubic-bezier(0.6, 0, 0.85, 0.4), opacity 0.5s ease 1s;
 		font-family: var(--tech);
 		color: var(--machine-ink);
 		cursor: default;
+		/* Laid out from config/layout.js, which +layout.svelte writes onto :root
+		   for the current aspect. --below is the chassis line under the glass. */
+		--winh: calc(var(--win) / var(--win-aspect));
+		--below: calc(var(--win-y) + var(--winh) / 2);
 	}
 
-	.machine.launching {
-		transform: scale(22);
+	/* Everything that is not the cartoon machine waits until it is nearly home,
+	   because at monitor scale it is a few unreadable pixels. */
+	.controls,
+	.go {
 		opacity: 0;
+		transition: opacity 0.4s ease;
 		pointer-events: none;
 	}
-
-	/* Arriving: only the screen exists at first, sitting in the room's monitor.
-	   The body and the furniture come up as it grows to fill the frame. */
-	.machine.arriving {
-		transition: transform 1.7s cubic-bezier(0.3, 0.7, 0.25, 1);
-		pointer-events: none;
-	}
-	.machine.bare .chassis,
-	.machine.bare .plate,
-	.machine.bare .lamps,
-	.machine.bare .dials,
-	.machine.bare .switches,
-	.machine.bare .controls,
-	.machine.bare .vent,
-	.machine.bare .grille,
-	.machine.bare .start,
-	.machine.bare .screw {
-		opacity: 0;
-		transition: none;
+	.calculator.realised .controls,
+	.calculator.realised .go {
+		opacity: 1;
+		pointer-events: auto;
 	}
 
-	/* Clear the glass first, so what you fly through is the window rather than
-	   the words that were on it. */
-	.machine.launching .screen p,
-	.machine.launching .readout,
-	.machine.launching .scanlines {
-		opacity: 0;
-		transition: opacity 0.22s ease;
+	/* ── The window and the body ─────────────────────────────────────────── */
+	.body {
+		position: absolute;
+		background: var(--machine);
 	}
-	.machine.launching .screen {
-		background: transparent;
-		transition: background 0.5s ease;
+	.body.top {
+		left: 0;
+		right: 0;
+		top: 0;
+		height: calc(var(--win-y) - var(--winh) / 2);
+	}
+	.body.bottom {
+		left: 0;
+		right: 0;
+		top: calc(var(--win-y) + var(--winh) / 2);
+		bottom: 0;
+	}
+	/* A pixel of overlap top and bottom: four bars meeting exactly leaves a
+	   hairline seam wherever the layout rounds. */
+	.body.left,
+	.body.right {
+		width: calc(50% - var(--win) / 2 + 1px);
+		top: calc(var(--win-y) - var(--winh) / 2 - 1px);
+		height: calc(var(--winh) + 2px);
+	}
+	.body.left {
+		left: 0;
+	}
+	.body.right {
+		right: 0;
 	}
 
-	/* ── The window, and the chassis that surrounds it ───────────────────── */
-	/* Same rect as .hole; the 9999px spread is the whole machine body. */
-	.chassis,
-	.hole {
+	.window {
 		position: absolute;
 		left: 50%;
-		top: 46%;
+		top: var(--win-y);
 		width: var(--win);
-		aspect-ratio: 4 / 3;
+		aspect-ratio: var(--win-aspect);
 		transform: translate(-50%, -50%);
 		border-radius: 18px;
-	}
-
-	.chassis {
-		box-shadow: 0 0 0 9999px var(--machine);
-		/* Held back until the machine is nearly home. Until then you are looking
-		   at its screen sitting in the room's computer, with the room still
-		   around it — which is the whole point of the way back. */
-		transition: opacity 0.75s ease 1s;
-	}
-
-	.hole {
 		box-shadow: inset 0 0 0 9px var(--machine-dark), inset 0 0 0 12px var(--machine-light),
 			inset 0 14px 30px rgba(0, 0, 0, 0.55);
 		overflow: hidden;
-	}
-
-	/* The furniture comes up with the body. */
-	.plate,
-	.lamps,
-	.dials,
-	.switches,
-	.controls,
-	.vent,
-	.grille,
-	.start,
-	.screw {
-		transition: opacity 0.75s ease 1s;
 	}
 
 	.screen {
 		position: absolute;
 		inset: 12px;
 		border-radius: 10px;
-		/* A vignette, not a colour: the window looks straight onto the corridor
-		   the camera is about to fly down, so it only needs darkening at the
-		   edges to read as glass. */
+		/* A vignette, not a colour: the window looks straight onto the scene
+		   behind it, so it only needs darkening at the edges to read as glass. */
 		background: radial-gradient(
 			ellipse at 50% 40%,
 			rgba(0, 0, 0, 0.34) 0%,
@@ -480,10 +465,29 @@
 		line-height: 1.5;
 		letter-spacing: 0.03em;
 		color: rgba(240, 242, 248, 0.72);
-		transition: opacity 0.25s ease;
 	}
 	.screen p.lit {
 		color: var(--yellow);
+	}
+
+	.caret {
+		display: inline-block;
+		width: 0.5em;
+		height: 0.9em;
+		vertical-align: text-bottom;
+		background: rgba(240, 242, 248, 0.8);
+		animation: blink 1.05s steps(1) infinite;
+	}
+
+	@keyframes blink {
+		0%,
+		50% {
+			opacity: 1;
+		}
+		50.01%,
+		100% {
+			opacity: 0;
+		}
 	}
 
 	.readout {
@@ -491,7 +495,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: clamp(4px, 1.4vh, 10px);
-		transition: opacity 0.25s ease;
 	}
 	.readout div {
 		display: flex;
@@ -517,41 +520,22 @@
 		color: var(--yellow);
 	}
 
-	.caret {
-		display: inline-block;
-		width: 0.5em;
-		height: 0.9em;
-		vertical-align: text-bottom;
-		background: rgba(240, 242, 248, 0.8);
-		animation: blink 1.05s steps(1) infinite;
-	}
-
-	@keyframes blink {
-		0%,
-		50% {
-			opacity: 1;
-		}
-		50.01%,
-		100% {
-			opacity: 0;
-		}
-	}
-
 	/* ── Fascia ──────────────────────────────────────────────────────────── */
 	.plate {
 		position: absolute;
 		left: 50%;
-		top: max(5vh, 26px);
+		top: max(4vh, 20px);
 		transform: translateX(-50%);
 		text-align: center;
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
-		padding: 10px 26px;
+		padding: 10px clamp(14px, 2.4vw, 26px);
 		background: var(--machine-light);
 		border: 2px solid var(--machine-dark);
 		border-radius: 6px;
 		box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.12);
+		white-space: nowrap;
 	}
 	.model {
 		font-size: 9px;
@@ -560,7 +544,7 @@
 		opacity: 0.65;
 	}
 	.name {
-		font-size: clamp(15px, 2vw, 24px);
+		font-size: clamp(14px, 2vw, 24px);
 		font-weight: 700;
 		letter-spacing: 0.02em;
 	}
@@ -568,7 +552,7 @@
 	.lamps {
 		position: absolute;
 		left: 50%;
-		top: calc(46% - var(--winh) / 2 - 30px);
+		top: calc(var(--win-y) - var(--winh) / 2 - 28px);
 		transform: translateX(-50%);
 		display: flex;
 		gap: 7px;
@@ -581,22 +565,22 @@
 		box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
 	}
 	.lamps i.on {
-		background: #ff6a3c;
+		background: var(--machine-lamp);
 		box-shadow: 0 0 8px rgba(255, 106, 60, 0.8);
 	}
 
 	.dials {
 		position: absolute;
 		left: max(3vw, 18px);
-		top: 50%;
+		top: var(--win-y);
 		transform: translateY(-50%);
 		display: flex;
 		flex-direction: column;
-		gap: clamp(14px, 2.4vh, 26px);
+		gap: clamp(12px, 2.2vh, 26px);
 	}
 	.dial {
-		width: clamp(34px, 4vw, 52px);
-		height: clamp(34px, 4vw, 52px);
+		width: clamp(30px, 3.6vw, 52px);
+		height: clamp(30px, 3.6vw, 52px);
 		border-radius: 50%;
 		background: radial-gradient(circle at 34% 30%, var(--machine-light), var(--machine-dark));
 		border: 2px solid var(--machine-ink);
@@ -627,11 +611,11 @@
 	.switches {
 		position: absolute;
 		right: max(3vw, 18px);
-		top: 50%;
+		top: var(--win-y);
 		transform: translateY(-50%);
 		display: flex;
 		flex-direction: column;
-		gap: clamp(12px, 2vh, 22px);
+		gap: clamp(10px, 1.8vh, 22px);
 	}
 	.sw {
 		width: 24px;
@@ -654,42 +638,11 @@
 		background: var(--machine-light);
 	}
 
-	.vent {
-		position: absolute;
-		bottom: max(6vh, 34px);
-		width: clamp(70px, 9vw, 120px);
-		height: 34px;
-		border-radius: 4px;
-		background: repeating-linear-gradient(
-			to bottom,
-			var(--machine-dark) 0 3px,
-			transparent 3px 7px
-		);
-	}
-	.vent.left {
-		left: max(3vw, 18px);
-	}
-	.vent.right {
-		right: max(3vw, 18px);
-	}
-
-	.grille {
-		position: absolute;
-		left: 50%;
-		bottom: max(6vh, 34px);
-		transform: translateX(-50%);
-		width: clamp(90px, 11vw, 150px);
-		height: 40px;
-		border-radius: 6px;
-		background: radial-gradient(circle, var(--machine-dark) 1.1px, transparent 1.3px) 0 0 / 7px 7px;
-		border: 2px solid var(--machine-dark);
-	}
-
 	/* ── The panel: both questions live on the machine ───────────────────── */
 	.controls {
 		position: absolute;
 		left: 50%;
-		top: calc(var(--below) + 18px);
+		top: calc(var(--below) + var(--controls-gap));
 		transform: translateX(-50%);
 		display: flex;
 		align-items: flex-start;
@@ -735,7 +688,7 @@
 	input[type='range'] {
 		width: clamp(130px, 15vw, 200px);
 		margin: 5px 0 0;
-		accent-color: #ff6a3c;
+		accent-color: var(--machine-lamp);
 		cursor: pointer;
 	}
 
@@ -748,10 +701,41 @@
 		opacity: 0.7;
 	}
 
-	.start {
+	.vent {
+		position: absolute;
+		bottom: max(5vh, 28px);
+		width: clamp(70px, 9vw, 120px);
+		height: 34px;
+		border-radius: 4px;
+		background: repeating-linear-gradient(
+			to bottom,
+			var(--machine-dark) 0 3px,
+			transparent 3px 7px
+		);
+	}
+	.vent.left {
+		left: max(3vw, 18px);
+	}
+	.vent.right {
+		right: max(3vw, 18px);
+	}
+
+	.grille {
 		position: absolute;
 		left: 50%;
-		top: calc(var(--below) + 18px + var(--ctl-h) + 16px);
+		bottom: max(5vh, 28px);
+		transform: translateX(-50%);
+		width: clamp(90px, 11vw, 150px);
+		height: 40px;
+		border-radius: 6px;
+		background: radial-gradient(circle, var(--machine-dark) 1.1px, transparent 1.3px) 0 0 / 7px 7px;
+		border: 2px solid var(--machine-dark);
+	}
+
+	.go {
+		position: absolute;
+		left: 50%;
+		top: calc(var(--below) + var(--controls-gap) + var(--controls-h) + var(--button-gap));
 		transform: translateX(-50%);
 		font-family: var(--tech);
 		font-size: 14px;
@@ -764,16 +748,18 @@
 		color: var(--machine-ink);
 		box-shadow: 0 5px 0 var(--machine-ink);
 		cursor: default;
+	}
+	.calculator.realised .go {
 		opacity: 0.55;
 	}
-	.start.armed {
-		background: #ff6a3c;
+	.calculator.realised .go.armed {
+		background: var(--machine-lamp);
 		color: #fff5ec;
 		opacity: 1;
 		cursor: pointer;
 		animation: pulse 1.6s ease-in-out infinite;
 	}
-	.start.armed:active {
+	.go.armed:active {
 		transform: translate(-50%, 4px);
 		box-shadow: 0 1px 0 var(--machine-ink);
 	}
@@ -820,17 +806,13 @@
 		bottom: 16px;
 	}
 
-	@media (max-width: 700px) {
+	/* Portrait has no room either side of the window, and the panel stacks. */
+	@media (max-aspect-ratio: 85 / 100) {
 		.dials,
 		.switches,
 		.vent,
 		.grille {
 			display: none;
-		}
-
-		/* Stacked, so the panel gets taller and the button moves down with it. */
-		.machine {
-			--ctl-h: 156px;
 		}
 		.controls {
 			flex-direction: column;
