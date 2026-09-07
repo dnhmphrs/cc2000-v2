@@ -72,3 +72,15 @@ export const calcZoom = writable(1);
 // Written by: routes/+layout.svelte.
 export const aspect = writable('landscape');
 export const screenSize = writable({ width: 0, height: 0 });
+
+// ── The backdrop ─────────────────────────────────────────────────────────────
+// Which shader is behind the 3D, and the colour it is given. The Stage sets
+// this from the active scene's backdrop(); components/Background.svelte reads
+// it and recompiles when the name changes. See three/shaders/index.js.
+export const backdrop = writable({ shader: 'flat', color: 0x0a1f4a });
+
+// The rotation the field is carried by, as a column-major mat3. NOT a store:
+// the computation writes it every frame and the background reads it in its own
+// loop, so a writable would only mean a notification per frame for a value
+// nothing reacts to. Written in place — never reassign the array.
+export const fieldRotation = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);

@@ -108,7 +108,10 @@
 	}
 
 	export function backdrop() {
-		return { color: world.getAir(), alpha: 1 };
+		// A block of the air's own colour — see three/shaders/flat.js. The fog
+		// already walks this from deep blue to white, and a field behind it would
+		// only fight that.
+		return { color: world.getAir(), shader: 'flat' };
 	}
 
 	export function render(r) {
