@@ -130,7 +130,9 @@ function grower(mat, spread) {
 
 const TILT = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.tilt));
 const UP = new THREE.Vector3(0, 1, 0);
-const SPIN = new THREE.Quaternion();
+const RIGHT = new THREE.Vector3(1, 0, 0);
+const YAW = new THREE.Quaternion();
+const PITCH = new THREE.Quaternion();
 
 export function createLattice() {
 	const scene = new THREE.Scene();
@@ -303,11 +305,17 @@ export function createLattice() {
 				pn.line.visible = v > 0.001;
 			});
 		},
-		// Turn the whole assembly about the screen's vertical, on top of the
-		// resting tilt. A whole number of turns lands back on exactly ICOSA.tilt,
-		// which is where the computation picks the frame up.
-		setSpin(rad) {
-			frame.quaternion.copy(TILT).premultiply(SPIN.setFromAxisAngle(UP, rad));
+		// Turn the whole assembly on top of the resting tilt: about the screen's
+		// vertical AND its horizontal, which tumbles rather than spins. Both are
+		// premultiplied, so both are world axes and the two do not fight over
+		// which one the other turns around. A whole number of turns on each is
+		// the identity, so the frame lands back on exactly ICOSA.tilt — which is
+		// where the computation picks it up.
+		setSpin(yaw, pitch) {
+			frame.quaternion
+				.copy(TILT)
+				.premultiply(PITCH.setFromAxisAngle(RIGHT, pitch))
+				.premultiply(YAW.setFromAxisAngle(UP, yaw));
 		},
 		setLineOpacity(v) {
 			edgeMat.uniforms.uOpacity.value = v;

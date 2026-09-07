@@ -89,15 +89,20 @@
 		world.spermMaterial.opacity = shown * (1 - gone);
 		world.sperm.visible = world.spermMaterial.opacity > 0.004;
 
-		// ── The egg ──────────────────────────────────────────────────────────
-		// The fog does most of this; the fade only keeps it from popping.
-		const eggIn = span(p, T.eggIn);
-		world.egg.setCore(eggIn);
-		world.egg.setShell(eggIn);
-
 		// ── The air ──────────────────────────────────────────────────────────
-		air.copy(blue).lerp(white, easeInOutPower(span(p, T.whiten), 1.6));
+		const blown = easeInOutPower(span(p, T.whiten), 1.6);
+		air.copy(blue).lerp(white, blown);
 		world.setAir(air.getHex());
+
+		// ── The egg ──────────────────────────────────────────────────────────
+		// The fog does most of the arrival; the fade only keeps it from popping.
+		// It leaves ON the white-out, and slightly ahead of it — an egg still
+		// sitting there while the frame is already white is a beat of nothing at
+		// the exact moment the scene is supposed to end.
+		const eggIn = span(p, T.eggIn);
+		const goes = clamp01(1 - blown * 1.35);
+		world.egg.setCore(eggIn * goes);
+		world.egg.setShell(eggIn * goes);
 
 		return t >= T.duration;
 	}

@@ -91,6 +91,12 @@
 	let shown = LINES.map(() => 0);
 	let typed = !!arrivingFrom; // no manifesto second time round
 	let realised = !arrivingFrom; // are the real controls allowed on screen yet
+	// Cold until it has actually landed. On the way home the machine is a picture
+	// inside somebody's monitor, a few dozen pixels across — nothing it could say
+	// would be readable, and a live screen zooming at you is the thing that gives
+	// away that this is a web page rather than a machine. So it shows its own
+	// mark, and turns on when it is set.
+	let booting = !!arrivingFrom;
 	let timer;
 	let controlsTimer;
 	let power = 0;
@@ -150,6 +156,9 @@
 				// containing block and a stacking context for everything inside it,
 				// and there is no reason to keep one once it has landed.
 				node.style.transform = t === 1 ? '' : `translate(${x}px, ${y}px) scale(${k})`;
+				// The end of the move IS the moment it comes on, so it is taken
+				// from here rather than from a timer that could drift off it.
+				if (t === 1) booting = false;
 				calcZoom.set(t);
 			}
 		};
@@ -179,7 +188,10 @@
 			controlsTimer = setTimeout(() => {
 				realised = true;
 			}, T.arrive * T.controlsAt * 1000);
-			timer = setTimeout(settled, T.arrive * 1000);
+			timer = setTimeout(() => {
+				booting = false;
+				settled();
+			}, T.arrive * 1000);
 			return;
 		}
 
@@ -268,7 +280,13 @@
 	<div class="window">
 		<div class="screen">
 			<div class="scanlines" />
-			{#if !typed}
+			{#if booting}
+				<!-- Not on yet. -->
+				<div class="boot">
+					<p class="mark">CC<span>2K</span></p>
+					<p class="tag">conception calculator</p>
+				</div>
+			{:else if !typed}
 				{#each LINES as line, i}
 					<p class:lit={i === LINES.length - 1}>
 						{line.slice(0, shown[i])}{#if shown[i] > 0 && shown[i] < line.length}<span
@@ -385,6 +403,30 @@
 		   for the current aspect. --below is the chassis line under the glass. */
 		--winh: calc(var(--win) / var(--win-aspect));
 		--below: calc(var(--win-y) + var(--winh) / 2);
+	}
+
+	/* The cold screen on the way home. Sized in the same units as everything
+	   else in the machine, so it scales down with it inside the monitor. */
+	.boot {
+		margin: auto;
+		text-align: center;
+	}
+	.boot .mark {
+		margin: 0;
+		font-size: 30px;
+		font-weight: 700;
+		letter-spacing: 0.18em;
+		color: var(--yellow);
+	}
+	.boot .mark span {
+		color: var(--ink);
+	}
+	.boot .tag {
+		margin: 7px 0 0;
+		font-size: 8px;
+		letter-spacing: 0.36em;
+		text-transform: uppercase;
+		color: var(--ink-dim);
 	}
 
 	/* Everything that is not the cartoon machine waits until it is nearly home,
