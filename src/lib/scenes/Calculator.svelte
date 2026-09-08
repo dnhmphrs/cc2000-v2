@@ -612,9 +612,10 @@
 	   a soft specular, because everything else here is inked and a rendered
 	   highlight would be the one thing that is not.
 	   
-	   The SCANLINES are not here: components/Glass.svelte lays them over the
-	   whole site for the whole run. Drawing them twice at the same 3px pitch —
-	   once here and once over the top — is a moiré, not a CRT. */
+	   There are no SCANLINES on this machine at all. components/Glass.svelte
+	   lays them over the site for the flight and nothing else — over the two
+	   ends of the loop, this one and the bedroom, they would be a second 3px
+	   pitch on top of a screen that already has one: a moiré, not a CRT. */
 	.gleam {
 		position: absolute;
 		inset: 0;

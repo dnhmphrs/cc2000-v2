@@ -11,7 +11,7 @@
 	//
 	//   0  Background   the theta field, off behind one switch
 	//   1  Stage        the three 3D scenes
-	//   30 Glass        scanlines, over everything, for the whole run
+	//   30 Glass        scanlines, over everything, for the flight only
 	//   4  (flash)      the moment of conception, thrown by the Stage
 	//   10 the screens  the calculator and the room
 	//
