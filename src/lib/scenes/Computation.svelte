@@ -245,12 +245,12 @@
 
 		// ── The camera pulls back ────────────────────────────────────────────
 		// Only while the panes are coming out; after that the frustum belongs to
-		// the zoom, and to the return zoom after that.
+		// the zoom, and to the return zoom after that. The search leans in a
+		// little on each decade it stops at — see `push` below — so the frustum is
+		// worked out here and applied once the search has had its say.
 		const zoom = span(p, T.zoom);
-		if (zoom <= 0) {
-			frustum = lerp(ICOSA.conceptionFrustum, rest, easeInOutCubic(span(p, T.pullBack)));
-			world.applyFrustum(frustum);
-		}
+		const pulled = lerp(ICOSA.conceptionFrustum, rest, easeInOutCubic(span(p, T.pullBack)));
+		let push = 0;
 
 		// ── The panes come out ───────────────────────────────────────────────
 		// Working first, artwork second, working away third.
@@ -310,11 +310,27 @@
 			legB.copy(via).slerp(to, turn);
 			world.frame.quaternion.copy(legA).slerp(legB, turn);
 
+			// The LOOK. Most of a slot is the turn onto that decade; what is left is
+			// the pause on it, and during that pause the other five step back so the
+			// artwork this scene exists to show is what you are actually looking at.
+			// The last slot has no look — the zoom follows it straight away.
+			const look = last ? 0 : clamp01((local - T.searchSpin) / (1 - T.searchSpin));
+			push = Math.sin(look * Math.PI);
+			const back = push * T.searchDim;
+			const focus = searchOrder[step];
+			panes.forEach((pane, i) => pane && pane.setDim(i === focus ? 1 : 1 - back));
+
 			const d = decadeAssignments[searchOrder[step]] ?? null;
 			if (d !== facing) {
 				facing = d;
 				fieldDecade.set(d);
 			}
+		}
+
+		// And now the frustum, with the lean-in the search asked for.
+		if (zoom <= 0) {
+			frustum = pulled * (1 - push * T.searchPush);
+			world.applyFrustum(frustum);
 		}
 
 		// The backdrop turns with the solid. Same attitude, same coordinates — the

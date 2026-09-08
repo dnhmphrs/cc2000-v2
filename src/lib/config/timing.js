@@ -226,6 +226,13 @@ export const SCENES = scale({
 		// Fraction of each step spent turning; the rest is the look. The last
 		// step is all turn, because the zoom follows it straight away.
 		searchSpin: 0.76,
+		// How far the other five step back during that look, and how far the
+		// camera leans in on it. Both are pulses — in and out across the pause —
+		// so they read as attention rather than as five rooms switching off, and
+		// the lean stays small because the fall at the end of the scene is the
+		// zoom and this must not spend it.
+		searchDim: 0.55,
+		searchPush: 0.13,
 		// How the turn itself moves. A high power is a real acceleration out of
 		// rest and a real deceleration into the next decade, which is what stops
 		// this reading as a turntable; 1.0 would be a flat constant pivot.

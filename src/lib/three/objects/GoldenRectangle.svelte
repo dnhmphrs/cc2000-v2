@@ -369,6 +369,7 @@
 	// 0..1 — how far up the drafting layer is. The computation runs this on its
 	// own window, so the working can be shown and then put away.
 	export function setDraft(v) {
+		if (v === draft) return;
 		draft = v;
 		updateOpacities();
 	}
@@ -378,8 +379,12 @@
 		if (roomComponent) roomComponent.setReveal(v);
 	}
 
-	// Fade this pane's line-work and room (used to hide non-target panes on zoom).
+	// Fade this pane's line-work and room. Written every frame through the search
+	// and the zoom, so it early-outs on no change: re-placing six rooms' worth of
+	// layers to arrive at the numbers they already had is the one thing in this
+	// scene that would cost real time.
 	export function setDim(f) {
+		if (f === dimFactor) return;
 		dimFactor = f;
 		updateOpacities();
 		if (roomComponent) roomComponent.setDim(f);
@@ -387,6 +392,7 @@
 
 	// Fade only the golden line-work, keeping the room (used on the zoom target).
 	export function setLineDim(f) {
+		if (f === lineDim) return;
 		lineDim = f;
 		updateOpacities();
 	}

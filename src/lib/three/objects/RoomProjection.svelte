@@ -192,12 +192,14 @@
 	}
 
 	export function setDim(f) {
+		if (f === dimFactor) return;
 		dimFactor = f;
 		apply(lastProjection);
 	}
 
 	// 0..1 — how far up this room's artwork is, driven by the computation.
 	export function setReveal(v) {
+		if (v === reveal) return;
 		reveal = v;
 		apply(lastProjection);
 	}
