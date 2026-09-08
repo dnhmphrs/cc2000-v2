@@ -2,17 +2,34 @@
 	import { tick } from 'svelte';
 	import { get } from 'svelte/store';
 	import * as THREE from 'three';
-	import { accentHex } from '$lib/theme';
+	import { accentHex, ink } from '$lib/theme';
+	import { ICOSA, ICOSA_INK } from '$lib/config';
 	import GoldenRectangleSchematic from './GoldenRectangleSchematic.svelte';
 	import RoomProjection from './RoomProjection.svelte';
 
-	// Live accent recolour of all this pane's line-work.
-	$: recolorAccent($accentHex);
-	function recolorAccent(hex) {
-		[fillMaterial, outlineMaterial, spiralMaterial].forEach((m) => m && m.color.setHex(hex));
-		subdivisionMaterials.forEach(({ mat }) => mat && mat.color.setHex(hex));
-		traceLineMaterials.forEach((m) => m && m.color.setHex(hex));
-	}
+	// ── One golden rectangle, and the room behind it ─────────────────────────
+	// Three layers on the same plane, in the order the computation brings them
+	// up:
+	//
+	//   the OUTLINE     the rectangle itself, which at projection 0 lies exactly
+	//                   on four of the icosahedron's own vertices
+	//   the DRAFTING    the spiral, the subdivision squares, the traces back to
+	//                   the solid — and, in the sibling component, the dimension
+	//                   lines and the 1:phi bar. This is the machine showing its
+	//                   working, and it is the whole reason the scene reads as a
+	//                   computation rather than as a carousel
+	//   the ROOM        the decade diorama, which is the only thing in the second
+	//                   half of the run with any colour in it
+	//
+	// They are driven SEPARATELY, from the computation's own timeline, rather
+	// than all derived from the projection: the drafting comes out first and
+	// alone, the artwork fades up through it, and then the drafting steps back so
+	// it is not clutter over the one coloured thing on screen. Deriving all three
+	// from one number is what made this an undifferentiated bloom before.
+
+	// Live accent recolour of the rectangle. The drafting keeps its own quiet ink
+	// whatever the accent does — it is a hierarchy, not one colour used twice.
+	$: if (outlineMaterial) outlineMaterial.color.copy(ink($accentHex));
 
 	// Single group — everything lives here and rotates together
 	export let group;
@@ -24,29 +41,28 @@
 	export let portrait = false;
 	export let renderer = null;
 
-	// The drafting layer: dimension lines and ticks, the 1:φ ratio bar, the golden
-	// spiral, the subdivision squares and the dashed trace lines. Beautiful up
-	// close, and clutter at the speed the panes actually open — and giving it a
-	// beat of its own only made the run wait on it. Flip to true to see it.
-	const DRAFTING_DETAIL = false;
+	// A tall screen cannot take the full reach — see ICOSA.paneReachPortrait.
+	// The reach is reactive, so everything placed against it has to be re-placed
+	// when the viewport changes shape. Depending on PANE_REACH alone keeps this
+	// out of a loop: reflow() writes lastProjection, which this block never reads.
+	$: PANE_REACH = portrait ? ICOSA.paneReachPortrait : ICOSA.paneReach;
+	$: reflow(PANE_REACH);
+	function reflow() {
+		if (rectangleGroup) updateProjection(lastProjection);
+	}
 
-	// How far the pane (and its room) travels out from the icosahedron centre at
-	// full projection, and how deep the room's parallax runs behind the frame.
-	const PANE_REACH = 6.4;
-	const ROOM_DEPTH = 3.0;
+	const ROOM_DEPTH = ICOSA.roomDepth;
 
 	let rectangleGroup;
 	let traceLines = [];
 	let schematicComponent;
 	let roomComponent;
 	let basis = null;
-	let baseOpacity = 1.0;
-	let schematicBaseOpacity = 1.0;
 	let dimFactor = 1; // fades everything (line-work + room)
 	let lineDim = 1; // fades only the golden line-work
+	let draft = 0; // the drafting layer's own level
 	let lastProjection = 0;
 
-	let fillMaterial;
 	let outlineMaterial;
 	let spiralMaterial;
 	let subdivisionMaterials = [];
@@ -94,6 +110,9 @@
 			.add(basis.vAxis.clone().multiplyScalar(v));
 	}
 
+	// The classical subdivision: chop the square off the golden rectangle and
+	// what is left is another golden rectangle. Ten times over is well past
+	// visible, which is the point — the spiral has to keep going somewhere.
 	function computeGoldenRectangleData() {
 		const squares = [];
 		const arcCenters = [];
@@ -168,7 +187,7 @@
 		const pointsPerArc = 32;
 
 		spiralMaterial = new THREE.LineBasicMaterial({
-			color: get(accentHex),
+			color: ink(ICOSA_INK.draft),
 			transparent: true,
 			opacity: 0
 		});
@@ -215,7 +234,7 @@
 			]);
 
 			const mat = new THREE.LineBasicMaterial({
-				color: get(accentHex),
+				color: ink(ICOSA_INK.draft),
 				transparent: true,
 				opacity: 0
 			});
@@ -230,26 +249,8 @@
 		const rectGroup = new THREE.Group();
 		const corners = getRectCorners();
 
-		fillMaterial = new THREE.MeshBasicMaterial({
-			color: get(accentHex),
-			transparent: true,
-			opacity: 0,
-			side: THREE.DoubleSide,
-			depthWrite: false
-		});
-
-		const shape = new THREE.BufferGeometry().setFromPoints([
-			corners[0],
-			corners[1],
-			corners[2],
-			corners[0],
-			corners[2],
-			corners[3]
-		]);
-		rectGroup.add(new THREE.Mesh(shape, fillMaterial));
-
 		outlineMaterial = new THREE.LineBasicMaterial({
-			color: get(accentHex),
+			color: ink(get(accentHex)),
 			transparent: true,
 			opacity: 0
 		});
@@ -266,15 +267,20 @@
 		]);
 		rectGroup.add(new THREE.LineSegments(outline, outlineMaterial));
 
-		if (DRAFTING_DETAIL) {
-			const { squares, arcCenters } = computeGoldenRectangleData();
-			rectGroup.add(createGoldenSpiral(arcCenters));
-			rectGroup.add(createSubdivisionLines(squares));
-		}
+		// The drafting, in its own group so it can be faded independently of the
+		// rectangle it annotates.
+		const { squares, arcCenters } = computeGoldenRectangleData();
+		const draft = new THREE.Group();
+		draft.add(createGoldenSpiral(arcCenters));
+		draft.add(createSubdivisionLines(squares));
+		rectGroup.add(draft);
 
 		return rectGroup;
 	}
 
+	// The four dashed lines running back from the pane's corners to the vertices
+	// of the solid they came off. They are what says this rectangle was TAKEN
+	// from that shape rather than placed beside it.
 	function createTraceLines() {
 		const lines = [];
 		traceLineMaterials = [];
@@ -291,7 +297,7 @@
 			);
 
 			const material = new THREE.LineDashedMaterial({
-				color: get(accentHex),
+				color: ink(ICOSA_INK.draft),
 				transparent: true,
 				opacity: 0,
 				dashSize: 0.1,
@@ -309,19 +315,22 @@
 		return lines;
 	}
 
-	function updateOpacities(t) {
+	function updateOpacities() {
+		const t = lastProjection;
 		const d = dimFactor * lineDim;
-		if (fillMaterial) fillMaterial.opacity = 0;
-		if (outlineMaterial) outlineMaterial.opacity = t * baseOpacity * d;
-		if (spiralMaterial) spiralMaterial.opacity = t * baseOpacity * d;
+		const g = t * draft * d;
 
-		subdivisionMaterials.forEach(({ mat }) => {
-			mat.opacity = t * baseOpacity * 0.5 * d;
-		});
-
-		traceLineMaterials.forEach((mat) => {
-			mat.opacity = t * baseOpacity * 0.5 * d;
-		});
+		// The outline does NOT fade up from the projection. At projection 0 this
+		// rectangle lies exactly on four of the solid's own vertices — it is the
+		// same figure the conception folded up out of the page — so it is already
+		// on screen when this scene starts and simply travels outward. Fading it
+		// in from zero put three bright rectangles out at the cut and brought them
+		// back from nothing, which is the one visible seam the run had left.
+		if (outlineMaterial) outlineMaterial.opacity = d;
+		if (spiralMaterial) spiralMaterial.opacity = g * 0.85;
+		subdivisionMaterials.forEach(({ mat }) => (mat.opacity = g * 0.45));
+		traceLineMaterials.forEach((mat) => (mat.opacity = g * 0.6));
+		if (schematicComponent) schematicComponent.setLevel(g);
 	}
 
 	export async function init() {
@@ -330,16 +339,12 @@
 		rectangleGroup = createRectangle();
 		group.add(rectangleGroup);
 
-		if (DRAFTING_DETAIL) traceLines = createTraceLines();
+		traceLines = createTraceLines();
 
 		await tick();
 
-		if (schematicComponent) {
-			schematicComponent.init();
-		}
-		if (roomComponent) {
-			roomComponent.init();
-		}
+		if (schematicComponent) schematicComponent.init();
+		if (roomComponent) roomComponent.init();
 	}
 
 	export function updateProjection(projection) {
@@ -347,15 +352,13 @@
 		lastProjection = projection;
 
 		const paneDist = projection * PANE_REACH;
-		const schematicDist = projection * (PANE_REACH + 3.5);
-
 		rectangleGroup.position.copy(axis.clone().multiplyScalar(paneDist * direction));
 
-		updateOpacities(projection);
+		updateOpacities();
 
 		traceLines.forEach((line) => {
 			const { startPos } = line.userData;
-			const endPos = startPos.clone().add(axis.clone().multiplyScalar(schematicDist * direction));
+			const endPos = startPos.clone().add(axis.clone().multiplyScalar(paneDist * direction));
 
 			const positions = line.geometry.attributes.position.array;
 			positions[3] = endPos.x;
@@ -365,25 +368,39 @@
 			line.computeLineDistances();
 		});
 
-		if (schematicComponent && schematicComponent.updateProjection) {
-			schematicComponent.updateProjection(projection, schematicDist);
-		}
-		if (roomComponent && roomComponent.updateProjection) {
-			roomComponent.updateProjection(projection);
-		}
+		if (schematicComponent) schematicComponent.updateProjection(paneDist);
+		if (roomComponent) roomComponent.updateProjection(projection);
 	}
 
-	// Fade this pane's line-work and room (used to hide non-target panes on zoom).
+	// 0..1 — how far up the drafting layer is. The computation runs this on its
+	// own window, so the working can be shown and then put away.
+	export function setDraft(v) {
+		if (v === draft) return;
+		draft = v;
+		updateOpacities();
+	}
+
+	// 0..1 — how far up the room's artwork is.
+	export function setReveal(v) {
+		if (roomComponent) roomComponent.setReveal(v);
+	}
+
+	// Fade this pane's line-work and room. Written every frame through the search
+	// and the zoom, so it early-outs on no change: re-placing six rooms' worth of
+	// layers to arrive at the numbers they already had is the one thing in this
+	// scene that would cost real time.
 	export function setDim(f) {
+		if (f === dimFactor) return;
 		dimFactor = f;
-		updateOpacities(lastProjection);
+		updateOpacities();
 		if (roomComponent) roomComponent.setDim(f);
 	}
 
 	// Fade only the golden line-work, keeping the room (used on the zoom target).
 	export function setLineDim(f) {
+		if (f === lineDim) return;
 		lineDim = f;
-		updateOpacities(lastProjection);
+		updateOpacities();
 	}
 
 	export function setPortrait(p) {
@@ -408,26 +425,13 @@
 			line.geometry.dispose();
 			line.material.dispose();
 		});
-		if (schematicComponent && schematicComponent.dispose) {
-			schematicComponent.dispose();
-		}
-		if (roomComponent && roomComponent.dispose) {
-			roomComponent.dispose();
-		}
+		if (schematicComponent && schematicComponent.dispose) schematicComponent.dispose();
+		if (roomComponent && roomComponent.dispose) roomComponent.dispose();
 	}
 </script>
 
-{#if basis && DRAFTING_DETAIL}
-	<GoldenRectangleSchematic
-		bind:this={schematicComponent}
-		{group}
-		{basis}
-		{axis}
-		{direction}
-		baseOpacity={schematicBaseOpacity}
-	/>
-{/if}
 {#if basis}
+	<GoldenRectangleSchematic bind:this={schematicComponent} {group} {basis} {axis} {direction} />
 	<RoomProjection
 		bind:this={roomComponent}
 		{group}

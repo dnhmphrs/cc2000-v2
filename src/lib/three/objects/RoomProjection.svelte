@@ -19,6 +19,10 @@
 	let dimFactor = 1;
 	let lastProjection = 0;
 	let zoomK = 0; // 0..1 final-zoom progress; scales layers by depth for parallax
+	// How far up the artwork is. NOT derived from the projection: the computation
+	// brings the drafting out first and then fades the rooms up through it, which
+	// is two beats, and deriving both from one number collapses them into one.
+	let reveal = 0;
 
 	const normal = () => axis.clone().multiplyScalar(direction).normalize();
 
@@ -134,9 +138,6 @@
 		const f = frame();
 		const n = f.n;
 
-		// Fade the room in later in the projection so the early spread stays clean
-		// and uncluttered — the colored artwork only firms up as the panes near full.
-		const reveal = smoothstep(0.32, 0.9, projection);
 		const eff = reveal * dimFactor;
 		const visible = eff > 0.01;
 
@@ -174,11 +175,6 @@
 		});
 	}
 
-	function smoothstep(a, b, x) {
-		const t = Math.max(0, Math.min((x - a) / (b - a), 1));
-		return t * t * (3 - 2 * t);
-	}
-
 	export function init() {
 		build();
 		apply(0);
@@ -196,7 +192,15 @@
 	}
 
 	export function setDim(f) {
+		if (f === dimFactor) return;
 		dimFactor = f;
+		apply(lastProjection);
+	}
+
+	// 0..1 — how far up this room's artwork is, driven by the computation.
+	export function setReveal(v) {
+		if (v === reveal) return;
+		reveal = v;
 		apply(lastProjection);
 	}
 

@@ -1,134 +1,133 @@
 import * as THREE from 'three';
 import { createEgg } from './egg';
-import {
-	VERTICES,
-	EDGES,
-	PENTAGONS,
-	PENTAGON_PAIRS,
-	CIRCUMRADIUS,
-	edgePositions
-} from '../geometry/icosahedron';
-import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, WHITE } from '$lib/config';
+import { createConstruction } from './construction';
+import { growLineMaterial, grower, segmentAttributes } from './ink';
+import { VERTICES, EDGES, PENTAGONS, PENTAGON_PAIRS, edgePositions } from '../geometry/icosahedron';
+import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, VOID } from '$lib/config';
 
 // ── The lattice ──────────────────────────────────────────────────────────────
-// The place the conception and the computation both happen in: white, an
-// orthographic camera, the egg, and the icosahedron.
+// The place the conception and the computation both happen in: the void, an
+// orthographic camera, a gold circle, and the icosahedron drawn inside it.
 //
-// Two scenes share it for the same reason the fly-in and the conception used to
-// share the tunnel — so the cut between them cannot move anything. The
-// conception assembles the wireframe inside the egg; the computation projects
-// panes off the very same frame. Neither builds it.
+// Two scenes share it so the cut between them cannot move anything. The
+// conception derives the wireframe; the computation projects panes off the very
+// same frame. Neither builds it.
 //
-// It does NOT continue the fly-in's egg. That scene ends in a white-out and a
-// hold on empty white; the sphere here appears fresh, at ICOSA_SPHERE_R, and
-// keeps that size for the whole of the rest of the run.
+// It does NOT continue the fly-in's egg. That scene ends in a white-out and the
+// sphere here appears fresh — and on black it is a RIM and nothing else, a gold
+// circle the frame is inscribed in, because a filled shell at any opacity is a
+// grey wash over a black ground.
 //
 // Sizes live in config/space.js (ICOSA); colour in config/palette.js.
 
-// Lines that draw themselves on. `aT` runs 0→1 along each segment and `aDelay`
-// staggers when each one is allowed to start, so the structure spreads out of
-// the vertices instead of switching on all at once.
-//
-// The lines also carry their own depth. Thirty edges all drawn at one weight is
-// a flat tangle — there is no way to tell which corner is nearest — so each
-// fragment fades toward uBack as it goes away from the camera. That is the
-// whole 3D read: no fill, no hidden-line removal, every edge still there, but
-// the near ones come forward and the shape resolves. It is also live, so the
-// object turning in the computation reads as turning rather than as a flicker.
-function growLineMaterial(color, opacity = 1) {
-	return new THREE.ShaderMaterial({
-		transparent: true,
-		depthWrite: false,
-		uniforms: {
-			uColor: { value: new THREE.Color(color).convertSRGBToLinear() },
-			uGrow: { value: 0 },
-			uSpan: { value: 0.4 },
-			uOpacity: { value: opacity },
-			// Half-depth of the object, so vFront lands on ±1 at its poles.
-			uRadius: { value: CIRCUMRADIUS },
-			// What is left of a line at the very back.
-			uBack: { value: 0.16 }
-		},
-		vertexShader: `
-			attribute float aT;
-			attribute float aDelay;
-			uniform float uRadius;
-			varying float vT;
-			varying float vDelay;
-			varying float vFront;
-			void main() {
-				vT = aT;
-				vDelay = aDelay;
-				vec4 mv = modelViewMatrix * vec4(position, 1.0);
-				// Depth measured from the object's OWN centre, not the camera's,
-				// so it does not change when the camera dollies or the frustum
-				// closes on the way home. +1 nearest, -1 furthest.
-				vec4 centre = modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
-				vFront = clamp((mv.z - centre.z) / uRadius, -1.0, 1.0);
-				gl_Position = projectionMatrix * mv;
-			}
-		`,
-		fragmentShader: `
-			uniform vec3 uColor;
-			uniform float uGrow;
-			uniform float uSpan;
-			uniform float uOpacity;
-			uniform float uBack;
-			varying float vT;
-			varying float vDelay;
-			varying float vFront;
-			void main() {
-				float local = clamp((uGrow - vDelay) / max(uSpan, 0.0001), 0.0, 1.0);
-				if (vT > local) discard;
-				gl_FragColor = vec4(uColor, uOpacity * mix(uBack, 1.0, vFront * 0.5 + 0.5));
-			}
-		`
-	});
-}
-
-// Per-segment attributes for a flat [x,y,z, x,y,z, ...] pair list.
-//
-// `aDelay` is NORMALISED here to exactly 0..1 — 0 starts with the build, 1
-// starts last — whatever scale delayOf() happens to return. The growers below
-// depend on that range being exactly this, and returning `spread` is how they
-// learn it: 1 when the delays vary, 0 when every segment starts together.
-//
-// `flipOf(i)` swaps which end of a segment is aT=0. That end is the one it
-// grows FROM, so it decides the direction each line draws in.
-function segmentAttributes(geo, count, delayOf, flipOf = () => false) {
-	const raw = Array.from({ length: count }, (_, i) => delayOf(i));
-	const lo = Math.min(...raw);
-	const range = Math.max(...raw) - lo;
-	const spread = range > 1e-6 ? 1 : 0;
-
-	const aT = new Float32Array(count * 2);
-	const aDelay = new Float32Array(count * 2);
-	for (let i = 0; i < count; i++) {
-		const flip = flipOf(i);
-		aT[i * 2] = flip ? 1 : 0;
-		aT[i * 2 + 1] = flip ? 0 : 1;
-		const d = spread ? (raw[i] - lo) / range : 0;
-		aDelay[i * 2] = d;
-		aDelay[i * 2 + 1] = d;
-	}
-	geo.setAttribute('aT', new THREE.BufferAttribute(aT, 1));
-	geo.setAttribute('aDelay', new THREE.BufferAttribute(aDelay, 1));
-	return spread;
-}
-
-// The clock behind setGrow() and friends.
-//
-// A segment is only FULLY drawn once uGrow reaches its own delay plus uSpan, so
-// a clock that stops at 1 leaves everything late part-drawn and the very last
-// band never drawn at all — which is exactly how this frame used to end up
-// permanently unfinished. Each grower therefore runs its uniform out to the
-// reach its own delays actually need, and takes a plain 0..1 from the caller.
-function grower(mat, spread) {
-	const reach = spread + mat.uniforms.uSpan.value;
-	return (v) => (mat.uniforms.uGrow.value = v * reach);
-}
-
 const TILT = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.tilt));
+
+// ── The cage ─────────────────────────────────────────────────────────────────
+// A 24-cell — the regular 4-polytope whose 24 vertices are every permutation of
+// (±1, ±1, 0, 0) — projected from four dimensions into three and hung around
+// the solid. 96 edges, one draw call.
+//
+// It is here because the search needs somewhere to happen. An icosahedron
+// turning on a black ground is turning in nothing; the same icosahedron inside
+// a lattice that is itself turning, in the same coordinates, is turning in a
+// SPACE — and the blueprint field behind it (three/shaders/grid.js) rules the
+// ground with the same figure in two dimensions, so the three read as one
+// continuous thing.
+//
+// The 4D rotation is the only clock in this file. It has to be: a projection
+// from 4D is not a rotation of anything in 3D, so it cannot be a function of a
+// scene's progress without the scene owning a fourth angle. It is atmosphere,
+// it never resets, and nothing depends on where it is.
+function createCage() {
+	const verts = [];
+	for (const [a, b] of [
+		[0, 1],
+		[0, 2],
+		[0, 3],
+		[1, 2],
+		[1, 3],
+		[2, 3]
+	]) {
+		for (const sa of [-1, 1]) {
+			for (const sb of [-1, 1]) {
+				const v = [0, 0, 0, 0];
+				v[a] = sa;
+				v[b] = sb;
+				verts.push(v);
+			}
+		}
+	}
+	// Two vertices are joined exactly when they are the minimum distance apart,
+	// which for this vertex set is squared-distance 2. 96 edges.
+	const pairs = [];
+	for (let i = 0; i < verts.length; i++) {
+		for (let j = i + 1; j < verts.length; j++) {
+			let d = 0;
+			for (let k = 0; k < 4; k++) d += (verts[i][k] - verts[j][k]) ** 2;
+			if (Math.abs(d - 2) < 1e-6) pairs.push([i, j]);
+		}
+	}
+
+	const geo = new THREE.BufferGeometry();
+	const pos = new Float32Array(pairs.length * 6);
+	geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+	const spread = segmentAttributes(geo, pairs.length, () => 0);
+	const mat = growLineMaterial(ICOSA_INK.grid, 0);
+	mat.uniforms.uBack.value = 0.3;
+	mat.uniforms.uRadius.value = ICOSA_SPHERE_R * ICOSA.cageRadius;
+	// Always fully inked: the cage is not something that draws itself on.
+	const growCage = grower(mat, spread);
+	growCage(1);
+
+	const lines = new THREE.LineSegments(geo, mat);
+	lines.frustumCulled = false;
+
+	const angle = [0.2, 0.6, 0.4];
+	const projected = verts.map(() => new THREE.Vector3());
+
+	// The w-divide magnifies a vertex by at most W/(W - sqrt(2)), and a 24-cell
+	// vertex is sqrt(2) from the origin, so this is the largest the projection can
+	// ever get. Scaling by it means cageRadius is a real bound on how far the cage
+	// reaches, in circumradii — otherwise the thing breathes out past the frame
+	// edges on its own and the scene is played inside a much bigger object than
+	// anyone asked for.
+	const W = 3.2;
+	const SCALE = (ICOSA_SPHERE_R * ICOSA.cageRadius) / (Math.SQRT2 * (W / (W - Math.SQRT2)));
+
+	function rot4(p, a, b, ang) {
+		const c = Math.cos(ang);
+		const s = Math.sin(ang);
+		const q = p.slice();
+		q[a] = p[a] * c - p[b] * s;
+		q[b] = p[a] * s + p[b] * c;
+		return q;
+	}
+
+	function advance(dt) {
+		angle[0] += dt * ICOSA.cageSpin[0];
+		angle[1] += dt * ICOSA.cageSpin[1];
+		angle[2] += dt * ICOSA.cageSpin[2];
+
+		for (let i = 0; i < verts.length; i++) {
+			let p = rot4(verts[i], 0, 3, angle[0]);
+			p = rot4(p, 1, 3, angle[1]);
+			p = rot4(p, 2, 3, angle[2]);
+			// Perspective divide along w, which is what makes a 4D rotation read
+			// as the lattice breathing rather than merely spinning.
+			const k = W / (W - p[3]);
+			projected[i].set(p[0] * k, p[1] * k, p[2] * k).multiplyScalar(SCALE);
+		}
+		for (let e = 0; e < pairs.length; e++) {
+			const a = projected[pairs[e][0]];
+			const b = projected[pairs[e][1]];
+			pos.set([a.x, a.y, a.z, b.x, b.y, b.z], e * 6);
+		}
+		geo.attributes.position.needsUpdate = true;
+	}
+
+	advance(0);
+	return { lines, mat, geo, advance };
+}
 
 export function createLattice() {
 	const scene = new THREE.Scene();
@@ -145,23 +144,43 @@ export function createLattice() {
 	camera.up.set(0, 1, 0);
 	camera.lookAt(0, 0, 0);
 
-	// The sphere. Same factory as the tunnel's egg, but only ever the shell —
-	// the yolk would hide the wireframe, which is the whole point of it.
-	const egg = createEgg(ICOSA_SPHERE_R);
+	// The circumsphere, as a RIM. Same factory as the tunnel's egg with the base
+	// alpha taken out, so what is drawn is the silhouette and nothing else: a
+	// gold circle exactly through the twelve vertices.
+	const egg = createEgg(ICOSA_SPHERE_R, {
+		shell: ICOSA_INK.line,
+		rim: ICOSA_INK.bright,
+		rimPower: 8.0,
+		base: 0,
+		// No lamp: this is a drawn circle, not a surface. Additive, so it is light
+		// on black rather than paint on it — and so a flash can push it past 1.
+		key: 0,
+		gloss: 1,
+		add: true
+	});
 	egg.setCore(0);
 	scene.add(egg.group);
 
 	// Everything that turns. It rests on ICOSA.tilt, which is where the
-	// computation's search starts from; the conception leaves it alone.
-	// THREE_FOLD_VIEW is exported from the geometry if you ever want the
-	// face-on view the reference diagram is drawn in.
+	// computation's search starts from; the conception turns it there from
+	// identity as the construction folds up.
 	const frame = new THREE.Group();
 	frame.quaternion.copy(TILT);
 	scene.add(frame);
 
-	// The line-work, in a group of its own. Built at the raw
-	// vertex scale so the panes — which GoldenRectangle builds from the same raw
-	// coordinates — sit exactly on the frame's own edges at projection 0.
+	// The cage sits OUTSIDE the frame: it is the space the solid is turning in,
+	// not part of the solid, so it must not turn with it.
+	const cage = createCage();
+	scene.add(cage.lines);
+
+	// The conception's three variants, in the frame's own coordinates so that
+	// every point they arrive at is a point of the solid.
+	const construction = createConstruction();
+	frame.add(construction.group);
+
+	// The line-work, in a group of its own. Built at the raw vertex scale so the
+	// panes — which GoldenRectangle builds from the same raw coordinates — sit
+	// exactly on the frame's own edges at projection 0.
 	const wire = new THREE.Group();
 	frame.add(wire);
 	const S = 1;
@@ -199,10 +218,6 @@ export function createLattice() {
 	// centre to its antipode. These are the only lines in the figure that are NOT
 	// edges — they are the five-fold axes — so this is the one piece of geometry
 	// that shows the solid has an inside.
-	//
-	// It used to build apex-to-ring pairs, which are every one of the thirty
-	// edges over again in a lighter ink: the comment claimed an internal star and
-	// the geometry drew the outline twice.
 	const spokeSegs = [];
 	VERTICES.forEach((v, a) => {
 		const b = VERTICES.findIndex((w) => w.every((n, k) => Math.abs(n + v[k]) < 1e-9));
@@ -285,12 +300,15 @@ export function createLattice() {
 		paneGroup,
 		edges,
 		spokes,
+		construction,
+		cage,
 		// Each pentagon is its own object with its own spin axis, so a scene can
 		// turn them individually — nothing does at the moment, but the structure
 		// is here (PENTAGON_PAIRS groups the antipodal ones).
 		pentagons,
 		pentagonPairs: PENTAGON_PAIRS,
 		scale: S,
+		tilt: TILT,
 
 		// 0..1 — how much of the wireframe has drawn itself on. 1 means FINISHED:
 		// every grower maps this onto the clock its own delays need, so the caller
@@ -317,18 +335,22 @@ export function createLattice() {
 		setPanesVisible(v) {
 			paneGroup.visible = v;
 		},
+		setCage(o) {
+			cage.mat.uniforms.uOpacity.value = o;
+			cage.lines.visible = o > 0.004;
+		},
+
+		// The cage's 4D rotation, and the only thing in here that is a clock.
+		tick(dt) {
+			if (cage.lines.visible) cage.advance(dt);
+		},
 
 		backdrop() {
-			return { color: WHITE, alpha: 1 };
+			return { color: VOID, alpha: 1 };
 		},
 
 		resize() {
-			const a = window.innerWidth / window.innerHeight;
-			camera.left = (-ICOSA.frustum * a) / 2;
-			camera.right = (ICOSA.frustum * a) / 2;
-			camera.top = ICOSA.frustum / 2;
-			camera.bottom = -ICOSA.frustum / 2;
-			camera.updateProjectionMatrix();
+			this.applyFrustum(camera.top * 2);
 		},
 
 		// The frustum is a HEIGHT; width follows the viewport.
@@ -349,6 +371,9 @@ export function createLattice() {
 			this.setSpokes(0);
 			this.setPentagons(0);
 			this.setLineOpacity(1);
+			this.setCage(0);
+			construction.reset();
+			construction.show(null);
 			egg.setCore(0);
 			egg.setShell(0);
 			egg.group.scale.setScalar(1);
@@ -360,6 +385,9 @@ export function createLattice() {
 
 		dispose() {
 			egg.dispose();
+			construction.dispose();
+			cage.geo.dispose();
+			cage.mat.dispose();
 			edgeGeo.dispose();
 			edgeMat.dispose();
 			spokeGeo.dispose();

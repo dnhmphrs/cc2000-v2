@@ -48,11 +48,16 @@
 	// The field's three stops, eased toward whichever decade the search is
 	// looking at — so the page changes colour with the era on screen instead of
 	// holding one palette through the whole run. color1 is overridden by the
-	// scene's own backdrop colour, which is what makes `flat` work at all.
+	// scene's own backdrop colour, which is what makes `flat` work at all, so
+	// only the second and third ever come from here.
+	//
+	// Both are golds now, because the field they feed is the blueprint the
+	// second half of the run is drawn on: color2 rules it, color3 is the
+	// lattice. The decade shifts which gold, not whether it is gold.
 	const NEUTRAL = [
 		[1.0, 0.86, 0.28],
-		[0.22, 0.5, 0.82],
-		[0.04, 0.08, 0.28]
+		[1.0, 0.82, 0.36],
+		[1.0, 0.71, 0.29]
 	];
 	let stops = NEUTRAL.map((c) => c.slice());
 	let ground = [1, 1, 1];
@@ -130,6 +135,7 @@
 			c3: gl.getUniformLocation(program, 'color3'),
 			mouse: gl.getUniformLocation(program, 'mouse'),
 			aspect: gl.getUniformLocation(program, 'aspectRatio'),
+			time: gl.getUniformLocation(program, 'uTime'),
 			rot: gl.getUniformLocation(program, 'uRot')
 		};
 		if (uni.aspect) gl.uniform1f(uni.aspect, window.innerWidth / window.innerHeight);
@@ -203,6 +209,7 @@
 			for (let c = 0; c < 3; c++) stops[i][c] += (wantStops[i][c] - stops[i][c]) * k;
 		}
 
+		if (uni.time) gl.uniform1f(uni.time, t);
 		if (uni.c1) gl.uniform3f(uni.c1, ground[0], ground[1], ground[2]);
 		if (uni.c2) gl.uniform3f(uni.c2, stops[1][0], stops[1][1], stops[1][2]);
 		if (uni.c3) gl.uniform3f(uni.c3, stops[2][0], stops[2][1], stops[2][2]);

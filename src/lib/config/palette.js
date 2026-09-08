@@ -1,17 +1,31 @@
 // ── Palette ──────────────────────────────────────────────────────────────────
 // Every colour the site uses, named by where it is used rather than by hue.
 //
-// The run walks a deliberate path: yellow machine on deep blue, then deep blue
-// air, then white for everything after conception, then the rooms' own colour.
-// The one rule that follows from that: anything drawn over the canvas has to
-// know whether it is currently on the blue or on the white, which is what the
+// The run walks a deliberate path, and the whole point of the walk is that no
+// two consecutive scenes are on the same ground:
+//
+//   1 calculator   a yellow machine on deep blue
+//   2 fly-in       deep blue air, going white under the blow-out
+//   —              THE FLASH
+//   3 conception   the void — near-black, and gold
+//   4 computation  the same void, gold line-work, the rooms in full colour on it
+//   5 room         the room's own colour, edge to edge
+//
+// The flash is the hinge: the frame goes white and what is underneath it when
+// your eye recovers is black. That is the one cut in the run, and it is why the
+// second half can be a different world from the first without a transition.
+//
+// The one rule that follows: anything drawn over the canvas has to know whether
+// it is currently on the blue, the white or the black — which is what the
 // `sceneTone` store carries.
 
 // ── Ground ───────────────────────────────────────────────────────────────────
-// The run walks from blue to white: the machine and the fly-in sit on the deep
-// blue, everything from the conception onward on the white.
 export const DEEP_BLUE = 0x0a246a;
 export const WHITE = 0xffffff;
+// The void. V1's true-black with a whisper of the blue still in it, so the two
+// halves of the run belong to the same site — and dark enough that gold on it
+// is the brightest thing on screen.
+export const VOID = 0x0a0a0c;
 
 // ── The machine ──────────────────────────────────────────────────────────────
 // Drawn like the bedrooms it flies into: flat saturated fills and a heavy black
@@ -37,24 +51,55 @@ export const MACHINE = {
 // not symmetric across the texture's edges seams pole to pole); the shell is a
 // view-space rim. Neither is lit, because the two cameras that draw it project
 // differently and a lit sphere would not match across the cut.
+//
+// It is seen on the deep blue, so it is warm-white falling to a blue shadow —
+// which is what makes it read as lit from above in air that is itself blue.
 export const EGG = {
-	coreStops: ['#ffffff', '#e4ecff', '#a8bce6', '#6f86bd'],
+	coreStops: ['#ffffff', '#eef3ff', '#b3c4ec', '#6274ad'],
 	shell: 0xdfe8ff,
-	rim: 0x8fa6dc,
-	rimPower: 1.7
+	rim: 0xffffff,
+	rimPower: 1.5,
+	// How wet it is. The key and the specular are worked out from the view
+	// normal in world/egg.js; this is only how much of them there is.
+	key: 1,
+	gloss: 26
+};
+
+// ── The sperm ────────────────────────────────────────────────────────────────
+// Not a lit model — a wireframe hologram, additively blended, with a scanline
+// running through it and a fresnel rim. It is the one thing in the fly-in that
+// is brighter than the air, and it has to stay legible against a fog that is
+// swallowing everything else.
+export const HOLO = {
+	body: 0xdbe6ff,
+	rim: 0xffffff,
+	// The rivals, further out and losing. Dimmer and cooler, so the one you are
+	// riding with is unambiguously the one in front.
+	rival: 0x6d86c8
 };
 
 // ── The icosahedron ──────────────────────────────────────────────────────────
-// Only ever seen on white, so the line-work is dark. (Its SIZES live in
-// space.js under ICOSA; this is only what colour it is.)
+// Gold on the void. Three weights, and they are a hierarchy rather than three
+// colours: the frame is the brightest thing in the scene, the internal
+// structure sits behind it, and the drafting lives at the bottom of the stack.
+//
+// (The SIZES live in space.js under ICOSA; this is only what colour it is.)
 export const ICOSA_INK = {
-	line: 0x2b3350,
-	// The internal structure that grows out of the vertices — lighter, so the
-	// frame stays legible under it.
-	inner: 0x8390b5,
-	pentagon: 0x2b3350,
-	// The solid faces, which are only ever seen on the white.
-	solid: 0x14224e
+	// The thirty edges. This is THE gold of the site.
+	line: 0xf0c45c,
+	// Vertices, the answer's own pane, anything the scene is pointing at.
+	bright: 0xfff0c8,
+	// The six long diagonals and the vertex figures — behind the frame, so the
+	// frame stays legible through them.
+	inner: 0x9c7c33,
+	pentagon: 0xd0a340,
+	// The drafting layer: dimension lines, the ratio bar, the spiral, the
+	// subdivision squares. Quietest of all — it is meant to be found, not read.
+	draft: 0x6f5720,
+	// The blueprint field behind everything.
+	grid: 0x6b5726,
+	// The solid faces, if a scene ever fills them.
+	solid: 0x100e08
 };
 
 // ── UI ink ───────────────────────────────────────────────────────────────────

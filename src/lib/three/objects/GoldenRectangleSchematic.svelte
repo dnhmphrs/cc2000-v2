@@ -1,20 +1,19 @@
 <script>
-	import { get } from 'svelte/store';
 	import * as THREE from 'three';
-	import { accentHex } from '$lib/theme';
-
-	// Live accent recolour of the schematic line-work.
-	$: {
-		const hex = $accentHex;
-		materials.forEach(({ mat }) => mat && mat.color.setHex(hex));
-	}
+	import { ink } from '$lib/theme';
+	import { ICOSA_INK } from '$lib/config';
 
 	// Same group as everything else — rotates together
 	export let group;
 	export let basis;
 	export let axis;
 	export let direction;
-	export let baseOpacity;
+
+	// Coplanar with the rectangle it annotates, at the same distance out, so it
+	// reads as drafting ON that rectangle rather than as a second object hanging
+	// in front of it. The room sits BEHIND the pane's plane, so nothing here is
+	// ever occluded by the artwork it is dimensioning.
+	let level = 0;
 
 	const PHI = (1 + Math.sqrt(5)) / 2;
 
@@ -32,14 +31,14 @@
 		const geo = new THREE.BufferGeometry().setFromPoints(points);
 		const mat = dashed
 			? new THREE.LineDashedMaterial({
-					color: get(accentHex),
+					color: ink(ICOSA_INK.draft),
 					transparent: true,
 					opacity: 0,
 					dashSize: 0.08,
 					gapSize: 0.04
 			  })
 			: new THREE.LineBasicMaterial({
-					color: get(accentHex),
+					color: ink(ICOSA_INK.draft),
 					transparent: true,
 					opacity: 0
 			  });
@@ -219,23 +218,23 @@
 		group.add(schematicGroup);
 	}
 
-	function updateOpacities(t) {
-		const o = t * baseOpacity;
-		materials.forEach(({ mat, baseOpacity: lineOpacity }) => {
-			mat.opacity = o * lineOpacity;
-		});
-	}
-
 	export function init() {
 		create();
 	}
 
-	export function updateProjection(projection, schematicDist) {
+	// 0..1 — the drafting layer's level, owned by GoldenRectangle so that every
+	// part of the working comes up and goes away together.
+	export function setLevel(v) {
+		level = v;
+		materials.forEach(({ mat, baseOpacity: lineOpacity }) => {
+			mat.opacity = level * lineOpacity;
+		});
+		if (schematicGroup) schematicGroup.visible = level > 0.004;
+	}
+
+	export function updateProjection(paneDist) {
 		if (!schematicGroup) return;
-
-		schematicGroup.position.copy(axis.clone().multiplyScalar(schematicDist * direction));
-
-		updateOpacities(projection);
+		schematicGroup.position.copy(axis.clone().multiplyScalar(paneDist * direction));
 	}
 
 	export function dispose() {

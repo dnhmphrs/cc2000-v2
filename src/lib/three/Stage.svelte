@@ -3,7 +3,7 @@
 	import { get } from 'svelte/store';
 	import * as THREE from 'three';
 	import { scene as sceneStore, sceneTone, monitorRect, backdrop } from '$lib/store/store';
-	import { CANVAS_FADE, FLASH_DECAY, clamp01, DEV } from '$lib/config';
+	import { CANVAS_FADE, FLASH_HOLD, FLASH_FALL, clamp01, DEV } from '$lib/config';
 	import { createTunnel } from './world/tunnel';
 	import { createLattice } from './world/lattice';
 	import { advance } from '$lib/scenes/director';
@@ -51,7 +51,11 @@
 
 	let canvasFadeStart = null;
 	let flashEl;
-	let flash = 0;
+	// The blow-out, as an envelope rather than a decay. A plain exponential fall
+	// spends most of its length as a GREY VEIL over the next scene — which is
+	// what the one cut in the run must not look like. This holds pure white for a
+	// beat and then goes, so the transition is a blink.
+	let flashT = Infinity;
 
 	// Which scene we last handed control to, so entering happens exactly once,
 	// and the last 3D scene to run, whose final frame is HELD while a DOM scene
@@ -69,7 +73,7 @@
 		if (entered === name) return;
 		// The one blow-out in the run: through the flash, the air goes from deep
 		// blue to white and the world changes underneath it.
-		if (name === 'conception') flash = 1;
+		if (name === 'conception') flashT = 0;
 		entered = name;
 		held = next;
 		next.enter();
@@ -99,8 +103,12 @@
 		const since = canvasFadeStart != null ? performance.now() / 1000 - canvasFadeStart - 0.2 : 0;
 		canvasElement.style.opacity = clamp01(since / CANVAS_FADE).toFixed(4);
 
-		flash = Math.max(0, flash - dt * FLASH_DECAY);
-		if (flashEl) flashEl.style.opacity = flash.toFixed(4);
+		// Infinity until a blow-out is thrown, which puts the envelope at zero and
+		// keeps it there without a second flag to test.
+		flashT += dt;
+		if (flashEl) {
+			flashEl.style.opacity = (1 - clamp01((flashT - FLASH_HOLD) / FLASH_FALL)).toFixed(4);
+		}
 
 		if (!active) {
 			// A DOM screen is up. Which frame sits behind it depends on whether a
