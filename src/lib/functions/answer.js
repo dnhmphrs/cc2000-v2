@@ -16,9 +16,13 @@ import { conceptionDate, previousDay, dateToDecade } from './utils';
 // The chart archive starts here, and nobody has been conceived after today.
 export const ARCHIVE_START = '1958-06-01';
 
-// Each day holds 10 tracks ordered spicy 10 → 1 (index 0 → 9), so the track for
-// a given level is at index (10 - spicy). Days with no chart fall back to the
-// most recent one that has one.
+// Each day holds its top ten IN CHART ORDER, so the level picks a position: 1 is
+// the number one, 10 is the number ten. Days with no chart fall back to the most
+// recent one that has one.
+//
+// NOTE the tracks carry a `spicy` field of their own, and it runs the other way
+// — 10 on the number one, 1 on the number ten. It is the chart position stored
+// upside down and it is NOT what the lever means, so do not reach for it here.
 const LOOKBACK = 400;
 
 export function resolve(dateStr, spicy) {
@@ -30,8 +34,8 @@ export function resolve(dateStr, spicy) {
 
 	for (let i = 0; i < LOOKBACK; i++) {
 		const day = data[cd];
-		if (day && day[10 - spicy]) {
-			return { track: day[10 - spicy], conceived: cd, decade: dateToDecade(cd) };
+		if (day && day[spicy - 1]) {
+			return { track: day[spicy - 1], conceived: cd, decade: dateToDecade(cd) };
 		}
 		cd = previousDay(cd);
 	}

@@ -8,18 +8,91 @@ import { ASPECT } from './space';
 // artwork frame — cx/cy is the centre, w/h the size, both 0..1. The projection
 // turns these into CSS pixels once the camera has settled on a room.
 //
+// `art` is that PNG's own pixel aspect, which is what turns the fractions above
+// into a real shape — see glassAspect() below.
+//
 // Measured off the artwork by eye. If a result panel sits crooked in a monitor,
 // this is the file to nudge.
 export const SCREEN_GLASS = {
-	'50s': { cx: 0.545, cy: 0.42, w: 0.73, h: 0.58 },
-	'60s': { cx: 0.382, cy: 0.391, w: 0.64, h: 0.65 },
-	'90s': { cx: 0.352, cy: 0.436, w: 0.51, h: 0.63 },
-	'10s': { cx: 0.498, cy: 0.319, w: 0.94, h: 0.6 }
+	'50s': { cx: 0.545, cy: 0.42, w: 0.73, h: 0.58, art: 1024 / 1099 },
+	'60s': { cx: 0.382, cy: 0.391, w: 0.64, h: 0.65, art: 1289 / 1148 },
+	'90s': { cx: 0.352, cy: 0.436, w: 0.51, h: 0.63, art: 1457 / 1182 },
+	'10s': { cx: 0.498, cy: 0.319, w: 0.94, h: 0.6, art: 1097 / 999 }
 };
 
 // Pull the published rect in slightly, so a panel drawn into it never laps over
 // the bezel that the artwork drew around it. 1 = the measured glass exactly.
 export const GLASS_SAFETY = 0.92;
+
+// What shape that monitor actually is. NOT a number anyone chose: w/h above are
+// fractions of the artwork, so the glass is only square-on-screen if the PNG is
+// too — hence `art`, each file's own pixel aspect, and hence this.
+//
+//   50s  1024x1099 art -> 1.173  a squarish console television
+//   60s  1289x1148 art -> 1.106  squarer still
+//   90s  1457x1182 art -> 0.998  a square CRT, near enough exactly
+//   10s  1097x999  art -> 1.720  the only widescreen in the building
+//
+// Measured back off the running site at 1440x900 and again at 390x844: the
+// projection reproduces all four to three decimals, so RESULT_PANEL reads the
+// live rect rather than this. It is the record — the thing to look at when you
+// want to know which decade you are designing for — not the source.
+export function glassAspect(decadeKey) {
+	const g = SCREEN_GLASS[decadeKey] || SCREEN_GLASS['90s'];
+	return (g.w / g.h) * g.art;
+}
+
+// ── The result panel ─────────────────────────────────────────────────────────
+// The answer is drawn INSIDE the monitor the run landed in, and those are four
+// different shapes. One fixed layout cannot serve all of them: sized off width
+// alone it is a widescreen band, which is right for the 2010s and leaves the
+// three squarish sets showing a letterbox floating in a mostly empty screen.
+//
+// So the panel picks a reference box by the shape of the glass it is in and
+// fills it. `ref` is the size the panel is drawn 1:1 at; the scale is whichever
+// of the two dimensions runs out first. A NARROWER reference buys bigger type
+// in a narrow screen, paid for in title lines — which a tall screen has room
+// for and a wide one does not.
+export const RESULT_PANEL = {
+	// How small the panel may be drawn before it stops being readable, and how
+	// large before it stops reading as a screen.
+	scale: [0.55, 1.35],
+
+	// Spotify's own compact card is 152px tall and it draws nothing bigger until
+	// 232. Past 152 the embed would only be stretched, so whatever height is left
+	// over becomes breathing space around the panel instead. Real pixels, not
+	// scaled ones — the breakpoint is the player's, not ours.
+	playerMax: 152,
+
+	// Smallest the player may be squeezed to, in panel units.
+	playerMin: 72,
+
+	// First match wins, so these run widest-first and the last one has to be 0.
+	shapes: [
+		{ name: 'wide', from: 1.45, ref: { w: 420, h: 190 }, titleLines: 2, artistLines: 1 },
+		{ name: 'square', from: 0.85, ref: { w: 330, h: 250 }, titleLines: 3, artistLines: 2 },
+		// Nothing is this shape today. It is here so that a monitor taller than it
+		// is wide cannot land on the widescreen layout by default, which is the
+		// exact failure this config exists to fix.
+		{ name: 'tall', from: 0, ref: { w: 300, h: 330 }, titleLines: 4, artistLines: 2 }
+	]
+};
+
+// How to draw the panel in this decade's monitor at this size on screen.
+//
+// The SHAPE comes from the decade rather than from the rect, and deliberately:
+// the rect is a bounding box that moves the whole way through the return zoom,
+// and a layout that switched modes part way down that zoom would be a visible
+// fault. The decade's monitor is the same shape at every size, so the mode is
+// settled before the first frame and only the scale rides the rect.
+export function panelFit(decadeKey, width, height) {
+	const ratio = glassAspect(decadeKey);
+	const shapes = RESULT_PANEL.shapes;
+	const shape = shapes.find((s) => ratio >= s.from) || shapes[shapes.length - 1];
+	const [lo, hi] = RESULT_PANEL.scale;
+	const s = Math.min(width / shape.ref.w, height / shape.ref.h);
+	return { shape, scale: Math.max(lo, Math.min(hi, s)) };
+}
 
 // ── The calculator chassis ───────────────────────────────────────────────────
 // The machine is one window with a body spread around it. Everything bolted to

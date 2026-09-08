@@ -105,10 +105,30 @@
 
 	// The machine comes on. Taken from the transition's own end where possible,
 	// with the timer below as the fallback if it is ever interrupted.
+	let root;
 	let landed = false;
+
+	// Put the node back the way a fresh load leaves it. The flight writes three
+	// things inline and all three are the flight's, not the machine's: the fit
+	// transform, the origin it is taken about, and --edge.
+	//
+	// --edge is the one that matters. The corner radius is three times it, and
+	// dropping .cold eases that radius back out to square — so a landing that
+	// arrives while --edge is still at flight scale (the timer below is on the
+	// clock, the transition is on frames, and a slow device parts them) would
+	// bloom the corners on the way home instead of shaving 9px off them.
+	// Cleared first, the ease always starts from the 3px fallback.
+	function normalise(node) {
+		if (!node) return;
+		node.style.transform = '';
+		node.style.transformOrigin = '';
+		node.style.removeProperty('--edge');
+	}
+
 	function land() {
 		if (landed) return;
 		landed = true;
+		normalise(root);
 		booting = false;
 		realised = true;
 		settled();
@@ -173,10 +193,14 @@
 				// matrix: a transform on a fixed, full-viewport element is a
 				// containing block and a stacking context for everything inside it,
 				// and there is no reason to keep one once it has landed.
-				node.style.transform = t === 1 ? '' : `translate(${x}px, ${y}px) scale(${k})`;
-				// Undo the scale for the chassis edge, so it is the same number of
-				// real pixels wide the whole way home. See .calculator::after.
-				node.style.setProperty('--edge', `${(EDGE_PX / Math.max(k, 0.02)).toFixed(2)}px`);
+				if (t === 1) {
+					normalise(node);
+				} else {
+					node.style.transform = `translate(${x}px, ${y}px) scale(${k})`;
+					// Undo the scale for the chassis edge, so it is the same number
+					// of real pixels wide the whole way home. See .calculator::after.
+					node.style.setProperty('--edge', `${(EDGE_PX / Math.max(k, 0.02)).toFixed(2)}px`);
+				}
 				// The end of the move IS the moment it comes on, so it is taken
 				// from here rather than from a timer that could drift off it.
 				if (t === 1) land();
@@ -261,6 +285,7 @@
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
+	bind:this={root}
 	class="calculator"
 	class:cold={booting}
 	class:realised
@@ -302,7 +327,7 @@
 						<dd>{readout}</dd>
 					</div>
 					<div>
-						<dt>resonance</dt>
+						<dt>how spicy do your parents like it?</dt>
 						<dd>{String($spicy).padStart(2, '0')} / 10</dd>
 					</div>
 					<div>
@@ -385,8 +410,8 @@
 				label="spicy"
 				min={1}
 				max={10}
-				low="sweet"
-				high="filthy"
+				low="spicy?"
+				high="how"
 				value={$spicy}
 				on:change={(e) => spicy.set(e.detail)}
 			/>
@@ -417,7 +442,7 @@
 			<div class="ctl">
 				<span class="lab">how spicy do you like it?</span>
 				<input type="range" bind:value={$spicy} min="1" max="10" aria-label="spicy" />
-				<div class="ends"><span>sweet</span><span>filthy</span></div>
+				<div class="ends"><span>how</span><span>spicy?</span></div>
 			</div>
 		</div>
 	{/if}
@@ -494,13 +519,23 @@
 	   without that, dropping .cold would punch the transparent window through to
 	   the 3D behind a machine that has not been drawn yet. */
 	.calculator {
-		transition: background-color 0.5s ease 0.06s;
+		border-radius: 0;
+		transition: background-color 0.5s ease 0.06s, border-radius 0.5s ease 0.06s;
 	}
 	.calculator > :global(*) {
 		transition: opacity 0.5s ease 0.06s;
 	}
 	.calculator.cold {
 		background: var(--machine);
+		/* The yellow is CLIPPED to the same curve as the frame drawn round it.
+		   Without this the panel is a hard rectangle behind a rounded border and
+		   its four corners poke out past it — small, but they are the only sharp
+		   thing in the shot and the eye goes straight to them.
+
+		   Landing drops .cold, and the radius eases back out to square with the
+		   yellow rather than snapping mid-cross-fade. Home is then exactly the
+		   machine a fresh load draws: no frame, no corners. */
+		border-radius: calc(var(--edge, 3px) * 3);
 		transition: none;
 	}
 	.calculator.cold > :global(*) {
@@ -612,9 +647,10 @@
 	   a soft specular, because everything else here is inked and a rendered
 	   highlight would be the one thing that is not.
 	   
-	   The SCANLINES are not here: components/Glass.svelte lays them over the
-	   whole site for the whole run. Drawing them twice at the same 3px pitch —
-	   once here and once over the top — is a moiré, not a CRT. */
+	   There are no SCANLINES on this machine at all. components/Glass.svelte
+	   lays them over the site for the flight and nothing else — over the two
+	   ends of the loop, this one and the bedroom, they would be a second 3px
+	   pitch on top of a screen that already has one: a moiré, not a CRT. */
 	.gleam {
 		position: absolute;
 		inset: 0;

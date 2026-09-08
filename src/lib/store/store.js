@@ -25,11 +25,16 @@ export const runId = writable(0);
 // ── The operator's answers ───────────────────────────────────────────────────
 // These live in stores rather than in the calculator so that going round again
 // can deliberately KEEP them. Written by: Calculator.
-export const spicy = writable(4);
+//
+// The machine arrives already set to the first of January 2000, at one, so it is
+// ARMED on the first frame and the button can simply be pressed. The dials and
+// the band still handle an unset value ('--', no needle) — that is their
+// contract and they are reusable — but nothing here reaches it any more.
+export const spicy = writable(1);
 export const date = writable('2000-01-01');
-export const dobMonth = writable('');
-export const dobDay = writable('');
-export const dobYear = writable('');
+export const dobMonth = writable(1);
+export const dobDay = writable(1);
+export const dobYear = writable(2000);
 
 // ── The answer ───────────────────────────────────────────────────────────────
 // Written by: Calculator's calculate(), cleared by director.clearResult().

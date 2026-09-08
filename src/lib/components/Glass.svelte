@@ -1,23 +1,30 @@
 <script>
+	import { scene } from '$lib/store/store';
+
 	// ── The glass ────────────────────────────────────────────────────────────
-	// Scanlines over the whole site, for the whole run — the machine, the rooms
-	// and the result panel alike. They are not the machine's screen, they are the
-	// one you are watching this on, so they have no reason to stop when the
-	// machine does, and they sit above every DOM screen rather than under them.
+	// Scanlines over the whole site, for the three 3D scenes and those only.
 	//
-	// The calculator's CRT deliberately does NOT draw its own: the same pitch
-	// twice over is a moiré, not a CRT. The diagonal gleam stays where it belongs,
-	// on the machine's own window — carrying it full-screen through the fly-in
-	// was tried and it is too much over a scene.
+	// They belong to the flight, not to the furniture. The calculator has its own
+	// CRT and draws its own gleam on it — laying a second pitch over that is a
+	// moiré, not a screen — and the bedroom you land in is a room, photographed
+	// on nothing, so scanlines over it read as a filter rather than as a set.
+	//
+	// Between those two ends you are inside the machine, and that is where they
+	// earn their keep.
+	$: inFlight = $scene === 'flyIn' || $scene === 'conception' || $scene === 'computation';
 </script>
 
-<div class="scanlines" />
+{#if inFlight}
+	<div class="scanlines" />
+{/if}
 
 <style>
 	.scanlines {
 		position: fixed;
 		inset: 0;
 		pointer-events: none;
+		/* Over everything, including the flash: they are the screen this is being
+		   watched on, not a layer inside the scene. */
 		z-index: 30;
 		background: var(--scanlines);
 	}
