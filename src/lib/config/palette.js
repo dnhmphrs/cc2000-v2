@@ -5,15 +5,20 @@
 // two consecutive scenes are on the same ground:
 //
 //   1 calculator   a yellow machine on deep blue
-//   2 fly-in       deep blue air, going white under the blow-out
-//   —              THE FLASH
+//   2 fly-in       BLACK AIR, blue swimmer, gold ovum
 //   3 conception   the void — near-black, and gold
 //   4 computation  the same void, gold line-work, the rooms in full colour on it
 //   5 room         the room's own colour, edge to edge
 //
-// The flash is the hinge: the frame goes white and what is underneath it when
-// your eye recovers is black. That is the one cut in the run, and it is why the
-// second half can be a different world from the first without a transition.
+// THE MIDDLE THREE ARE ONE WORLD. They used to be two, joined by a white
+// blow-out; scenes 2, 3 and 4 are now the same black ground and the same gold,
+// and the fly-in hands the conception the identical picture — a dark sphere
+// with a gold rim, on the void — so there is no cut in the middle of the run
+// at all. Everything that used to be carried by the flash is carried by the
+// fact that nothing changes.
+//
+// Blue survives as the one COLD thing in it: the swimmer and the debris in the
+// air. Blue goes to gold, and after the conception there is no blue left.
 //
 // The one rule that follows: anything drawn over the canvas has to know whether
 // it is currently on the blue, the white or the black — which is what the
@@ -26,6 +31,15 @@ export const WHITE = 0xffffff;
 // halves of the run belong to the same site — and dark enough that gold on it
 // is the brightest thing on screen.
 export const VOID = 0x0a0a0c;
+
+// The fly-in's air, and it is NOT the void: it is lifted a shade off it, and
+// warm. Fog can only take a thing toward the colour of the air it is in, so air
+// that is exactly the ground is fog you cannot see — everything simply dims,
+// which reads as fading out rather than as being far away. V1 fogged against an
+// off-black for precisely this reason. It walks down to the VOID over the last
+// of the run, so the frame the conception opens on is the frame the fly-in
+// closed on, to the bit.
+export const AIR = 0x14120e;
 
 // ── The machine ──────────────────────────────────────────────────────────────
 // Drawn like the bedrooms it flies into: flat saturated fills and a heavy black
@@ -56,19 +70,45 @@ export const MACHINE = {
 // golden rectangles lie in — so the thing being swum at already carries the
 // figure it becomes.
 export const EGG = {
-	wire: 0x6f8fce,
-	rings: 0xffc95e,
+	// ── The outer shell ──────────────────────────────────────────────────────
+	// Gold, and held back: the cage is the quiet weight and the three great
+	// circles are the bright one, so what you read at distance is three rings
+	// round a dark ball rather than a ball of wire.
+	wire: 0x9c7c33,
+	rings: 0xf0c45c,
 	// How much brighter the three great circles are than the cage.
-	ringGain: 1.9,
-	// The silhouette.
-	skin: 0x4a6bb0,
-	rim: 0xcfe0ff,
-	rimPower: 2.6,
+	ringGain: 1.7,
+	// The outer silhouette. In the fly-in it is a whisper; in the void it is THE
+	// gold circle the icosahedron is drawn inside.
+	skin: 0xb08a3a,
+	rim: 0xffe6a8,
+	rimPower: 3.2,
 	// How many lines the cage is made of. Coarse on purpose — this is a
 	// wireframe, and every extra line is one more thing between you and the
 	// shape.
 	meridians: 9,
-	parallels: 7
+	parallels: 7,
+
+	// ── The core ─────────────────────────────────────────────────────────────
+	// The inner sphere, and the reason the ovum reads as an OVUM rather than as
+	// a wire ball: a dark, opaque body inside the cage, so the cage's far half is
+	// hidden behind something and the two layers separate. V1's egg was two
+	// spheres and that was the whole of its weight.
+	//
+	// It is nearly the ground colour, so on black what you actually see is its
+	// gold rim and whatever is lit on it — which is what the wave is for.
+	core: 0x0b0a08,
+	// THE SAME TWO GOLDS the icosahedron's frame is drawn in (ICOSA_INK.line and
+	// .bright, below). Not a coincidence and not to be drifted apart: the core's
+	// rim in the fly-in and the gold circle in the void are the same material
+	// with the same numbers, which is the whole reason one scene can hand the
+	// other its last frame and nothing appears to happen.
+	coreRim: 0xf0c45c,
+	coreHot: 0xfff0c8,
+	coreRimPower: 2.2,
+	// The wave that runs on it. Crests go to `waveHot`.
+	wave: 0xe8b652,
+	waveHot: 0xfff0c8
 };
 
 // ── The sperm, and the air it is in ──────────────────────────────────────────
@@ -77,11 +117,15 @@ export const EGG = {
 // thing in the fly-in brighter than the air, and it has to stay legible against
 // a fog that is swallowing everything else.
 export const HOLO = {
-	body: 0x9dbcf0,
-	rim: 0xffffff,
-	// The debris streaming past the lens, and the glow the ovum comes up out of.
-	mote: 0xc3d6ff,
-	halo: 0x5f79c4
+	body: 0x74a0f2,
+	rim: 0xc6dcff,
+	// The debris streaming past the lens. Cold, like the swimmer — they are the
+	// only things in the air that are not gold, and they leave with it.
+	mote: 0x8ea6d8,
+	// The glow the ovum comes up out of, which is the ovum's and therefore GOLD.
+	// It is the first thing in the run that is: a warmth in the black long
+	// before there is anything in the warmth.
+	halo: 0xb98a2e
 };
 
 // ── The icosahedron ──────────────────────────────────────────────────────────

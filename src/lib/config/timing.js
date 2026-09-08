@@ -70,164 +70,228 @@ export const SCENES = scale({
 	},
 
 	// ── FlyIn ────────────────────────────────────────────────────────────────
-	// Deep blue air, a pack of five, and a run at the egg.
+	// Black air, one swimmer riding the lens, and three hundred units of travel
+	// to an ovum that starts as a warmth in the fog.
 	//
-	//  0     0.10   0.23        0.30                    0.76        0.86   1.0
-	//  |motes|      |the warp   |the run                |egg there  |white |
-	//        |the pack comes past|                      |
+	// FOURTEEN AND A HALF SECONDS, and that is the point of it. See TUNNEL's
+	// note in config/space.js: the arrival is made of the length of the approach
+	// and nothing else, and every version of this that shortened the run turned
+	// the arrival into a zoom. The camera holds ONE speed for three quarters of
+	// it — glide(), not an ease-in-out — so you stop noticing you are moving,
+	// which is the only way the last thirty units can feel like arriving.
+	//
+	//  0    .05      .14            .66              .78    .94   1.0
+	//  |motes|swimmer |the long haul, orbit closing   |dive  |in   |hold
+	//       |halo, then the ovum in it .58|
 	flyIn: {
-		duration: 7.0,
+		duration: 14.5,
 
 		// The calculator is still on screen, warping into the lens. Documentation
 		// only — the machine runs its own `launch` in seconds — but the two have
 		// to describe the same 1.6 seconds or the hand-over is visible.
-		warp: [0.0, 0.23],
+		warp: [0.0, 0.11],
 
-		// The mote field. It is up on the FIRST FRAME, deliberately: the cut into
-		// this scene happens behind the calculator, and what is underneath it has
-		// to be moving before the calculator clears or the run opens on an empty
-		// blue rectangle. It goes out under the blow-out.
-		motesIn: [0.0, 0.09],
+		// The mote field. Up on the FIRST FRAME, deliberately: the cut into this
+		// scene happens behind the calculator, and what is underneath it has to be
+		// moving before the calculator clears. It goes out as you arrive — the
+		// last beat is the ovum and nothing else.
+		motesIn: [0.0, 0.04],
+		motesOut: [0.8, 0.94],
 
-		// The pack comes past from behind and spreads off the axis.
-		packIn: [0.09, 0.3],
-		// How the pack falls back once the run starts. Lower than the hero's own
-		// power, so the gap opens early and keeps opening.
-		packLagPower: 1.0,
-		// They are the losers: never as bright as the one you are with.
-		packOpacity: 0.4,
+		// The swimmer comes past from behind and settles in front of the lens.
+		spermIn: [0.015, 0.13],
+		// And then its orbit CLOSES: wide and wild while it is still overtaking
+		// you, tightening to a steady corkscrew once you are travelling together.
+		// See TUNNEL.spermOrbit — the radius is V1's, and this is the one liberty
+		// taken with it.
+		close: [0.08, 0.66],
 
-		// The hero comes past from behind, overtakes, and is ahead of it.
-		spermIn: [0.13, 0.3],
-		// And then it is leaving, from that moment on — the window opens where
-		// spermIn closes so there is no stretch where it holds station and then
-		// bolts. `power` is the whole character of it: at 2.2 the gap opens at a
-		// near-constant rate and it reads as travelling away; at 3.2 it rides in
-		// front of the lens for a beat and then the gap grows by more every step
-		// of the way to the egg, which is what speeding up actually looks like.
-		spermRun: [0.3, 0.98],
-		spermRunPower: 3.2,
-		// It is inside the shell by the end of this.
-		spermGone: [0.9, 0.99],
+		// It breaks formation and goes in. Its own curve, and a hard one: this is
+		// the only acceleration in the scene and it happens against a camera that
+		// is by then slowing down.
+		dive: [0.78, 0.94],
+		divePower: 2.8,
+		spermGone: [0.925, 0.95],
 
-		// The camera's own run in. Its own power, so the two can be tuned apart:
-		// the camera easing off while the sperm accelerates is what sells it.
-		approachPower: 1.35,
+		// The camera's own run in — glide(), and this is the fraction of it spent
+		// at CONSTANT speed before the stop begins.
+		hold: 0.78,
 
 		// The bank, and how far the camera wanders off the axis while it holds it.
-		// Both ease out to level before the blow-out: the next scene is
-		// orthographic and square to the frame, and arriving tilted is a jolt.
-		level: [0.7, 0.94],
+		// Both ease out to level before the hand-over: the next scene is square to
+		// the frame, and arriving tilted is a jolt.
+		level: [0.7, 0.92],
 		drift: 1.1,
 
-		// The glow first, then the egg in it. The halo OPENS EARLIER and CLOSES
+		// The glow first, then the ovum in it. The halo OPENS EARLIER and CLOSES
 		// EARLIER than the shell, which is the whole trick of the arrival: there
-		// is a brightness in the fog before there is anything in the brightness.
-		haloIn: [0.16, 0.64],
+		// is a warmth in the black before there is anything in the warmth.
+		haloIn: [0.05, 0.48],
+		haloOut: [0.8, 0.95],
 		haloPeak: 1.0,
-		eggIn: [0.3, 0.76],
+		// An ENABLE, not a fade: what actually brings the cage up is the fog
+		// thinning as the camera closes on it. See FlyIn.svelte.
+		eggIn: [0.06, 0.34],
 
-		// Deep blue turning white, under the blow-out that ends the scene.
-		whiten: [0.86, 1.0]
+		// ── THE HAND-OVER ────────────────────────────────────────────────────
+		// There is no flash any more. The fly-in simply ENDS ON THE PICTURE THE
+		// CONCEPTION OPENS ON: the outer cage goes as you pass through it, the air
+		// walks down to the void, the backdrop flattens to the same void, and what
+		// is left in the middle of the frame is the core — a dark sphere with a
+		// gold rim, at exactly the size and exactly the place the void's own gold
+		// circle is drawn at. Nothing has to appear and nothing has to leave.
+		//
+		// (FlyIn.svelte derives the core's size from the void's framing every
+		// frame, so this holds on any screen. See TUNNEL.coreRatio.)
+		shellOut: [0.8, 0.955],
+		settle: [0.78, 0.96],
+		// The rim answers the entry. A nudge, not a flash — the wave that breaks
+		// across the surface at the top of the next scene is the payoff, and this
+		// must not spend it.
+		strike: [0.93, 1.0]
 	},
 
 	// ── Conception ───────────────────────────────────────────────────────────
-	// The hinge of the whole run: the frame is white when this opens and black
-	// by the time it has finished its first beat, and everything after it is on
-	// the void.
+	// It opens on the fly-in's last frame, unchanged, and it is the same object:
+	// the swimmer has just gone in, and for a beat nothing happens.
 	//
-	// THREE VARIANTS, and which one runs is config/dev.js CONCEPTION (or
-	// ?conception=construct|strike|divide in the URL). They share a duration and
-	// a hand-over — the icosahedron, centred, at ICOSA.tilt — and nothing else.
-	// See scenes/Conception.svelte.
+	// Then the surface answers. A ring of waves breaks from the point of entry
+	// and runs round the sphere — and RELAXES, over the next two seconds, into a
+	// standing wave: the lowest one a sphere has that is symmetric under the
+	// icosahedral group, whose twelve antinodes ARE the twelve vertices. See
+	// world/materials.js coreMaterial(); it is the sum of P6(n·a) over the six
+	// five-fold axes and it is not a decoration, it is the answer arriving as
+	// physics before it arrives as geometry.
+	//
+	// The twelve strike. The page squares up. And only then does the machine
+	// DERIVE what it has already been shown: compass, pentagon, pentagram —
+	// which is where phi actually comes from — the ratio measured off as a bar,
+	// three golden rectangles, and two of them folding up out of the page. Every
+	// length is exact; see world/construction.js.
+	//
+	// It ends where it began. The union's twelve corners land on the twelve
+	// antinodes the wave put there four seconds earlier, in the same pose, to the
+	// pixel — a promise and the paying of it.
 	conception: {
-		duration: 5.6,
+		duration: 9.0,
 
-		// A compass sweep, the pentagon inscribed in it, the pentagram inside THAT
-		// — which is where phi actually comes from — the ratio measured off as a
-		// bar, three golden rectangles drawn in it, and two of them folding up out
-		// of the page into the solid. See world/construction.js: every length is
-		// exact and the arithmetic is written down.
-		circle: [0.08, 0.28],
-		pentagon: [0.24, 0.4],
-		star: [0.36, 0.5],
-		bar: [0.46, 0.6],
-		rects: [0.56, 0.72],
+		// The beat of nothing, and then the strike.
+		wake: [0.03, 0.1],
+		// Travelling waves out of the point of entry.
+		ripple: [0.02, 0.26],
+		// Ripple → the icosahedral standing wave. This is the whole idea.
+		relax: [0.13, 0.35],
+		// The twelve antinodes brighten and are struck as points.
+		lobes: [0.28, 0.4],
+		// The surface goes, leaving its rim — which is the circumcircle.
+		waveOut: [0.34, 0.43],
+		coreOut: [0.35, 0.44],
+		// And the page turns square to you to be drawn on. The twelve go with it.
+		square: [0.33, 0.45],
+
+		// ── The derivation ───────────────────────────────────────────────────
+		circle: [0.47, 0.58],
+		pentagon: [0.56, 0.65],
+		star: [0.63, 0.71],
+		bar: [0.69, 0.77],
+		rects: [0.75, 0.84],
 		// The guides have done their work by the time the rectangles are out.
-		guidesOut: [0.66, 0.8],
-		fold: [0.66, 0.88],
-		edges: [0.8, 0.96],
-		rim: [0.68, 0.86],
+		guidesOut: [0.8, 0.88],
+		fold: [0.8, 0.93],
+		edges: [0.88, 0.98],
 
-		// THE UNION, and the reason the scene has the name it does. The last edge
-		// closes and the whole figure answers at once: the twelve corners strike,
-		// the line-work overdrives, the rim flares. One event you feel, on the
-		// beat the twelve separate things become one thing.
-		union: [0.88, 1.0],
+		// THE UNION. The last edge closes and the whole figure answers at once:
+		// the twelve corners strike, the line-work overdrives, the rim flares.
+		union: [0.93, 1.0],
 		unionPeak: 1.3
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────
 	computation: {
-		duration: 9.0,
+		duration: 11.5,
 
 		// The camera pulls BACK as the panes come out. The conception was close on
 		// the solid; six rooms will not fit in that frame, so the opening move of
 		// this scene is to make room for them — and that pull-back is most of why
 		// the panes read as coming out rather than merely appearing.
-		pullBack: [0.0, 0.32],
+		pullBack: [0.0, 0.25],
 
 		// The panes come out of the frame, as DRAFTING first: the golden rectangle,
 		// its dimension lines, its ratio bar, its spiral. The rooms only fade in
 		// through that once it is out, which is what stops the two reading as one
 		// undifferentiated bloom, and what makes the machine look as though it is
 		// working the answer out rather than displaying it.
-		open: [0.0, 0.2],
-		schematic: [0.02, 0.26],
-		rooms: [0.2, 0.44],
+		open: [0.0, 0.16],
+		schematic: [0.015, 0.2],
+		rooms: [0.16, 0.34],
 		// And the drafting steps back once the rooms are up, or it is clutter over
 		// the only thing in the scene with any colour in it.
-		draftOut: [0.34, 0.56],
+		draftOut: [0.27, 0.44],
 
 		// The sphere stays — it is the thing the frame is held inside — but thins
 		// and opens out off the frame it was skin-tight on, so the rooms come
 		// THROUGH it rather than out from under it.
-		shellThin: [0.06, 0.28],
-		sphereGrow: [0.02, 0.36],
+		shellThin: [0.05, 0.22],
+		sphereGrow: [0.015, 0.28],
 
 		// The 24-cell hung around the scene. It belongs to the search and nothing
 		// else — it arrives with the panes and goes out with the zoom. It is a
 		// SPACE, so it never comes above a whisper: the moment it is as bright as
 		// the drafting it stops being the room and becomes furniture in it.
-		cageIn: [0.12, 0.36],
+		cageIn: [0.1, 0.28],
 		cagePeak: 0.5,
 
-		// The search: turn a decade square to camera, look at it, turn to the
-		// next. The point is not to fake a search — it is that each turn shows
-		// another decade's artwork, which is otherwise built and never seen.
-		search: [0.26, 0.82],
+		// ── THE SURVEY ───────────────────────────────────────────────────────
+		// The whole assembly, fully out, BEFORE the machine starts choosing. This
+		// is the beat V2 had and every version since has been missing: six rooms
+		// hanging off a solid, turning slowly, seen as one object — so that when
+		// the clocking starts you already know what is being clocked through.
+		//
+		// It is also the only place in the run with any perspective in it. The
+		// lens opens from ICOSA.fov to ICOSA.fovWide and the camera walks in to
+		// match, which is a true dolly zoom: the framing does not change and the
+		// SPACE does. Near rooms swell off the frame, far ones fall away, and the
+		// thing stops being a diagram for two and a half seconds.
+		survey: [0.28, 0.5],
+		// Yaw and pitch it walks through while it does, in radians.
+		surveyTurn: 1.25,
+		surveyTilt: 0.3,
+
+		// The search: turn a decade square to camera, HOLD it, turn to the next.
+		// The point is not to fake a search — it is that each turn shows another
+		// decade's artwork, which is otherwise built and never seen.
+		search: [0.5, 0.87],
 		// Three decades visited before the answer, then the answer itself.
 		searchSteps: 4,
-		// Fraction of each step spent turning; the rest is the look. The last
-		// step is all turn, because the zoom follows it straight away.
-		searchSpin: 0.76,
-		// How far the other five step back during that look, and how far the
-		// camera leans in on it. Both are pulses — in and out across the pause —
-		// so they read as attention rather than as five rooms switching off, and
-		// the lean stays small because the fall at the end of the scene is the
-		// zoom and this must not spend it.
-		searchDim: 0.72,
-		searchPush: 0.32,
+		// Fraction of each step spent turning; the rest is the hold. The last step
+		// is all turn, because the fall follows it straight away.
+		searchSpin: 0.7,
+		// How far the other five step back for it — and they STEP, they do not
+		// breathe: it comes on over a twentieth of the slot and stays there until
+		// the next turn takes it off. A pulse reads as five rooms sighing; a step
+		// reads as a machine selecting one.
+		//
+		// AND THE CAMERA DOES NOT MOVE. Not a lean, not a nudge, nothing. The
+		// clocking is rigid or it is nothing, and a frustum that pumps on every
+		// candidate is the single loudest way to make a precise instrument look
+		// like a slideshow transition.
+		searchDim: 0.78,
+		searchSnap: 0.06,
 		// How the turn itself moves. A high power is a real acceleration out of
 		// rest and a real deceleration into the next decade, which is what stops
 		// this reading as a turntable; 1.0 would be a flat constant pivot.
 		searchEase: 2.6,
-		// Then in. Accelerates away from rest, then eases onto the final frame.
-		zoom: [0.82, 1.0],
-		zoomPower: 2.2,
+
+		// ── The fall ─────────────────────────────────────────────────────────
+		// A plain, dead-centre zoom on the WHOLE SCENE, on one symmetric ease, and
+		// nothing in it is staggered. The depth-parallax version — where the bed
+		// rushed past first, then the desk, then the screen — was tried and it is
+		// worse: it pulls the room apart at the exact moment it is supposed to
+		// become a place. The scene goes in as one thing.
+		zoom: [0.87, 1.0],
 
 		// How hard the blueprint field burns. It is the machine's own effort.
-		flare: [0.1, 0.88]
+		flare: [0.08, 0.9]
 	},
 
 	// ── Room ─────────────────────────────────────────────────────────────────
@@ -239,15 +303,20 @@ export const SCENES = scale({
 	}
 });
 
-// The one blow-out in the run: the end of the fly-in, into the conception. It
-// is also the only CUT — the world underneath goes from deep blue air to the
-// void while the frame is white — so it is shaped rather than merely decayed:
-// pure white for a beat, then gone. An exponential fall spends most of its
-// length as a grey veil over the scene it is supposed to be hiding.
+// THERE IS NO LONGER A BLOW-OUT. The fly-in used to end on a white flash,
+// because the world underneath it changed — deep blue air on one side, the void
+// on the other — and a cut like that needs covering.
 //
-// The fall has to be at least as long as the ground's own ease to the void
-// (components/Background.svelte, ~0.3s) or the black arrives before the white
-// has finished leaving.
+// It does not change any more. Scenes 2, 3 and 4 are one black-and-gold world,
+// and the fly-in ends on the exact frame the conception opens on: the same dark
+// sphere, the same gold rim, the same size, on the same void. So the flash was
+// not smoothing a transition, it was ANNOUNCING one — and what it actually did
+// was break the only three scenes that are supposed to run as one shot into two
+// halves with a bang in the middle, and make the conception look as though the
+// run had reset.
+//
+// The envelope is kept because the machinery is cheap and something may yet want
+// it; nothing throws it.
 export const FLASH_HOLD = 0.14;
 export const FLASH_FALL = 0.34;
 

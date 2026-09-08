@@ -20,7 +20,10 @@ void main() {
 	// How lit the air is. At the end of the fly-in this runs to 1 and every
 	// bit of shaping below is taken back out, leaving pure white.
 	float lit = dot(color1, vec3(0.2126, 0.7152, 0.0722));
-	float shaped = 1.0 - smoothstep(0.34, 0.9, lit);
+	// uFade takes the whole channel out as the fly-in arrives, so the last frame
+	// of that scene is flat air and the conception can open on the same flat air
+	// under a different shader without a seam. See store/store.js fieldFade.
+	float shaped = (1.0 - smoothstep(0.34, 0.9, lit)) * uFade;
 
 	// The far end of the channel.
 	vec3 far = color1 * 0.13;

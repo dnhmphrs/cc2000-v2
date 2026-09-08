@@ -26,6 +26,12 @@
 //   uRot                     mat3   a rotation to carry the field with the
 //                                   scene — the computation feeds it the
 //                                   icosahedron's own attitude
+//   uFade                    float  0..1 — how much of the FIGURE is drawn. At
+//                                   0 a field is its ground colour and nothing
+//                                   else, so two different shaders at fade 0
+//                                   are the same frame. That is what carries
+//                                   the fly-in into the conception without a
+//                                   cut. Every shader must honour it.
 //
 // vUv is 0..1 across the viewport.
 import { DEEP } from './deep';
@@ -58,6 +64,7 @@ export const PRELUDE = `
 	uniform float aspectRatio;
 	uniform float uTime;
 	uniform mat3 uRot;
+	uniform float uFade;
 
 	float hSinh(float x) { return 0.5 * (exp(x) - exp(-x)); }
 	float hCosh(float x) { return 0.5 * (exp(x) + exp(-x)); }

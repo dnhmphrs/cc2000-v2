@@ -1,7 +1,7 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
-	import { flare, fieldDecade, backdrop, fieldRotation } from '$lib/store/store';
+	import { flare, fieldDecade, backdrop, fieldRotation, fieldFade } from '$lib/store/store';
 	import { DECADE_FIELD } from '$lib/data/roomElements';
 	import { SHADERS, VERT, PRELUDE } from '$lib/three/shaders';
 
@@ -140,7 +140,8 @@
 			mouse: gl.getUniformLocation(program, 'mouse'),
 			aspect: gl.getUniformLocation(program, 'aspectRatio'),
 			time: gl.getUniformLocation(program, 'uTime'),
-			rot: gl.getUniformLocation(program, 'uRot')
+			rot: gl.getUniformLocation(program, 'uRot'),
+			fade: gl.getUniformLocation(program, 'uFade')
 		};
 		if (uni.aspect) gl.uniform1f(uni.aspect, window.innerWidth / window.innerHeight);
 	}
@@ -219,6 +220,10 @@
 		if (uni.c3) gl.uniform3f(uni.c3, stops[2][0], stops[2][1], stops[2][2]);
 		// Written in place by the computation each frame; identity everywhere else.
 		if (uni.rot) gl.uniformMatrix3fv(uni.rot, false, fieldRotation);
+		// Straight through, with no easing of its own: it is carrying a hand-over
+		// between two scenes that have to agree frame for frame, and an envelope
+		// here would put a lag in exactly the place that must not have one.
+		if (uni.fade) gl.uniform1f(uni.fade, clamp(get(fieldFade), 0, 1));
 
 		gl.drawArrays(gl.TRIANGLES, 0, 3);
 

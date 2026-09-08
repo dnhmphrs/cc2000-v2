@@ -27,13 +27,17 @@
 	// the 3D are never out of step — there is one answer to "where are we" and
 	// both halves read it.
 	//
-	// TWO WORLDS, THREE SCENES. The fly-in has the tunnel to itself; the
-	// conception and the computation share the lattice, which is why the
-	// icosahedron the conception assembles is the one the computation projects
-	// panes off. Both worlds size their egg from the same EGG_SCREEN, so the one
-	// cut between them cannot move it — which is why there is exactly one
-	// visible transition in the whole run: the white blow-out that ends the
-	// fly-in, thrown here.
+	// TWO WORLDS, THREE SCENES, AND NO TRANSITION BETWEEN THEM. The fly-in has
+	// the tunnel to itself; the conception and the computation share the lattice,
+	// which is why the icosahedron the conception assembles is the one the
+	// computation projects panes off.
+	//
+	// There is no blow-out any more. The fly-in ENDS on the frame the conception
+	// OPENS on — the same dark sphere, the same gold rim, the same size, on the
+	// same flat void, with both backdrop shaders faded to that void (see
+	// store/store.js fieldFade) — so the hand-over between the two worlds is
+	// invisible and the middle three scenes run as one shot. The flash envelope
+	// below is kept because it costs nothing; nothing throws it.
 
 	let canvasElement;
 	let renderer;
@@ -51,10 +55,8 @@
 
 	let canvasFadeStart = null;
 	let flashEl;
-	// The blow-out, as an envelope rather than a decay. A plain exponential fall
-	// spends most of its length as a GREY VEIL over the next scene — which is
-	// what the one cut in the run must not look like. This holds pure white for a
-	// beat and then goes, so the transition is a blink.
+	// Kept, and never thrown. See the note above: the run no longer has a cut in
+	// it to cover.
 	let flashT = Infinity;
 
 	// Which scene we last handed control to, so entering happens exactly once,
@@ -71,9 +73,6 @@
 		// over whatever the 3D last drew. Leave it alone.
 		if (!next) return;
 		if (entered === name) return;
-		// The one blow-out in the run: through the flash, the air goes from deep
-		// blue to white and the world changes underneath it.
-		if (name === 'conception') flashT = 0;
 		entered = name;
 		held = next;
 		next.enter();

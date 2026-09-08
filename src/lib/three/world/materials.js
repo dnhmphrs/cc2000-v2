@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { CIRCUMRADIUS } from '../geometry/icosahedron';
+import { CIRCUMRADIUS, VERTICES } from '../geometry/icosahedron';
 
 // ── Materials ────────────────────────────────────────────────────────────────
-// Everything in the 3D is drawn with FOUR materials and no lights at all. This
-// file is all four of them, and the vocabulary they share.
+// Everything in the 3D is drawn with FIVE materials and no lights at all. This
+// file is all five of them, and the vocabulary they share.
 //
 // The site is the inside of a machine. Nothing in it is a photograph of a thing;
 // it is a thing being DISPLAYED by an instrument — so nothing is shaded, nothing
@@ -223,9 +223,15 @@ export function holoMaterial({ ink, accent, fog, fogDensity, rings, longs, gain 
 
 				// The stripes are held well back: they wrap a tail two pixels wide,
 				// where any line family aliases into a crawl.
-				float wire = max(ring, longi * 0.3);
-				float alpha = (0.05 + wire * 0.28 + rim * 0.5 + band * wire * 0.4) * uOpacity * uGain;
-				vec3 col = mix(uInk, uAccent, rim * 0.55 + band * 0.35);
+				//
+				// The CONTOURS carry it, not the rim. A fresnel-led body is a white
+				// ghost whatever colour you give it — the rim term is where all the
+				// brightness is and it is achromatic — and this is meant to be the
+				// one cold thing in a gold scene, so the wire is up and the rim is
+				// down and the colour survives.
+				float wire = max(ring, longi * 0.35);
+				float alpha = (0.04 + wire * 0.42 + rim * 0.34 + band * wire * 0.45) * uOpacity * uGain;
+				vec3 col = mix(uInk, uAccent, rim * 0.3 + band * 0.3);
 
 				float f = fogAt(vDepth);
 				col = mix(col, uFogColor, f);
@@ -237,10 +243,18 @@ export function holoMaterial({ ink, accent, fog, fogDensity, rings, longs, gain 
 }
 
 // ── 3. The skin ──────────────────────────────────────────────────────────────
-// A silhouette, and only a silhouette: `1 - |n.z|` in VIEW space is the edge of
-// a shape however the camera is projected, which is the one shading term that
-// resolves identically under a perspective and an orthographic camera. That is
-// why the fly-in's globe and the void's circle can be the same material.
+// A silhouette, and only a silhouette.
+//
+// AGAINST THE VIEW RAY, not the view axis, and the difference is not academic.
+// `1 - |n.z|` in view space is the edge of a shape only under an ORTHOGRAPHIC
+// camera, where every ray is the axis. On a lens the silhouette is the tangent
+// cone, and its normal is tilted away from the axis by asin(R/d) — sixteen
+// degrees on the fly-in's ovum. At the eighth power that turns a term which
+// should be 1.0 at the edge into 0.07, which is exactly why the fly-in's gold
+// rim was invisible while the void's, on a much longer lens, was merely dim.
+//
+// Against the ray it is 1.0 at the silhouette under any projection, which is
+// what lets the fly-in's core and the void's circle be the same drawing.
 //
 // `base` is how much body it has inside that edge. On the void it is ZERO — a
 // gold circle and nothing else — because any body at all is a grey wash over
@@ -262,9 +276,13 @@ export function skinMaterial({ ink, accent, power = 3, base = 0, add = false }) 
 		},
 		vertexShader: `
 			varying vec3 vN;
+			varying vec3 vV;
 			void main() {
+				vec4 mv = modelViewMatrix * vec4(position, 1.0);
 				vN = normalize(normalMatrix * normal);
-				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+				// The ray from the surface back to the lens, in view space.
+				vV = normalize(-mv.xyz);
+				gl_Position = projectionMatrix * mv;
 			}
 		`,
 		fragmentShader: `
@@ -274,8 +292,9 @@ export function skinMaterial({ ink, accent, power = 3, base = 0, add = false }) 
 			uniform float uBase;
 			uniform float uOpacity;
 			varying vec3 vN;
+			varying vec3 vV;
 			void main() {
-				float f = pow(1.0 - abs(normalize(vN).z), uPower);
+				float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), uPower);
 				float a = (uBase + f * (1.0 - uBase)) * uOpacity;
 				gl_FragColor = vec4(mix(uInk, uAccent, f) * a, a);
 			}
@@ -310,6 +329,193 @@ export function dotMaterial(color, size) {
 				float r = length(d) * 2.0;
 				float a = (exp(-r * r * 4.0) * 0.5 + (1.0 - smoothstep(0.2, 0.32, r)) * 0.95) * uOpacity;
 				gl_FragColor = vec4(uInk * a, a);
+			}
+		`
+	});
+}
+
+// ── 5. The core ──────────────────────────────────────────────────────────────
+// The ovum's inner sphere, and the only OPAQUE thing in the whole site.
+//
+// It has two jobs. The first is structural: it is what makes the ovum read as an
+// ovum instead of as a ball of wire. A wireframe globe on its own is a scribble
+// — near lines and far lines are the same lines — and V1 solved that with two
+// spheres, an opaque inner one inside a transparent outer one. This is the inner
+// one. It occludes the cage's far half, and the moment it does, the cage has an
+// inside and an outside.
+//
+// The second is the whole hinge of the run. It carries a WAVE, and the wave has
+// two states it moves between:
+//
+//   THE RIPPLE     travelling wavefronts out of the point the swimmer entered
+//                  at: sin(kθ − ωt) falling off with angular distance. This is
+//                  the impact.
+//
+//   THE HARMONIC   the lowest standing wave a sphere has that is invariant under
+//                  the icosahedral group:
+//
+//                      f(n) = Σ P₆(n · aᵢ)   over the six five-fold axes
+//
+//                  P₆ is the sixth Legendre polynomial and the aᵢ are the six
+//                  axes through opposite vertices. Degree 6 is the FIRST degree
+//                  at which a non-constant icosahedral invariant exists at all —
+//                  the degree-2 and degree-4 sums are identically zero — so this
+//                  is not a pattern chosen to look icosahedral, it is the only
+//                  thing of its kind there is. Normalised to 1 at a vertex,
+//                  where all twelve of its antinodes are.
+//
+// uRelax crossfades one into the other. That crossfade is the conception: a
+// disturbance on a sphere settling into the lowest mode its symmetry allows, and
+// the twelve places it settles hardest are the twelve places the icosahedron's
+// corners are about to be struck. The geometry that follows is the machine
+// WRITING DOWN what the physics has already done.
+//
+// The field is evaluated twice — once per vertex to displace the surface, once
+// per fragment to draw on it — because a wave you can only see is a texture and
+// a wave that moves the skin is a wave.
+const FIVE_FOLD = (() => {
+	const out = [];
+	VERTICES.forEach((v) => {
+		const u = new THREE.Vector3(...v).normalize();
+		// One of each antipodal pair. The invariant is even, so the sign is free.
+		if (!out.some((w) => Math.abs(w.dot(u)) > 0.999)) out.push(u);
+	});
+	return out; // six of them
+})();
+
+// Σ P₆(n·aᵢ) at a vertex: 1 + 5·P₆(1/√5). The five-fold axes meet at arccos(1/√5).
+const HARMONIC_PEAK = (() => {
+	const p6 = (x) => (231 * x ** 6 - 315 * x ** 4 + 105 * x ** 2 - 5) / 16;
+	return 1 + 5 * p6(1 / Math.sqrt(5));
+})();
+
+const WAVE_FIELD = `
+	uniform vec3 uAxes[6];
+	uniform vec3 uEntry;
+	uniform float uRipple;
+	uniform float uRelax;
+	uniform float uPhase;
+	uniform float uPeak;
+
+	float waveField(vec3 n) {
+		// The impact: wavefronts running away from where it went in.
+		float th = acos(clamp(dot(n, uEntry), -1.0, 1.0));
+		float ripple = sin(th * 7.0 - uPhase * 4.2) * exp(-th * 0.5);
+
+		// The lowest icosahedral standing wave. Twelve antinodes, at the twelve
+		// vertices, and it is the only degree-6 invariant the group has.
+		float h = 0.0;
+		for (int i = 0; i < 6; i++) {
+			float x = dot(n, uAxes[i]);
+			float x2 = x * x;
+			float x4 = x2 * x2;
+			h += (231.0 * x4 * x2 - 315.0 * x4 + 105.0 * x2 - 5.0) / 16.0;
+		}
+		h /= uPeak;
+
+		return mix(ripple * uRipple, h, uRelax);
+	}
+`;
+
+export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
+	return new THREE.ShaderMaterial({
+		transparent: true,
+		// IT OCCLUDES. That is the point of it, and it is the one material in the
+		// site that writes depth: the cage's far half has to go behind something.
+		depthWrite: true,
+		side: THREE.FrontSide,
+		uniforms: {
+			uInk: { value: new THREE.Color(ink) },
+			uWave: { value: new THREE.Color(wave) },
+			uHot: { value: new THREE.Color(hot) },
+			uRim: { value: new THREE.Color(rim) },
+			uRimPower: { value: rimPower },
+			// ZERO by default. The visible gold rim on this object is a separate
+			// additive silhouette (world/egg.js) — the same material the void draws
+			// its circle with, which is why the two scenes match — and drawing a
+			// second one here would double it. This one is a live overdrive, for
+			// the moment the swimmer goes in.
+			uRimGain: { value: 0 },
+			uOpacity: { value: 0 },
+			// How brightly the field is drawn, and how far it moves the skin.
+			uGlow: { value: 0 },
+			uAmp: { value: 0 },
+			uAxes: { value: FIVE_FOLD.map((v) => v.clone()) },
+			uEntry: { value: new THREE.Vector3(0, 0, 1) },
+			uRipple: { value: 0 },
+			uRelax: { value: 0 },
+			uPhase: { value: 0 },
+			uPeak: { value: HARMONIC_PEAK }
+		},
+		vertexShader: `
+			${WAVE_FIELD}
+			uniform float uAmp;
+			varying vec3 vN;
+			varying vec3 vV;
+			varying vec3 vLocal;
+			void main() {
+				vLocal = position;
+				vec3 n = normalize(position);
+				// The skin actually moves. Along its own normal, by the field.
+				vec3 p = position + n * (uAmp * waveField(n));
+				vec4 mv = modelViewMatrix * vec4(p, 1.0);
+				vN = normalize(normalMatrix * n);
+				vV = normalize(-mv.xyz);
+				gl_Position = projectionMatrix * mv;
+			}
+		`,
+		fragmentShader: `
+			${WAVE_FIELD}
+			uniform vec3 uInk;
+			uniform vec3 uWave;
+			uniform vec3 uHot;
+			uniform vec3 uRim;
+			uniform float uRimPower;
+			uniform float uRimGain;
+			uniform float uOpacity;
+			uniform float uGlow;
+			varying vec3 vN;
+			varying vec3 vV;
+			varying vec3 vLocal;
+
+			// A line wherever x is near a whole number.
+			float rule(float x, float w) {
+				float fr = fract(x);
+				return 1.0 - smoothstep(0.0, w, min(fr, 1.0 - fr));
+			}
+
+			void main() {
+				vec3 n = normalize(vLocal);
+				float f = waveField(n);
+
+				// It is drawn as a CONTOUR MAP, not as a shaded ball. The fill is
+				// held right back — a gold sphere is a bauble and this is a readout
+				// — and what carries the shape is the line-work on it:
+				//
+				//   the LEVEL SETS   every fifth of the field's range, which is what
+				//                    an instrument would actually draw.
+				//   the NODAL SET    where the field is zero. On the standing wave
+				//                    that is the curve system separating the twelve
+				//                    antinodes, and it is the figure itself.
+				float lit = smoothstep(0.04, 0.86, f);
+				float crest = smoothstep(0.74, 1.06, f);
+				float dip = smoothstep(0.05, 0.6, -f);
+				float bands = rule(f * 5.0, 0.055);
+				float node = 1.0 - smoothstep(0.0, 0.045, abs(f));
+
+				vec3 col = uInk;
+				col = mix(col, uWave, lit * 0.42 * uGlow);
+				col = mix(col, uHot, crest * 0.34 * uGlow);
+				col += uWave * dip * 0.07 * uGlow;
+				col += uWave * bands * 0.3 * uGlow;
+				col += uHot * node * 0.75 * uGlow;
+
+				// And the rim — against the RAY, for the reason skinMaterial gives.
+				float rim = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), uRimPower);
+				col += uRim * rim * uRimGain;
+
+				float a = uOpacity;
+				gl_FragColor = vec4(col * a, a);
 			}
 		`
 	});

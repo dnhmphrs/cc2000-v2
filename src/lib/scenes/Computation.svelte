@@ -2,7 +2,15 @@
 	import { tick } from 'svelte';
 	import * as THREE from 'three';
 	import { get } from 'svelte/store';
-	import { decade, aspect, flare, fieldDecade, monitorRect, fieldRotation } from '$lib/store/store';
+	import {
+		decade,
+		aspect,
+		flare,
+		fieldDecade,
+		monitorRect,
+		fieldRotation,
+		fieldFade
+	} from '$lib/store/store';
 	import {
 		SCENES,
 		span,
@@ -11,6 +19,7 @@
 		smoothstep,
 		easeInOutCubic,
 		easeInOutPower,
+		bump,
 		ICOSA,
 		restFrustum,
 		conceptionFrustum,
@@ -30,6 +39,20 @@
 	// of why the panes read as coming OUT rather than merely appearing, and it
 	// costs nothing: it is the same frustum the return zoom already walks.
 	//
+	// ── The survey ───────────────────────────────────────────────────────────
+	// Then it STOPS AND LOOKS. Two and a half seconds of the whole assembly,
+	// fully out, turning — before a single decade is chosen. This is the beat V2
+	// had and every version since dropped, and dropping it is why the clocking
+	// afterwards never landed: a machine cannot be seen to select from a set you
+	// have never been shown.
+	//
+	// It is also the only place in the run with any perspective in it. The lens
+	// opens from ICOSA.fov to ICOSA.fovWide and the camera walks in to match — a
+	// true dolly zoom, framing held to the pixel, space transformed: the near
+	// rooms swell off the frame and the far ones fall away, and for two seconds
+	// the thing is unmistakably three-dimensional. Then the lens closes back to
+	// its technical 12 degrees and the machine gets to work.
+	//
 	// And it comes out as DRAFTING first. The rectangle, its dimension lines, its
 	// ratio bar, its spiral — the machine's working — and only then do the rooms
 	// fade up through it, and only then does the working step back. Three beats
@@ -37,15 +60,33 @@
 	// machine calculating and a slideshow.
 	//
 	// The search is stepped, not continuous: turn a decade SQUARE to the camera,
-	// look at it, turn to the next, and the last turn lands on the answer. Every
+	// HOLD it, turn to the next, and the last turn lands on the answer. Every
 	// step locks face-on, and the route is the direct arc — the shortest rotation
 	// between two poses, taken firmly.
+	//
+	// TWO THINGS IT DOES NOT DO, and both were tried:
+	//
+	//   THE CAMERA DOES NOT MOVE. Not a lean, not a nudge, nothing. A frustum
+	//   that pumps in on every candidate is the single loudest way to make a
+	//   precise instrument look like a slideshow transition.
+	//
+	//   THE OTHER ROOMS DO NOT PULSE. They STEP back — on over a twentieth of the
+	//   slot, held for the whole look, off on the next turn. A sine in and out
+	//   reads as five rooms sighing; a step reads as a machine selecting one, and
+	//   the rigidity IS the character.
 	//
 	// It was tried the other way, holding an oblique attitude and only squaring
 	// up for the answer. It reads as drift. The whole point of the scene is that a
 	// machine is examining candidates, and a machine turns a thing to face you and
 	// stops: the precision IS the drama, and a bowed route through a control pose
 	// is a flourish where a lock-on should be.
+	//
+	// ── The fall ─────────────────────────────────────────────────────────────
+	// And then a plain, dead-centre zoom on the WHOLE SCENE, on one symmetric
+	// ease, with nothing in it staggered. The depth-parallax version — the bed
+	// rushing past first, then the desk, then the screen — pulls the room apart
+	// at the exact moment it is supposed to become a place. It goes in as one
+	// thing.
 	//
 	// Like the conception, every value here is a pure function of scene progress
 	// — nothing integrates dt — so the scene can be reset or re-entered without
@@ -141,9 +182,12 @@
 			.slice(0, Math.max(0, T.searchSteps - 1));
 	}
 
-	// Scratch for handing the frame's attitude to the backdrop shader as a mat3.
+	// Scratch for handing the frame's attitude to the backdrop shader as a mat3,
+	// and for the survey's own turn.
 	const ROT4 = new THREE.Matrix4();
 	const ROT3 = new THREE.Matrix3();
+	const SURVEY_E = new THREE.Euler();
+	const SURVEY_Q = new THREE.Quaternion();
 
 	// The rotation that puts a pane's artwork square to the camera.
 	function landingQuatFor(i) {
@@ -157,6 +201,20 @@
 		const upT2 = new THREE.Vector3().crossVectors(camDir, rightT).normalize();
 		const mTarget = new THREE.Matrix4().makeBasis(rightT, upT2, camDir);
 		return new THREE.Quaternion().setFromRotationMatrix(mTarget.multiply(mLocal.transpose()));
+	}
+
+	// How deep the answer's pane sits, in world z, at the pose the search has just
+	// locked it into. It is square to the camera there, so the whole of the pane's
+	// projection distance is depth — and on a lens the fall has to be framed at
+	// that plane rather than at the origin.
+	function landingDepth() {
+		const reach = get(aspect) === 'portrait' ? ICOSA.paneReachPortrait : ICOSA.paneReach;
+		const c = paneConfigs[target];
+		if (!c) return 0;
+		return c.axis
+			.clone()
+			.multiplyScalar(reach * c.direction)
+			.applyQuaternion(world.frame.quaternion).z;
 	}
 
 	// How much the room's own artwork fills the frame when the camera is on it.
@@ -197,7 +255,12 @@
 		// wireframe that just drew itself, at the same weight.
 		world.egg.setShell(ICOSA.shellSolid);
 		world.egg.group.scale.setScalar(1);
-		world.camera.position.set(...ICOSA.camPos);
+		// The camera's range belongs to applyFrustum now; only the truck is ours.
+		world.camera.position.x = ICOSA.camPos[0];
+		world.camera.position.y = ICOSA.camPos[1];
+		world.setFov(ICOSA.fov);
+		world.setFocus(0);
+		fieldFade.set(1);
 		monitorRect.set(null);
 		panes.forEach((p) => {
 			if (!p) return;
@@ -224,7 +287,6 @@
 		// worked out here and applied once the search has had its say.
 		const zoom = span(p, T.zoom);
 		const pulled = lerp(from, rest, easeInOutCubic(span(p, T.pullBack)));
-		let push = 0;
 
 		// ── The panes come out ───────────────────────────────────────────────
 		// Working first, artwork second, working away third.
@@ -256,11 +318,30 @@
 			lerp(1, ICOSA.sphereGrow, easeInOutCubic(span(p, T.sphereGrow)))
 		);
 
+		// ── The survey ───────────────────────────────────────────────────────
+		// The assembly, whole, turning, on an opening lens — before a single
+		// decade is chosen. It hands the search whatever attitude it finishes on;
+		// the search latches its own start pose, so nothing has to be handed back.
+		const sv = span(p, T.survey);
+		if (sv > 0 && sv < 1) {
+			const k = easeInOutCubic(sv);
+			SURVEY_E.set(-T.surveyTilt * Math.sin(k * Math.PI), T.surveyTurn * k, 0);
+			// PRE-multiplied, so the yaw is about the WORLD's up axis: it reads as
+			// walking round the thing rather than as the thing spinning on a spit.
+			world.frame.quaternion.copy(SURVEY_Q.setFromEuler(SURVEY_E)).multiply(world.tilt);
+			// The dolly zoom. Out and back, so the search starts on the technical
+			// lens the rest of the scene is drawn with. Half of it on a phone: the
+			// same lens on a frame a third as wide puts the near room through the
+			// screen.
+			const wide = get(aspect) === 'portrait' ? (ICOSA.fov + ICOSA.fovWide) / 2 : ICOSA.fovWide;
+			world.setFov(lerp(ICOSA.fov, wide, bump(sv)));
+		}
+
 		// ── The search ───────────────────────────────────────────────────────
 		// One slot per decade visited. Most of a slot is the turn onto that
-		// decade; the rest is the look, during which the other rooms step back
-		// so the artwork this exists to show is what you are seeing. The last
-		// slot is all turn, because the zoom follows it straight away.
+		// decade; the rest is the HOLD, during which the other rooms step back so
+		// the artwork this exists to show is what you are seeing. The last slot is
+		// all turn, because the fall follows it straight away.
 		const u = span(p, T.search);
 		if (u > 0 && measured && searchQuats.length) {
 			if (!searchLatched) {
@@ -280,13 +361,15 @@
 			// the other, taken firmly and stopped dead.
 			world.frame.quaternion.copy(from).slerp(to, turn);
 
-			// The LOOK. Most of a slot is the turn onto that decade; what is left is
-			// the pause on it, and during that pause the other five step back so the
-			// artwork this scene exists to show is what you are actually looking at.
-			// The last slot has no look — the zoom follows it straight away.
-			const look = last ? 0 : clamp01((local - T.searchSpin) / (1 - T.searchSpin));
-			push = Math.sin(look * Math.PI);
-			const back = push * T.searchDim;
+			// THE HOLD. Most of a slot is the turn onto that decade; what is left is
+			// the stop on it, and for the whole of that stop the other five are held
+			// back so the artwork this scene exists to show is what you are actually
+			// looking at. It comes on over searchSnap of the slot and STAYS — a
+			// pulse would read as five rooms breathing.
+			const held = last
+				? 0
+				: smoothstep(T.searchSpin, Math.min(1, T.searchSpin + T.searchSnap), local);
+			const back = held * T.searchDim;
 			const focus = searchOrder[step];
 			panes.forEach((pane, i) => pane && pane.setDim(i === focus ? 1 : 1 - back));
 
@@ -297,9 +380,9 @@
 			}
 		}
 
-		// And now the frustum, with the lean-in the search asked for.
+		// And now the frustum. The search does not touch it: see the note above.
 		if (zoom <= 0) {
-			frustum = pulled * (1 - push * T.searchPush);
+			frustum = pulled;
 			world.applyFrustum(frustum);
 		}
 
@@ -314,10 +397,14 @@
 			if (!zoomLatched) {
 				zoomLatched = true;
 				landFrustum = landingFrustum();
+				// The answer's pane is six units off the origin, and at the landing
+				// pose it is square to the camera — so that offset is pure depth.
+				// Frame the fall AT that plane or it lands at the wrong size.
+				world.setFocus(landingDepth());
 			}
-			// Accelerates away from rest, then eases onto the final frame.
-			const z = easeInOutPower(zoom, T.zoomPower);
-			frustum = lerp(ICOSA.frustum, landFrustum, z);
+			// ONE symmetric ease, on the whole scene, and nothing in it staggered.
+			const z = easeInOutCubic(zoom);
+			frustum = lerp(rest, landFrustum, z);
 			world.applyFrustum(frustum);
 
 			// Everything that is not the answer gets out of the way.
@@ -329,10 +416,12 @@
 				if (i === target) pane.setLineDim(1 - smoothstep(0.15, 0.7, z));
 				else pane.setDim(fade);
 			});
-			// The depth parallax is a transient felt DURING the move — the bed
-			// rushes past first, then the desk, then the screen — and relaxes so
-			// the resting frame lands flat.
-			panes[target]?.getRoom?.()?.setZoomProgress?.(Math.sin(z * Math.PI));
+			// And the room does NOT come apart on the way in. Its layers used to
+			// separate in depth as the camera fell — the bed first, then the desk,
+			// then the screen — which is a nice effect and the wrong one: it pulls
+			// the room to pieces at the exact moment it is supposed to become a
+			// place. It goes in flat, as one thing.
+			panes[target]?.getRoom?.()?.setZoomProgress?.(0);
 			flare.set(1 - smoothstep(0.05, 0.6, z));
 			publishMonitor();
 		} else {

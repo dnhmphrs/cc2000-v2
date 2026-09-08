@@ -62,12 +62,15 @@ void main() {
 	// through the search; here it only lifts the ruling as the machine works.
 	float burn = clamp(mouse.x * 1.4, 0.0, 1.0);
 
+	// uFade rules the paper ON. At 0 this is the bare void, which is exactly the
+	// frame the fly-in hands over — so the conception opens on black and the
+	// blueprint arrives under the wave rather than with it.
 	vec3 col = color1;
-	col += color2 * fine * (0.03 + burn * 0.03) * reach;
-	col += color2 * coarse * (0.075 + burn * 0.05) * reach;
-	col += color2 * cross * 0.06 * reach;
-	col += color2 * ticks * 0.34;
-	col += color2 * pool * 0.016;
+	col += color2 * fine * (0.03 + burn * 0.03) * reach * uFade;
+	col += color2 * coarse * (0.075 + burn * 0.05) * reach * uFade;
+	col += color2 * cross * 0.06 * reach * uFade;
+	col += color2 * ticks * 0.34 * uFade;
+	col += color2 * pool * 0.016 * uFade;
 
 	gl_FragColor = vec4(col, 1.0);
 }
