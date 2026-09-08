@@ -36,22 +36,16 @@
 	// where there used to be one bloom, and it is the difference between a
 	// machine calculating and a slideshow.
 	//
-	// The search is stepped, not continuous: turn a decade to camera, look at it,
-	// turn to the next, and the last turn lands on the answer. The point is not
-	// to fake a search — it is that each turn shows another decade's artwork,
-	// which is otherwise built and never seen.
+	// The search is stepped, not continuous: turn a decade SQUARE to the camera,
+	// look at it, turn to the next, and the last turn lands on the answer. Every
+	// step locks face-on, and the route is the direct arc — the shortest rotation
+	// between two poses, taken firmly.
 	//
-	// The intermediate turns hold an OBLIQUE attitude and only the answer's turn
-	// comes square. Squaring up four times over spends the one move that should
-	// mean "this is the one", and the rooms read better as faces of a solid than
-	// as slides anyway.
-	//
-	// Each turn takes a CURVED route, not the shortest arc: a control pose off to
-	// one side of the direct path, and two nested slerps tracing a quadratic
-	// Bézier through it. The side alternates, so the frame swings one way and
-	// then the other across the search instead of pivoting flatly four times.
-	// Config: searchBow is how far it bows, searchEase how hard it accelerates
-	// out of one decade and settles into the next.
+	// It was tried the other way, holding an oblique attitude and only squaring
+	// up for the answer. It reads as drift. The whole point of the scene is that a
+	// machine is examining candidates, and a machine turns a thing to face you and
+	// stops: the precision IS the drama, and a bowed route through a control pose
+	// is a flourish where a lock-on should be.
 	//
 	// Like the conception, every value here is a pure function of scene progress
 	// — nothing integrates dt — so the scene can be reset or re-entered without
@@ -127,13 +121,9 @@
 		const pool = preferred.length ? preferred : candidates;
 		target = shuffle(pool)[0].i;
 		searchOrder = [...previsits(candidates), target];
-		// Every turn but the last holds the oblique attitude. The answer is the
-		// only one that comes square to the camera, so squaring up IS the arrival
-		// rather than something that has already happened four times over.
-		const last = searchOrder.length - 1;
-		searchQuats = searchOrder.map((i, k) =>
-			k === last ? landingQuatFor(i) : OBLIQUE.clone().multiply(landingQuatFor(i))
-		);
+		// Every turn lands square. The answer's is the last of them, and what makes
+		// it the arrival is the fall that follows it, not a different attitude.
+		searchQuats = searchOrder.map((i) => landingQuatFor(i));
 		measured = true;
 	}
 
@@ -151,27 +141,9 @@
 			.slice(0, Math.max(0, T.searchSteps - 1));
 	}
 
-	// Applied on top of a landing rotation, in world space, to knock it off
-	// square by ICOSA.searchOblique.
-	const OBLIQUE = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.searchOblique));
-
 	// Scratch for handing the frame's attitude to the backdrop shader as a mat3.
 	const ROT4 = new THREE.Matrix4();
 	const ROT3 = new THREE.Matrix3();
-
-	// Scratch for the curved route between decades. Reused rather than allocated,
-	// because this runs every frame of the search.
-	const BOW = new THREE.Quaternion();
-	const via = new THREE.Quaternion();
-	const legA = new THREE.Quaternion();
-	const legB = new THREE.Quaternion();
-	// Which way each turn bows. Four axes, so no two turns in a run arc the same.
-	const BOW_AXES = [
-		new THREE.Vector3(0, 1, 0),
-		new THREE.Vector3(1, 0, 0.3).normalize(),
-		new THREE.Vector3(0, 0, 1),
-		new THREE.Vector3(-0.5, 1, 0.3).normalize()
-	];
 
 	// The rotation that puts a pane's artwork square to the camera.
 	function landingQuatFor(i) {
@@ -219,11 +191,10 @@
 		world.setLineOpacity(1);
 		world.setGrow(1);
 		world.setCage(0);
-		world.construction.show(null);
+		world.construction.show(false);
 		// The rim picks up exactly where the conception left it and thins away
 		// from there. The frame is NOT touched: what turns here is the same
 		// wireframe that just drew itself, at the same weight.
-		world.egg.setCore(0);
 		world.egg.setShell(ICOSA.shellSolid);
 		world.egg.group.scale.setScalar(1);
 		world.camera.position.set(...ICOSA.camPos);
@@ -269,7 +240,9 @@
 
 		// The cage the search happens inside.
 		world.setCage(
-			smoothstep(0, 1, span(p, T.cageIn)) * (zoom > 0 ? 1 - smoothstep(0, 0.4, zoom) : 1)
+			smoothstep(0, 1, span(p, T.cageIn)) *
+				T.cagePeak *
+				(zoom > 0 ? 1 - smoothstep(0, 0.4, zoom) : 1)
 		);
 
 		// The sphere stays — it is what the frame is held inside — but it thins so
@@ -303,15 +276,9 @@
 			const from = step === 0 ? searchFrom : searchQuats[step - 1];
 			const to = searchQuats[step];
 
-			// The control pose: halfway along the direct arc, then rolled off it.
-			BOW.setFromAxisAngle(BOW_AXES[step % BOW_AXES.length], T.searchBow * (step % 2 ? -1 : 1));
-			via.copy(from).slerp(to, 0.5).premultiply(BOW);
-
-			// Quadratic Bezier on the sphere of rotations. Both ends are still
-			// exactly `from` and `to`; only the route between them is bent.
-			legA.copy(from).slerp(via, turn);
-			legB.copy(via).slerp(to, turn);
-			world.frame.quaternion.copy(legA).slerp(legB, turn);
+			// The direct arc, which is the shortest rotation carrying one pose to
+			// the other, taken firmly and stopped dead.
+			world.frame.quaternion.copy(from).slerp(to, turn);
 
 			// The LOOK. Most of a slot is the turn onto that decade; what is left is
 			// the pause on it, and during that pause the other five step back so the
@@ -443,7 +410,7 @@
 	}
 
 	export function render(r) {
-		r.render(world.scene, world.camera);
+		world.render(r);
 	}
 
 	export function remeasureMonitor() {
@@ -455,6 +422,14 @@
 		rest = restFrustum(window.innerWidth, window.innerHeight);
 		world.applyFrustum(frustum);
 		panes.forEach((pane) => pane && pane.setPortrait(get(aspect) === 'portrait'));
+	}
+
+	// Jump to a fraction of the scene's own duration, exactly. Everything here is
+	// a pure function of progress, so the frame this draws IS the frame the run
+	// would have drawn at that moment. Used by the ?at= scrub — config/dev.js.
+	export function seek(v) {
+		t = v * T.duration;
+		update(0);
 	}
 
 	export function reset() {

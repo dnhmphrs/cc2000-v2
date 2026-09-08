@@ -1,66 +1,32 @@
 import * as THREE from 'three';
-import { VERTICES, RECTANGLES, CIRCUMRADIUS } from '../geometry/icosahedron';
+import { VERTICES, RECTANGLES, CIRCUMRADIUS, PHI } from '../geometry/icosahedron';
 import { ICOSA_INK } from '$lib/config';
-import { growLineMaterial, grower, segmentAttributes, stroke, ring } from './ink';
+import { lineMaterial, dotMaterial, grower, segmentAttributes, stroke, ring } from './materials';
 
 // ── The construction ─────────────────────────────────────────────────────────
-// Everything the conception draws that is NOT the icosahedron itself. Three
-// variants, built side by side and all hidden until one is asked for, because
-// they are alternatives to be flipped between rather than a sequence — see
-// config/dev.js CONCEPTION and scenes/Conception.svelte.
+// The derivation the conception performs, and nothing else — the icosahedron
+// itself is world/lattice.js.
 //
-//   construct   the derivation. A circle, the pentagon in it, the pentagram
-//               that IS phi, the three golden rectangles read off that ratio,
-//               and the two of them that fold up out of the page.
-//   strike      the impact. A singularity, twelve vertices thrown out of it on
-//               trails, and the edges closing between them.
-//   divide      cleavage. One cell, then two, then four, then twelve, and the
-//               twelve are where the vertices are.
+// It is an actual proof, not a decoration, and every length in it is exact:
 //
-// All three are built in the icosahedron's own RAW coordinates, so every
-// vertex the construction arrives at is exactly a vertex of the frame that
-// follows it. Nothing is approximated to look right; it lands on the solid
-// because it is the solid.
+//   the CIRCLE      the icosahedron's own circumcircle, radius √(1+φ²).
+//   the PENTAGON    regular, inscribed in it. Side s = 2R·sin36° = √5.
+//   the PENTAGRAM   its five diagonals. d = 2R·sin72° = √5·φ, so d/s IS φ —
+//                   this is where the number comes from, and the only place in
+//                   the run it is derived rather than asserted.
+//   the RATIO BAR   s and d laid end to end under the figure with the ONE scale
+//                   2/√5 applied to both. That takes them to exactly 2 and 2φ,
+//                   which are exactly the sides of the icosahedron's golden
+//                   rectangle. Nothing is fudged to make it land.
+//   the RECTANGLES  three of them, in that ratio, flat and stacked in the page.
+//   the FOLD        two stand up into the planes perpendicular to the first, and
+//                   their twelve corners are the twelve vertices.
+//
+// All of it is built in the icosahedron's own RAW coordinates, so every point
+// the construction arrives at is a point of the solid. It lands on the shape
+// because it IS the shape.
 //
 // This file BUILDS. Conception.svelte MOVES.
-
-// A soft additive dot. Twelve of these are the vertices in two of the three
-// variants, and they are the brightest thing on screen when they land.
-function dotMaterial(color, size) {
-	return new THREE.ShaderMaterial({
-		transparent: true,
-		depthWrite: false,
-		blending: THREE.CustomBlending,
-		blendSrc: THREE.OneFactor,
-		blendDst: THREE.OneFactor,
-		blendEquation: THREE.AddEquation,
-		uniforms: {
-			uColor: { value: new THREE.Color(color) },
-			uOpacity: { value: 0 },
-			uSize: { value: size }
-		},
-		vertexShader: `
-			uniform float uSize;
-			void main() {
-				vec4 mv = modelViewMatrix * vec4(position, 1.0);
-				gl_PointSize = uSize;
-				gl_Position = projectionMatrix * mv;
-			}
-		`,
-		fragmentShader: `
-			uniform vec3 uColor;
-			uniform float uOpacity;
-			void main() {
-				vec2 d = gl_PointCoord - 0.5;
-				float r = length(d) * 2.0;
-				// A hard little core in a soft halo — a drawn point, not a blur.
-				float a = (exp(-r * r * 4.0) * 0.55 + (1.0 - smoothstep(0.22, 0.34, r)) * 0.9);
-				a *= uOpacity;
-				gl_FragColor = vec4(uColor * a, a);
-			}
-		`
-	});
-}
 
 const v3 = (i) => new THREE.Vector3(...VERTICES[i]);
 
@@ -78,45 +44,65 @@ export function createConstruction() {
 		return o;
 	}
 
-	// ── construct: the derivation ────────────────────────────────────────────
-	const cGroup = new THREE.Group();
-	cGroup.visible = false;
-	group.add(cGroup);
+	// The figure is drawn FLAT and face-on for its whole life, so depth shading
+	// would only dim it unevenly for no reason.
+	function flatInk(color, opacity = 1) {
+		const m = keep(lineMaterial(color, opacity));
+		m.uniforms.uBack.value = 1;
+		return m;
+	}
 
 	const X = new THREE.Vector3(1, 0, 0);
 	const Y = new THREE.Vector3(0, 1, 0);
 
-	// The circumcircle, drawn by a pen going round it once. Radius is the real
-	// circumradius, so the twelve vertices land exactly on it.
-	const circleMat = keep(growLineMaterial(ICOSA_INK.line, 1));
-	circleMat.uniforms.uBack.value = 1; // flat and face-on; depth shading would only dim it
+	// ── The circle ───────────────────────────────────────────────────────────
+	// Drawn by a pen going round it once. The radius is the real circumradius, so
+	// the twelve vertices land exactly on it.
+	const circleMat = flatInk(ICOSA_INK.line);
 	const circle = track(
 		stroke(
-			ring(X.clone().multiplyScalar(CIRCUMRADIUS), Y.clone().multiplyScalar(CIRCUMRADIUS), 160),
+			ring(X.clone().multiplyScalar(CIRCUMRADIUS), Y.clone().multiplyScalar(CIRCUMRADIUS), 192),
 			circleMat,
 			true
 		)
 	);
 	const growCircle = grower(circleMat, 0);
-	cGroup.add(circle);
+	group.add(circle);
 
-	// The regular pentagon inscribed in it, and then the pentagram inside that.
-	// This is not decoration: the ratio of a pentagram's chord to the pentagon's
-	// side IS phi, and phi is the only number the rest of this scene needs.
+	// The compass: an arm from the centre to the pen, and a bright point at the
+	// tip. A growing arc on its own is a line appearing; an arm swinging round is
+	// a tool being used, and the first third of this scene is otherwise very
+	// quiet.
+	const armMat = flatInk(ICOSA_INK.inner, 1);
+	const armGeo = new THREE.BufferGeometry();
+	const armPos = new Float32Array(6);
+	armGeo.setAttribute('position', new THREE.BufferAttribute(armPos, 3));
+	segmentAttributes(armGeo, 1, () => 0);
+	armMat.uniforms.uGrow.value = armMat.uniforms.uSpan.value;
+	const arm = track(new THREE.LineSegments(armGeo, armMat));
+	geos.push(armGeo);
+	group.add(arm);
+
+	const penMat = keep(dotMaterial(ICOSA_INK.bright, 9));
+	const penGeo = new THREE.BufferGeometry();
+	const penPos = new Float32Array(3);
+	penGeo.setAttribute('position', new THREE.BufferAttribute(penPos, 3));
+	geos.push(penGeo);
+	group.add(new THREE.Points(penGeo, penMat));
+
+	// ── The pentagon, and the pentagram inside it ────────────────────────────
 	const pentPts = Array.from({ length: 5 }, (_, i) => {
 		const a = Math.PI / 2 + (i * Math.PI * 2) / 5;
 		return new THREE.Vector3(Math.cos(a), Math.sin(a), 0).multiplyScalar(CIRCUMRADIUS);
 	});
-	const pentMat = keep(growLineMaterial(ICOSA_INK.pentagon, 1));
-	pentMat.uniforms.uBack.value = 1;
+	const pentMat = flatInk(ICOSA_INK.pentagon);
 	const pentagon = track(stroke(pentPts, pentMat, true));
 	const growPentagon = grower(pentMat, 0);
-	cGroup.add(pentagon);
+	group.add(pentagon);
 
-	const starMat = keep(growLineMaterial(ICOSA_INK.inner, 1));
-	starMat.uniforms.uBack.value = 1;
-	// One continuous stroke: 0-2-4-1-3-0 is the pentagram drawn without lifting
-	// the pen, which is the only way to draw it that reads as one gesture.
+	const starMat = flatInk(ICOSA_INK.inner);
+	// 0-2-4-1-3-0 is the pentagram drawn without lifting the pen, which is the
+	// only way to draw it that reads as one gesture.
 	const star = track(
 		stroke(
 			[0, 2, 4, 1, 3].map((i) => pentPts[i]),
@@ -125,11 +111,41 @@ export function createConstruction() {
 		)
 	);
 	const growStar = grower(starMat, 0);
-	cGroup.add(star);
+	group.add(star);
 
-	// The three golden rectangles. Each is built at its FINAL position and then
-	// laid flat into the page by its holder, so the fold is one rotation back to
-	// zero and every corner is exactly an icosahedron vertex when it gets there.
+	// ── The ratio bar ────────────────────────────────────────────────────────
+	// The pentagon's side and the pentagram's diagonal, laid end to end below the
+	// figure with the one factor 2/√5 applied to both — which takes them to
+	// exactly 2 and 2φ, the sides of the rectangle that draws next.
+	//
+	// This is the hinge of the whole derivation and it is four segments long.
+	const side = pentPts[0].distanceTo(pentPts[1]);
+	const diag = pentPts[0].distanceTo(pentPts[2]);
+	const K = 2 / side; // side → 2, and therefore diagonal → 2φ
+	const barY = -CIRCUMRADIUS * 1.13;
+	const barX0 = -((side + diag) * K) / 2;
+	const marks = [barX0, barX0 + side * K, barX0 + (side + diag) * K];
+
+	const barMat = flatInk(ICOSA_INK.line);
+	const barPos = [];
+	barPos.push(marks[0], barY, 0, marks[1], barY, 0);
+	barPos.push(marks[1], barY, 0, marks[2], barY, 0);
+	const tick = CIRCUMRADIUS * 0.075;
+	marks.forEach((x) => barPos.push(x, barY - tick, 0, x, barY + tick, 0));
+	const barGeo = new THREE.BufferGeometry();
+	barGeo.setAttribute('position', new THREE.Float32BufferAttribute(barPos, 3));
+	// Left to right, one length after the other, so it reads as a measurement
+	// being taken rather than a diagram switching on.
+	const barSpread = segmentAttributes(barGeo, barPos.length / 6, (i) => (i < 2 ? i : 2 + i * 0.01));
+	const growBar = grower(barMat, barSpread);
+	const bar = track(new THREE.LineSegments(barGeo, barMat));
+	geos.push(barGeo);
+	group.add(bar);
+
+	// ── The three rectangles ─────────────────────────────────────────────────
+	// Each is built at its FINAL position and then laid flat into the page by its
+	// holder, so the fold is one rotation back to zero and every corner is
+	// exactly an icosahedron vertex when it gets there.
 	//
 	// Rectangle 0 is already in the page. Rectangle 1 lies in the YZ plane, so a
 	// quarter turn about Y puts it in the page; rectangle 2 lies in XZ, so a
@@ -139,127 +155,46 @@ export function createConstruction() {
 		{ axis: 'y', from: -Math.PI / 2 },
 		{ axis: 'x', from: Math.PI / 2 }
 	];
-	const rectMat = keep(growLineMaterial(ICOSA_INK.line, 1));
+	const rectMat = keep(lineMaterial(ICOSA_INK.line, 1));
 	const rects = RECTANGLES.map((r, i) => {
 		const holder = new THREE.Object3D();
-		cGroup.add(holder);
-		const pts = r.indices.map((k) => v3(k));
-		const line = track(stroke(pts, rectMat, true));
-		holder.add(line);
+		group.add(holder);
+		holder.add(track(stroke(r.indices.map(v3), rectMat, true)));
 		return { holder, ...FOLD[i] };
 	});
 	const growRects = grower(rectMat, 0);
 
-	// ── strike: the impact ───────────────────────────────────────────────────
-	const sGroup = new THREE.Group();
-	sGroup.visible = false;
-	group.add(sGroup);
-
-	// Twelve trails, centre to vertex, in one draw call. All start together, so
-	// this is a burst rather than a queue.
-	const trailPos = [];
-	VERTICES.forEach((v) => trailPos.push(0, 0, 0, ...v));
-	const trailGeo = new THREE.BufferGeometry();
-	trailGeo.setAttribute('position', new THREE.Float32BufferAttribute(trailPos, 3));
-	const trailMat = keep(growLineMaterial(ICOSA_INK.inner, 1));
-	trailMat.uniforms.uBack.value = 0.45;
-	const trailSpread = segmentAttributes(trailGeo, 12, () => 0);
-	const growTrails = grower(trailMat, trailSpread);
-	const trails = track(new THREE.LineSegments(trailGeo, trailMat));
-	geos.push(trailGeo);
-	sGroup.add(trails);
-
-	// The singularity, and the twelve it throws.
-	const sparkMat = keep(dotMaterial(ICOSA_INK.bright, 26));
-	const sparkGeo = new THREE.BufferGeometry();
-	sparkGeo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(3), 3));
-	geos.push(sparkGeo);
-	sGroup.add(new THREE.Points(sparkGeo, sparkMat));
-
-	// ── the twelve ───────────────────────────────────────────────────────────
-	// Shared by every variant, so it sits OUTSIDE all three: the impact throws
-	// them, the cleavage arrives at them, and the derivation strikes them all at
-	// once on the beat the scene is named after. Their own opacity is the only
-	// thing that decides whether they are there.
-	const flungMat = keep(dotMaterial(ICOSA_INK.bright, 12));
-	const flungGeo = new THREE.BufferGeometry();
-	const flungPos = new Float32Array(36);
-	flungGeo.setAttribute('position', new THREE.BufferAttribute(flungPos, 3));
-	geos.push(flungGeo);
-	group.add(new THREE.Points(flungGeo, flungMat));
-
-	// ── divide: cleavage ─────────────────────────────────────────────────────
-	const dGroup = new THREE.Group();
-	dGroup.visible = false;
-	group.add(dGroup);
-
-	// One unit circle, twelve placements. Twelve draw calls and no per-frame
-	// buffer writes at all — each cell is moved and scaled by its own matrix.
-	const cellGeo = new THREE.BufferGeometry();
-	{
-		const pts = ring(X, Y, 72);
-		const flat = [];
-		for (let i = 0; i < pts.length; i++) {
-			const a = pts[i];
-			const b = pts[(i + 1) % pts.length];
-			flat.push(a.x, a.y, a.z, b.x, b.y, b.z);
-		}
-		cellGeo.setAttribute('position', new THREE.Float32BufferAttribute(flat, 3));
-		segmentAttributes(cellGeo, pts.length, () => 0);
-		geos.push(cellGeo);
-	}
-	const cellMat = keep(growLineMaterial(ICOSA_INK.line, 1));
-	cellMat.uniforms.uBack.value = 0.5;
-	// Always fully drawn: what animates a cell is where it is and how big, not
-	// how much of it has been inked.
-	cellMat.uniforms.uGrow.value = cellMat.uniforms.uSpan.value;
-
-	// Cleavage in three waves — 2, then 4, then 6 — so it reads as doubling
-	// rather than as twelve things appearing. `parent` is where each one is born.
-	const WAVE = [0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2];
-	const PARENT = [-1, -1, 0, 1, 0, 1, 2, 3, 4, 5, 0, 1];
-	const cells = VERTICES.map((v, i) => {
-		const o = new THREE.Object3D();
-		o.add(new THREE.LineSegments(cellGeo, cellMat));
-		dGroup.add(o);
-		return {
-			o,
-			target: new THREE.Vector3(...v),
-			wave: WAVE[i],
-			parent: PARENT[i],
-			// Each cell's plane faces the camera, but tipped a little by its own
-			// axis, so twelve discs do not read as twelve identical stickers.
-			tip: new THREE.Vector3(...v).normalize()
-		};
-	});
-
-	const nucleusMat = keep(dotMaterial(ICOSA_INK.bright, 10));
-	const nucleusGeo = new THREE.BufferGeometry();
-	const nucleusPos = new Float32Array(36);
-	nucleusGeo.setAttribute('position', new THREE.BufferAttribute(nucleusPos, 3));
-	geos.push(nucleusGeo);
-	dGroup.add(new THREE.Points(nucleusGeo, nucleusMat));
-
-	// ── Setters ──────────────────────────────────────────────────────────────
-	const scratch = new THREE.Vector3();
-	const Z = new THREE.Vector3(0, 0, 1);
+	// ── The twelve ───────────────────────────────────────────────────────────
+	// The corners, struck all at once on the beat the figure closes.
+	const cornerMat = keep(dotMaterial(ICOSA_INK.bright, 12));
+	const cornerGeo = new THREE.BufferGeometry();
+	cornerGeo.setAttribute('position', new THREE.Float32BufferAttribute(VERTICES.flat(), 3));
+	geos.push(cornerGeo);
+	group.add(new THREE.Points(cornerGeo, cornerMat));
 
 	return {
 		group,
+		// The exact numbers, for anyone checking the claim in the header.
+		phi: PHI,
+		ratio: { side: side * K, diagonal: diag * K },
 
-		// Only one variant is ever on screen; the other two are not in the frame
-		// at all, so they cost nothing but the memory they were built in.
-		show(which) {
-			cGroup.visible = which === 'construct';
-			sGroup.visible = which === 'strike';
-			dGroup.visible = which === 'divide';
-		},
-
-		// ── construct ────────────────────────────────────────────────────────
 		setCircle(v, o = 1) {
 			growCircle(v);
 			circleMat.uniforms.uOpacity.value = o;
 			circle.visible = v > 0.001 && o > 0.004;
+		},
+		// The compass arm at angle `a` radians, `o` bright. The pen rides on the
+		// circle it is drawing.
+		setCompass(a, o) {
+			const x = Math.cos(a) * CIRCUMRADIUS;
+			const y = Math.sin(a) * CIRCUMRADIUS;
+			armPos.set([0, 0, 0, x, y, 0]);
+			penPos.set([x, y, 0]);
+			armGeo.attributes.position.needsUpdate = true;
+			penGeo.attributes.position.needsUpdate = true;
+			armMat.uniforms.uOpacity.value = o * 0.65;
+			penMat.uniforms.uOpacity.value = o;
+			arm.visible = o > 0.004;
 		},
 		setPentagon(v, o = 1) {
 			growPentagon(v);
@@ -270,6 +205,11 @@ export function createConstruction() {
 			growStar(v);
 			starMat.uniforms.uOpacity.value = o;
 			star.visible = v > 0.001 && o > 0.004;
+		},
+		setBar(v, o = 1) {
+			growBar(v);
+			barMat.uniforms.uOpacity.value = o;
+			bar.visible = v > 0.001 && o > 0.004;
 		},
 		setRects(v, o = 1) {
 			growRects(v);
@@ -285,83 +225,23 @@ export function createConstruction() {
 				else if (r.axis === 'x') r.holder.rotation.x = r.from * (1 - k);
 			});
 		},
-
-		// ── strike ───────────────────────────────────────────────────────────
-		setSpark(o) {
-			sparkMat.uniforms.uOpacity.value = o;
-		},
-		setTrails(v, o = 1) {
-			growTrails(v);
-			trailMat.uniforms.uOpacity.value = o;
-			trails.visible = v > 0.001 && o > 0.004;
-		},
-		// How far the twelve have been thrown, 0 at the centre and 1 home.
-		setThrow(k, o = 1) {
-			for (let i = 0; i < 12; i++) {
-				flungPos[i * 3] = VERTICES[i][0] * k;
-				flungPos[i * 3 + 1] = VERTICES[i][1] * k;
-				flungPos[i * 3 + 2] = VERTICES[i][2] * k;
-			}
-			flungGeo.attributes.position.needsUpdate = true;
-			flungGeo.computeBoundingSphere();
-			flungMat.uniforms.uOpacity.value = o;
-		},
-
-		// ── divide ───────────────────────────────────────────────────────────
-		// `k` walks the whole cleavage: 0 is one cell at the centre, 1 is twelve
-		// of them sitting on the vertices. Each wave is a third of it, and every
-		// cell travels out of its own parent.
-		setCleave(k, r0, o) {
-			cellMat.uniforms.uOpacity.value = o;
-			for (let i = 0; i < cells.length; i++) {
-				const c = cells[i];
-				const local = Math.min(1, Math.max(0, k * 3 - c.wave));
-				const born = local > 0;
-				c.o.visible = born && o > 0.004;
-				if (!born) continue;
-
-				const from = c.parent < 0 ? scratch.set(0, 0, 0) : cells[c.parent].target;
-				// Its parent's own position at this moment, so the split starts
-				// where the cell it came out of actually is.
-				const px = c.parent < 0 ? 0 : Math.min(1, Math.max(0, k * 3 - cells[c.parent].wave));
-				const start = from.clone().multiplyScalar(px);
-				c.o.position.copy(start).lerp(c.target, local * local * (3 - 2 * local));
-
-				// They shrink as they divide — twelve cells out of one, and the one
-				// was the biggest thing on screen.
-				const s = r0 * (1 - 0.62 * (c.wave + local) * 0.33);
-				c.o.scale.setScalar(Math.max(0.02, s));
-				c.o.quaternion.setFromUnitVectors(Z, c.tip);
-			}
-		},
-		setNuclei(k, o) {
-			for (let i = 0; i < 12; i++) {
-				const c = cells[i];
-				const local = Math.min(1, Math.max(0, k * 3 - c.wave));
-				const px = c.parent < 0 ? 0 : Math.min(1, Math.max(0, k * 3 - cells[c.parent].wave));
-				const from =
-					c.parent < 0 ? scratch.set(0, 0, 0) : cells[c.parent].target.clone().multiplyScalar(px);
-				const at = from.clone().lerp(c.target, local * local * (3 - 2 * local));
-				nucleusPos[i * 3] = at.x;
-				nucleusPos[i * 3 + 1] = at.y;
-				nucleusPos[i * 3 + 2] = at.z;
-			}
-			nucleusGeo.attributes.position.needsUpdate = true;
-			nucleusGeo.computeBoundingSphere();
-			nucleusMat.uniforms.uOpacity.value = o;
+		setCorners(o) {
+			cornerMat.uniforms.uOpacity.value = o;
 		},
 
 		reset() {
 			this.setCircle(0, 1);
+			this.setCompass(Math.PI / 2, 0);
 			this.setPentagon(0, 1);
 			this.setStar(0, 1);
+			this.setBar(0, 1);
 			this.setRects(0, 1);
 			this.setFold(0);
-			this.setSpark(0);
-			this.setTrails(0, 1);
-			this.setThrow(0, 0);
-			this.setCleave(0, 1, 0);
-			this.setNuclei(0, 0);
+			this.setCorners(0);
+		},
+
+		show(on) {
+			group.visible = on;
 		},
 
 		dispose() {

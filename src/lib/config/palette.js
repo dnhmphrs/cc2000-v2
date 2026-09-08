@@ -46,36 +46,42 @@ export const MACHINE = {
 	orange: '#e8802a'
 };
 
-// ── The egg ──────────────────────────────────────────────────────────────────
-// The yolk is a painted vertical ramp (a sphere's UVs wrap in u, so anything
-// not symmetric across the texture's edges seams pole to pole); the shell is a
-// view-space rim. Neither is lit, because the two cameras that draw it project
-// differently and a lit sphere would not match across the cut.
+// ── The ovum ─────────────────────────────────────────────────────────────────
+// A WIRE GLOBE, not a rendered egg. Pale blue line-work with three gold great
+// circles round it, and a silhouette a few percent thick so it occludes what is
+// behind it. Nothing about it is lit or glossy: it is what an instrument would
+// draw, which is the whole register of this site.
 //
-// It is seen on the deep blue, so it is warm-white falling to a blue shadow —
-// which is what makes it read as lit from above in air that is itself blue.
+// The three gold circles are the three coordinate planes — the same three the
+// golden rectangles lie in — so the thing being swum at already carries the
+// figure it becomes.
 export const EGG = {
-	coreStops: ['#ffffff', '#eef3ff', '#b3c4ec', '#6274ad'],
-	shell: 0xdfe8ff,
-	rim: 0xffffff,
-	rimPower: 1.5,
-	// How wet it is. The key and the specular are worked out from the view
-	// normal in world/egg.js; this is only how much of them there is.
-	key: 1,
-	gloss: 26
+	wire: 0x6f8fce,
+	rings: 0xffc95e,
+	// How much brighter the three great circles are than the cage.
+	ringGain: 1.9,
+	// The silhouette.
+	skin: 0x4a6bb0,
+	rim: 0xcfe0ff,
+	rimPower: 2.6,
+	// How many lines the cage is made of. Coarse on purpose — this is a
+	// wireframe, and every extra line is one more thing between you and the
+	// shape.
+	meridians: 9,
+	parallels: 7
 };
 
-// ── The sperm ────────────────────────────────────────────────────────────────
-// Not a lit model — a wireframe hologram, additively blended, with a scanline
-// running through it and a fresnel rim. It is the one thing in the fly-in that
-// is brighter than the air, and it has to stay legible against a fog that is
-// swallowing everything else.
+// ── The sperm, and the air it is in ──────────────────────────────────────────
+// A wireframe hologram: the mesh IS the image. Additive, with the silhouette
+// lifting toward white and one band travelling along its length. It is the one
+// thing in the fly-in brighter than the air, and it has to stay legible against
+// a fog that is swallowing everything else.
 export const HOLO = {
-	body: 0xdbe6ff,
+	body: 0x9dbcf0,
 	rim: 0xffffff,
-	// The rivals, further out and losing. Dimmer and cooler, so the one you are
-	// riding with is unambiguously the one in front.
-	rival: 0x6d86c8
+	// The debris streaming past the lens, and the glow the ovum comes up out of.
+	mote: 0xc3d6ff,
+	halo: 0x5f79c4
 };
 
 // ── The icosahedron ──────────────────────────────────────────────────────────

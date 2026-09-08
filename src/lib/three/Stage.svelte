@@ -3,7 +3,7 @@
 	import { get } from 'svelte/store';
 	import * as THREE from 'three';
 	import { scene as sceneStore, sceneTone, monitorRect, backdrop } from '$lib/store/store';
-	import { CANVAS_FADE, FLASH_HOLD, FLASH_FALL, clamp01, DEV } from '$lib/config';
+	import { CANVAS_FADE, FLASH_HOLD, FLASH_FALL, clamp01, DEV, DEV_AT } from '$lib/config';
 	import { createTunnel } from './world/tunnel';
 	import { createLattice } from './world/lattice';
 	import { advance } from '$lib/scenes/director';
@@ -150,7 +150,11 @@
 		// has pinned this one, in which case it simply runs again. Looping here
 		// rather than in the director keeps the director describing the site's
 		// real control flow and nothing else.
-		if (active.update(dt)) {
+		//
+		// ?at= holds the scene at one progress instead of running it, which is
+		// exact because every 3D scene is a pure function of its own progress.
+		if (DEV.on && DEV_AT != null) active.seek(DEV_AT);
+		else if (active.update(dt)) {
 			if (DEV.on && DEV.only === name) active.enter();
 			else advance(name);
 		}
