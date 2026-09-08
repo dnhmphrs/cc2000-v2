@@ -302,7 +302,7 @@
 						<dd>{readout}</dd>
 					</div>
 					<div>
-						<dt>resonance</dt>
+						<dt>how spicy do your parents like it?</dt>
 						<dd>{String($spicy).padStart(2, '0')} / 10</dd>
 					</div>
 					<div>
@@ -385,8 +385,8 @@
 				label="spicy"
 				min={1}
 				max={10}
-				low="sweet"
-				high="filthy"
+				low="spicy?"
+				high="how"
 				value={$spicy}
 				on:change={(e) => spicy.set(e.detail)}
 			/>
@@ -417,7 +417,7 @@
 			<div class="ctl">
 				<span class="lab">how spicy do you like it?</span>
 				<input type="range" bind:value={$spicy} min="1" max="10" aria-label="spicy" />
-				<div class="ends"><span>sweet</span><span>filthy</span></div>
+				<div class="ends"><span>how</span><span>spicy?</span></div>
 			</div>
 		</div>
 	{/if}
