@@ -204,21 +204,19 @@ export function createTunnel() {
 	scene.add(motes.lines);
 
 	// ── The sperm ────────────────────────────────────────────────────────────
-	// ONE, and it is built as THREE nested groups, because that is what V1's
-	// rotation actually is:
+	// ONE, riding a couple of units in front of the lens, pointing AWAY, and
+	// ROLLING ABOUT ITS OWN LONG AXIS — which is the axis you are looking down.
+	// So what you see is the tail's curl whipping round, end-on, at one and a
+	// half turns a second. That is V1's move; see TUNNEL.spermOffset in
+	// config/space.js for why `position.y -= 0.695` in that file is a body being
+	// dropped ONTO the pivot rather than hung off it.
 	//
+	// Two groups:
 	//   sperm     where it is. Driven by FlyIn against the camera, not the world.
 	//   spinner   turns about z at ten radians a second, linear, forever.
-	//   arm       holds the model OFF that axis by the orbit radius.
 	//
-	// So the body ORBITS the axis of the lens while rolling about its own — a
-	// corkscrew, swinging across the frame and back out of it, all the way in.
-	// V1 wrote it as `sperm.position.y -= 0.695` on a pivot spun by
-	// `-elapsedTime * 10`, and the offset is the entire character of the move: a
-	// pure axial roll in its place is a prop turning on a spit.
-	//
-	// The radius is live (setOrbit) because it CLOSES across the run — wide while
-	// it is still overtaking you, tight once you are travelling together.
+	// and the model sits in the spinner, recentred, with the small eccentricity
+	// V1 has left over — thirteen percent of a body-width, which is the wobble.
 	//
 	// How big it reads is a fraction of the FRAME, not a scale factor on a model
 	// whose file we do not control: the mesh is normalised (centred on its own
@@ -226,7 +224,7 @@ export function createTunnel() {
 	// half-height at the riding distance. Measured ONCE, from the lens the scene
 	// opens on — recomputing it per frame would normalise the approach away.
 	const RIDE_HALF = TUNNEL.spermLead * Math.tan((TUNNEL.fovStart * Math.PI) / 360);
-	const bodyLength = TUNNEL.spermSpan * RIDE_HALF * 2;
+	const bodyHeight = TUNNEL.spermSpan * RIDE_HALF * 2;
 
 	const spermMaterial = holoMaterial({
 		ink: HOLO.body,
@@ -240,8 +238,6 @@ export function createTunnel() {
 
 	const sperm = new THREE.Group();
 	const spinner = new THREE.Group();
-	const arm = new THREE.Group();
-	spinner.add(arm);
 	sperm.add(spinner);
 	sperm.visible = false;
 	scene.add(sperm);
@@ -285,13 +281,21 @@ export function createTunnel() {
 		const box = new THREE.Box3().setFromObject(model);
 		const size = box.getSize(new THREE.Vector3());
 		model.position.sub(box.getCenter(new THREE.Vector3()));
-		// Normalised on the CROSS-SECTION, not the longest dimension. The body
-		// points down -Z — straight away from the camera — so its length is the one
-		// axis that is almost entirely foreshortened; sizing by it made the thing a
-		// third of the size it was asked to be. What `spermSpan` means is how much
-		// of the frame it covers, and that is x and y.
-		inner.scale.setScalar(bodyLength / Math.max(size.x, size.y));
-		arm.add(inner);
+		// Normalised on the CROSS-SECTION HEIGHT, not the longest dimension. The
+		// body points along z — straight away from the camera — so its length is
+		// the one axis that is almost entirely foreshortened; sizing by it made the
+		// thing a third of the size it was asked to be. What `spermSpan` means is
+		// how much of the frame it covers, and that is y.
+		//
+		// Then stretched along its own axis, because V1's (0.2, 0.4, 0.2) is twice
+		// as much along the body as across it and that is part of the silhouette.
+		const k = bodyHeight / size.y;
+		inner.scale.set(k, k, k * TUNNEL.spermStretch);
+		// And the wobble: what is left of V1's offset once the .glb's own +0.7 has
+		// been cancelled out of it. A fraction of the body's own width, so it
+		// scales with the framing.
+		inner.position.set(TUNNEL.spermOffset.x * bodyHeight, TUNNEL.spermOffset.y * bodyHeight, 0);
+		spinner.add(inner);
 	});
 
 	return {
@@ -349,11 +353,6 @@ export function createTunnel() {
 		getLead() {
 			return lead;
 		},
-		// The orbit radius, in HALF-HEIGHTS of the frame at that distance. V1's
-		// was 1.73 of them; this closes from wide to tight across the run.
-		setOrbit(halfHeights) {
-			arm.position.y = -halfHeights * RIDE_HALF;
-		},
 
 		resize() {
 			camera.aspect = window.innerWidth / window.innerHeight;
@@ -363,10 +362,9 @@ export function createTunnel() {
 		reset() {
 			this.setAir(AIR);
 			this.setFov(TUNNEL.fovStart);
-			this.setOrbit(TUNNEL.spermOrbit);
 			egg.setCoreRatio(TUNNEL.coreRatio);
 			egg.setCoreRimGain(0);
-			egg.setWave({ glow: 0, amp: 0, ripple: 0, relax: 0, phase: 0 });
+			egg.setWave({ grow: 0, glow: 0, amp: 0, ring: 0, phase: 0 });
 			camera.position.set(0, 0, TUNNEL.camStart);
 			camera.rotation.set(0, 0, 0);
 			this.setCamZ(TUNNEL.camStart);

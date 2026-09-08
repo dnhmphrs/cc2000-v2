@@ -100,14 +100,17 @@ export const LAYERS = [
 		opacity: 1.0,
 		port: { x: 0.0, y: -0.34, width: 1.08 }
 	},
+	// The bed is over on the RIGHT and it is not the whole floor: at full width,
+	// centred, it is a wall of duvet across the bottom third of every room and it
+	// buries the desk. Off to one side it is furniture in a bedroom.
 	{
 		key: 'bed',
 		depth: 0.16,
-		x: 0.0,
-		y: -0.74,
-		width: 1.1,
+		x: 0.46,
+		y: -0.72,
+		width: 0.66,
 		opacity: 1.0,
-		port: { x: 0.0, y: -0.74, width: 1.2 }
+		port: { x: 0.34, y: -0.74, width: 0.84 }
 	}
 ];
 

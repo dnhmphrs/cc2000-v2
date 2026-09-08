@@ -18,6 +18,7 @@
 	} from '$lib/store/store';
 	import { SCENES } from '$lib/config';
 	import { begin, settled } from './director';
+	import { windowY } from '$lib/config';
 	import { resolve } from '$lib/functions/answer';
 	import Dial from '$lib/components/Dial.svelte';
 	import Lever from '$lib/components/Lever.svelte';
@@ -108,27 +109,9 @@
 	let root;
 	let landed = false;
 
-	// Put the node back the way a fresh load leaves it. The flight writes three
-	// things inline and all three are the flight's, not the machine's: the fit
-	// transform, the origin it is taken about, and --edge.
-	//
-	// --edge is the one that matters. The corner radius is three times it, and
-	// dropping .cold eases that radius back out to square — so a landing that
-	// arrives while --edge is still at flight scale (the timer below is on the
-	// clock, the transition is on frames, and a slow device parts them) would
-	// bloom the corners on the way home instead of shaving 9px off them.
-	// Cleared first, the ease always starts from the 3px fallback.
-	function normalise(node) {
-		if (!node) return;
-		node.style.transform = '';
-		node.style.transformOrigin = '';
-		node.style.removeProperty('--edge');
-	}
-
 	function land() {
 		if (landed) return;
 		landed = true;
-		normalise(root);
 		booting = false;
 		realised = true;
 		settled();
@@ -173,34 +156,38 @@
 	// On-screen width of the chassis edge, in real pixels, at any scale.
 	const EDGE_PX = 3;
 
+	// The fit itself: the whole viewport painted into the glass rect, centred in
+	// the leftover — the monitor's shape and the viewport's are not the same, and
+	// a page pinned to the glass's corner reads as a mistake rather than a screen.
+	//
+	// It is remembered, because the LAUNCH has to start from it: the machine now
+	// lives in the monitor for good, so the way out of it is a warp out of the
+	// glass rather than a warp of a full-screen page.
+	let fitK = 1;
+	let fitX = 0;
+	let fitY = 0;
+
+	function fitTo(node, rect) {
+		if (!node || !rect) return;
+		const vw = window.innerWidth;
+		const vh = window.innerHeight;
+		fitK = Math.min(rect.width / vw, rect.height / vh);
+		fitX = rect.left + (rect.width - vw * fitK) / 2;
+		fitY = rect.top + (rect.height - vh * fitK) / 2;
+		node.style.transformOrigin = '0 0';
+		node.style.transform = `translate(${fitX}px, ${fitY}px) scale(${fitK})`;
+		// Undo the scale for the chassis edge, so it is the same number of real
+		// pixels wide at any size. See .calculator::after.
+		node.style.setProperty('--edge', `${(EDGE_PX / Math.max(fitK, 0.02)).toFixed(2)}px`);
+	}
+
 	function outOfMonitor(node, { rect }) {
 		if (!rect) return { duration: 0 };
 		node.style.transformOrigin = '0 0';
 		return {
 			duration: T.arrive * 1000,
 			tick: (t) => {
-				const live = get(monitorRect) ?? rect;
-				const vw = window.innerWidth;
-				const vh = window.innerHeight;
-				// Fit inside the glass whichever way round it is, and centre in the
-				// leftover — the monitor's shape and the viewport's are not the
-				// same, and a page pinned to the glass's corner reads as a mistake
-				// rather than as a screen.
-				const k = Math.min(live.width / vw, live.height / vh);
-				const x = live.left + (live.width - vw * k) / 2;
-				const y = live.top + (live.height - vh * k) / 2;
-				// Cleared outright at the end rather than left as an identity
-				// matrix: a transform on a fixed, full-viewport element is a
-				// containing block and a stacking context for everything inside it,
-				// and there is no reason to keep one once it has landed.
-				if (t === 1) {
-					normalise(node);
-				} else {
-					node.style.transform = `translate(${x}px, ${y}px) scale(${k})`;
-					// Undo the scale for the chassis edge, so it is the same number
-					// of real pixels wide the whole way home. See .calculator::after.
-					node.style.setProperty('--edge', `${(EDGE_PX / Math.max(k, 0.02)).toFixed(2)}px`);
-				}
+				fitTo(node, get(monitorRect) ?? rect);
 				// The end of the move IS the moment it comes on, so it is taken
 				// from here rather than from a timer that could drift off it.
 				if (t === 1) land();
@@ -209,15 +196,37 @@
 		};
 	}
 
+	// AND IT STAYS THERE. The loop used to finish by clearing the transform and
+	// going fullscreen, which threw away the room it had just spent nine seconds
+	// flying into. The machine ends the run sitting on the desk, in the monitor,
+	// with the bedroom round it — so the fit is kept live for as long as there is
+	// a glass to sit in, and only a resize ever moves it.
+	$: if (landed && arrivingFrom && root && $monitorRect) fitTo(root, $monitorRect);
+
 	// Into the lens. Real perspective, so the frame warps outward as it goes —
 	// being sucked in, rather than a picture being scaled up.
+	//
+	// It composes with the fit, because the machine is not full-screen any more:
+	// on a second run it is a picture inside a bedroom monitor, and the warp has
+	// to leave THAT rather than the viewport. Written about the window's own
+	// centre with explicit translates rather than a transform-origin, because the
+	// origin would have to apply to the fit as well and the fit is measured from
+	// the top-left of the page.
 	function intoLens(node) {
-		node.style.transformOrigin = '50% var(--win-y)';
+		node.style.transformOrigin = '0 0';
+		const ox = window.innerWidth / 2;
+		const oy = windowY(get(aspect)) * window.innerHeight;
+		const k = landed && arrivingFrom ? fitK : 1;
+		const x = landed && arrivingFrom ? fitX : 0;
+		const y = landed && arrivingFrom ? fitY : 0;
 		return {
 			duration: T.launch * 1000,
 			easing: cubicIn,
 			tick: (t, u) => {
-				node.style.transform = `perspective(760px) translateZ(${u * 700}px)`;
+				node.style.transform =
+					`translate(${x}px, ${y}px) scale(${k}) ` +
+					`translate(${ox}px, ${oy}px) perspective(760px) translateZ(${u * 700}px) ` +
+					`translate(${-ox}px, ${-oy}px)`;
 				node.style.opacity = String(1 - u * u * u);
 				calcZoom.set(1 + u);
 			}

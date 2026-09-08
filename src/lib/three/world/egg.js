@@ -252,22 +252,18 @@ export function createEgg(radius, opts = {}) {
 			rim.visible = o > 0.004;
 		},
 
-		// The wave. `glow` is how brightly it is drawn, `amp` how far it moves the
-		// skin (as a fraction of the core's radius), `ripple` the impact's
-		// envelope, `relax` the crossfade from the impact into the standing wave.
-		setWave({ glow = 0, amp = 0, ripple = 0, relax = 0, phase = null } = {}) {
+		// The wave. `grow` is how many of the six five-fold axes are in (0..6) and
+		// is the whole of the conception; `glow` is how brightly the field is
+		// drawn; `amp` how far it moves the skin, as a fraction of the core's
+		// radius; `ring` the amplitude of the mode's own oscillation as it settles.
+		setWave({ grow = 0, glow = 0, amp = 0, ring = 0, phase = null } = {}) {
 			if (!coreMat) return;
 			const u = coreMat.uniforms;
+			u.uGrow.value = grow;
 			u.uGlow.value = glow;
 			u.uAmp.value = amp;
-			u.uRipple.value = ripple;
-			u.uRelax.value = relax;
+			u.uRing.value = ring;
 			if (phase !== null) u.uPhase.value = phase;
-		},
-
-		// Where it was struck, as a direction in the core's own coordinates.
-		setEntry(v) {
-			coreMat?.uniforms.uEntry.value.copy(v).normalize();
 		},
 
 		// The core's size as a fraction of the shell's. The fly-in writes this

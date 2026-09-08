@@ -31,7 +31,7 @@ export const TUNNEL = {
 	far: 700,
 
 	// ── THE DISTANCE, and it is the whole scene ──────────────────────────────
-	// 360 units from the lens to the ovum, covered in fifteen seconds. Both of
+	// 490 units from the lens to the ovum, covered in fifteen seconds. Both of
 	// those numbers are large on purpose and neither is negotiable:
 	//
 	//   V1 put the ovum 250 units away and took twenty seconds to reach it at a
@@ -46,8 +46,8 @@ export const TUNNEL = {
 	// See SCENES.flyIn.duration, and glide() in config/ease.js: the camera holds
 	// ONE speed for three quarters of the run and then stops. No ease-in-out —
 	// that spends the middle at double speed and reads as a camera being moved.
-	camStart: 130,
-	eggZ: -230,
+	camStart: 150,
+	eggZ: -340,
 	// World radius of the outer shell. How big it READS is EGG_SCREEN; the fly-in
 	// turns the two into a stopping distance.
 	shellR: 26,
@@ -60,8 +60,8 @@ export const TUNNEL = {
 	// The glow it comes up out of, as a multiple of its diameter.
 	haloSpread: 7.0,
 	// Fog. Thick enough that the ovum is a rumour at the start and present at the
-	// end: 99.7% fogged when the scene opens, 6% when the camera stops.
-	fogDensity: 0.0068,
+	// end: effectively total when the scene opens, 5% when the camera stops.
+	fogDensity: 0.0058,
 
 	// ── The sperm ────────────────────────────────────────────────────────────
 	// ONE, and it rides in front of the lens for the whole flight — you are not
@@ -77,32 +77,42 @@ export const TUNNEL = {
 	// through that would shrink by a third. It is pulled in as the lens opens, so
 	// it holds its place in the frame and the only thing that changes size is the
 	// thing you are travelling toward.
+	// It rides this far in front of the lens. The number itself is free — the
+	// framing is angular, so the FORESHORTENING (how much bigger the near end of
+	// the body is than the far end) is fixed by the lens and by spermSpan, not by
+	// this. It only has to clear the near plane.
 	spermLead: 5.5,
-	// How much of the frame HEIGHT it covers — its width ACROSS the frame,
-	// because the body points away from the camera and its length is foreshortened
-	// to almost nothing.
-	spermSpan: 0.4,
+	// How much of the frame HEIGHT its CROSS-SECTION covers. V1's, measured off
+	// the file: 0.153 units across a frame 0.603 units high. The body points
+	// AWAY, so its length is foreshortened into about three times this.
+	spermSpan: 0.254,
 
 	// ── THE ROTATION, and it is V1's, exactly ────────────────────────────────
-	// Not a roll. V1 hung the model OFF the pivot — `sperm.position.y -= 0.695`
-	// on a body about half a unit long — and then spun the pivot at ten radians a
-	// second. So the thing ORBITS the axis of the lens while rolling about its
-	// own, which is a corkscrew: it swings across the frame, out past the edge,
-	// and back, over and over, all the way in.
+	// A ROLL ABOUT ITS OWN LONG AXIS, which points away from you, with a very
+	// small eccentricity. Not an orbit — and reading V1 as an orbit is the single
+	// easiest mistake to make with that file, because it says this:
 	//
-	// A pure axial roll was tried in its place. It is tidier and it is wrong: it
-	// is a prop turning on a spit. The orbit is the swim.
+	//     sperm.position.y -= 0.695;
 	//
-	// The radius is in HALF-HEIGHTS of the frame at the riding distance (V1's was
-	// 1.73 of them, which is why it kept leaving the frame), and it CLOSES across
-	// the run — wide and wild while it is still overtaking you, tightening to a
-	// steady corkscrew ahead of you once you are travelling together. That is the
-	// one liberty taken with V1's number and it is taken because fifteen seconds
-	// of something strobing past the edge of frame is fifteen seconds of nothing.
-	spermOrbit: 1.25,
-	spermOrbitEnd: 0.62,
+	// on a body less than a unit long, which looks like hanging the model a long
+	// way off the pivot. It is the opposite. The .glb's own root node carries a
+	// translation of exactly +0.7 in y (its node matrix; see the file), so that
+	// line CANCELS the model's built-in offset and drops the body onto the
+	// pivot, to within 0.005. What is left is a roll with a wobble.
+	//
+	// So: the swimmer rides a couple of units in front of the lens, pointing
+	// away, and spins about the axis you are looking down. The tail is a wide
+	// curl, so what you actually see is that curl whipping round — end-on, small,
+	// and violent, at one and a half turns a second.
+	//
+	// The eccentricity is what is left of V1's offset, as a fraction of the
+	// body's own cross-section: the pivot is 13% of a body-width off centre.
+	spermOffset: { x: 0.134, y: 0.127 },
 	// rad/s, linear, and it never stops. V1: -elapsedTime * 10.
 	spermSpin: 10,
+	// V1 scaled the model (0.2, 0.4, 0.2) — twice as much along the body as
+	// across it. That stretch is part of the silhouette, so it is kept.
+	spermStretch: 2,
 
 	// The contour set drawn on it: rings around the body and stripes along it,
 	// per unit of the model's own geometry. This is the wire DENSITY, and it is

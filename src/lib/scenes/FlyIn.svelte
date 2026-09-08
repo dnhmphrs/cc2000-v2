@@ -42,12 +42,11 @@
 	//                and then a stop. NOT an ease-in-out, which spends its middle
 	//                at double speed and reads as a camera being moved.
 	//
-	//   THE ORBIT    V1's rotation, exactly, and it is not a roll — the model
-	//                hangs OFF the pivot and the pivot spins at ten radians a
-	//                second, so the body corkscrews around the axis of the lens,
-	//                swinging out past the frame and back. The radius CLOSES as
-	//                the run goes on: wild while it is still overtaking you,
-	//                steady once you are travelling together.
+	//   THE ROLL     V1's rotation, exactly: the body points AWAY down the axis
+	//                you are looking along and spins about it at ten radians a
+	//                second, so what whips round is the tail's curl, seen end-on.
+	//                The orbit that used to be here is a misreading of V1 — see
+	//                TUNNEL.spermOffset in config/space.js.
 	//
 	//   THE LENS     28mm out to 40mm. Widening on the way IN is the half of a
 	//                dolly zoom that exaggerates speed. The swimmer's riding
@@ -157,15 +156,10 @@
 		world.setMotes(span(p, T.motesIn) * (1 - easeInOutCubic(span(p, T.motesOut))));
 
 		// ── The swimmer ──────────────────────────────────────────────────────
-		// The corkscrew: the pivot turns, the body hangs off it. V1's exactly.
+		// The roll, about the axis you are looking down. V1's exactly, and the one
+		// thing in the scene that never stops.
 		world.spinner.rotation.z = elapsed * SPIN;
 		const dive = span(p, T.dive);
-		world.setOrbit(
-			lerp(TUNNEL.spermOrbit, TUNNEL.spermOrbitEnd, easeInOutCubic(span(p, T.close))) *
-				// And it unwinds onto the axis to go in. A body spiralling into a
-				// sphere off-centre misses it.
-				(1 - easeInOutCubic(dive))
-		);
 
 		// THE POSITION IS RELATIVE TO THE LENS, not to the world. The camera is
 		// itself covering three hundred units while this happens, so a world-space
