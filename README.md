@@ -21,43 +21,71 @@ is up.
          └──────────────────────────── calculate again ───────────────────────────────┘
 ```
 
-| #   | Scene           | What it is                                           | Where                               |
-| --- | --------------- | ---------------------------------------------------- | ----------------------------------- |
-| 1   | **Calculator**  | The machine. Takes both answers. DOM.                | `src/lib/scenes/Calculator.svelte`  |
-| 2   | **FlyIn**       | Deep-blue air, one sperm, a run at the ovum. 3D.     | `src/lib/scenes/FlyIn.svelte`       |
-| 3   | **Conception**  | The icosahedron is DERIVED, and it is a proof. 3D.   | `src/lib/scenes/Conception.svelte`  |
-| 4   | **Computation** | Panes out, search the decades, fall into a room. 3D. | `src/lib/scenes/Computation.svelte` |
-| 5   | **Room**        | The answer, in that room's monitor. DOM.             | `src/lib/scenes/Room.svelte`        |
+| #   | Scene           | What it is                                            | Where                               |
+| --- | --------------- | ----------------------------------------------------- | ----------------------------------- |
+| 1   | **Calculator**  | The machine. Takes both answers. DOM.                 | `src/lib/scenes/Calculator.svelte`  |
+| 2   | **FlyIn**       | Black air, one swimmer, 300 units to the ovum. 3D.    | `src/lib/scenes/FlyIn.svelte`       |
+| 3   | **Conception**  | A wave settles into the solid, which is then derived. | `src/lib/scenes/Conception.svelte`  |
+| 4   | **Computation** | Panes out, survey, clock the decades, fall in. 3D.    | `src/lib/scenes/Computation.svelte` |
+| 5   | **Room**        | The answer, in that room's monitor. DOM.              | `src/lib/scenes/Room.svelte`        |
 
 Scenes 1 and 5 are DOM screens with no 3D of their own; 2–4 are 3D.
 `src/lib/scenes/director.js` owns every transition between them — it is four
 functions long and it is the first file to read.
 
+**Scenes 2, 3 and 4 are one shot.** There is no cut anywhere in the middle of the
+run: the fly-in ends on the exact frame the conception opens on, and the
+conception hands the computation a solid it has already assembled. See the
+colour walk below, and `SCENES.flyIn.shellOut` in `config/timing.js` for how the
+hand-over is arranged.
+
 ---
 
 ## The colour walk
 
-No two consecutive scenes are on the same ground, and the whole run is built
-around that:
+The machine is yellow on deep blue and the bedrooms are their own colour. Between
+them, **the middle three scenes are one world: black and gold.**
 
 ```
-  yellow machine        deep blue air        WHITE BLOW-OUT     gold on the void       the room's
-  on deep blue     →    going white     →    (the one cut)  →   (scenes 3 and 4)   →   own colour
+  yellow machine        ┌─────────────────────────────────────────────┐        the room's
+  on deep blue     →    │  black air · gold ovum · blue swimmer       │   →    own colour
+                        │  black void · gold line-work · blue is gone │
+                        └─────────────────────────────────────────────┘
+                          2 FlyIn        3 Conception     4 Computation
 ```
 
-The blow-out is the hinge. The frame goes white and the world underneath it
-changes from deep-blue air to near-black while your eye is recovering, which is
-why the second half of the run can be a completely different place from the
-first without a transition to get there. It is thrown by `Stage.svelte` and it
-is shaped, not decayed: pure white for a beat and then gone (`FLASH_HOLD`,
-`FLASH_FALL`). An exponential fall spends most of its length as a grey veil over
-the scene it is meant to be hiding.
+Blue survives as the one **cold** thing in it — the swimmer and the debris in the
+air — and there is none of it left after the conception. Everything else is gold
+on `VOID`, over the blueprint field in `three/shaders/grid.js`: a ruled
+screen-space grid, a centre crosshair, corner registration brackets, and `uRot`
+carrying the ruling in the same coordinates the icosahedron is turning in, so the
+ground swings with the solid instead of sitting behind it.
 
-Everything after the flash is drawn in gold on `VOID`, over the blueprint field
-in `three/shaders/grid.js`: a ruled screen-space grid, a centre crosshair,
-corner registration brackets, and a LATTICE carried by `uRot` — three families
-of planes in the same coordinates the icosahedron is turning in, so the ground
-swings with the solid instead of sitting behind it.
+### There used to be a white blow-out here
+
+The fly-in ended on a flash, because the world underneath it changed: deep-blue
+air on one side, the void on the other, and a cut like that needs covering.
+
+It does not change any more, so the flash was not smoothing a transition — it was
+**announcing** one. What it actually did was break the only three scenes that are
+supposed to run as one shot into two halves with a bang in the middle, and make
+the conception look as though the run had reset.
+
+What replaced it is that the two frames either side of the hand-over are the
+**same frame**:
+
+- the fly-in's cage goes as you pass through it, leaving the ovum's **core** — a
+  dark sphere with a gold rim;
+- its air walks down to `VOID`, and `fieldFade` (`store/store.js`) takes both
+  backdrop shaders down to their bare ground colour, so `deep` and `grid` are the
+  same flat black at the swap;
+- `FlyIn.coreRatio()` derives the core's size from the **next** scene's framing
+  every frame, solving the tangent cone at both ends so the two gold circles land
+  on the same pixels on any screen and any lens.
+
+Measured at 1280×800 and at 430×900: same radius, same peak brightness, both
+sides. The envelope (`FLASH_HOLD`, `FLASH_FALL`) is still in `Stage.svelte`
+because it costs nothing. Nothing throws it.
 
 ---
 
@@ -106,10 +134,11 @@ fractions of that duration.** No scene file contains a number of seconds.
 ```js
 // config/timing.js
 flyIn: {
-  duration: 6.4,
-  eggIn:   [0.04, 0.52],   // the egg resolving out of the fog
-  spermIn: [0.14, 0.26],   // it comes past the camera from behind
-  whiten:  [0.84, 1.0]     // the dark turning white under the flash
+  duration: 14.5,
+  spermIn:  [0.015, 0.13],  // it comes past the camera from behind
+  close:    [0.08, 0.66],   // its corkscrew tightening across the run
+  dive:     [0.78, 0.94],   // it breaks formation and goes in
+  shellOut: [0.8, 0.955]    // the cage shed, leaving the core to hand over
 }
 ```
 
@@ -165,11 +194,14 @@ resize(); // the window changed
 Scenes are the _motion_. Worlds are the _look_ — every object, material and
 dimension. A scene never builds anything.
 
-- **`world/tunnel.js`** is scene 2: deep blue air, fog, a field of motes, one
-  sperm, and the ovum.
-- **`world/lattice.js`** is scenes 3 and 4: the void, an orthographic camera, a
-  gold circle, the icosahedron, and the 24-cell cage. Sharing it is why the
-  wireframe the conception derives is the one the computation projects panes off.
+- **`world/tunnel.js`** is scene 2: black air, fog, a field of motes, one
+  swimmer, and the ovum.
+- **`world/lattice.js`** is scenes 3 and 4: the void, a very long lens, a gold
+  circle, the icosahedron, and the 24-cell cage. Sharing it is why the wireframe
+  the conception derives is the one the computation projects panes off.
+- **`world/egg.js`** is the ovum, and it is **two spheres** — see below. Both
+  worlds build one from it, which is what lets scene 2 hand scene 3 its last
+  frame.
 - **`world/construction.js`** is the conception's derivation, built into the
   lattice's own frame so every point it arrives at is a point of the solid.
 - **`world/materials.js`** is every material in the site, and the vocabulary
@@ -177,7 +209,60 @@ dimension. A scene never builds anything.
 
 ---
 
-## Materials, and why there are only four
+## The ovum is two spheres
+
+A wireframe globe on its own is a scribble: the near lines and the far lines are
+the same lines and the eye cannot separate them. V1 solved it with an opaque
+sphere at radius 14 inside a transparent one at 22, and every version since
+dropped the inner one.
+
+`world/egg.js` builds both:
+
+- **the core** — opaque, dark, and the only thing in the site that writes depth.
+  It hides the cage's far half, and the instant it does the cage has an inside
+  and an outside. It is also what the conception opens on.
+- **the shell** — the cage in a held-back gold, three bright gold great circles
+  cutting it in the three coordinate planes, and a silhouette.
+
+The three great circles are not decoration: they are the three mutually
+perpendicular planes the whole second half is built on — the same three the
+golden rectangles lie in — so the thing being swum at is already carrying the
+figure it becomes.
+
+### And the core carries the wave
+
+`coreMaterial()` in `world/materials.js` draws a scalar field on that surface and
+displaces the skin by it. The field has two states and one number crossfading
+them:
+
+- **the ripple** — travelling wavefronts out of the point the swimmer entered at,
+  `sin(kθ − ωt)` falling off with angular distance. The impact.
+- **the harmonic** — the lowest standing wave a sphere has that is invariant under
+  the icosahedral group:
+
+  ```
+  f(n) = Σ P₆(n · aᵢ)     over the six five-fold axes
+  ```
+
+  `P₆` is the sixth Legendre polynomial. Degree 6 is the **first** degree at which
+  a non-constant icosahedral invariant exists at all — the degree-2 and degree-4
+  sums vanish identically — so this is not a pattern chosen to look icosahedral,
+  it is the only thing of its kind there is. Normalised to 1 at a vertex, where
+  all twelve of its antinodes are.
+
+`uRelax` takes one into the other, and that crossfade is the conception: a
+disturbance on a sphere settling into the lowest mode its symmetry allows, and
+the twelve places it settles hardest being exactly the twelve places the
+icosahedron's corners are struck four seconds later.
+
+It is drawn as a **contour map** rather than a shaded ball — level sets every
+fifth of the range, and the nodal set (where the field is zero) brightest of all,
+because that curve system IS the figure. A gold sphere is a bauble; this is a
+readout.
+
+---
+
+## Materials, and why there are only five
 
 The site is the inside of a machine. Nothing in it is a photograph of a thing; it
 is a thing being **displayed by an instrument** — so nothing is shaded, nothing
@@ -192,10 +277,18 @@ being drawn. Two colours do the whole job: an ink and an accent.
 | **dot**  | a hard core in a soft halo                                | vertices, the compass pen                                   |
 
 **No lights, anywhere.** A lit sphere would need matching lamps in two very
-different scenes and would still differ between a perspective and an
-orthographic camera. Everything is done in **view space**, where the two agree —
-which is why the fly-in's globe and the void's gold circle are the same material
-with `base`, `skinOnly` and two colours changed and nothing else.
+different scenes and would still differ between one lens and another. Everything
+is done in view space — which is why the fly-in's core and the void's gold circle
+are the same material with the same numbers, and therefore why one scene can hand
+the other its last frame.
+
+**Silhouettes are measured against the view RAY, not the view axis**, and the
+difference is not academic. `1 - |n.z|` is the edge of a shape only under an
+_orthographic_ camera, where every ray is the axis. On a lens the silhouette is
+the tangent cone and its normal is tilted away from the axis by `asin(R/d)` —
+sixteen degrees on the fly-in's ovum. At the eighth power that turns a term which
+should be 1.0 at the edge into 0.07, which is exactly why the fly-in's gold rim
+was invisible while the void's, on a much longer lens, was merely dim.
 
 **Contours, not `wireframe: true`.** three's wireframe gives you the mesh's
 topology, and the sperm is nine thousand triangles of thin tube — it renders as a
@@ -218,44 +311,77 @@ each when you find them the hard way:
 
 ---
 
-## Scene 2 is a flight, and a flight needs something to fly past
+## Scene 2 is a flight, and a flight needs LENGTH
 
-The camera covers 230-odd world units. With nothing between it and the ovum, all
-of them read as **zero** — the globe simply gets bigger, and a shape growing in
-the middle of an empty frame is a zoom, not a flight. Three things fix that:
+The ovum is **360 world units away** and it takes **fourteen and a half seconds**
+to reach it. Both numbers are large on purpose and neither is negotiable.
 
-- **the motes** — one `LineSegments`, one draw call. Each is a short segment
-  lying along the flight axis, so it is a dot when far off and a streak as it
-  passes. They are placed relative to the CAMERA and wrap:
-  `mod(aPhase - uCamZ, uSpan)` folds the whole field into the slab of air ahead
-  of the lens, so it is equally dense at every point of the flight for the price
-  of a few hundred segments and nothing is animated on the CPU.
-- **the lens** — 26mm out to 44mm across the run. Widening on the way IN is the
-  half of a dolly zoom that exaggerates speed.
-- **the roll** — the sperm turns about its own long axis, once every four
-  seconds, linear. No orbit, no wobble, no easing. That is V1's rotation exactly,
-  and it is the difference between an animal swimming and a prop being swung
-  round on a stick.
+V1 put its ovum 250 units off and took twenty seconds to get there at a flat 12.7
+units a second, and that is why V1's fly-in has any weight: the thing appears as
+a rumour in the fog, you travel toward it long enough to forget you are
+travelling, and it is enormous when you arrive. Every later version shortened the
+run, and every one of them turned an **arrival** into a zoom — because a shape
+that grows in an empty frame for two seconds is a shape being scaled, and one
+that grows for fifteen is somewhere you went.
 
-`EGG_SCREEN` is **above one**: the thing you have flown 230 units to reach should
-not fit on the screen.
+Four things carry it:
+
+- **the speed** — `glide()` in `config/ease.js`: one constant speed for three
+  quarters of the run, then a stop, the two halves joined with matching slope so
+  there is no kick where they meet. NOT an ease-in-out, which spends its middle
+  at double speed and reads as a camera being moved rather than as travel.
+- **the motes** — one `LineSegments`, one draw call. Each is a short segment lying
+  along the flight axis, so it is a dot when far off and a streak as it passes.
+  They are placed relative to the CAMERA and wrap: `mod(aPhase - uCamZ, uSpan)`
+  folds the whole field into the slab of air ahead of the lens, so it is equally
+  dense at every point of the flight for the price of a thousand segments and
+  nothing is animated on the CPU. Without them the flight is a zoom: there is
+  nothing else between the lens and the ovum for three hundred units.
+- **the fog, doing the arrival itself** — the cage is not keyframed on. The line
+  materials are additive and carry no fog of their own (that is what lets thirty
+  gold edges read on the void later), so `FlyIn.svelte` applies the weather to
+  them by hand, from the camera's actual distance, using exactly the exponential
+  `scene.fog` uses. Six percent of the cage at a quarter of the way in, twenty at
+  half, half at three quarters. A thing resolving as you close on it, rather than
+  a wireframe fading up in the middle of an empty frame.
+- **the lens** — 28mm out to 40mm. Widening on the way IN is the half of a dolly
+  zoom that exaggerates speed. The swimmer's riding distance is **compensated**
+  for it (`tunnel.setFov`), so the only thing in the shot that changes size is
+  the thing you are travelling toward.
+
+`EGG_SCREEN` is **above one**: the thing you have flown three hundred units to
+reach should not fit on the screen.
+
+### The rotation is V1's, and it is not a roll
+
+V1 hung the model OFF the pivot — `sperm.position.y -= 0.695` on a body about
+half a unit long — and then spun the pivot at ten radians a second. So the body
+**orbits** the axis of the lens while rolling about its own: a corkscrew that
+swings across the frame, out past the edge, and back, all the way in.
+
+A pure axial roll was tried in its place. It is tidier and it is wrong — it is a
+prop turning on a spit. `world/tunnel.js` builds it as three nested groups
+(`sperm` → `spinner` → `arm`) so the offset is real, and the radius is live,
+because it **closes** across the run: wild while the swimmer is still overtaking
+you, tightening to a steady corkscrew ahead of you once you are travelling
+together. That is the one liberty taken with V1's number, and it is taken because
+fifteen seconds of something strobing past the edge of frame is fifteen seconds
+of nothing.
+
+### And two bugs worth knowing about
 
 Sizes in `TUNNEL` are **fractions of the frame**, not scale factors on a model
-whose file we do not control. Two bugs came out of getting that wrong, and both
-are worth knowing about:
+whose file we do not control. Both of these came out of getting that wrong:
 
 - the corkscrew radius was a raw number from the `.glb`, and at the distance the
-  sperm actually rode it swung the body clean out of frame for the whole scene;
-- the mesh was normalised on its **longest** dimension, which is its length —
-  and it points straight away from the camera, so that axis is the one entirely
-  foreshortened. It came out a third of the size it was asked to be. What
-  `spermSpan` means is how much of the frame it covers, so it is normalised on
-  the cross-section.
+  swimmer actually rode it swung the body clean out of frame for the whole scene;
+- the mesh was normalised on its longest dimension in a pose where that axis was
+  foreshortened, and it came out a third of the size it was asked to be.
 
 And the overtake is **relative to the lens**, not to the world: the camera is
-itself covering 230 units while it happens, so a world-space lerp from behind the
-camera to in front of it has to out-run the camera to arrive at all — and it does
-not.
+itself covering three hundred units while it happens, so a world-space lerp from
+behind the camera to in front of it has to out-run the camera to arrive at all —
+and it does not.
 
 ---
 
@@ -316,10 +442,29 @@ in it is exact and the arithmetic is written down in `world/construction.js`:
 
 Nothing is fudged to make the fold land: it lands because it is the shape.
 
-The frame is at **identity** for the flat work, because that is the one attitude
-in which the first golden rectangle is exactly square to the camera, and turns to
-`ICOSA.tilt` on the fold. The drawing becoming a solid and the page turning away
-are one move.
+### But the wave gets there first
+
+The derivation is the second half of the scene. The first half is the **wave**:
+the swimmer has just gone in, the surface answers, and a ring of travelling
+wavefronts relaxes into the lowest icosahedrally-symmetric standing wave a sphere
+has (see _The ovum is two spheres_ above). Its twelve antinodes are the twelve
+vertices; they are struck as points; and then the machine writes down what the
+physics has already shown it.
+
+It ends where it began: the union's twelve corners land on the twelve antinodes
+the wave put there four seconds earlier, in the same pose, to the pixel.
+
+### The page turns twice
+
+The flat work happens at **identity**, because that is the one attitude in which
+the first golden rectangle is exactly square to the camera. The wave happens at
+`ICOSA.tilt`, because that is the attitude the twelve vertices are legible in —
+at identity the solid is looked at down a two-fold axis and six pairs of them
+land on top of each other.
+
+So the page turns out of the solid's pose to be drawn on, and back into it as the
+drawing stands up. The drawing becoming a solid and the page turning away are one
+move.
 
 It ends on the **union**: the last edge closes and the whole figure answers at
 once — the twelve corners strike, the line-work overdrives, the rim flares.
@@ -336,11 +481,47 @@ its dimension lines, its 1:φ bar, its spiral, its dashed traces back to the
 vertices it came off — and the rooms fade up through that before the working
 steps back.
 
+Then it **stops and looks**. The survey is two and a half seconds of the whole
+assembly, fully out, turning, before a single decade is chosen — the beat V2 had
+and every version since dropped, and dropping it is why the clocking afterwards
+never landed: a machine cannot be seen to select from a set you have never been
+shown.
+
+It is also the only place in the run with any perspective in it. The lattice
+camera is a **lens**, not a box — `applyFrustum()` parks it at whatever range
+makes `fr` world units fill the frame at the plane it is focused on, so every
+framing number in `config/space.js` means exactly what it meant under the
+orthographic camera it replaced. At `ICOSA.fov` (12°) that is very nearly
+orthographic, which is the register this half is drawn in. The survey opens it to
+`fovWide` and walks the camera in to match: a true dolly zoom, framing held to
+the pixel and the space transformed — near rooms swelling off the frame, far ones
+falling away. Then it closes back and the machine gets to work.
+
+(The fall into a room sets `setFocus()` to that room's own depth, because the
+pane is six units off the origin and at the landing pose that offset is pure
+depth. Frame the height at the origin instead and the room lands a tenth too
+small.)
+
 The search **locks square**. Every step turns a decade face-on to the camera by
 the direct arc — the shortest rotation between two poses — and stops. It was
 tried the other way, holding an oblique attitude and only squaring up for the
 answer; it reads as drift. A machine turns a thing to face you and stops: the
 precision IS the drama.
+
+Two things it deliberately does **not** do, and both were tried:
+
+- **the camera does not move.** Not a lean, not a nudge, nothing. A frustum that
+  pumps in on every candidate is the single loudest way to make a precise
+  instrument look like a slideshow transition.
+- **the other rooms do not pulse.** They STEP back — on over a twentieth of the
+  slot (`searchSnap`), held for the whole look, off on the next turn. A sine in
+  and out reads as five rooms sighing; a step reads as a machine selecting one,
+  and the rigidity IS the character.
+
+And the fall at the end is a plain, dead-centre zoom on the **whole scene**, on
+one symmetric ease, with nothing in it staggered. The depth-parallax version —
+the bed rushing past first, then the desk, then the screen — pulls the room apart
+at the exact moment it is supposed to become a place.
 
 Behind all of it is the **cage**: a 24-cell, the regular 4-polytope whose 24
 vertices are every permutation of (±1, ±1, 0, 0), projected from four dimensions
@@ -472,4 +653,22 @@ button — that last one because `main { pointer-events: none }` has silently
 killed a visible control three times now. It exits non-zero on any failure and
 drops screenshots in `.verify/`.
 
-`BASE`, `CHROMIUM` and `OUT` are all overridable from the environment.
+`scripts/shots.mjs` is the other half of the toolkit: a contact sheet of any beat
+of any 3D scene, exactly.
+
+```
+PLAN='[["2",[0.3,0.75,1]],["3",[0,0.32]]]' node scripts/shots.mjs
+```
+
+Every 3D scene is a pure function of its own progress, so `?at=` pins one at a
+fraction of its duration and holds it — the frame you get IS the frame the run
+would have drawn at that moment. Checking a half-second beat inside a
+fifteen-second scene by taking timed screenshots and hoping is not a method,
+particularly under a software renderer where `dt` is clamped and the scene
+advances at roughly half real time.
+
+It is also how the hand-over is checked: shoot `flyIn` at 1 and `conception` at
+0, and the two files should be the same picture.
+
+`BASE`, `CHROMIUM`, `OUT`, `W`, `H` and `PLAN` are all overridable from the
+environment.

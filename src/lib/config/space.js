@@ -17,52 +17,93 @@ export const EGG_SCREEN = 1.12;
 // ── The tunnel (scene 2) ─────────────────────────────────────────────────────
 export const TUNNEL = {
 	// The lens WARPS through the fly-in: long and compressed at the start, so the
-	// egg reads as a long way off through the fog, opening out as the camera
+	// ovum reads as a long way off through the fog, opening out as the camera
 	// closes on it. Widening on the way in is what exaggerates the rush — the
 	// same move a dolly zoom makes, and for the same reason.
 	//
 	// `fov` is the resting value the camera is BUILT at; `fovEnd` is what the
 	// framing is derived from, because that is the lens the scene finishes on.
-	fov: 26,
-	fovStart: 26,
-	fovEnd: 44,
+	fov: 28,
+	fovStart: 28,
+	fovEnd: 40,
 
-	near: 0.5,
-	far: 520,
+	near: 0.35,
+	far: 700,
 
-	// Where the camera starts, and where the ovum is. 230-odd units of travel,
-	// and the length of the swim is half the drama: at the old distances the
-	// camera crossed a quarter of the gap and the arrival had nowhere to build
-	// from.
-	camStart: 110,
-	eggZ: -180,
-	// World radius. How big it READS is EGG_SCREEN; the fly-in turns the two
-	// into a stopping distance.
+	// ── THE DISTANCE, and it is the whole scene ──────────────────────────────
+	// 360 units from the lens to the ovum, covered in fifteen seconds. Both of
+	// those numbers are large on purpose and neither is negotiable:
+	//
+	//   V1 put the ovum 250 units away and took twenty seconds to reach it at a
+	//   flat 12.7 units a second. That is why it worked. The thing appears as a
+	//   rumour in the fog, you travel toward it for long enough to forget you
+	//   are travelling, and it is enormous by the time you arrive. Every later
+	//   version shortened the run, and every one of them turned an ARRIVAL into
+	//   a zoom — because a shape that grows in an empty frame for two seconds is
+	//   a shape being scaled, and one that grows for fifteen is somewhere you
+	//   went.
+	//
+	// See SCENES.flyIn.duration, and glide() in config/ease.js: the camera holds
+	// ONE speed for three quarters of the run and then stops. No ease-in-out —
+	// that spends the middle at double speed and reads as a camera being moved.
+	camStart: 130,
+	eggZ: -230,
+	// World radius of the outer shell. How big it READS is EGG_SCREEN; the fly-in
+	// turns the two into a stopping distance.
 	shellR: 26,
+	// The core, as a fraction of that. It is the inner of the two spheres, and it
+	// is what the conception opens on — so the fly-in DERIVES this at runtime
+	// from the void's own framing (see FlyIn.svelte) and the number here is only
+	// what it starts at. 0.69 lands the core exactly on the void's gold circle at
+	// 16:9, which is why there is no cut between the two scenes.
+	coreRatio: 0.69,
 	// The glow it comes up out of, as a multiple of its diameter.
 	haloSpread: 7.0,
-	// How much body the silhouette has. A few percent — enough to occlude the
-	// motes behind it, not enough to be a surface.
-	skinBase: 0.05,
-
 	// Fog. Thick enough that the ovum is a rumour at the start and present at the
-	// end. It is doing the whole of the arrival, so it is worth being fussy
-	// about: at this density it is 99% fogged when the scene opens and 15% fogged
-	// when the camera stops.
-	fogDensity: 0.0072,
+	// end: 99.7% fogged when the scene opens, 6% when the camera stops.
+	fogDensity: 0.0068,
 
 	// ── The sperm ────────────────────────────────────────────────────────────
-	// ONE. Sizes here are FRACTIONS OF THE FRAME, not scale factors on a model
-	// whose file we do not control: world/tunnel.js normalises the mesh and works
-	// these out against the half-height of the frame at the riding distance, so
-	// changing the lens or the lead re-frames the shot rather than breaking it.
+	// ONE, and it rides in front of the lens for the whole flight — you are not
+	// watching it swim, you are swimming WITH it, which is V1's shot and the
+	// reason V1's fly-in has any drama in it at all.
 	//
-	// It rides this far in front of the lens once it has overtaken.
-	spermLead: 8,
-	// How much of the frame HEIGHT it covers at that distance — its width ACROSS
-	// the frame, because the body points away from the camera and its length is
-	// foreshortened to almost nothing.
-	spermSpan: 0.42,
+	// Sizes here are FRACTIONS OF THE FRAME rather than scale factors on a model
+	// whose file we do not control: world/tunnel.js normalises the mesh and works
+	// these out against the half-height of the frame at the riding distance.
+	//
+	// The ride distance is COMPENSATED for the lens (see setFov): the fly-in
+	// widens from 28 to 40 degrees, and a body sitting at a fixed distance
+	// through that would shrink by a third. It is pulled in as the lens opens, so
+	// it holds its place in the frame and the only thing that changes size is the
+	// thing you are travelling toward.
+	spermLead: 5.5,
+	// How much of the frame HEIGHT it covers — its width ACROSS the frame,
+	// because the body points away from the camera and its length is foreshortened
+	// to almost nothing.
+	spermSpan: 0.4,
+
+	// ── THE ROTATION, and it is V1's, exactly ────────────────────────────────
+	// Not a roll. V1 hung the model OFF the pivot — `sperm.position.y -= 0.695`
+	// on a body about half a unit long — and then spun the pivot at ten radians a
+	// second. So the thing ORBITS the axis of the lens while rolling about its
+	// own, which is a corkscrew: it swings across the frame, out past the edge,
+	// and back, over and over, all the way in.
+	//
+	// A pure axial roll was tried in its place. It is tidier and it is wrong: it
+	// is a prop turning on a spit. The orbit is the swim.
+	//
+	// The radius is in HALF-HEIGHTS of the frame at the riding distance (V1's was
+	// 1.73 of them, which is why it kept leaving the frame), and it CLOSES across
+	// the run — wide and wild while it is still overtaking you, tightening to a
+	// steady corkscrew ahead of you once you are travelling together. That is the
+	// one liberty taken with V1's number and it is taken because fifteen seconds
+	// of something strobing past the edge of frame is fifteen seconds of nothing.
+	spermOrbit: 1.25,
+	spermOrbitEnd: 0.62,
+	// rad/s, linear, and it never stops. V1: -elapsedTime * 10.
+	spermSpin: 10,
+
 	// The contour set drawn on it: rings around the body and stripes along it,
 	// per unit of the model's own geometry. This is the wire DENSITY, and it is
 	// ours to choose — the mesh's own wireframe is nine thousand triangles of
@@ -73,22 +114,18 @@ export const TUNNEL = {
 	// Where it is when the scene starts — behind the camera and off the axis,
 	// because passing exactly through the lens is degenerate.
 	spermFrom: { x: 3.6, y: -1.7, z: 18 },
-	// THE ROLL, and it is V1's exactly: one turn every four seconds, linear,
-	// clockwise from the camera, about the body's OWN long axis. Not an orbit —
-	// the model sits at the spinner's origin, so nothing swings. Constant through
-	// everything; it is the one thing in the scene that never stops.
-	spermRollPeriod: 4,
+
 	// The ovum turns too, slowly, about its own pole. rad/s.
 	eggSpin: 0.16,
 
 	// ── The motes ────────────────────────────────────────────────────────────
 	// The field of debris the camera flies through. Without it the flight is a
-	// zoom: there is nothing between the lens and the egg for 180 units, so
-	// none of the distance reads. See world/tunnel.js.
-	motes: 900,
-	moteSpan: 160,
-	moteRadius: 48,
-	moteLength: 3.0
+	// zoom: there is nothing between the lens and the ovum for three hundred
+	// units, so none of the distance reads. See world/tunnel.js.
+	motes: 1200,
+	moteSpan: 190,
+	moteRadius: 56,
+	moteLength: 3.2
 };
 
 // Where the camera has to stop for the shell to fill EGG_SCREEN of the frame's
@@ -110,8 +147,25 @@ export const ICOSA = {
 	conceptionFrustum: 4.9,
 	frustum: 13.0,
 	camPos: [0, 0, 14],
+
+	// ── The lens ─────────────────────────────────────────────────────────────
+	// The camera is PERSPECTIVE now, on a very long lens, and it is driven by the
+	// frustum height it has to fit rather than by a distance — applyFrustum()
+	// parks it at whatever range makes `fr` world units fill the frame at the
+	// plane it is focused on, so every framing number in this file still means
+	// exactly what it meant under the orthographic camera it replaced.
+	//
+	// At `fov` it is very nearly orthographic, which is the register the whole
+	// second half is drawn in: a technical projection, not a photograph. The
+	// SURVEY opens it out to `fovWide` and walks the camera in to match, which is
+	// a true dolly zoom — the framing does not change by a pixel and the SPACE
+	// does: the near rooms swell off the frame and the far ones fall away. It is
+	// the one moment in the run with any perspective in it, and it is what shows
+	// you that the six rooms are hung in three dimensions rather than printed.
+	fov: 12,
+	fovWide: 22,
 	near: 0.1,
-	far: 100,
+	far: 400,
 
 	// The resting orientation, and it is worth being fussy about. Looked at down
 	// any of its symmetry axes an icosahedron COLLAPSES: pairs of vertices land

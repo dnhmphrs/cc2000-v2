@@ -65,6 +65,13 @@ export const fieldDecade = writable(null);
 // Written by: Computation.
 export const flare = writable(0);
 
+// 0..1 — how much of the backdrop shader's FIGURE is drawn. At 0 every field
+// collapses to its ground colour and nothing else, which is what makes the one
+// remaining scene change in the run invisible: the fly-in flattens `deep` to the
+// void as it arrives, the conception brings `grid` up out of the same void, and
+// the frame either side of the swap is the identical flat black.
+export const fieldFade = writable(1);
+
 // ── The calculator's own transform ───────────────────────────────────────────
 // 0 = drawn 1:1 inside the room's monitor, 1 = filling the viewport. Both ends
 // of the loop ride this: pressing calculate drives it past 1 and into the lens,

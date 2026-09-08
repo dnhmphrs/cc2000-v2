@@ -57,3 +57,20 @@ export function accelerate(t, power = 2) {
 export function bump(t) {
 	return Math.sin(clamp01(t) * Math.PI);
 }
+
+// Flat out, and then a stop. `hold` is the fraction spent at CONSTANT speed
+// before the deceleration begins, and the two halves are joined with matching
+// slope so there is no kick where they meet.
+//
+// This is what a long approach actually feels like and what every ease-in-out
+// gets wrong: an ease-in-out spends the middle of the run at double speed and
+// the ends crawling, which reads as a camera being MOVED. A real approach holds
+// a speed for a long time — you get used to it, it becomes the world's speed —
+// and then arrives.
+export function glide(t, hold = 0.75) {
+	const p = clamp01(t);
+	if (p <= hold) return p;
+	const s = (p - hold) / (1 - hold);
+	// s + s² - s³: f(0)=0, f(1)=1, f'(0)=1, f'(1)=0. Monotone on [0,1].
+	return hold + (1 - hold) * (s + s * s - s * s * s);
+}

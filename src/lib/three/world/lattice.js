@@ -6,17 +6,35 @@ import { VERTICES, EDGES, PENTAGONS, PENTAGON_PAIRS, edgePositions } from '../ge
 import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, VOID } from '$lib/config';
 
 // ── The lattice ──────────────────────────────────────────────────────────────
-// The place the conception and the computation both happen in: the void, an
-// orthographic camera, a gold circle, and the icosahedron drawn inside it.
+// The place the conception and the computation both happen in: the void, a very
+// long lens, a gold circle, and the icosahedron drawn inside it.
 //
 // Two scenes share it so the cut between them cannot move anything. The
 // conception derives the wireframe; the computation projects panes off the very
 // same frame. Neither builds it.
 //
-// It does NOT continue the fly-in's egg. That scene ends in a white-out and the
-// sphere here appears fresh — and on black it is a RIM and nothing else, a gold
-// circle the frame is inscribed in, because a filled shell at any opacity is a
-// grey wash over a black ground.
+// ── It DOES continue the fly-in's ovum ───────────────────────────────────────
+// It used to not: the fly-in ended in a white-out and the sphere here appeared
+// fresh. There is no white-out any more. The sphere here is the same two-layer
+// object — a dark core with a gold rim — built from the same numbers, and the
+// fly-in sizes its own core against this scene's framing every frame so the two
+// land on each other exactly. The wave that breaks across it at the top of the
+// conception is running on the surface the swimmer just went into.
+//
+// ── The camera ───────────────────────────────────────────────────────────────
+// PERSPECTIVE, on a 12-degree lens, and driven by the frustum HEIGHT it has to
+// fit rather than by a distance: applyFrustum() parks it at whatever range makes
+// `fr` world units fill the frame at the plane it is focused on. At 12 degrees
+// that is very nearly orthographic, which is the register this half of the run
+// is drawn in — a technical projection, not a photograph — and every framing
+// number in config/space.js still means exactly what it meant under the
+// orthographic camera this replaced.
+//
+// It is a lens rather than a box so that the SURVEY can open it (setFov) and
+// walk the camera in to match. The framing does not change by a pixel and the
+// space does: near rooms swell off the frame, far ones fall away. That is the
+// one moment in the run with any perspective in it and it is what shows you the
+// six rooms are hung in three dimensions rather than printed.
 //
 // Sizes live in config/space.js (ICOSA); colour in config/palette.js.
 
@@ -183,33 +201,36 @@ function createCage() {
 
 export function createLattice() {
 	const scene = new THREE.Scene();
-	const aspect = window.innerWidth / window.innerHeight;
-	const camera = new THREE.OrthographicCamera(
-		(-ICOSA.frustum * aspect) / 2,
-		(ICOSA.frustum * aspect) / 2,
-		ICOSA.frustum / 2,
-		-ICOSA.frustum / 2,
+	const camera = new THREE.PerspectiveCamera(
+		ICOSA.fov,
+		window.innerWidth / window.innerHeight,
 		ICOSA.near,
 		ICOSA.far
 	);
 	camera.position.set(...ICOSA.camPos);
 	camera.up.set(0, 1, 0);
-	camera.lookAt(0, 0, 0);
 
-	// The circumsphere, as a RIM. Same factory as the tunnel's egg with the base
-	// alpha taken out, so what is drawn is the silhouette and nothing else: a
-	// gold circle exactly through the twelve vertices.
-	const egg = createEgg(ICOSA_SPHERE_R, {
-		ink: ICOSA_INK.line,
-		accent: ICOSA_INK.bright,
-		power: 8,
-		base: 0,
-		// A drawn circle, not a surface: no cage, no body, and additive so it is
-		// light on the void rather than paint on it — which is also the only way
-		// the union's flash can push it past 1.
-		skinOnly: true,
-		add: true
-	});
+	// The live framing. applyFrustum() owns the camera's range; `fov` and `focus`
+	// are the two things that change what that range has to be.
+	let frustum = ICOSA.frustum;
+	let fov = ICOSA.fov;
+	// The plane the frustum height is measured AT. Zero for everything except the
+	// fall into a room, which is measured at that room's own depth — otherwise a
+	// pane six units off the origin lands at the wrong size on a lens.
+	let focus = 0;
+
+	// The circumsphere. NO cage and no outer skin: what is drawn is the core's
+	// own silhouette, which on the void is a gold circle exactly through the
+	// twelve vertices — and behind it the core's body, which is what the wave at
+	// the top of the conception runs on and which is switched off outright the
+	// moment that wave has finished (see egg.setCore: it writes depth, and in
+	// here an invisible occluder would swallow the icosahedron whole).
+	//
+	// It is the same object the fly-in hands over, built from the same numbers.
+	const egg = createEgg(ICOSA_SPHERE_R, { wire: false, outer: false, core: 1 });
+	// The core carries the icosahedral standing wave, whose twelve antinodes are
+	// the twelve vertices — so it has to be in the pose those vertices are in.
+	egg.group.quaternion.copy(TILT);
 	scene.add(egg.group);
 
 	// Everything that turns. It rests on ICOSA.tilt, which is where the
@@ -400,7 +421,7 @@ export function createLattice() {
 		// against room artwork it has no business being occluded by.
 		render(r) {
 			cage.spin.quaternion.copy(frame.quaternion);
-			cage.setScreen(camera.top * 2);
+			cage.setScreen(frustum);
 			r.autoClear = true;
 			r.render(cage.scene, camera);
 			r.autoClear = false;
@@ -414,22 +435,54 @@ export function createLattice() {
 		},
 
 		resize() {
-			this.applyFrustum(camera.top * 2);
+			this.applyFrustum(frustum);
 		},
 
-		// The frustum is a HEIGHT; width follows the viewport.
+		// The frustum is a HEIGHT, and on a lens that means a RANGE: park the
+		// camera wherever `fr` world units fill the frame at the focus plane.
+		// Width follows the viewport, exactly as it did under the orthographic
+		// camera this replaced, so every number in config/space.js is unchanged.
 		applyFrustum(fr) {
-			const a = window.innerWidth / window.innerHeight;
-			camera.left = (-fr * a) / 2;
-			camera.right = (fr * a) / 2;
-			camera.top = fr / 2;
-			camera.bottom = -fr / 2;
+			frustum = fr;
+			const d = fr / 2 / Math.tan((fov * Math.PI) / 360);
+			camera.fov = fov;
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.position.z = focus + d;
+			// Clipped around the content rather than at fixed depths: the range
+			// walks from sixty units out to under twenty on the fall, and a fixed
+			// near plane at either end is either clipping the cage or throwing away
+			// most of the depth buffer.
+			camera.near = Math.max(d * 0.05, d - 30);
+			camera.far = d + 30;
 			camera.updateProjectionMatrix();
+		},
+
+		// The lens. Opening it and re-applying the same frustum height walks the
+		// camera in to match: a true dolly zoom, framing held, space changed.
+		setFov(deg) {
+			if (Math.abs(fov - deg) < 1e-4) return;
+			fov = deg;
+			this.applyFrustum(frustum);
+		},
+
+		// Which plane the frustum height is measured at. The fall into a room sets
+		// this to that room's own depth so it lands at exactly the size the
+		// orthographic camera would have given it.
+		setFocus(z) {
+			if (Math.abs(focus - z) < 1e-4) return;
+			focus = z;
+			this.applyFrustum(frustum);
+		},
+
+		getFrustum() {
+			return frustum;
 		},
 
 		reset() {
 			paneGroup.visible = false;
 			frame.quaternion.copy(TILT);
+			fov = ICOSA.fov;
+			focus = 0;
 			pentagons.forEach((pn) => (pn.spinner.rotation.z = 0));
 			this.setGrow(0);
 			this.setSpokes(0);
@@ -439,10 +492,14 @@ export function createLattice() {
 			construction.reset();
 			construction.show(null);
 			egg.setShell(0);
+			egg.setCore(0);
+			egg.setCoreRimGain(0);
+			egg.setWave({ glow: 0, amp: 0, ripple: 0, relax: 0, phase: 0 });
 			egg.group.scale.setScalar(1);
-			camera.position.set(...ICOSA.camPos);
+			egg.group.quaternion.copy(TILT);
+			camera.position.set(ICOSA.camPos[0], ICOSA.camPos[1], camera.position.z);
 			camera.up.set(0, 1, 0);
-			camera.lookAt(0, 0, 0);
+			camera.rotation.set(0, 0, 0);
 			this.applyFrustum(ICOSA.frustum);
 		},
 

@@ -2,33 +2,38 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createEgg } from './egg';
 import { holoMaterial, ADD } from './materials';
-import { TUNNEL, DEEP_BLUE, HOLO } from '$lib/config';
+import { TUNNEL, AIR, HOLO } from '$lib/config';
 
 // ── The tunnel ───────────────────────────────────────────────────────────────
-// The place the fly-in happens. Deep blue air, an ovum at the far end of it, ONE
-// sperm, and a field of motes streaming past the lens.
+// The place the fly-in happens. BLACK air, an ovum three hundred units down it,
+// ONE sperm riding the lens, and a field of motes streaming past.
 //
 // This file BUILDS. FlyIn.svelte MOVES — it never creates anything. Every
 // dimension is in config/space.js under TUNNEL.
 //
 // ── What this is a picture of ────────────────────────────────────────────────
 // Not a cell. The inside of a machine that is DRAWING a cell. Everything here is
-// line-work: the ovum is a wire globe with three gold great circles round it,
-// the sperm is a wireframe hologram, and the only solid surface in the scene is
-// a silhouette a few percent thick so the globe can occlude what is behind it.
-// See world/materials.js — nothing in this site is lit and nothing is glossy.
+// line-work: the ovum is two spheres — a dark occluding core inside a gold wire
+// cage — and the sperm is a wireframe hologram. See world/materials.js; nothing
+// in this site is lit and nothing is glossy.
+//
+// It is BLACK AND GOLD, like the two scenes after it, and the swimmer and the
+// debris are the only cold things in it. That is the whole colour scheme of the
+// middle of the run: blue goes into gold, and after the conception there is no
+// blue left.
 //
 // ── Why there is anything in the air at all ──────────────────────────────────
-// The camera covers 230-odd world units. With nothing between it and the ovum,
+// The camera covers 300 world units. With nothing between it and the ovum,
 // all of them read as ZERO: the globe simply gets larger, and a shape that grows
 // in the middle of an empty frame is a zoom, not a flight. The motes are what
 // turn it into travel — they have parallax, they streak as they pass, and they
 // are the only reason the fog reads as distance rather than as a wash. One draw
 // call.
 //
-// The air changes colour across the run (deep blue for the approach, white for
-// the blow-out), so the fog and the shader's ground are one value: set it with
-// setAir(), read it back with getAir(), and let the backdrop paint that.
+// The air changes colour across the run — AIR for the approach, walking down to
+// the VOID as it arrives, so the frame this scene ends on is the frame the
+// conception opens on. Fog and backdrop are one value: set it with setAir(),
+// read it back with getAir(), and let the backdrop paint that.
 
 // ── The motes ────────────────────────────────────────────────────────────────
 // One LineSegments, one draw call. Each mote is a short segment lying along the
@@ -136,8 +141,8 @@ function createMotes() {
 
 export function createTunnel() {
 	const scene = new THREE.Scene();
-	scene.fog = new THREE.FogExp2(DEEP_BLUE, TUNNEL.fogDensity);
-	let air = DEEP_BLUE;
+	scene.fog = new THREE.FogExp2(AIR, TUNNEL.fogDensity);
+	let air = AIR;
 
 	const camera = new THREE.PerspectiveCamera(
 		TUNNEL.fov,
@@ -147,14 +152,19 @@ export function createTunnel() {
 	);
 	camera.position.z = TUNNEL.camStart;
 
-	const egg = createEgg(TUNNEL.shellR, { base: TUNNEL.skinBase, add: false });
+	// Two spheres: the cage at shellR, and the core inside it — which is the one
+	// that occludes, the one the wave runs on, and the one the conception picks
+	// up when this scene ends. See world/egg.js.
+	const egg = createEgg(TUNNEL.shellR, { core: TUNNEL.coreRatio });
 	egg.group.position.z = TUNNEL.eggZ;
 	scene.add(egg.group);
 
 	// The glow it comes up out of. A flat disc, well behind the globe and much
 	// larger than it, additively blended — there is no light in this scene, so
 	// without this the ovum arrives as a diagram pasted onto the fog rather than
-	// as something with its own presence in it.
+	// as something with its own presence in it. It is GOLD, and it is the first
+	// gold in the run: for the first four seconds of the fly-in it is all there
+	// is of the thing you are travelling toward.
 	const haloMat = new THREE.ShaderMaterial({
 		transparent: true,
 		depthWrite: false,
@@ -194,27 +204,34 @@ export function createTunnel() {
 	scene.add(motes.lines);
 
 	// ── The sperm ────────────────────────────────────────────────────────────
-	// ONE of them, and it ROLLS. Not an orbit: the model is centred on the
-	// spinner's own origin and the spinner turns about z, so what you see is a
-	// body rolling about its own long axis as it swims. That is exactly what V1
-	// did — a linear tween of -2π every four seconds on a pivot the model sits at
-	// the centre of — and it is the difference between an animal swimming and a
-	// prop being swung round on a stick.
+	// ONE, and it is built as THREE nested groups, because that is what V1's
+	// rotation actually is:
+	//
+	//   sperm     where it is. Driven by FlyIn against the camera, not the world.
+	//   spinner   turns about z at ten radians a second, linear, forever.
+	//   arm       holds the model OFF that axis by the orbit radius.
+	//
+	// So the body ORBITS the axis of the lens while rolling about its own — a
+	// corkscrew, swinging across the frame and back out of it, all the way in.
+	// V1 wrote it as `sperm.position.y -= 0.695` on a pivot spun by
+	// `-elapsedTime * 10`, and the offset is the entire character of the move: a
+	// pure axial roll in its place is a prop turning on a spit.
+	//
+	// The radius is live (setOrbit) because it CLOSES across the run — wide while
+	// it is still overtaking you, tight once you are travelling together.
 	//
 	// How big it reads is a fraction of the FRAME, not a scale factor on a model
 	// whose file we do not control: the mesh is normalised (centred on its own
-	// bounding box, longest dimension scaled to one world unit) and sized against
-	// the frame's half-height at the riding distance. Measured ONCE, from the
-	// lens the scene opens on — recomputing it per frame would normalise the
-	// approach away, and staying the same size however close it gets is the one
-	// thing it must not do.
+	// bounding box, cross-section scaled) and sized against the frame's
+	// half-height at the riding distance. Measured ONCE, from the lens the scene
+	// opens on — recomputing it per frame would normalise the approach away.
 	const RIDE_HALF = TUNNEL.spermLead * Math.tan((TUNNEL.fovStart * Math.PI) / 360);
 	const bodyLength = TUNNEL.spermSpan * RIDE_HALF * 2;
 
 	const spermMaterial = holoMaterial({
 		ink: HOLO.body,
 		accent: HOLO.rim,
-		fog: DEEP_BLUE,
+		fog: AIR,
 		fogDensity: TUNNEL.fogDensity,
 		rings: TUNNEL.spermRings,
 		longs: TUNNEL.spermLongs,
@@ -223,9 +240,17 @@ export function createTunnel() {
 
 	const sperm = new THREE.Group();
 	const spinner = new THREE.Group();
+	const arm = new THREE.Group();
+	spinner.add(arm);
 	sperm.add(spinner);
 	sperm.visible = false;
 	scene.add(sperm);
+
+	// The riding distance is COMPENSATED for the lens: the scene widens from 28
+	// to 40 degrees, and a body at a fixed distance through that would shrink by
+	// a third. Pulling it in as the lens opens holds it in the frame, so the only
+	// thing in the shot that changes size is the thing you are travelling toward.
+	let lead = TUNNEL.spermLead;
 
 	new GLTFLoader().load('/sperm.glb', (glb) => {
 		const model = glb.scene.children[0] ?? glb.scene;
@@ -266,7 +291,7 @@ export function createTunnel() {
 		// third of the size it was asked to be. What `spermSpan` means is how much
 		// of the frame it covers, and that is x and y.
 		inner.scale.setScalar(bodyLength / Math.max(size.x, size.y));
-		spinner.add(inner);
+		arm.add(inner);
 	});
 
 	return {
@@ -310,10 +335,24 @@ export function createTunnel() {
 
 		// The lens itself is animatable — see TUNNEL.fovStart / fovEnd. Widening
 		// on the way in exaggerates the rush without moving the camera any faster.
+		//
+		// It also re-derives the swimmer's riding distance, so opening the lens
+		// does not shrink it: RIDE_HALF is the half-height it is framed against
+		// and it is held constant by construction.
 		setFov(deg) {
 			if (Math.abs(camera.fov - deg) < 1e-4) return;
 			camera.fov = deg;
 			camera.updateProjectionMatrix();
+			lead = RIDE_HALF / Math.tan((deg * Math.PI) / 360);
+		},
+		// How far in front of the lens the swimmer rides, at the current lens.
+		getLead() {
+			return lead;
+		},
+		// The orbit radius, in HALF-HEIGHTS of the frame at that distance. V1's
+		// was 1.73 of them; this closes from wide to tight across the run.
+		setOrbit(halfHeights) {
+			arm.position.y = -halfHeights * RIDE_HALF;
 		},
 
 		resize() {
@@ -322,8 +361,12 @@ export function createTunnel() {
 		},
 
 		reset() {
-			this.setAir(DEEP_BLUE);
+			this.setAir(AIR);
 			this.setFov(TUNNEL.fovStart);
+			this.setOrbit(TUNNEL.spermOrbit);
+			egg.setCoreRatio(TUNNEL.coreRatio);
+			egg.setCoreRimGain(0);
+			egg.setWave({ glow: 0, amp: 0, ripple: 0, relax: 0, phase: 0 });
 			camera.position.set(0, 0, TUNNEL.camStart);
 			camera.rotation.set(0, 0, 0);
 			this.setCamZ(TUNNEL.camStart);
@@ -342,6 +385,8 @@ export function createTunnel() {
 			// brings it up out of the fog (SCENES.flyIn.eggIn).
 			egg.setWire(0);
 			egg.setShell(0);
+			egg.setCore(0);
+			egg.setCoreRim(0);
 			egg.group.rotation.set(0, 0, 0);
 		},
 
