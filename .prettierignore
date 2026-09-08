@@ -3,6 +3,10 @@ node_modules
 /build
 /.svelte-kit
 /package
+# Build output. Not in .gitignore's sight for these two, so running the linter
+# after a build used to report 35 generated files as "code style issues".
+.vercel
+.output
 .env
 .env.*
 !.env.example
