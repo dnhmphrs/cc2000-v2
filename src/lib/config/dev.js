@@ -37,3 +37,24 @@ export const DEV = {
 	// | 'room'.
 	only: null
 };
+
+// ── The conception ───────────────────────────────────────────────────────────
+// Which of the three middle scenes runs. They are alternatives, not a sequence
+// — see scenes/Conception.svelte for what each one is.
+//
+//   'construct'  the derivation. The default, and the one the rest of the run
+//                is built to follow: the three golden rectangles it folds up
+//                are the three the computation projects its rooms off.
+//   'strike'     the impact.
+//   'divide'     cleavage.
+//
+// ?conception=strike in the URL overrides this, so all three can be looked at
+// without a rebuild. Anything unrecognised falls back to the default.
+export const CONCEPTIONS = ['construct', 'strike', 'divide'];
+export const DEFAULT_CONCEPTION = 'construct';
+
+export const CONCEPTION = (() => {
+	if (typeof window === 'undefined') return DEFAULT_CONCEPTION;
+	const v = new URLSearchParams(window.location.search).get('conception');
+	return CONCEPTIONS.includes(v) ? v : DEFAULT_CONCEPTION;
+})();

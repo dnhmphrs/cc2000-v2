@@ -12,7 +12,8 @@
 		easeInOutCubic,
 		easeInOutPower,
 		ICOSA,
-		WHITE
+		restFrustum,
+		VOID
 	} from '$lib/config';
 	import { assignDecades, shuffle } from '$lib/data/roomElements';
 	import GoldenRectangle from '$lib/three/objects/GoldenRectangle.svelte';
@@ -21,6 +22,18 @@
 	// ── Scene 4: the computation ─────────────────────────────────────────────
 	// The panes come out of the sphere, the search turns through the decades,
 	// and the camera falls into the room that holds the answer.
+	//
+	// It opens by PULLING BACK. The conception was close on the solid — that
+	// scene had nothing else to show — and six rooms will not fit in that frame,
+	// so the first thing this does is make room for them. The pull-back is most
+	// of why the panes read as coming OUT rather than merely appearing, and it
+	// costs nothing: it is the same frustum the return zoom already walks.
+	//
+	// And it comes out as DRAFTING first. The rectangle, its dimension lines, its
+	// ratio bar, its spiral — the machine's working — and only then do the rooms
+	// fade up through it, and only then does the working step back. Three beats
+	// where there used to be one bloom, and it is the difference between a
+	// machine calculating and a slideshow.
 	//
 	// The search is stepped, not continuous: turn a decade to camera, look at it,
 	// turn to the next, and the last turn lands on the answer. The point is not
@@ -67,6 +80,9 @@
 	let decadeAssignments = [];
 
 	let frustum = ICOSA.frustum;
+	// What the pull-back is heading for. Measured on entry, because it depends on
+	// the shape of the viewport.
+	let rest = ICOSA.frustum;
 	let landFrustum = 8;
 	let target = -1;
 	// The panes the search visits, in order, and the pose that puts each square
@@ -191,12 +207,18 @@
 		searchLatched = false;
 		zoomLatched = false;
 		facing = null;
-		frustum = ICOSA.frustum;
+		// Picks up exactly where the conception left off — close on the solid —
+		// and pulls back from there.
+		frustum = ICOSA.conceptionFrustum;
+		rest = restFrustum(window.innerWidth, window.innerHeight);
 		world.applyFrustum(frustum);
 		world.setPanesVisible(true);
 		world.setLineOpacity(1);
-		// The sphere picks up exactly where the conception left it and shrinks
-		// away from there. The frame is NOT touched: what turns here is the same
+		world.setGrow(1);
+		world.setCage(0);
+		world.construction.show(null);
+		// The rim picks up exactly where the conception left it and thins away
+		// from there. The frame is NOT touched: what turns here is the same
 		// wireframe that just drew itself, at the same weight.
 		world.egg.setCore(0);
 		world.egg.setShell(ICOSA.shellSolid);
@@ -207,6 +229,8 @@
 			if (!p) return;
 			p.setDim(1);
 			p.setLineDim(1);
+			p.setDraft(0);
+			p.setReveal(0);
 			p.updateProjection(0);
 		});
 	}
@@ -216,11 +240,34 @@
 		if (!measured) measure();
 
 		t += dt;
+		world.tick(dt);
 		const p = clamp01(t / T.duration);
 
+		// ── The camera pulls back ────────────────────────────────────────────
+		// Only while the panes are coming out; after that the frustum belongs to
+		// the zoom, and to the return zoom after that.
+		const zoom = span(p, T.zoom);
+		if (zoom <= 0) {
+			frustum = lerp(ICOSA.conceptionFrustum, rest, easeInOutCubic(span(p, T.pullBack)));
+			world.applyFrustum(frustum);
+		}
+
 		// ── The panes come out ───────────────────────────────────────────────
+		// Working first, artwork second, working away third.
 		const open = easeInOutCubic(span(p, T.open));
-		panes.forEach((pane) => pane && pane.updateProjection(open));
+		const draft = span(p, T.schematic) * (1 - smoothstep(T.draftOut[0], T.draftOut[1], p) * 0.78);
+		const reveal = easeInOutCubic(span(p, T.rooms));
+		panes.forEach((pane) => {
+			if (!pane) return;
+			pane.updateProjection(open);
+			pane.setDraft(draft);
+			pane.setReveal(reveal);
+		});
+
+		// The cage the search happens inside.
+		world.setCage(
+			smoothstep(0, 1, span(p, T.cageIn)) * (zoom > 0 ? 1 - smoothstep(0, 0.4, zoom) : 1)
+		);
 
 		// The sphere stays — it is what the frame is held inside — but it thins so
 		// the artwork is not seen through a wash, and it opens out off the frame
@@ -277,7 +324,6 @@
 		fieldRotation.set(ROT3.setFromMatrix4(ROT4).elements);
 
 		// ── The fall into the room ───────────────────────────────────────────
-		const zoom = span(p, T.zoom);
 		if (zoom > 0) {
 			if (!zoomLatched) {
 				zoomLatched = true;
@@ -297,6 +343,10 @@
 				if (i === target) pane.setLineDim(1 - smoothstep(0.15, 0.7, z));
 				else pane.setDim(fade);
 			});
+			// The depth parallax is a transient felt DURING the move — the bed
+			// rushes past first, then the desk, then the screen — and relaxes so
+			// the resting frame lands flat.
+			panes[target]?.getRoom?.()?.setZoomProgress?.(Math.sin(z * Math.PI));
 			flare.set(1 - smoothstep(0.05, 0.6, z));
 			publishMonitor();
 		} else {
@@ -313,10 +363,10 @@
 	}
 
 	export function backdrop() {
-		// 'white' by default. 'theta' is the field in three/shaders/theta.js and
-		// is a one-word swap — it is loud on a white ground and it does compete
-		// with the line-work, so it is off until it earns its place.
-		return { color: WHITE, shader: 'white' };
+		// The blueprint field — three/shaders/grid.js — ruled in the same
+		// coordinates the frame is turning in, which is what the fieldRotation
+		// written above is for.
+		return { color: VOID, shader: 'grid' };
 	}
 
 	// ── The way back ────────────────────────────────────────────────────────
@@ -382,6 +432,7 @@
 	}
 
 	export function resize() {
+		rest = restFrustum(window.innerWidth, window.innerHeight);
 		world.applyFrustum(frustum);
 		panes.forEach((pane) => pane && pane.setPortrait(get(aspect) === 'portrait'));
 	}
@@ -396,13 +447,15 @@
 		searchQuats = [];
 		rt = 0;
 		returnFrom = 0;
-		frustum = ICOSA.frustum;
+		frustum = rest;
 		fieldDecade.set(null);
 		monitorRect.set(null);
 		panes.forEach((pane) => {
 			if (!pane) return;
 			pane.setDim(1);
 			pane.setLineDim(1);
+			pane.setDraft(0);
+			pane.setReveal(0);
 			pane.updateProjection(0);
 		});
 	}

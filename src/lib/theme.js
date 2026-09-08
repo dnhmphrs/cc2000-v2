@@ -1,4 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
+import * as THREE from 'three';
 import { ICOSA_INK, INK } from '$lib/config';
 
 // ── Ink ──────────────────────────────────────────────────────────────────────
@@ -21,6 +22,18 @@ export const palette = derived(paletteKey, (k) => PALETTES[k] || PALETTES[DEFAUL
 
 // Ink as a THREE-friendly hex number for the 3D line-work.
 export const accentHex = derived(palette, (p) => p.line);
+
+// A THREE.Color ready to hand to a BUILT-IN material.
+//
+// three r148 ships with ColorManagement disabled, so a colour set on a
+// LineBasicMaterial is used as LINEAR and then encoded to sRGB on output — it
+// comes out a full gamma stop brighter and washed out. Custom ShaderMaterials
+// are the opposite case: they are never re-encoded (see world/ink.js), so their
+// colours are handed over raw. Anything on a STOCK material goes through here,
+// or the same gold is two different colours in the same drawing.
+export function ink(hex) {
+	return new THREE.Color(hex).convertSRGBToLinear();
+}
 
 export function accentRGB() {
 	const hex = get(accentHex);

@@ -122,15 +122,20 @@ export const LAYERS = [
 // Re-exported so nothing that already imports it from here has to change.
 export { SCREEN_GLASS, GLASS_SAFETY } from '$lib/config';
 
-// The palettes the background field takes while the search turns through the
-// decades. All of them sit in the site's blue/yellow pairing — the era shifts
-// which way the field leans rather than changing its colours outright.
-// [near, mid, far] feeding the shader's three stops.
+// The palettes the blueprint field takes while the search turns through the
+// decades. The first stop is never used — the scene's own ground overrides it —
+// so these are really [ignored, the RULE, the LATTICE].
+//
+// All four are golds, because the field is the paper the second half of the run
+// is worked on and the paper does not change material between eras. What the
+// decade shifts is the temperature of the gold: warm brass for the fifties,
+// hard yellow for the sixties, a greener gold for the nineties, and something
+// nearly white for the twenty-tens.
 export const DECADE_FIELD = {
-	'50s': [0xffe6a3, 0x2f7fc8, 0x0a1f52],
-	'60s': [0xffd426, 0x2b5fd0, 0x0c1746],
-	'90s': [0xfff2c0, 0x4aa0d8, 0x0d2a5e],
-	'10s': [0xeef4ff, 0x3a56e0, 0x080f3a]
+	'50s': [0xffe6a3, 0xffc46a, 0xe08a2e],
+	'60s': [0xffd426, 0xffd23a, 0xf2a521],
+	'90s': [0xfff2c0, 0xe6d878, 0xbfae3e],
+	'10s': [0xeef4ff, 0xfff0c8, 0xd8d0a0]
 };
 
 export function elementUrl(decade, key) {

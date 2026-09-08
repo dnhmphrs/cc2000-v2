@@ -70,32 +70,42 @@ export const SCENES = scale({
 	},
 
 	// ── FlyIn ────────────────────────────────────────────────────────────────
+	// Deep blue air, a pack of five, and a run at the egg.
+	//
+	//  0     0.10   0.23        0.30                    0.76        0.86   1.0
+	//  |motes|      |the warp   |the run                |egg there  |white |
+	//        |the pack comes past|                      |
 	flyIn: {
-		duration: 6.4,
+		duration: 7.0,
 
-		// The calculator is still on screen, warping into the lens. Nothing in
-		// the 3D should draw attention until this is over.
-		warp: [0.0, 0.25],
+		// The calculator is still on screen, warping into the lens. Documentation
+		// only — the machine runs its own `launch` in seconds — but the two have
+		// to describe the same 1.6 seconds or the hand-over is visible.
+		warp: [0.0, 0.23],
 
-		// The egg resolving out of the fog. It starts LATE on purpose: the fog is
-		// what is supposed to reveal it, and an opacity ramp that opens at 0.04
-		// simply puts the egg on screen from the first second and leaves the fog
-		// nothing to do. By the time this opens the camera has closed enough
-		// distance for the fog to be thinning on its own, so the two agree.
-		eggIn: [0.3, 0.74],
+		// The mote field. It is up on the FIRST FRAME, deliberately: the cut into
+		// this scene happens behind the calculator, and what is underneath it has
+		// to be moving before the calculator clears or the run opens on an empty
+		// blue rectangle. It goes out under the blow-out.
+		motesIn: [0.0, 0.09],
 
-		// The sperm comes from behind the camera, overtakes, and is ahead of it.
-		spermIn: [0.14, 0.26],
+		// The pack comes past from behind and spreads off the axis.
+		packIn: [0.09, 0.3],
+		// How the pack falls back once the run starts. Lower than the hero's own
+		// power, so the gap opens early and keeps opening.
+		packLagPower: 1.0,
+		// They are the losers: never as bright as the one you are with.
+		packOpacity: 0.4,
+
+		// The hero comes past from behind, overtakes, and is ahead of it.
+		spermIn: [0.13, 0.3],
 		// And then it is leaving, from that moment on — the window opens where
 		// spermIn closes so there is no stretch where it holds station and then
-		// bolts. `power` is the whole character of it. Measure it as the gap
-		// between sperm and camera rather than guessing: at 2.2 that gap opened
-		// at a near-constant rate from a fifth of the way in, so it read as
-		// travelling away rather than accelerating, and it was a third of the way
-		// gone by the halfway mark. At 3.2 it rides in front of the lens for a
-		// beat and then the gap grows by more every step of the way to the egg,
-		// which is what speeding up actually looks like.
-		spermRun: [0.26, 0.98],
+		// bolts. `power` is the whole character of it: at 2.2 the gap opens at a
+		// near-constant rate and it reads as travelling away; at 3.2 it rides in
+		// front of the lens for a beat and then the gap grows by more every step
+		// of the way to the egg, which is what speeding up actually looks like.
+		spermRun: [0.3, 0.98],
 		spermRunPower: 3.2,
 		// It is inside the shell by the end of this.
 		spermGone: [0.9, 0.99],
@@ -104,50 +114,113 @@ export const SCENES = scale({
 		// the camera easing off while the sperm accelerates is what sells it.
 		approachPower: 1.35,
 
+		// The bank, and how far the camera wanders off the axis while it holds it.
+		// Both ease out to level before the blow-out: the next scene is
+		// orthographic and square to the frame, and arriving tilted is a jolt.
+		level: [0.7, 0.94],
+		drift: 1.1,
+
+		// The glow first, then the egg in it. The halo OPENS EARLIER and CLOSES
+		// EARLIER than the shell, which is the whole trick of the arrival: there
+		// is a brightness in the fog before there is anything in the brightness.
+		haloIn: [0.16, 0.64],
+		haloPeak: 1.0,
+		eggIn: [0.3, 0.76],
+
 		// Deep blue turning white, under the blow-out that ends the scene.
-		whiten: [0.84, 1.0]
+		whiten: [0.86, 1.0]
 	},
 
 	// ── Conception ───────────────────────────────────────────────────────────
-	// White, a beat of nothing, a sphere, and the icosahedron drawing itself on
-	// inside it. Nothing turns and nothing else is added: the frame finishes and
-	// the next thing that happens is the rooms coming out of it.
+	// The hinge of the whole run: the frame is white when this opens and black
+	// by the time it has finished its first beat, and everything after it is on
+	// the void.
 	//
-	//   0     0.06    0.3            0.86        1.0
-	//   |hold | sphere |     wire     |   rest    |
-	//
-	// The hold and the rest are the GAPS either side, not settings.
+	// THREE VARIANTS, and which one runs is config/dev.js CONCEPTION (or
+	// ?conception=construct|strike|divide in the URL). They share a duration and
+	// a hand-over — the icosahedron, centred, at ICOSA.tilt — and nothing else.
+	// See scenes/Conception.svelte.
 	conception: {
-		duration: 4.0,
+		duration: 5.4,
 
-		// The sphere fades up out of the white, at the frame's exact circumradius
-		// — so what appears is one object, not a ball with something in it.
-		sphere: [0.06, 0.3],
+		// ── construct: the derivation ────────────────────────────────────────
+		// A compass sweep, the pentagon inscribed in it, the pentagram inside
+		// THAT — which is where phi actually comes from — the three golden
+		// rectangles read off the ratio, and two of them folding up out of the
+		// page into the solid.
+		//
+		// The frame is at IDENTITY for all of this, which is the one pose in
+		// which the first golden rectangle is exactly square to the camera, and
+		// turns to ICOSA.tilt on the fold. The drawing becoming a solid and the
+		// page turning away are one move.
+		cCircle: [0.09, 0.26],
+		cPentagon: [0.2, 0.36],
+		cStar: [0.32, 0.47],
+		cRects: [0.42, 0.6],
+		// The guides have done their work by the time the rectangles are out.
+		cGuidesOut: [0.56, 0.74],
+		cFold: [0.56, 0.82],
+		cEdges: [0.74, 0.95],
+		cRim: [0.58, 0.78],
 
-		// The frame draws itself on inside it. Every edge at once — the stagger is
-		// gone, see world/lattice.js — so this only has to be long enough to see
-		// the strokes travel.
-		wire: [0.26, 0.86]
+		// ── strike: the impact ───────────────────────────────────────────────
+		// A singularity, twelve vertices thrown out of it on trails, and thirty
+		// edges closing between them. It starts a few degrees off the resting
+		// attitude and recoils onto it, so the solid settles rather than parks.
+		sFlash: [0.0, 0.16],
+		sThrow: [0.08, 0.44],
+		sTrails: [0.08, 0.52],
+		sTrailsOut: [0.5, 0.72],
+		sEdges: [0.38, 0.74],
+		sRim: [0.6, 0.84],
+		sSettle: [0.1, 0.9],
+
+		// ── divide: cleavage ─────────────────────────────────────────────────
+		// One cell, then two, then four, then twelve — and the twelve are where
+		// the vertices are.
+		dCell: [0.02, 0.14],
+		dCleave: [0.1, 0.62],
+		dSnap: [0.58, 0.76],
+		dEdges: [0.66, 0.92],
+		dRim: [0.68, 0.88]
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────
 	computation: {
-		duration: 8.0,
+		duration: 9.0,
 
-		// The panes come out of the frame. The sphere stays — it is the thing the
-		// frame is held inside — but thins to shellFaint so the rooms are not seen
-		// through a wash. The frame itself is left exactly as the conception drew
-		// it: same weight, no fill.
-		open: [0.0, 0.18],
-		shellThin: [0.04, 0.22],
-		// And the sphere opens out off the frame it was skin-tight on, so the
-		// rooms come THROUGH it rather than out from under it.
-		sphereGrow: [0.0, 0.34],
+		// The camera pulls BACK as the panes come out. The conception was close on
+		// the solid; six rooms will not fit in that frame, so the opening move of
+		// this scene is to make room for them — and that pull-back is most of why
+		// the panes read as coming out rather than merely appearing.
+		pullBack: [0.0, 0.32],
+
+		// The panes come out of the frame, as DRAFTING first: the golden rectangle,
+		// its dimension lines, its ratio bar, its spiral. The rooms only fade in
+		// through that once it is out, which is what stops the two reading as one
+		// undifferentiated bloom, and what makes the machine look as though it is
+		// working the answer out rather than displaying it.
+		open: [0.0, 0.2],
+		schematic: [0.02, 0.26],
+		rooms: [0.2, 0.44],
+		// And the drafting steps back once the rooms are up, or it is clutter over
+		// the only thing in the scene with any colour in it.
+		draftOut: [0.34, 0.56],
+
+		// The sphere stays — it is the thing the frame is held inside — but thins
+		// and opens out off the frame it was skin-tight on, so the rooms come
+		// THROUGH it rather than out from under it.
+		shellThin: [0.06, 0.28],
+		sphereGrow: [0.02, 0.36],
+
+		// The 24-cell hung around the solid. It belongs to the search and nothing
+		// else — it arrives with the panes and goes out with the zoom.
+		cageIn: [0.12, 0.36],
 
 		// The search: turn a decade square to camera, look at it, turn to the
 		// next. The point is not to fake a search — it is that each turn shows
 		// another decade's artwork, which is otherwise built and never seen.
-		search: [0.14, 0.8],
+		search: [0.26, 0.82],
 		// Three decades visited before the answer, then the answer itself.
 		searchSteps: 4,
 		// Fraction of each step spent turning; the rest is the look. The last
@@ -164,11 +237,11 @@ export const SCENES = scale({
 		searchBow: 0.5,
 
 		// Then in. Accelerates away from rest, then eases onto the final frame.
-		zoom: [0.8, 1.0],
+		zoom: [0.82, 1.0],
 		zoomPower: 2.2,
 
-		// The field's one appearance, if it is switched on.
-		flare: [0.1, 0.86]
+		// How hard the blueprint field burns. It is the machine's own effort.
+		flare: [0.1, 0.88]
 	},
 
 	// ── Room ─────────────────────────────────────────────────────────────────
@@ -180,8 +253,17 @@ export const SCENES = scale({
 	}
 });
 
-// The one blow-out in the run: the end of the fly-in, into conception.
-export const FLASH_DECAY = 2.4;
+// The one blow-out in the run: the end of the fly-in, into the conception. It
+// is also the only CUT — the world underneath goes from deep blue air to the
+// void while the frame is white — so it is shaped rather than merely decayed:
+// pure white for a beat, then gone. An exponential fall spends most of its
+// length as a grey veil over the scene it is supposed to be hiding.
+//
+// The fall has to be at least as long as the ground's own ease to the void
+// (components/Background.svelte, ~0.3s) or the black arrives before the white
+// has finished leaving.
+export const FLASH_HOLD = 0.14;
+export const FLASH_FALL = 0.34;
 
 // Canvas fade at first paint, and again when the run resets.
 export const CANVAS_FADE = 1.2;
