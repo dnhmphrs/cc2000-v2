@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { createEgg } from './egg';
 import { createConstruction } from './construction';
-import { growLineMaterial, grower, segmentAttributes } from './ink';
+import { lineMaterial, dotMaterial, grower, segmentAttributes } from './materials';
 import { VERTICES, EDGES, PENTAGONS, PENTAGON_PAIRS, edgePositions } from '../geometry/icosahedron';
 import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, VOID } from '$lib/config';
 
@@ -25,14 +25,27 @@ const TILT = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.tilt))
 // ── The cage ─────────────────────────────────────────────────────────────────
 // A 24-cell — the regular 4-polytope whose 24 vertices are every permutation of
 // (±1, ±1, 0, 0) — projected from four dimensions into three and hung around
-// the solid. 96 edges, one draw call.
+// the scene. 96 edges and 24 nodes, two draw calls.
 //
 // It is here because the search needs somewhere to happen. An icosahedron
-// turning on a black ground is turning in nothing; the same icosahedron inside
-// a lattice that is itself turning, in the same coordinates, is turning in a
-// SPACE — and the blueprint field behind it (three/shaders/grid.js) rules the
-// ground with the same figure in two dimensions, so the three read as one
-// continuous thing.
+// turning on a black ground is turning in NOTHING; the same icosahedron inside a
+// lattice that is itself turning, in the same coordinates, is turning in a
+// space.
+//
+// Three things make it read as one figure rather than as a haze, and all three
+// are V2's:
+//
+//   IT TURNS WITH THE SOLID. Not beside it — the same quaternion, so the whole
+//   frame swings as one object.
+//
+//   IT IS LOCKED TO THE SCREEN. setScreen() is handed the live frustum height
+//   every frame and scales the whole thing to it, so the lattice is the same
+//   size on screen at every zoom. A fixed world size would balloon during the
+//   fall into the room.
+//
+//   IT IS BEHIND EVERYTHING. Its own scene, drawn first, depth cleared after —
+//   see render() below. Left in the main scene it would either be occluded to
+//   ribbons by the room artwork or laid over the top of it.
 //
 // The 4D rotation is the only clock in this file. It has to be: a projection
 // from 4D is not a rotation of anything in 3D, so it cannot be a function of a
@@ -68,31 +81,41 @@ function createCage() {
 		}
 	}
 
-	const geo = new THREE.BufferGeometry();
-	const pos = new Float32Array(pairs.length * 6);
-	geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-	const spread = segmentAttributes(geo, pairs.length, () => 0);
-	const mat = growLineMaterial(ICOSA_INK.grid, 0);
-	mat.uniforms.uBack.value = 0.3;
-	mat.uniforms.uRadius.value = ICOSA_SPHERE_R * ICOSA.cageRadius;
-	// Always fully inked: the cage is not something that draws itself on.
-	const growCage = grower(mat, spread);
-	growCage(1);
+	const scene = new THREE.Scene();
+	const spin = new THREE.Group();
+	scene.add(spin);
 
-	const lines = new THREE.LineSegments(geo, mat);
+	const edgeGeo = new THREE.BufferGeometry();
+	const edgePos = new Float32Array(pairs.length * 6);
+	edgeGeo.setAttribute('position', new THREE.BufferAttribute(edgePos, 3));
+	const edgeSpread = segmentAttributes(edgeGeo, pairs.length, () => 0);
+	const edgeMat = lineMaterial(ICOSA_INK.grid, 0);
+	// Flat: this is a backdrop, and depth-shading it fights the solid in front,
+	// which is the one thing in the frame that is supposed to have depth.
+	edgeMat.uniforms.uBack.value = 1;
+	grower(edgeMat, edgeSpread)(1);
+	const lines = new THREE.LineSegments(edgeGeo, edgeMat);
 	lines.frustumCulled = false;
+	spin.add(lines);
+
+	const nodeGeo = new THREE.BufferGeometry();
+	const nodePos = new Float32Array(verts.length * 3);
+	nodeGeo.setAttribute('position', new THREE.BufferAttribute(nodePos, 3));
+	const nodeMat = dotMaterial(ICOSA_INK.grid, ICOSA.cageNode);
+	const nodes = new THREE.Points(nodeGeo, nodeMat);
+	nodes.frustumCulled = false;
+	spin.add(nodes);
 
 	const angle = [0.2, 0.6, 0.4];
 	const projected = verts.map(() => new THREE.Vector3());
 
-	// The w-divide magnifies a vertex by at most W/(W - sqrt(2)), and a 24-cell
-	// vertex is sqrt(2) from the origin, so this is the largest the projection can
-	// ever get. Scaling by it means cageRadius is a real bound on how far the cage
-	// reaches, in circumradii — otherwise the thing breathes out past the frame
-	// edges on its own and the scene is played inside a much bigger object than
-	// anyone asked for.
+	// The w-divide magnifies a vertex by at most W/(W - sqrt2), and a 24-cell
+	// vertex is sqrt2 from the origin, so this is the largest the projection can
+	// ever get. Dividing it out means the cage is a fixed fraction of the frame
+	// rather than something that breathes out past the edges on its own.
 	const W = 3.2;
-	const SCALE = (ICOSA_SPHERE_R * ICOSA.cageRadius) / (Math.SQRT2 * (W / (W - Math.SQRT2)));
+	const REACH = Math.SQRT2 * (W / (W - Math.SQRT2));
+	let scale = 1;
 
 	function rot4(p, a, b, ang) {
 		const c = Math.cos(ang);
@@ -103,11 +126,7 @@ function createCage() {
 		return q;
 	}
 
-	function advance(dt) {
-		angle[0] += dt * ICOSA.cageSpin[0];
-		angle[1] += dt * ICOSA.cageSpin[1];
-		angle[2] += dt * ICOSA.cageSpin[2];
-
+	function project() {
 		for (let i = 0; i < verts.length; i++) {
 			let p = rot4(verts[i], 0, 3, angle[0]);
 			p = rot4(p, 1, 3, angle[1]);
@@ -115,18 +134,51 @@ function createCage() {
 			// Perspective divide along w, which is what makes a 4D rotation read
 			// as the lattice breathing rather than merely spinning.
 			const k = W / (W - p[3]);
-			projected[i].set(p[0] * k, p[1] * k, p[2] * k).multiplyScalar(SCALE);
+			projected[i].set(p[0] * k, p[1] * k, p[2] * k).multiplyScalar(scale);
+			nodePos.set([projected[i].x, projected[i].y, projected[i].z], i * 3);
 		}
 		for (let e = 0; e < pairs.length; e++) {
 			const a = projected[pairs[e][0]];
 			const b = projected[pairs[e][1]];
-			pos.set([a.x, a.y, a.z, b.x, b.y, b.z], e * 6);
+			edgePos.set([a.x, a.y, a.z, b.x, b.y, b.z], e * 6);
 		}
-		geo.attributes.position.needsUpdate = true;
+		edgeGeo.attributes.position.needsUpdate = true;
+		nodeGeo.attributes.position.needsUpdate = true;
 	}
 
-	advance(0);
-	return { lines, mat, geo, advance };
+	project();
+
+	return {
+		scene,
+		spin,
+		visible: () => edgeMat.uniforms.uOpacity.value > 0.004,
+		advance(dt) {
+			angle[0] += dt * ICOSA.cageSpin[0];
+			angle[1] += dt * ICOSA.cageSpin[1];
+			angle[2] += dt * ICOSA.cageSpin[2];
+			project();
+		},
+		// Lock it to the frame: the widest the figure ever gets is ICOSA.cageFill
+		// of the frustum height, whatever the camera is doing.
+		setScreen(frustumHeight) {
+			const want = (frustumHeight * ICOSA.cageFill) / 2 / REACH;
+			if (Math.abs(want - scale) < 1e-4) return;
+			scale = want;
+			project();
+		},
+		setOpacity(o) {
+			edgeMat.uniforms.uOpacity.value = o;
+			nodeMat.uniforms.uOpacity.value = o * ICOSA.cageNodeGain;
+			lines.visible = o > 0.004;
+			nodes.visible = o > 0.004;
+		},
+		dispose() {
+			edgeGeo.dispose();
+			edgeMat.dispose();
+			nodeGeo.dispose();
+			nodeMat.dispose();
+		}
+	};
 }
 
 export function createLattice() {
@@ -148,17 +200,16 @@ export function createLattice() {
 	// alpha taken out, so what is drawn is the silhouette and nothing else: a
 	// gold circle exactly through the twelve vertices.
 	const egg = createEgg(ICOSA_SPHERE_R, {
-		shell: ICOSA_INK.line,
-		rim: ICOSA_INK.bright,
-		rimPower: 8.0,
+		ink: ICOSA_INK.line,
+		accent: ICOSA_INK.bright,
+		power: 8,
 		base: 0,
-		// No lamp: this is a drawn circle, not a surface. Additive, so it is light
-		// on black rather than paint on it — and so a flash can push it past 1.
-		key: 0,
-		gloss: 1,
+		// A drawn circle, not a surface: no cage, no body, and additive so it is
+		// light on the void rather than paint on it — which is also the only way
+		// the union's flash can push it past 1.
+		skinOnly: true,
 		add: true
 	});
-	egg.setCore(0);
 	scene.add(egg.group);
 
 	// Everything that turns. It rests on ICOSA.tilt, which is where the
@@ -168,13 +219,12 @@ export function createLattice() {
 	frame.quaternion.copy(TILT);
 	scene.add(frame);
 
-	// The cage sits OUTSIDE the frame: it is the space the solid is turning in,
-	// not part of the solid, so it must not turn with it.
+	// The cage is in its own scene — see createCage — and only borrows the
+	// frame's attitude, so it turns with the solid without being part of it.
 	const cage = createCage();
-	scene.add(cage.lines);
 
-	// The conception's three variants, in the frame's own coordinates so that
-	// every point they arrive at is a point of the solid.
+	// The conception's derivation, in the frame's own coordinates so that every
+	// point it arrives at is a point of the solid.
 	const construction = createConstruction();
 	frame.add(construction.group);
 
@@ -193,7 +243,7 @@ export function createLattice() {
 	// in. One delay for every edge, so the frame simply draws itself on.
 	const edgeGeo = new THREE.BufferGeometry();
 	edgeGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions(S), 3));
-	const edgeMat = growLineMaterial(ICOSA_INK.line);
+	const edgeMat = lineMaterial(ICOSA_INK.line);
 	const growEdges = grower(
 		edgeMat,
 		// Each edge still grows outward from the end nearer the seed vertex, so
@@ -229,7 +279,7 @@ export function createLattice() {
 	});
 	const spokeGeo = new THREE.BufferGeometry();
 	spokeGeo.setAttribute('position', new THREE.Float32BufferAttribute(spokePos, 3));
-	const spokeMat = growLineMaterial(ICOSA_INK.inner, 0.85);
+	const spokeMat = lineMaterial(ICOSA_INK.inner, 0.85);
 	// These run from the front of the solid to the back through the middle, so at
 	// the frame's depth floor the far half of every one of them disappears and
 	// six diagonals read as six short stubs. Lifted so they carry all the way.
@@ -276,7 +326,7 @@ export function createLattice() {
 		// as a line chasing itself round. spread 0, so its whole clock is uSpan.
 		const spread = segmentAttributes(geo, local.length, () => 0);
 
-		const mat = growLineMaterial(ICOSA_INK.pentagon, 0.9);
+		const mat = lineMaterial(ICOSA_INK.pentagon, 0.9);
 		const line = new THREE.LineSegments(geo, mat);
 		spinner.add(line);
 		wire.add(holder);
@@ -336,13 +386,27 @@ export function createLattice() {
 			paneGroup.visible = v;
 		},
 		setCage(o) {
-			cage.mat.uniforms.uOpacity.value = o;
-			cage.lines.visible = o > 0.004;
+			cage.setOpacity(o);
 		},
 
 		// The cage's 4D rotation, and the only thing in here that is a clock.
 		tick(dt) {
-			if (cage.lines.visible) cage.advance(dt);
+			if (cage.visible()) cage.advance(dt);
+		},
+
+		// TWO PASSES. The cage is drawn first into a cleared frame, the depth
+		// buffer is wiped, and the scene proper goes over the top — so the lattice
+		// is unambiguously BEHIND everything, at every zoom, without depth-testing
+		// against room artwork it has no business being occluded by.
+		render(r) {
+			cage.spin.quaternion.copy(frame.quaternion);
+			cage.setScreen(camera.top * 2);
+			r.autoClear = true;
+			r.render(cage.scene, camera);
+			r.autoClear = false;
+			r.clearDepth();
+			r.render(scene, camera);
+			r.autoClear = true;
 		},
 
 		backdrop() {
@@ -374,7 +438,6 @@ export function createLattice() {
 			this.setCage(0);
 			construction.reset();
 			construction.show(null);
-			egg.setCore(0);
 			egg.setShell(0);
 			egg.group.scale.setScalar(1);
 			camera.position.set(...ICOSA.camPos);
@@ -386,8 +449,7 @@ export function createLattice() {
 		dispose() {
 			egg.dispose();
 			construction.dispose();
-			cage.geo.dispose();
-			cage.mat.dispose();
+			cage.dispose();
 			edgeGeo.dispose();
 			edgeMat.dispose();
 			spokeGeo.dispose();

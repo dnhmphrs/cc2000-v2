@@ -24,8 +24,8 @@ is up.
 | #   | Scene           | What it is                                           | Where                               |
 | --- | --------------- | ---------------------------------------------------- | ----------------------------------- |
 | 1   | **Calculator**  | The machine. Takes both answers. DOM.                | `src/lib/scenes/Calculator.svelte`  |
-| 2   | **FlyIn**       | Deep-blue air, a pack of five, a run at the egg. 3D. | `src/lib/scenes/FlyIn.svelte`       |
-| 3   | **Conception**  | The icosahedron is DERIVED. Three variants. 3D.      | `src/lib/scenes/Conception.svelte`  |
+| 2   | **FlyIn**       | Deep-blue air, one sperm, a run at the ovum. 3D.     | `src/lib/scenes/FlyIn.svelte`       |
+| 3   | **Conception**  | The icosahedron is DERIVED, and it is a proof. 3D.   | `src/lib/scenes/Conception.svelte`  |
 | 4   | **Computation** | Panes out, search the decades, fall into a room. 3D. | `src/lib/scenes/Computation.svelte` |
 | 5   | **Room**        | The answer, in that room's monitor. DOM.             | `src/lib/scenes/Room.svelte`        |
 
@@ -71,7 +71,7 @@ src/lib/
     space.js          3D distances, cameras, aspect breakpoints
     layout.js         screen-space sizes — monitor glass, chassis
     palette.js        colour
-    dev.js            the dev keys, and which conception variant runs
+    dev.js            the dev keys and the ?at= scrub
     index.js          one barrel: import { SCENES, span, TUNNEL } from '$lib/config'
 
   scenes/           the five scenes, plus the director
@@ -80,11 +80,11 @@ src/lib/
   three/
     Stage.svelte      the canvas, the clock, the running order of the 3D three
     world/
-      tunnel.js         scene 2's world — air, fog, motes, the pack, the egg
+      tunnel.js         scene 2's world — air, fog, motes, the sperm, the ovum
       lattice.js        scenes 3–4's world — the icosahedron, the rim, the cage
-      construction.js   scene 3's three variants
-      egg.js            the sphere, shared by both worlds — wet in one, a rim in the other
-      ink.js            the one line material, and stroke()
+      construction.js   scene 3's derivation
+      egg.js            the wire globe — a cage and a skin in one world, a circle in the other
+      materials.js      every material in the site, and stroke()
     geometry/
       icosahedron.js    vertices, edges, faces, pentagons, golden rectangles
     objects/            the decade panes, their drafting, and their room artwork
@@ -127,8 +127,14 @@ and that almost always reads better than beats that queue.
 ### Scrub it
 
 `?speed=6` runs the whole thing six times faster; `?speed=0.3` runs it slower.
-Only the seconds are scaled, so the choreography is identical — use it to get to
-the beat you are working on without sitting through the run.
+Only the seconds are scaled, so the choreography is identical.
+
+`?at=0.35` **pins** the running 3D scene at that fraction of its own duration and
+holds it there. Because every 3D scene is a pure function of its progress, the
+seek is exact — the frame you get is the frame the run would have drawn at that
+moment. It is the tool for looking at one beat; without it, checking a
+half-second window in a seven-second scene is a matter of taking screenshots and
+hoping.
 
 ### Pure functions of progress
 
@@ -159,57 +165,97 @@ resize(); // the window changed
 Scenes are the _motion_. Worlds are the _look_ — every object, material and
 dimension. A scene never builds anything.
 
-- **`world/tunnel.js`** is scene 2: deep blue air, fog, the egg at the far end,
-  a pack of six sperm, and a field of motes.
+- **`world/tunnel.js`** is scene 2: deep blue air, fog, a field of motes, one
+  sperm, and the ovum.
 - **`world/lattice.js`** is scenes 3 and 4: the void, an orthographic camera, a
   gold circle, the icosahedron, and the 24-cell cage. Sharing it is why the
   wireframe the conception derives is the one the computation projects panes off.
-- **`world/construction.js`** is the conception's three variants, built into the
-  lattice's own frame so every point they arrive at is a point of the solid.
-- **`world/ink.js`** is the one line material everything in the second half is
-  drawn with, plus `stroke()` — a polyline that draws itself on end to end, which
-  is what every compass sweep in the conception is made of.
+- **`world/construction.js`** is the conception's derivation, built into the
+  lattice's own frame so every point it arrives at is a point of the solid.
+- **`world/materials.js`** is every material in the site, and the vocabulary
+  they share.
 
-### Scene 2 is a flight, and a flight needs something to fly past
+---
 
-The camera covers about 180 world units in seven seconds. With nothing between
-it and the egg, all 180 of them read as ZERO — the egg simply gets bigger, and a
-shape growing in the middle of an empty frame is a zoom, not a flight. Three
-things fix that, and between them they are the whole shot:
+## Materials, and why there are only four
+
+The site is the inside of a machine. Nothing in it is a photograph of a thing; it
+is a thing being **displayed by an instrument** — so nothing is shaded, nothing
+is glossy, and the only difference between one surface and another is how it is
+being drawn. Two colours do the whole job: an ink and an accent.
+
+|          | what it is                                                | where                                                       |
+| -------- | --------------------------------------------------------- | ----------------------------------------------------------- |
+| **line** | strokes that draw themselves on, carrying their own depth | every line in the second half, the ovum's cage, the 24-cell |
+| **holo** | a body being scanned: a contour set drawn on a surface    | the sperm                                                   |
+| **skin** | a view-space silhouette, and only a silhouette            | the ovum, and the gold circle on the void                   |
+| **dot**  | a hard core in a soft halo                                | vertices, the compass pen                                   |
+
+**No lights, anywhere.** A lit sphere would need matching lamps in two very
+different scenes and would still differ between a perspective and an
+orthographic camera. Everything is done in **view space**, where the two agree —
+which is why the fly-in's globe and the void's gold circle are the same material
+with `base`, `skinOnly` and two colours changed and nothing else.
+
+**Contours, not `wireframe: true`.** three's wireframe gives you the mesh's
+topology, and the sperm is nine thousand triangles of thin tube — it renders as a
+solid white ribbon. The holo material draws rings around the body and stripes
+along it, in the model's own coordinates, so the wire **density** is a number we
+choose rather than a decision the artist made in Blender.
+
+Two things three.js will not do for a `ShaderMaterial`, both of which cost a day
+each when you find them the hard way:
+
+- **Premultiply.** The canvas is premultiplied, so normal blending is
+  `(ONE, ONE_MINUS_SRC_ALPHA)` and a shader handing back straight colour paints
+  at full strength whatever its alpha says. Its own materials do this in
+  `<premultiplied_alpha_fragment>`; ours have to do it themselves.
+- **Encode.** `outputEncoding` is applied by `<encodings_fragment>`, and a
+  ShaderMaterial's source is used exactly as written — so a colour handed to one
+  of ours is the colour that lands on screen, and `convertSRGBToLinear()` only
+  renders it a gamma stop too dark. Stock materials are the opposite case, which
+  is what `theme.js ink()` is for.
+
+---
+
+## Scene 2 is a flight, and a flight needs something to fly past
+
+The camera covers 230-odd world units. With nothing between it and the ovum, all
+of them read as **zero** — the globe simply gets bigger, and a shape growing in
+the middle of an empty frame is a zoom, not a flight. Three things fix that:
 
 - **the motes** — one `LineSegments`, one draw call. Each is a short segment
   lying along the flight axis, so it is a dot when far off and a streak as it
-  passes. They are not placed in the world but relative to the CAMERA, and wrap:
+  passes. They are placed relative to the CAMERA and wrap:
   `mod(aPhase - uCamZ, uSpan)` folds the whole field into the slab of air ahead
   of the lens, so it is equally dense at every point of the flight for the price
   of a few hundred segments and nothing is animated on the CPU.
-- **the pack** — five rivals, dimmer, riding nearer the lens. They lose. Each
-  slips back past the camera in its own time, so the flight has a running score
-  rather than one animal swimming.
-- **the lens** — 24mm out to 46mm across the run. Widening on the way IN is the
+- **the lens** — 26mm out to 44mm across the run. Widening on the way IN is the
   half of a dolly zoom that exaggerates speed.
+- **the roll** — the sperm turns about its own long axis, once every four
+  seconds, linear. No orbit, no wobble, no easing. That is V1's rotation exactly,
+  and it is the difference between an animal swimming and a prop being swung
+  round on a stick.
+
+`EGG_SCREEN` is **above one**: the thing you have flown 230 units to reach should
+not fit on the screen.
 
 Sizes in `TUNNEL` are **fractions of the frame**, not scale factors on a model
-whose file we do not control: `tunnel.js` normalises the mesh (centred on its
-own bounding box, longest dimension scaled to one world unit) and works
-everything out against the frame's half-height at the riding distance. The bug
-that made this scene read as an empty blue rectangle was exactly this — a
-corkscrew radius taken raw from the file, which at the distance the sperm
-actually rode swung it clean out of frame for the whole scene.
+whose file we do not control. Two bugs came out of getting that wrong, and both
+are worth knowing about:
 
-### Nothing is lit
+- the corkscrew radius was a raw number from the `.glb`, and at the distance the
+  sperm actually rode it swung the body clean out of frame for the whole scene;
+- the mesh was normalised on its **longest** dimension, which is its length —
+  and it points straight away from the camera, so that axis is the one entirely
+  foreshortened. It came out a third of the size it was asked to be. What
+  `spermSpan` means is how much of the frame it covers, so it is normalised on
+  the cross-section.
 
-Not the egg, not the frame. A lit sphere would need matching lamps in two very
-different scenes and would STILL differ between a perspective and an
-orthographic camera. Everything is done in VIEW space, where the two agree: the
-yolk carries a painted top-to-bottom ramp, and the shell a rim, a key and a
-specular worked out from the view normal alone (`world/egg.js`). The result is a
-wet, glossy ovum for the price of one material — and the highlight can be walked
-across it by moving one uniform, which is what `setLight()` is for.
-
-The same material with the key turned off and the base alpha at zero is a pure
-RIM, which is what the void wants: a gold circle the frame is inscribed in. Same
-file, two numbers.
+And the overtake is **relative to the lens**, not to the world: the camera is
+itself covering 230 units while it happens, so a world-space lerp from behind the
+camera to in front of it has to out-run the camera to arrive at all — and it does
+not.
 
 ---
 
@@ -254,41 +300,67 @@ on was never legible in it.
 
 ---
 
-## Scene 3, and its three variants
+## Scene 3, and what it proves
 
-The conception has one job: put the icosahedron on screen, big, centred, in a
-pose you can read, having EARNED it. There are three ways to do that in the
-build and they are alternatives, not a sequence. Switch with
-`?conception=construct|strike|divide`, or set `CONCEPTION` in `config/dev.js`.
+The conception DERIVES the icosahedron, and it is an actual proof — every length
+in it is exact and the arithmetic is written down in `world/construction.js`:
 
-| Variant         | What happens                                                                                                                                                                                                                                                                            |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`construct`** | The derivation, and the default. A compass sweep; the pentagon inscribed in it; the pentagram inside that, which is where φ comes from; the three golden rectangles in that ratio, flat and stacked in the page; then two of them fold up and their twelve corners ARE the icosahedron. |
-| **`strike`**    | The impact. A singularity where the sperm went in, twelve vertices thrown out of it on trails, thirty edges closing between them, and a recoil onto the resting pose.                                                                                                                   |
-| **`divide`**    | Cleavage. One cell becomes two, two become four, four become twelve, and the twelve are sitting exactly where the vertices go.                                                                                                                                                          |
+|                    |                                         |                                              |
+| ------------------ | --------------------------------------- | -------------------------------------------- |
+| the **circle**     | the solid's own circumcircle            | radius √(1+φ²)                               |
+| the **pentagon**   | regular, inscribed in it                | side s = 2R·sin36° = √5                      |
+| the **pentagram**  | its five diagonals                      | d = 2R·sin72° = √5·φ, so **d/s IS φ**        |
+| the **ratio bar**  | s and d end to end, both scaled by 2/√5 | which is exactly 2 and 2φ                    |
+| the **rectangles** | three, in that ratio, flat in the page  | 2 × 2φ — the solid's golden rectangle        |
+| the **fold**       | two stand up perpendicular to the first | their twelve corners are the twelve vertices |
 
-`construct` is the default because it is the only one that makes scene 4
-inevitable rather than merely next: the three rectangles it folds up are the
-three the computation projects its rooms off, and the frame is at IDENTITY while
-it draws them — the one attitude in which the first rectangle is exactly square
-to the camera — turning to `ICOSA.tilt` as the fold happens. The drawing
-becoming a solid and the page turning away are one move.
+Nothing is fudged to make the fold land: it lands because it is the shape.
 
-All three share a duration and a hand-over: the icosahedron at `ICOSA.tilt`,
-the rim up, the frame fully drawn. Nothing else.
+The frame is at **identity** for the flat work, because that is the one attitude
+in which the first golden rectangle is exactly square to the camera, and turns to
+`ICOSA.tilt` on the fold. The drawing becoming a solid and the page turning away
+are one move.
 
-**The vertex ORDER is load-bearing.** The three golden rectangles are indices
-`[0,1,3,2]`, `[4,5,7,6]` and `[8,9,11,10]`, and the decade panes are built on
-them. Do not re-order the vertex list.
+It ends on the **union**: the last edge closes and the whole figure answers at
+once — the twelve corners strike, the line-work overdrives, the rim flares.
+Everything it drives is additively blended, which is why it can be given a level
+above 1 at all. Without that beat this is a geometry lecture standing where a
+conception ought to be.
 
-**The SCALE is load-bearing too.** The raw vertices have circumradius √(1+φ²) ≈
-1.902, and `GoldenRectangle` builds the decade panes from those same raw
-coordinates — so at projection 0 a pane sits exactly on the solid's own edges
-and appears to come out of it. Scale the geometry and the panes no longer line
-up with the shape they emerge from, and the solid outgrows the sphere it is
-supposed to sit softly inside. The conception shows it larger while it
-assembles by scaling the `wire` GROUP (`ICOSA.wireBuild`), never the geometry,
-and draws that back to 1 before handing over.
+---
+
+## Scene 4, and the space it happens in
+
+Near-black and gold. The panes come out as **drafting first** — the rectangle,
+its dimension lines, its 1:φ bar, its spiral, its dashed traces back to the
+vertices it came off — and the rooms fade up through that before the working
+steps back.
+
+The search **locks square**. Every step turns a decade face-on to the camera by
+the direct arc — the shortest rotation between two poses — and stops. It was
+tried the other way, holding an oblique attitude and only squaring up for the
+answer; it reads as drift. A machine turns a thing to face you and stops: the
+precision IS the drama.
+
+Behind all of it is the **cage**: a 24-cell, the regular 4-polytope whose 24
+vertices are every permutation of (±1, ±1, 0, 0), projected from four dimensions
+and hung around the scene. Three things make it read as one figure rather than a
+haze, and all three are V2's:
+
+- **it turns with the solid** — the same quaternion, so the whole frame swings as
+  one object;
+- **it is locked to the screen** — handed the live frustum height every frame, so
+  it is the same size at every zoom. A fixed world size balloons during the fall
+  into the room;
+- **it is behind everything** — its own scene, drawn first, depth cleared after.
+  Left in the main scene it is either occluded to ribbons by the room artwork or
+  laid over the top of it.
+
+The blueprint field (`three/shaders/grid.js`) is what it is drawn on: a ruled
+screen-space grid, a heavier rule every eighth line, a crosshair, corner
+registration brackets. It is **flat**, and drawn at **full resolution** — the
+field used to be a soft wash where half a pixel of blur cost nothing, and a grid
+at half resolution scaled up is a smear.
 
 ---
 

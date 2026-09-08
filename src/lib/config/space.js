@@ -3,13 +3,16 @@
 
 import { CIRCUMRADIUS } from '$lib/three/geometry/icosahedron';
 
-// ── The egg ──────────────────────────────────────────────────────────────────
-// How much of the frame's HALF-height the fly-in's egg spans when the camera
-// parks in front of it. Only the fly-in reads this — the run blows out to white
-// between that scene and the next, so nothing downstream has to agree with it.
-export const EGG_SCREEN = 0.78;
-// The yolk, as a fraction of the shell.
-export const EGG_CORE_RATIO = 0.82;
+// ── The ovum ─────────────────────────────────────────────────────────────────
+// How much of the frame's HALF-height it spans when the camera parks in front of
+// it. ABOVE ONE, deliberately: the thing you have flown 230 units to reach
+// should not fit on the screen. V1 ended at 1.03 of the half-height and that is
+// most of why its arrival landed; three quarters of it, which is where this had
+// drifted to, is a diagram of an arrival.
+//
+// Only the fly-in reads this — the run blows out to white between that scene and
+// the next, so nothing downstream has to agree with it.
+export const EGG_SCREEN = 1.12;
 
 // ── The tunnel (scene 2) ─────────────────────────────────────────────────────
 export const TUNNEL = {
@@ -20,68 +23,63 @@ export const TUNNEL = {
 	//
 	// `fov` is the resting value the camera is BUILT at; `fovEnd` is what the
 	// framing is derived from, because that is the lens the scene finishes on.
-	fov: 24,
-	fovStart: 24,
-	fovEnd: 46,
+	fov: 26,
+	fovStart: 26,
+	fovEnd: 44,
 
 	near: 0.5,
-	far: 460,
+	far: 520,
 
-	// Where the camera starts, and where the egg is. 180-odd units of travel.
-	camStart: 100,
-	eggZ: -150,
-	// World radius of the shell. How big it READS is EGG_SCREEN; the fly-in
-	// turns the two into a stopping distance.
-	shellR: 22,
-	// The glow it comes up out of, as a multiple of the shell's diameter.
-	haloSpread: 7.5,
+	// Where the camera starts, and where the ovum is. 230-odd units of travel,
+	// and the length of the swim is half the drama: at the old distances the
+	// camera crossed a quarter of the gap and the arrival had nowhere to build
+	// from.
+	camStart: 110,
+	eggZ: -180,
+	// World radius. How big it READS is EGG_SCREEN; the fly-in turns the two
+	// into a stopping distance.
+	shellR: 26,
+	// The glow it comes up out of, as a multiple of its diameter.
+	haloSpread: 7.0,
+	// How much body the silhouette has. A few percent — enough to occlude the
+	// motes behind it, not enough to be a surface.
+	skinBase: 0.05,
 
-	// Fog. Thick enough that the egg is a rumour at the start and present at the
+	// Fog. Thick enough that the ovum is a rumour at the start and present at the
 	// end. It is doing the whole of the arrival, so it is worth being fussy
-	// about: at this density the egg is 97% fogged when the scene opens and 22%
-	// fogged when the camera stops.
-	fogDensity: 0.0075,
+	// about: at this density it is 99% fogged when the scene opens and 15% fogged
+	// when the camera stops.
+	fogDensity: 0.0072,
 
-	// ── The hero ─────────────────────────────────────────────────────────────
-	// SIZES HERE ARE FRACTIONS OF THE FRAME, not scale factors on a model whose
-	// file we do not control. world/tunnel.js normalises the model — centred on
-	// its own bounding box, longest dimension scaled to one world unit — and then
-	// works everything below out against the half-height of the frame at the
-	// riding distance. Change the lens or the lead and the shot re-frames itself.
-	//
-	// (This is the bug that made the old fly-in read as an empty blue rectangle:
-	// the corkscrew radius was a raw number from the file, and at the distance
-	// the sperm actually rode it swung the body clean out of frame for the whole
-	// scene.)
+	// ── The sperm ────────────────────────────────────────────────────────────
+	// ONE. Sizes here are FRACTIONS OF THE FRAME, not scale factors on a model
+	// whose file we do not control: world/tunnel.js normalises the mesh and works
+	// these out against the half-height of the frame at the riding distance, so
+	// changing the lens or the lead re-frames the shot rather than breaking it.
 	//
 	// It rides this far in front of the lens once it has overtaken.
-	spermLead: 7,
-	// The body's length, as a fraction of the frame HEIGHT at that distance.
-	spermSpan: 0.5,
-	// How far off the flight axis it corkscrews, as a fraction of the frame's
-	// half-height at that distance.
-	spermOrbit: 0.34,
-	// And this is where it is when the scene starts — behind the camera and off
-	// the axis, because passing exactly through the lens is degenerate.
-	spermFrom: { x: 3.4, y: -1.6, z: 16 },
-	// Corkscrew, rad/s. Constant through everything; it is the one thing that
-	// never stops.
-	spermSpin: 9,
-	spermGroupY: -0.1,
-
-	// ── The pack ─────────────────────────────────────────────────────────────
-	// Five more, dimmer, riding NEARER the lens than the hero. They lose: each
-	// one slips back past the camera in its own time, so the flight has a running
-	// score rather than one animal swimming.
-	rivalLead: [3.2, 4.0, 4.8, 5.6, 6.4],
-	// How far each slips BACK relative to the camera over the run. Staggered, so
-	// the pack is overtaken one at a time — five going at once is a wipe.
-	rivalLag: [5.0, 8.0, 11.0, 15.0, 20.0],
-	// How far off the axis each rides, as a fraction of the frame's half-height
-	// AT ITS OWN DISTANCE, so the spread reads the same whatever the lead.
-	rivalRing: 0.55,
-	rivalSpin: 7.5,
-	rivalScale: 0.62,
+	spermLead: 8,
+	// How much of the frame HEIGHT it covers at that distance — its width ACROSS
+	// the frame, because the body points away from the camera and its length is
+	// foreshortened to almost nothing.
+	spermSpan: 0.42,
+	// The contour set drawn on it: rings around the body and stripes along it,
+	// per unit of the model's own geometry. This is the wire DENSITY, and it is
+	// ours to choose — the mesh's own wireframe is nine thousand triangles of
+	// tube and renders as a solid ribbon.
+	spermRings: 4,
+	spermLongs: 7,
+	spermGain: 1.0,
+	// Where it is when the scene starts — behind the camera and off the axis,
+	// because passing exactly through the lens is degenerate.
+	spermFrom: { x: 3.6, y: -1.7, z: 18 },
+	// THE ROLL, and it is V1's exactly: one turn every four seconds, linear,
+	// clockwise from the camera, about the body's OWN long axis. Not an orbit —
+	// the model sits at the spinner's origin, so nothing swings. Constant through
+	// everything; it is the one thing in the scene that never stops.
+	spermRollPeriod: 4,
+	// The ovum turns too, slowly, about its own pole. rad/s.
+	eggSpin: 0.16,
 
 	// ── The motes ────────────────────────────────────────────────────────────
 	// The field of debris the camera flies through. Without it the flight is a
@@ -150,8 +148,8 @@ export const ICOSA = {
 	// therefore gets a shorter reach AND a wider frustum (see restFrustum), and
 	// even then it is a compromise: six rooms exploded off a solid is a landscape
 	// composition.
-	paneReach: 4.6,
-	paneReachPortrait: 3.2,
+	paneReach: 6.4,
+	paneReachPortrait: 4.2,
 	roomDepth: 3.0,
 
 	// How much the sphere opens out as the rooms come through it. It starts as
@@ -167,12 +165,14 @@ export const ICOSA = {
 	// cage is atmosphere, and a fast one turns the scene into a screensaver.
 	cageSpin: [0.11, 0.083, 0.061],
 
-	// The attitude the search HOLDS while it is looking around. Each decade is
-	// turned round to the camera but deliberately not square to it, so the rooms
-	// stay at the angle they burst out of the frame at and you keep reading them
-	// as faces of a solid rather than as slides. Only the answer's own turn
-	// squares up — which is what makes that last turn land.
-	searchOblique: [0.18, -0.45, 0.04]
+	// The lattice cage. `fill` is how much of the frustum HEIGHT the figure spans
+	// at its widest — above 1, so it runs off the frame the way V2's did and
+	// reads as a space the scene is inside rather than an object in it. It is
+	// re-scaled from the live frustum every frame, so it is locked to the screen
+	// at every zoom.
+	cageFill: 1.55,
+	cageNode: 3.5,
+	cageNodeGain: 1.6
 };
 
 // The frustum is a HEIGHT, so a tall viewport sees a much narrower slice of the

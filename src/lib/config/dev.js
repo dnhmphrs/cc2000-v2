@@ -38,23 +38,21 @@ export const DEV = {
 	only: null
 };
 
-// ── The conception ───────────────────────────────────────────────────────────
-// Which of the three middle scenes runs. They are alternatives, not a sequence
-// — see scenes/Conception.svelte for what each one is.
+// ── The scrub ────────────────────────────────────────────────────────────────
+// ?at=0.35 PINS the running 3D scene at that fraction of its own duration and
+// holds it there. Every 3D scene is a pure function of its progress — nothing in
+// them integrates dt — so seeking is exact: the frame you get is the frame the
+// run would have drawn at that moment, not an approximation of it.
 //
-//   'construct'  the derivation. The default, and the one the rest of the run
-//                is built to follow: the three golden rectangles it folds up
-//                are the three the computation projects its rooms off.
-//   'strike'     the impact.
-//   'divide'     cleavage.
-//
-// ?conception=strike in the URL overrides this, so all three can be looked at
-// without a rebuild. Anything unrecognised falls back to the default.
-export const CONCEPTIONS = ['construct', 'strike', 'divide'];
-export const DEFAULT_CONCEPTION = 'construct';
-
-export const CONCEPTION = (() => {
-	if (typeof window === 'undefined') return DEFAULT_CONCEPTION;
-	const v = new URLSearchParams(window.location.search).get('conception');
-	return CONCEPTIONS.includes(v) ? v : DEFAULT_CONCEPTION;
+// This is the tool for looking at one beat. Without it, checking a half-second
+// window in a seven-second scene is a matter of taking screenshots and hoping.
+export const DEV_AT = (() => {
+	if (typeof window === 'undefined') return null;
+	// The raw value first. Number(null) is 0, not NaN, so testing the parse alone
+	// pins every scene at progress zero on every load that has no ?at= at all —
+	// which is to say, on the live site.
+	const raw = new URLSearchParams(window.location.search).get('at');
+	if (raw === null || raw === '') return null;
+	const v = Number(raw);
+	return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : null;
 })();

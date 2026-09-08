@@ -29,8 +29,12 @@
 	const FLARE_ATTACK = 1.6;
 	const FLARE_DECAY = 1.2;
 
-	// These shaders are heavy; let the backing buffer step down on slower GPUs.
-	const SCALES = [0.5, 0.35, 0.25];
+	// FULL RESOLUTION first. The field used to be a soft theta wash, where half a
+	// pixel of blur cost nothing; it is a ruled grid now, and a grid drawn at
+	// half resolution and scaled up is a smear — which is exactly what it looked
+	// like. It is a cheap shader, so it starts at 1:1 and only steps down if a
+	// slow GPU actually asks it to.
+	const SCALES = [1, 0.6, 0.4];
 
 	let canvas;
 	let gl;

@@ -28,7 +28,7 @@ export const accentHex = derived(palette, (p) => p.line);
 // three r148 ships with ColorManagement disabled, so a colour set on a
 // LineBasicMaterial is used as LINEAR and then encoded to sRGB on output — it
 // comes out a full gamma stop brighter and washed out. Custom ShaderMaterials
-// are the opposite case: they are never re-encoded (see world/ink.js), so their
+// are the opposite case: they are never re-encoded (see world/materials.js), so their
 // colours are handed over raw. Anything on a STOCK material goes through here,
 // or the same gold is two different colours in the same drawing.
 export function ink(hex) {

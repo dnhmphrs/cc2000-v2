@@ -141,55 +141,30 @@ export const SCENES = scale({
 	// a hand-over — the icosahedron, centred, at ICOSA.tilt — and nothing else.
 	// See scenes/Conception.svelte.
 	conception: {
-		duration: 5.4,
+		duration: 5.6,
 
-		// ── construct: the derivation ────────────────────────────────────────
-		// A compass sweep, the pentagon inscribed in it, the pentagram inside
-		// THAT — which is where phi actually comes from — the three golden
-		// rectangles read off the ratio, and two of them folding up out of the
-		// page into the solid.
-		//
-		// The frame is at IDENTITY for all of this, which is the one pose in
-		// which the first golden rectangle is exactly square to the camera, and
-		// turns to ICOSA.tilt on the fold. The drawing becoming a solid and the
-		// page turning away are one move.
-		cCircle: [0.09, 0.26],
-		cPentagon: [0.2, 0.36],
-		cStar: [0.32, 0.47],
-		cRects: [0.42, 0.6],
+		// A compass sweep, the pentagon inscribed in it, the pentagram inside THAT
+		// — which is where phi actually comes from — the ratio measured off as a
+		// bar, three golden rectangles drawn in it, and two of them folding up out
+		// of the page into the solid. See world/construction.js: every length is
+		// exact and the arithmetic is written down.
+		circle: [0.08, 0.28],
+		pentagon: [0.24, 0.4],
+		star: [0.36, 0.5],
+		bar: [0.46, 0.6],
+		rects: [0.56, 0.72],
 		// The guides have done their work by the time the rectangles are out.
-		cGuidesOut: [0.56, 0.74],
-		cFold: [0.56, 0.82],
-		cEdges: [0.74, 0.95],
-		cRim: [0.58, 0.78],
+		guidesOut: [0.66, 0.8],
+		fold: [0.66, 0.88],
+		edges: [0.8, 0.96],
+		rim: [0.68, 0.86],
+
 		// THE UNION, and the reason the scene has the name it does. The last edge
 		// closes and the whole figure answers at once: the twelve corners strike,
-		// the line-work overdrives, the rim flares. One event you feel, on the beat
-		// the twelve separate things become one thing. Without it this scene is a
-		// geometry lecture standing where a conception ought to be.
-		cUnion: [0.86, 1.0],
-		cUnionPeak: 1.3,
-
-		// ── strike: the impact ───────────────────────────────────────────────
-		// A singularity, twelve vertices thrown out of it on trails, and thirty
-		// edges closing between them. It starts a few degrees off the resting
-		// attitude and recoils onto it, so the solid settles rather than parks.
-		sFlash: [0.0, 0.16],
-		sThrow: [0.08, 0.44],
-		sTrails: [0.08, 0.52],
-		sTrailsOut: [0.5, 0.72],
-		sEdges: [0.38, 0.74],
-		sRim: [0.6, 0.84],
-		sSettle: [0.1, 0.9],
-
-		// ── divide: cleavage ─────────────────────────────────────────────────
-		// One cell, then two, then four, then twelve — and the twelve are where
-		// the vertices are.
-		dCell: [0.02, 0.14],
-		dCleave: [0.1, 0.62],
-		dSnap: [0.58, 0.76],
-		dEdges: [0.66, 0.92],
-		dRim: [0.68, 0.88]
+		// the line-work overdrives, the rim flares. One event you feel, on the
+		// beat the twelve separate things become one thing.
+		union: [0.88, 1.0],
+		unionPeak: 1.3
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────
@@ -220,9 +195,12 @@ export const SCENES = scale({
 		shellThin: [0.06, 0.28],
 		sphereGrow: [0.02, 0.36],
 
-		// The 24-cell hung around the solid. It belongs to the search and nothing
-		// else — it arrives with the panes and goes out with the zoom.
+		// The 24-cell hung around the scene. It belongs to the search and nothing
+		// else — it arrives with the panes and goes out with the zoom. It is a
+		// SPACE, so it never comes above a whisper: the moment it is as bright as
+		// the drafting it stops being the room and becomes furniture in it.
 		cageIn: [0.12, 0.36],
+		cagePeak: 0.5,
 
 		// The search: turn a decade square to camera, look at it, turn to the
 		// next. The point is not to fake a search — it is that each turn shows
@@ -238,18 +216,12 @@ export const SCENES = scale({
 		// so they read as attention rather than as five rooms switching off, and
 		// the lean stays small because the fall at the end of the scene is the
 		// zoom and this must not spend it.
-		searchDim: 0.55,
-		searchPush: 0.13,
+		searchDim: 0.72,
+		searchPush: 0.32,
 		// How the turn itself moves. A high power is a real acceleration out of
 		// rest and a real deceleration into the next decade, which is what stops
 		// this reading as a turntable; 1.0 would be a flat constant pivot.
 		searchEase: 2.6,
-		// How far off the direct arc each turn bows, in radians. The shortest path
-		// between two poses is the dullest one — this routes each turn through a
-		// control pose to the side of it, alternating which side, so the frame
-		// swings through the move rather than pivoting flatly across it.
-		searchBow: 0.5,
-
 		// Then in. Accelerates away from rest, then eases onto the final frame.
 		zoom: [0.82, 1.0],
 		zoomPower: 2.2,

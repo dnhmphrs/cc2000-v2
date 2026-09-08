@@ -1,107 +1,34 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createEgg } from './egg';
+import { holoMaterial, ADD } from './materials';
 import { TUNNEL, DEEP_BLUE, HOLO } from '$lib/config';
 
 // ── The tunnel ───────────────────────────────────────────────────────────────
-// The place the fly-in happens: deep blue air with the egg waiting at the far
-// end of it, a pack of sperm corkscrewing up the channel, and a field of motes
-// streaming past the lens.
+// The place the fly-in happens. Deep blue air, an ovum at the far end of it, ONE
+// sperm, and a field of motes streaming past the lens.
 //
 // This file BUILDS. FlyIn.svelte MOVES — it never creates anything. Every
-// dimension is in config/space.js under TUNNEL; everything here reads from
-// there, so tuning the scene means editing the config, not this.
+// dimension is in config/space.js under TUNNEL.
+//
+// ── What this is a picture of ────────────────────────────────────────────────
+// Not a cell. The inside of a machine that is DRAWING a cell. Everything here is
+// line-work: the ovum is a wire globe with three gold great circles round it,
+// the sperm is a wireframe hologram, and the only solid surface in the scene is
+// a silhouette a few percent thick so the globe can occlude what is behind it.
+// See world/materials.js — nothing in this site is lit and nothing is glossy.
 //
 // ── Why there is anything in the air at all ──────────────────────────────────
-// The camera covers about 180 world units in six seconds. With nothing between
-// it and the egg, all 180 of them read as ZERO: the egg simply gets larger, and
-// a shape that grows in the middle of an empty frame is a zoom, not a flight.
-// The motes are what turn it into travel — they have parallax, they streak as
-// they pass, and they are the only reason the fog reads as distance rather than
-// as a wash. They cost one draw call.
-//
-// The pack does the same job for the story. The hero is not travelling, it is
-// WINNING: it comes past the lens, the others fall back behind it, and by the
-// time it reaches the egg it is alone. That is one more draw call and it is the
-// difference between a swimming animation and a race.
+// The camera covers 230-odd world units. With nothing between it and the ovum,
+// all of them read as ZERO: the globe simply gets larger, and a shape that grows
+// in the middle of an empty frame is a zoom, not a flight. The motes are what
+// turn it into travel — they have parallax, they streak as they pass, and they
+// are the only reason the fog reads as distance rather than as a wash. One draw
+// call.
 //
 // The air changes colour across the run (deep blue for the approach, white for
 // the blow-out), so the fog and the shader's ground are one value: set it with
 // setAir(), read it back with getAir(), and let the backdrop paint that.
-
-// ── The hologram ─────────────────────────────────────────────────────────────
-// Not a lit model. Additive, depth-writing off, a scanline running down it and
-// a fresnel rim — so it is bright at its silhouette and sees through itself,
-// which is what makes a single mesh read as a specimen rather than as a shape.
-//
-// scene.fog does not reach a ShaderMaterial, so the same exponential the rest
-// of the scene is fogged by is applied here by hand. Without it the sperm is
-// the one object in the frame that ignores the air it is swimming in.
-function holoMaterial(color) {
-	return new THREE.ShaderMaterial({
-		transparent: true,
-		side: THREE.DoubleSide,
-		depthWrite: false,
-		blending: THREE.CustomBlending,
-		blendSrc: THREE.OneFactor,
-		blendDst: THREE.OneFactor,
-		blendEquation: THREE.AddEquation,
-		uniforms: {
-			uTime: { value: 0 },
-			uOpacity: { value: 0 },
-			uColor: { value: new THREE.Color(color) },
-			uRim: { value: new THREE.Color(HOLO.rim) },
-			uFogColor: { value: new THREE.Color(DEEP_BLUE) },
-			uFogDensity: { value: TUNNEL.fogDensity }
-		},
-		vertexShader: `
-			varying vec3 vNormal;
-			varying vec3 vView;
-			varying vec3 vLocal;
-			varying float vDepth;
-			void main() {
-				vLocal = position;
-				vec4 wp = modelMatrix * vec4(position, 1.0);
-				vNormal = normalize(normalMatrix * normal);
-				vView = normalize(cameraPosition - wp.xyz);
-				vec4 mv = viewMatrix * wp;
-				vDepth = -mv.z;
-				gl_Position = projectionMatrix * mv;
-			}
-		`,
-		fragmentShader: `
-			uniform float uTime;
-			uniform float uOpacity;
-			uniform vec3 uColor;
-			uniform vec3 uRim;
-			uniform vec3 uFogColor;
-			uniform float uFogDensity;
-			varying vec3 vNormal;
-			varying vec3 vView;
-			varying vec3 vLocal;
-			varying float vDepth;
-			void main() {
-				// Along the body, not up the world: a scanline fixed in world space
-				// slides over a model that is corkscrewing and reads as a stripe on
-				// the air rather than as a stripe on the animal.
-				float scan = sin(vLocal.z * 5.5 - uTime * 3.4) * 0.5 + 0.5;
-				scan = smoothstep(0.25, 0.85, scan);
-				float fres = pow(1.0 - abs(dot(normalize(vNormal), vView)), 2.2);
-
-				vec3 col = mix(uColor, uRim, fres * 0.8);
-				float a = (0.14 + scan * 0.13 + fres * 0.5) * uOpacity;
-
-				float fog = 1.0 - exp(-uFogDensity * uFogDensity * vDepth * vDepth);
-				col = mix(col, uFogColor, fog);
-				a *= 1.0 - fog * 0.92;
-
-				// Premultiplied, because additive blending adds col*a and nothing
-				// else — the alpha channel itself is never read.
-				gl_FragColor = vec4(col * a, a);
-			}
-		`
-	});
-}
 
 // ── The motes ────────────────────────────────────────────────────────────────
 // One LineSegments, one draw call. Each mote is a short segment lying along the
@@ -109,10 +36,10 @@ function holoMaterial(color) {
 // passing the lens — the length is free, it is just perspective doing its job.
 //
 // They are not placed in the world: they are placed relative to the CAMERA and
-// wrap. `aZ` is a mote's phase, and the shader folds it into the slab of air
-// just in front of the lens, so the field is equally dense at every point in a
-// 180-unit flight for the price of a few hundred segments. Nothing is animated
-// on the CPU; the whole field moves because uCamZ moves.
+// wrap. `aPhase` is a mote's place in the queue, and the shader folds it into
+// the slab of air just in front of the lens, so the field is equally dense at
+// every point of a 230-unit flight for the price of a few hundred segments.
+// Nothing is animated on the CPU; the whole field moves because uCamZ moves.
 function createMotes() {
 	const n = TUNNEL.motes;
 	const pos = new Float32Array(n * 6);
@@ -145,22 +72,17 @@ function createMotes() {
 	geo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
 	geo.setAttribute('aEnd', new THREE.BufferAttribute(end, 1));
 	geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
-	// The wrap is done in the shader, so three.js cannot know where these end up.
-	geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e6);
 
 	const mat = new THREE.ShaderMaterial({
 		transparent: true,
 		depthWrite: false,
-		blending: THREE.CustomBlending,
-		blendSrc: THREE.OneFactor,
-		blendDst: THREE.OneFactor,
-		blendEquation: THREE.AddEquation,
+		...ADD,
 		uniforms: {
 			uCamZ: { value: TUNNEL.camStart },
 			uSpan: { value: TUNNEL.moteSpan },
 			uLen: { value: TUNNEL.moteLength },
 			uOpacity: { value: 0 },
-			uColor: { value: new THREE.Color(HOLO.body) },
+			uInk: { value: new THREE.Color(HOLO.mote) },
 			uFogDensity: { value: TUNNEL.fogDensity }
 		},
 		vertexShader: `
@@ -194,19 +116,20 @@ function createMotes() {
 		`,
 		fragmentShader: `
 			uniform float uOpacity;
-			uniform vec3 uColor;
+			uniform vec3 uInk;
 			uniform float uFogDensity;
 			varying float vFade;
 			varying float vFog;
 			void main() {
 				float fog = 1.0 - exp(-uFogDensity * uFogDensity * vFog * vFog);
 				float a = vFade * uOpacity * (1.0 - fog * 0.96);
-				gl_FragColor = vec4(uColor * a, a);
+				gl_FragColor = vec4(uInk * a, a);
 			}
 		`
 	});
 
 	const lines = new THREE.LineSegments(geo, mat);
+	// The wrap happens in the shader, so three.js cannot know where these end up.
 	lines.frustumCulled = false;
 	return { lines, mat, geo };
 }
@@ -224,27 +147,21 @@ export function createTunnel() {
 	);
 	camera.position.z = TUNNEL.camStart;
 
-	// The zona pellucida: enough body to read as a second surface around the yolk,
-	// and no more — every point of base alpha is a grey veil over the thing the
-	// whole scene is flying toward.
-	const egg = createEgg(TUNNEL.shellR, { base: 0.09 });
+	const egg = createEgg(TUNNEL.shellR, { base: TUNNEL.skinBase, add: false });
 	egg.group.position.z = TUNNEL.eggZ;
 	scene.add(egg.group);
 
-	// The glow the egg comes up out of. A flat disc, well behind the shell and
-	// much larger than it, additively blended — the egg is not lit in this scene
-	// (nothing here is), so without this it arrives as a pale sticker rather than
-	// as something with its own light on a fogged horizon.
+	// The glow it comes up out of. A flat disc, well behind the globe and much
+	// larger than it, additively blended — there is no light in this scene, so
+	// without this the ovum arrives as a diagram pasted onto the fog rather than
+	// as something with its own presence in it.
 	const haloMat = new THREE.ShaderMaterial({
 		transparent: true,
 		depthWrite: false,
 		depthTest: false,
-		blending: THREE.CustomBlending,
-		blendSrc: THREE.OneFactor,
-		blendDst: THREE.OneFactor,
-		blendEquation: THREE.AddEquation,
+		...ADD,
 		uniforms: {
-			uColor: { value: new THREE.Color(HOLO.body) },
+			uInk: { value: new THREE.Color(HOLO.halo) },
 			uOpacity: { value: 0 }
 		},
 		vertexShader: `
@@ -255,13 +172,13 @@ export function createTunnel() {
 			}
 		`,
 		fragmentShader: `
-			uniform vec3 uColor;
+			uniform vec3 uInk;
 			uniform float uOpacity;
 			varying vec2 vP;
 			void main() {
 				float r = length(vP);
-				float a = exp(-r * r * 5.0) * uOpacity;
-				gl_FragColor = vec4(uColor * a, a);
+				float a = exp(-r * r * 5.5) * uOpacity;
+				gl_FragColor = vec4(uInk * a, a);
 			}
 		`
 	});
@@ -276,84 +193,65 @@ export function createTunnel() {
 	const motes = createMotes();
 	scene.add(motes.lines);
 
-	// ── The pack ─────────────────────────────────────────────────────────────
-	// How big anything reads is a fraction of the FRAME, never a scale factor on
-	// a model whose file we do not control. So the model is normalised — centred
-	// on its own bounding box and scaled so its longest dimension is exactly one
-	// world unit — and then sized from the frame it will be seen in:
+	// ── The sperm ────────────────────────────────────────────────────────────
+	// ONE of them, and it ROLLS. Not an orbit: the model is centred on the
+	// spinner's own origin and the spinner turns about z, so what you see is a
+	// body rolling about its own long axis as it swims. That is exactly what V1
+	// did — a linear tween of -2π every four seconds on a pivot the model sits at
+	// the centre of — and it is the difference between an animal swimming and a
+	// prop being swung round on a stick.
 	//
-	//   half-height at the riding distance = spermLead * tan(fovStart / 2)
-	//
-	// Measured ONCE, from the lens the scene opens on. Recomputing it per frame
-	// would normalise the approach away — the sperm would stay the same size on
-	// screen however close it got, which is the one thing it must not do.
+	// How big it reads is a fraction of the FRAME, not a scale factor on a model
+	// whose file we do not control: the mesh is normalised (centred on its own
+	// bounding box, longest dimension scaled to one world unit) and sized against
+	// the frame's half-height at the riding distance. Measured ONCE, from the
+	// lens the scene opens on — recomputing it per frame would normalise the
+	// approach away, and staying the same size however close it gets is the one
+	// thing it must not do.
 	const RIDE_HALF = TUNNEL.spermLead * Math.tan((TUNNEL.fovStart * Math.PI) / 360);
-	const HERO_LEN = TUNNEL.spermSpan * RIDE_HALF * 2;
-	const HERO_ORBIT = TUNNEL.spermOrbit * RIDE_HALF;
+	const bodyLength = TUNNEL.spermSpan * RIDE_HALF * 2;
 
-	const heroMaterial = holoMaterial(HOLO.body);
-
-	// Three nested objects, and each one is doing a different job:
-	//
-	//   group    where it IS — driven by the scene
-	//   spinner  the corkscrew. Turning this about z both swings the body round
-	//            the flight axis AND rolls it about its own length, because the
-	//            body lies along z inside an offset holder. One rotation, both
-	//            motions, which is what a corkscrew actually is.
-	//   holder   how far off the axis it swings
-	function rig(orbit) {
-		const group = new THREE.Group();
-		const spinner = new THREE.Group();
-		const holder = new THREE.Group();
-		holder.position.y = orbit;
-		spinner.add(holder);
-		group.add(spinner);
-		group.visible = false;
-		scene.add(group);
-		return { group, spinner, holder };
-	}
-
-	const hero = rig(HERO_ORBIT);
-	const sperm = hero.group;
-	sperm.position.y = TUNNEL.spermGroupY;
-
-	// One material EACH, because they have to be faded off one at a time: they
-	// are overtaken in turn, and each one has to go out as it reaches the lens or
-	// it is simply clipped away mid-body. The five share a program — three.js
-	// caches on shader source — so this is five uniform sets, not five shaders.
-	const rivals = TUNNEL.rivalLead.map((lead, i) => {
-		const a = (i / TUNNEL.rivalLead.length) * Math.PI * 2 + 0.4;
-		const half = lead * Math.tan((TUNNEL.fovStart * Math.PI) / 360);
-		const radius = TUNNEL.rivalRing * half * (0.62 + ((i * 7) % 5) / 7);
-		const r = rig(HERO_ORBIT * TUNNEL.rivalScale);
-		return {
-			...r,
-			material: holoMaterial(HOLO.rival),
-			lead,
-			// How far it slips back relative to the camera across the run. Staggered,
-			// so the pack is overtaken one at a time rather than all at once.
-			lag: TUNNEL.rivalLag[i],
-			// Where it rides, off the axis, so the pack is a spread rather than a
-			// queue directly behind the hero.
-			ring: a,
-			radius,
-			// Its own phase, so five of them do not corkscrew in lock-step.
-			phase: a * 1.7,
-			spin: TUNNEL.rivalSpin * (0.82 + ((i * 3) % 4) / 8)
-		};
+	const spermMaterial = holoMaterial({
+		ink: HOLO.body,
+		accent: HOLO.rim,
+		fog: DEEP_BLUE,
+		fogDensity: TUNNEL.fogDensity,
+		rings: TUNNEL.spermRings,
+		longs: TUNNEL.spermLongs,
+		gain: TUNNEL.spermGain
 	});
 
-	// Normalise and dress one copy of the model.
-	//
-	// The file's own origin is nowhere near the body and its axes are its own, so
-	// nothing can be positioned against it directly. This centres the geometry on
-	// its bounding box, scales the longest dimension to `length`, and leaves the
-	// head pointing down -Z — away from the camera, which is the way it swims.
-	function fit(source, material, length) {
-		const model = source.clone(true);
+	const sperm = new THREE.Group();
+	const spinner = new THREE.Group();
+	sperm.add(spinner);
+	sperm.visible = false;
+	scene.add(sperm);
+
+	new GLTFLoader().load('/sperm.glb', (glb) => {
+		const model = glb.scene.children[0] ?? glb.scene;
+		// The file's own origin is nowhere near the body and its axes are its own,
+		// so nothing can be positioned against it directly. Head down -Z, away
+		// from the camera, which is the way it swims.
 		model.rotation.x += Math.PI;
 		model.traverse((child) => {
-			if (child.material) child.material = material;
+			if (child.material) child.material = spermMaterial;
+		});
+
+		// The contour set is drawn in GEOMETRY space, so it needs the body's own
+		// long axis and midpoint there — which is the mesh's bounding box before
+		// any of the object transforms above.
+		model.traverse((child) => {
+			if (!child.isMesh) return;
+			child.geometry.computeBoundingBox();
+			const gb = child.geometry.boundingBox;
+			const gs = gb.getSize(new THREE.Vector3());
+			const axis = gs.x > gs.y && gs.x > gs.z ? 'x' : gs.y > gs.z ? 'y' : 'z';
+			const A = { x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, 1] };
+			const rest = ['x', 'y', 'z'].filter((k) => k !== axis);
+			spermMaterial.uniforms.uAxis.value.set(...A[axis]);
+			spermMaterial.uniforms.uSide.value.set(...A[rest[0]]);
+			spermMaterial.uniforms.uUp.value.set(...A[rest[1]]);
+			spermMaterial.uniforms.uCentre.value.copy(gb.getCenter(new THREE.Vector3()));
 		});
 
 		const inner = new THREE.Group();
@@ -362,48 +260,39 @@ export function createTunnel() {
 		const box = new THREE.Box3().setFromObject(model);
 		const size = box.getSize(new THREE.Vector3());
 		model.position.sub(box.getCenter(new THREE.Vector3()));
-		inner.scale.setScalar(length / Math.max(size.x, size.y, size.z));
-		return inner;
-	}
-
-	new GLTFLoader().load('/sperm.glb', (glb) => {
-		const source = glb.scene.children[0] ?? glb.scene;
-		hero.holder.add(fit(source, heroMaterial, HERO_LEN));
-		rivals.forEach((r) => r.holder.add(fit(source, r.material, HERO_LEN * TUNNEL.rivalScale)));
+		// Normalised on the CROSS-SECTION, not the longest dimension. The body
+		// points down -Z — straight away from the camera — so its length is the one
+		// axis that is almost entirely foreshortened; sizing by it made the thing a
+		// third of the size it was asked to be. What `spermSpan` means is how much
+		// of the frame it covers, and that is x and y.
+		inner.scale.setScalar(bodyLength / Math.max(size.x, size.y));
+		spinner.add(inner);
 	});
-
-	const holos = () => [heroMaterial, ...rivals.map((r) => r.material)];
 
 	return {
 		scene,
 		camera,
 		egg,
 		halo,
-		haloMat,
 		sperm,
-		hero,
-		rivals,
-		heroMaterial,
+		spinner,
+		spermMaterial,
 		motes,
-		// Kept under the name the fly-in has always used it by.
-		spermMaterial: heroMaterial,
 
 		setAir(hex) {
 			air = hex;
 			scene.fog.color.setHex(hex);
-			// The hand-applied fog in the custom materials has to walk with the
-			// scene's, or the sperm stay blue while the air goes white.
-			const c = new THREE.Color(hex);
-			holos().forEach((m) => m.uniforms.uFogColor.value.copy(c));
+			// The hand-applied fog in the sperm's material has to walk with the
+			// scene's, or it is the one thing that stays blue while the air whites.
+			spermMaterial.uniforms.uFogColor.value.set(hex);
 		},
 		getAir() {
 			return air;
 		},
 
-		// Advances the one thing in the scene that is a clock rather than a
-		// position: the scanline crawling along the bodies.
+		// The one clock in the scene: the band crawling along the body.
 		tick(dt) {
-			holos().forEach((m) => (m.uniforms.uTime.value += dt));
+			spermMaterial.uniforms.uTime.value += dt;
 		},
 
 		// Where the camera is, so the mote field can fold itself around it.
@@ -442,36 +331,28 @@ export function createTunnel() {
 			this.setHalo(0);
 			sperm.position.set(
 				TUNNEL.spermFrom.x,
-				TUNNEL.spermGroupY + TUNNEL.spermFrom.y,
+				TUNNEL.spermFrom.y,
 				TUNNEL.camStart + TUNNEL.spermFrom.z
 			);
-			hero.spinner.rotation.z = 0;
+			spinner.rotation.z = 0;
 			sperm.visible = false;
-			heroMaterial.uniforms.uOpacity.value = 0;
-			rivals.forEach((r) => {
-				r.group.visible = false;
-				r.group.position.set(0, 0, TUNNEL.camStart + TUNNEL.spermFrom.z);
-				r.spinner.rotation.z = 0;
-				r.material.uniforms.uOpacity.value = 0;
-			});
+			spermMaterial.uniforms.uOpacity.value = 0;
 			// Nothing in the air. The calculator's window looks onto this while it
-			// waits, and the egg is not supposed to be visible yet — the fly-in
+			// waits, and the ovum is not supposed to be visible yet — the fly-in
 			// brings it up out of the fog (SCENES.flyIn.eggIn).
-			egg.setCore(0);
+			egg.setWire(0);
 			egg.setShell(0);
 			egg.group.rotation.set(0, 0, 0);
-			egg.group.scale.setScalar(1);
 		},
 
 		dispose() {
 			egg.dispose();
-			holos().forEach((m) => m.dispose());
+			spermMaterial.dispose();
 			haloMat.dispose();
 			halo.geometry.dispose();
 			motes.geo.dispose();
 			motes.mat.dispose();
 			sperm.traverse((o) => o.geometry?.dispose());
-			rivals.forEach((r) => r.group.traverse((o) => o.geometry?.dispose()));
 		}
 	};
 }
