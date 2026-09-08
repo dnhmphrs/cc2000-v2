@@ -18,7 +18,7 @@ is up.
   │ Calculator  │ ───────────▶ │ FlyIn  │ ─▶ │ Conception │ ─▶ │ Computation │ ─▶ │ Room │
   └─────────────┘              └────────┘    └────────────┘    └─────────────┘    └──────┘
          ▲                        DOM: a caption, one line at a time                  │
-         └──────────────────────────── calculate again ────────────────────────────────┘
+         └──────────────────────────── calculate again ───────────────────────────────┘
 ```
 
 | #   | Scene           | What it is                                             | Where                               |
