@@ -4,8 +4,8 @@
 		SCENES,
 		span,
 		clamp01,
-		bump,
 		smoothstep,
+		smootherstep,
 		easeInOutCubic,
 		ICOSA,
 		conceptionFrustum,
@@ -20,39 +20,31 @@
 	// numbers. There is no flash, no cut and no reset: the swimmer has just gone
 	// in, and for a beat nothing happens.
 	//
-	// ── Then the surface answers ─────────────────────────────────────────────
-	// A ring of waves breaks from the point of entry and runs round the sphere.
-	// And over the next two seconds it RELAXES — into the lowest standing wave a
-	// sphere has that is invariant under the icosahedral group:
+	// ── Then it divides ──────────────────────────────────────────────────────
+	// A standing wave comes up on the surface, and the wave DIVIDES. It is
 	//
-	//     f(n) = Σ P₆(n · aᵢ)   over the six five-fold axes
+	//     f(n) = Σ wᵢ · P₆(n · aᵢ)
 	//
-	// Degree six is the first degree at which such an invariant exists at all;
-	// the degree-2 and degree-4 sums vanish identically. So this is not a pattern
-	// picked to look icosahedral, it is the only one of its kind, and its twelve
-	// antinodes are the twelve vertices. See world/materials.js coreMaterial().
+	// over the six five-fold axes of the icosahedron, and the axes come in ONE AT
+	// A TIME. One axis is a dumbbell: two antinodes, a sphere pulling into two.
+	// Two axes, four. Six axes, twelve — and twelve antinodes on a sphere, at
+	// arccos(1/√5) from each other, is an icosahedron.
 	//
-	// That is the conception. A disturbance settling into the lowest mode its
-	// symmetry allows, and the twelve places it settles hardest being exactly the
-	// twelve places the corners are about to be struck.
+	// Degree 6 is the first degree at which a non-constant icosahedral invariant
+	// exists at all; the degree-2 and degree-4 sums vanish identically. So this
+	// is not a pattern chosen to look right, it is the only one there is, and
+	// every step of the division is forced. See world/materials.js.
 	//
-	// ── And only then the geometry ───────────────────────────────────────────
-	// The twelve strike. The page turns square to you. And the machine DERIVES
-	// what the wave has already shown it: a compass swings the circumcircle, the
-	// pentagon goes in it, the pentagram goes in that — which is where φ comes
-	// from — the ratio is measured off as a bar, three rectangles are drawn in
-	// it, and two of them fold up out of the page. Every length is exact; see
-	// world/construction.js, which does the arithmetic and states it.
+	// ── And it does not go away ──────────────────────────────────────────────
+	// The wave IS the icosahedron by the time it is finished, so nothing is
+	// rebuilt from scratch afterwards. The twelve antinodes are struck as the
+	// twelve corners, in place; the six axes the field was summed over are drawn
+	// as the six long diagonals, because that is literally what they are; and the
+	// thirty edges close between corners that are already there. The surface
+	// stays, dropped to a ghost, as the shell the frame sits in.
 	//
-	// The flat work happens at IDENTITY, because that is the one attitude in
-	// which the first golden rectangle is exactly square to the camera. The wave
-	// happens at ICOSA.tilt, because that is the attitude the twelve vertices are
-	// legible in. So the page turns TWICE: out of the solid's pose to be drawn
-	// on, and back into it as the drawing stands up.
-	//
-	// It ends where it began. The union's twelve corners land on the twelve
-	// antinodes the wave put there four seconds earlier, in the same pose, to the
-	// pixel.
+	// The whole scene is at ICOSA.tilt and never turns. There is no page to
+	// square up any more: the drawing and the solid are the same object.
 	//
 	// Everything here is a pure function of scene progress. Nothing integrates
 	// dt, so the scene can be scrubbed, reset or re-entered without drifting.
@@ -60,14 +52,6 @@
 	export let world;
 
 	const T = SCENES.conception;
-
-	const REST = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.tilt));
-	const PAGE = new THREE.Quaternion();
-
-	// Where the swimmer went in, in the core's own coordinates. It came down the
-	// world's +Z at the lens; the core is in the solid's pose, so the direction
-	// has to be carried back through that.
-	const ENTRY = new THREE.Vector3(0, 0, 1).applyQuaternion(REST.clone().invert());
 
 	const ROT4 = new THREE.Matrix4();
 	const ROT3 = new THREE.Matrix3();
@@ -78,99 +62,49 @@
 		t = 0;
 		world.reset();
 		world.applyFrustum(conceptionFrustum(window.innerWidth, window.innerHeight));
-		world.construction.show(true);
 		world.setLineOpacity(1);
-		world.egg.setEntry(ENTRY);
 		update(0);
 	}
 
 	export function update(dt) {
 		t += dt;
 		const p = clamp01(t / T.duration);
-		const c = world.construction;
 
-		// ── The wave ─────────────────────────────────────────────────────────
-		// The impact, and then the settling. `relax` is the whole idea of the
-		// scene and it is one number.
-		const strike = smoothstep(0, 1, span(p, T.wake));
-		const relax = easeInOutCubic(span(p, T.relax));
-		const fade = 1 - easeInOutCubic(span(p, T.waveOut));
-		// The twelve antinodes blaze as they are recognised.
-		const lobes = bump(span(p, T.lobes));
+		// ── The division ─────────────────────────────────────────────────────
+		// One number: how many of the six axes are in. Everything else follows.
+		const grow = smootherstep(span(p, T.divide)) * 6;
+		const lit = smoothstep(0, 1, span(p, T.wake));
+		// The mode rings as it is excited and damps as it settles, which is what
+		// an excited normal mode does and is the only motion on the surface.
+		const ring = (1 - smootherstep(span(p, T.ring))) * T.ringPeak;
+		// The surface drops to a ghost once the frame is on it — it has to, or
+		// thirty edges are drawn inside an opaque ball and none of them read.
+		const ghost = easeInOutCubic(span(p, T.ghost));
+		const union = Math.sin(span(p, T.union) * Math.PI) * T.unionPeak;
+
 		world.egg.setWave({
-			glow: strike * fade * (0.85 + lobes * 0.5),
-			// The skin actually moves. Six percent of the radius at the impact,
-			// relaxing to the standing wave's own displacement, and flat by the
-			// time the drawing starts.
-			amp: 0.06 * strike * fade,
-			ripple: strike,
-			relax,
+			grow,
+			glow: lit * (1 - ghost * 0.42) * (1 + union * 0.6),
+			// Big while it is dividing — a cell pulling itself in two is a shape
+			// change, not a shading change — and flat by the time the frame draws.
+			amp: lit * T.amp * (1 - ghost),
+			ring,
 			phase: t
 		});
-		// The body goes, and with it the last opaque thing in the run. It has to
-		// be gone before the wireframe draws: it writes depth, and the
-		// icosahedron's edges are chords INSIDE this sphere.
-		world.egg.setCore(strike * (1 - easeInOutCubic(span(p, T.coreOut))));
+		world.egg.setCore(lit * (1 - ghost * 0.55));
 
 		// The blueprint field rules itself on under the wave. It is at zero on the
 		// frame this scene opens on, which is what lets the fly-in's `deep` and
 		// this scene's `grid` be the same black at the hand-over.
-		fieldFade.set(smoothstep(0.06, 0.32, p));
+		fieldFade.set(smoothstep(0.05, 0.3, p));
 
-		// ── The page turns square ────────────────────────────────────────────
-		// Out of the solid's pose, to be drawn on.
-		const square = easeInOutCubic(span(p, T.square));
-
-		// ── The twelve ───────────────────────────────────────────────────────
-		// Struck on the antinodes, and let go as the page turns away from the pose
-		// they are legible in — at identity the solid looks down a two-fold axis
-		// and six pairs of them land on top of each other, which is the whole
-		// reason ICOSA.tilt exists. They come back at the union, in the same
-		// place, which is the shape of the scene.
-		const held = span(p, T.lobes) * (1 - square);
-
-		// ── The compass ──────────────────────────────────────────────────────
-		// The pen and the arc are one move: the arm sweeps from the top, and the
-		// circle exists behind it. Linear, because a compass is. It is drawing
-		// over the sphere's own rim, which is the same circle — the instrument
-		// taking possession of what it found.
-		const drawn = span(p, T.circle);
-		c.setCircle(drawn);
-		c.setCompass(
-			Math.PI / 2 - drawn * Math.PI * 2,
-			// On for the sweep, and gone the moment the circle closes — a compass
-			// left lying on a finished drawing is a compass nobody put away.
-			smoothstep(0, 0.06, drawn) * (1 - smoothstep(0.9, 1, drawn))
-		);
-
-		// ── The figure ───────────────────────────────────────────────────────
-		const guides = 1 - smoothstep(T.guidesOut[0], T.guidesOut[1], p);
-		c.setPentagon(span(p, T.pentagon), guides);
-		c.setStar(span(p, T.star), guides);
-		c.setBar(span(p, T.bar), guides);
-
-		// The three rectangles, flat and stacked in the page — one upright and two
-		// landscape, all in the 1:φ the bar just measured.
-		c.setRects(span(p, T.rects), 1);
-
-		// ── The fold ─────────────────────────────────────────────────────────
-		// Two of them stand up, and the page turns back with them: by the time the
-		// rectangles are perpendicular the frame has carried them to the attitude
-		// the wave laid down, and scene 4 starts its search from.
-		const fold = easeInOutCubic(span(p, T.fold));
-		c.setFold(fold);
-		world.frame.quaternion.copy(REST).slerp(PAGE, square * (1 - fold));
-
-		// The edges close last, between corners that are already there.
+		// ── The solid, in the order the field builds it ───────────────────────
+		// The twelve, struck on the antinodes. The six axes the sum was taken
+		// over, drawn as the six long diagonals — they are the same six vectors.
+		// Then the thirty edges, between corners that are already there.
+		world.setCorners(span(p, T.corners) * (1 + union * 1.4));
+		world.setSpokes(smootherstep(span(p, T.spokes)));
 		world.setGrow(span(p, T.edges));
-
-		// ── The union ────────────────────────────────────────────────────────
-		// The last edge closes and the whole figure answers at once: the twelve
-		// corners strike, the line-work overdrives, the rim flares. Everything it
-		// drives is additively blended, which is why it can be given a level above
-		// 1 at all — on the void, more than full is simply more light.
-		const union = Math.sin(span(p, T.union) * Math.PI) * T.unionPeak;
-		c.setCorners(Math.max(held, union));
 		world.setLineOpacity(1 + union * 1.1);
 		// The rim never leaves. It arrived with the fly-in and it is the circle
 		// the whole figure is inscribed in; the union only burns it.

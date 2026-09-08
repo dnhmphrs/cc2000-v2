@@ -254,6 +254,18 @@
 		return { left: minX, top: minY, width: maxX - minX, height: maxY - minY };
 	}
 
+	// How big this room's monitor glass actually is, in WORLD units. The way home
+	// frames on the glass, and predicting that framing from the glass's current
+	// on-screen size does not work on a lens: the glass hangs in front of the
+	// plane the camera is focused at, so it magnifies faster than the frustum
+	// does and the flight overshoots. Given its real size the sum is exact.
+	export function glassExtent() {
+		const entry = layers.find((l) => l.cfg.key === 'screen');
+		if (!entry || entry.w == null || !entry.mat.map) return null;
+		const glass = SCREEN_GLASS[decadeKey] || SCREEN_GLASS['90s'];
+		return { w: entry.w * glass.w * GLASS_SAFETY, h: entry.h * glass.h * GLASS_SAFETY };
+	}
+
 	// World-space centre of this room's monitor glass — where the camera aims on
 	// the way home. The same sub-rectangle screenRect() measures, but left in the
 	// world instead of projected.
@@ -263,6 +275,17 @@
 		const glass = SCREEN_GLASS[decadeKey] || SCREEN_GLASS['90s'];
 		entry.mesh.updateWorldMatrix(true, false);
 		return entry.mesh.localToWorld(new THREE.Vector3(glass.cx - 0.5, 0.5 - glass.cy, 0));
+	}
+
+	// How big the room's own BACK WALL actually is, in world units. It is a
+	// `cover` layer, so it is scaled to cover the pane's frame and overflows on
+	// one axis — which means it is bigger than the rectangle in at least one
+	// direction, and the landing zoom can and should use that extra. Fitting the
+	// RECTANGLE instead is what left a black margin round the room.
+	export function coverExtent() {
+		const bg = layers.find((l) => l.cfg.cover);
+		if (!bg || bg.w == null) return null;
+		return { w: bg.w, h: bg.h };
 	}
 
 	// Local-space (pre-group-transform) orthonormal frame of this room's plane —

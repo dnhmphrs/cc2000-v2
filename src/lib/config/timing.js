@@ -100,11 +100,6 @@ export const SCENES = scale({
 
 		// The swimmer comes past from behind and settles in front of the lens.
 		spermIn: [0.015, 0.13],
-		// And then its orbit CLOSES: wide and wild while it is still overtaking
-		// you, tightening to a steady corkscrew once you are travelling together.
-		// See TUNNEL.spermOrbit — the radius is V1's, and this is the one liberty
-		// taken with it.
-		close: [0.08, 0.66],
 
 		// It breaks formation and goes in. Its own curve, and a hard one: this is
 		// the only acceleration in the scene and it happens against a camera that
@@ -155,54 +150,49 @@ export const SCENES = scale({
 	// It opens on the fly-in's last frame, unchanged, and it is the same object:
 	// the swimmer has just gone in, and for a beat nothing happens.
 	//
-	// Then the surface answers. A ring of waves breaks from the point of entry
-	// and runs round the sphere — and RELAXES, over the next two seconds, into a
-	// standing wave: the lowest one a sphere has that is symmetric under the
-	// icosahedral group, whose twelve antinodes ARE the twelve vertices. See
-	// world/materials.js coreMaterial(); it is the sum of P6(n·a) over the six
-	// five-fold axes and it is not a decoration, it is the answer arriving as
-	// physics before it arrives as geometry.
+	// Then the surface answers, and it DIVIDES. A standing wave comes up on it —
+	// the sum of P₆(n·aᵢ) over the icosahedron's six five-fold axes — and the
+	// axes come in ONE AT A TIME. One axis is a dumbbell: two antinodes, a sphere
+	// pulling into two. Two axes, four. Six, twelve. And twelve antinodes on a
+	// sphere is an icosahedron.
 	//
-	// The twelve strike. The page squares up. And only then does the machine
-	// DERIVE what it has already been shown: compass, pentagon, pentagram —
-	// which is where phi actually comes from — the ratio measured off as a bar,
-	// three golden rectangles, and two of them folding up out of the page. Every
-	// length is exact; see world/construction.js.
+	// Degree 6 is the first degree at which a non-constant icosahedral invariant
+	// exists at all, so every step of that division is forced rather than chosen.
+	// See world/materials.js coreMaterial().
 	//
-	// It ends where it began. The union's twelve corners land on the twelve
-	// antinodes the wave put there four seconds earlier, in the same pose, to the
-	// pixel — a promise and the paying of it.
+	// TWO BEATS, not three. There used to be a generic ripple, then the mode,
+	// then a compass-and-pentagon derivation that rebuilt from scratch what the
+	// mode had already produced. The wave IS the icosahedron by the time it has
+	// finished, so nothing is rebuilt: the twelve antinodes are struck in place,
+	// the six axes the sum was taken over are drawn as the six long diagonals —
+	// which is literally what they are — and the thirty edges close between
+	// corners that are already there.
 	conception: {
-		duration: 9.0,
+		duration: 6.4,
 
-		// The beat of nothing, and then the strike.
-		wake: [0.03, 0.1],
-		// Travelling waves out of the point of entry.
-		ripple: [0.02, 0.26],
-		// Ripple → the icosahedral standing wave. This is the whole idea.
-		relax: [0.13, 0.35],
-		// The twelve antinodes brighten and are struck as points.
-		lobes: [0.28, 0.4],
-		// The surface goes, leaving its rim — which is the circumcircle.
-		waveOut: [0.34, 0.43],
-		coreOut: [0.35, 0.44],
-		// And the page turns square to you to be drawn on. The twelve go with it.
-		square: [0.33, 0.45],
+		// The field lights up on the surface it was already sitting on.
+		wake: [0.0, 0.09],
+		// And divides. 0 → 6 axes.
+		divide: [0.04, 0.54],
+		// The mode ringing as it is excited, damped out as it settles. This is the
+		// only motion on the surface and it is an excited normal mode relaxing,
+		// not a texture scrolling.
+		ring: [0.0, 0.66],
+		ringPeak: 0.28,
+		// How far the wave moves the skin, as a fraction of the core's radius.
+		// Large: a cell pulling itself into two is a change of shape.
+		amp: 0.13,
 
-		// ── The derivation ───────────────────────────────────────────────────
-		circle: [0.47, 0.58],
-		pentagon: [0.56, 0.65],
-		star: [0.63, 0.71],
-		bar: [0.69, 0.77],
-		rects: [0.75, 0.84],
-		// The guides have done their work by the time the rectangles are out.
-		guidesOut: [0.8, 0.88],
-		fold: [0.8, 0.93],
-		edges: [0.88, 0.98],
+		// The solid, in the order the field builds it.
+		corners: [0.5, 0.6],
+		spokes: [0.58, 0.76],
+		edges: [0.62, 0.86],
+		// And the surface drops to a ghost, because thirty edges drawn inside an
+		// opaque ball are thirty edges nobody can see.
+		ghost: [0.58, 0.8],
 
-		// THE UNION. The last edge closes and the whole figure answers at once:
-		// the twelve corners strike, the line-work overdrives, the rim flares.
-		union: [0.93, 1.0],
+		// THE UNION. The last edge closes and the whole figure answers at once.
+		union: [0.86, 1.0],
 		unionPeak: 1.3
 	},
 
@@ -253,9 +243,12 @@ export const SCENES = scale({
 		// SPACE does. Near rooms swell off the frame, far ones fall away, and the
 		// thing stops being a diagram for two and a half seconds.
 		survey: [0.28, 0.5],
-		// Yaw and pitch it walks through while it does, in radians.
-		surveyTurn: 1.25,
-		surveyTilt: 0.3,
+		// Yaw and pitch it walks through, in radians. The yaw is a FULL sine — out
+		// one way, back through the rest pose, out the other, home — so the beat
+		// both moves properly and ends flat and facing, which is where the search
+		// has to start from.
+		surveyTurn: 0.95,
+		surveyTilt: 0.34,
 
 		// The search: turn a decade square to camera, HOLD it, turn to the next.
 		// The point is not to fake a search — it is that each turn shows another
@@ -266,17 +259,10 @@ export const SCENES = scale({
 		// Fraction of each step spent turning; the rest is the hold. The last step
 		// is all turn, because the fall follows it straight away.
 		searchSpin: 0.7,
-		// How far the other five step back for it — and they STEP, they do not
-		// breathe: it comes on over a twentieth of the slot and stays there until
-		// the next turn takes it off. A pulse reads as five rooms sighing; a step
-		// reads as a machine selecting one.
-		//
-		// AND THE CAMERA DOES NOT MOVE. Not a lean, not a nudge, nothing. The
-		// clocking is rigid or it is nothing, and a frustum that pumps on every
-		// candidate is the single loudest way to make a precise instrument look
-		// like a slideshow transition.
-		searchDim: 0.78,
-		searchSnap: 0.06,
+		// NOTHING MOVES BUT THE SOLID. The camera does not lean, and the other five
+		// rooms do not dim, pulse or step back — both were tried and both make a
+		// precise instrument look like a slideshow with a transition on it. The
+		// turn, and the stop at the end of it, are the whole event.
 		// How the turn itself moves. A high power is a real acceleration out of
 		// rest and a real deceleration into the next decade, which is what stops
 		// this reading as a turntable; 1.0 would be a flat constant pivot.

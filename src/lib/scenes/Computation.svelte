@@ -13,12 +13,14 @@
 	} from '$lib/store/store';
 	import {
 		SCENES,
+		RETURN_FILL,
 		span,
 		lerp,
 		clamp01,
 		smoothstep,
 		easeInOutCubic,
 		easeInOutPower,
+		smootherstep,
 		bump,
 		ICOSA,
 		restFrustum,
@@ -70,10 +72,9 @@
 	//   that pumps in on every candidate is the single loudest way to make a
 	//   precise instrument look like a slideshow transition.
 	//
-	//   THE OTHER ROOMS DO NOT PULSE. They STEP back — on over a twentieth of the
-	//   slot, held for the whole look, off on the next turn. A sine in and out
-	//   reads as five rooms sighing; a step reads as a machine selecting one, and
-	//   the rigidity IS the character.
+	//   NOTHING FADES ON THE BEAT. The other five do not dim, pulse, or step
+	//   back. Six rooms flickering at each other four times running is a
+	//   slideshow with a transition; the turn is the whole event.
 	//
 	// It was tried the other way, holding an oblique attitude and only squaring
 	// up for the answer. It reads as drift. The whole point of the scene is that a
@@ -188,6 +189,7 @@
 	const ROT3 = new THREE.Matrix3();
 	const SURVEY_E = new THREE.Euler();
 	const SURVEY_Q = new THREE.Quaternion();
+	const TAU = Math.PI * 2;
 
 	// The rotation that puts a pane's artwork square to the camera.
 	function landingQuatFor(i) {
@@ -203,24 +205,40 @@
 		return new THREE.Quaternion().setFromRotationMatrix(mTarget.multiply(mLocal.transpose()));
 	}
 
-	// How deep the answer's pane sits, in world z, at the pose the search has just
-	// locked it into. It is square to the camera there, so the whole of the pane's
-	// projection distance is depth — and on a lens the fall has to be framed at
-	// that plane rather than at the origin.
+	// Where the answer's BACK WALL sits, in world z, at the pose the search has
+	// just locked it into. Two offsets, and both of them matter on a lens:
+	//
+	//   the pane is `reach` out along its own axis, and at the landing pose that
+	//   axis points at the camera, so the whole of it is depth;
+	//
+	//   and the room's artwork is hung BEHIND the pane — the back wall by the
+	//   full ICOSA.roomDepth (RoomProjection: `back = -n * depth * maxDepth`).
+	//
+	// Framing at the pane's plane and not the wall's leaves the room a quarter
+	// too small, which is where the black border round it came from. Under the
+	// orthographic camera this file used to have, neither offset mattered at all.
 	function landingDepth() {
 		const reach = get(aspect) === 'portrait' ? ICOSA.paneReachPortrait : ICOSA.paneReach;
 		const c = paneConfigs[target];
 		if (!c) return 0;
-		return c.axis
-			.clone()
-			.multiplyScalar(reach * c.direction)
-			.applyQuaternion(world.frame.quaternion).z;
+		return (
+			c.axis
+				.clone()
+				.multiplyScalar(reach * c.direction)
+				.applyQuaternion(world.frame.quaternion).z - ICOSA.roomDepth
+		);
 	}
 
 	// How much the room's own artwork fills the frame when the camera is on it.
+	// It COVERS: the room is the last thing in the run and it goes edge to edge,
+	// with no void showing round it. So the measure is the back wall's real size
+	// — which overflows the golden rectangle on one axis, because it is a cover
+	// layer — rather than the rectangle's, and there is no safety gap.
 	function landingFrustum() {
 		const room = panes[target]?.getRoom?.();
 		const a = window.innerWidth / window.innerHeight;
+		const cover = room?.coverExtent?.();
+		if (cover) return Math.min(cover.h, cover.w / a) * 0.995;
 		if (!room?.localFrame) return 8;
 		const { W, H } = room.localFrame();
 		return Math.min(H, W / a) * 0.98;
@@ -248,8 +266,8 @@
 		world.setPanesVisible(true);
 		world.setLineOpacity(1);
 		world.setGrow(1);
+		world.setSpokes(1);
 		world.setCage(0);
-		world.construction.show(false);
 		// The rim picks up exactly where the conception left it and thins away
 		// from there. The frame is NOT touched: what turns here is the same
 		// wireframe that just drew itself, at the same weight.
@@ -314,6 +332,11 @@
 		// conception drew it at, all the way to the fall.
 		const thin = easeInOutCubic(span(p, T.shellThin));
 		world.egg.setShell(lerp(ICOSA.shellSolid, ICOSA.shellFaint, thin));
+		// And the wave's own surface, which the conception left as a ghost, goes
+		// with it: it is the last opaque thing in the run and the rooms come
+		// through where it was.
+		world.egg.setCore(lerp(0.45, 0, thin));
+		world.setCorners(1 - thin);
 		world.egg.group.scale.setScalar(
 			lerp(1, ICOSA.sphereGrow, easeInOutCubic(span(p, T.sphereGrow)))
 		);
@@ -324,8 +347,13 @@
 		// the search latches its own start pose, so nothing has to be handed back.
 		const sv = span(p, T.survey);
 		if (sv > 0 && sv < 1) {
-			const k = easeInOutCubic(sv);
-			SURVEY_E.set(-T.surveyTilt * Math.sin(k * Math.PI), T.surveyTurn * k, 0);
+			const k = smootherstep(sv);
+			// A LOOK ROUND AND BACK, and it lands exactly where it started. The yaw
+			// is a full sine — out one way, through the rest pose, out the other,
+			// home — rather than a single swing to nowhere, which is both livelier
+			// and, more to the point, ends the beat FLAT AND FACING instead of on
+			// some arbitrary oblique the search then has to un-do.
+			SURVEY_E.set(-T.surveyTilt * Math.sin(k * Math.PI), T.surveyTurn * Math.sin(k * TAU), 0);
 			// PRE-multiplied, so the yaw is about the WORLD's up axis: it reads as
 			// walking round the thing rather than as the thing spinning on a spit.
 			world.frame.quaternion.copy(SURVEY_Q.setFromEuler(SURVEY_E)).multiply(world.tilt);
@@ -361,18 +389,11 @@
 			// the other, taken firmly and stopped dead.
 			world.frame.quaternion.copy(from).slerp(to, turn);
 
-			// THE HOLD. Most of a slot is the turn onto that decade; what is left is
-			// the stop on it, and for the whole of that stop the other five are held
-			// back so the artwork this scene exists to show is what you are actually
-			// looking at. It comes on over searchSnap of the slot and STAYS — a
-			// pulse would read as five rooms breathing.
-			const held = last
-				? 0
-				: smoothstep(T.searchSpin, Math.min(1, T.searchSpin + T.searchSnap), local);
-			const back = held * T.searchDim;
-			const focus = searchOrder[step];
-			panes.forEach((pane, i) => pane && pane.setDim(i === focus ? 1 : 1 - back));
-
+			// NOTHING FADES ON THE BEAT. The other five used to step back on every
+			// decade the machine stopped at, and it is clutter: six rooms flickering
+			// at each other for four beats running reads as a slideshow with a
+			// transition, not as an instrument holding still. The turn is the whole
+			// event. Everything stays exactly as bright as it was.
 			const d = decadeAssignments[searchOrder[step]] ?? null;
 			if (d !== facing) {
 				facing = d;
@@ -467,23 +488,41 @@
 	let rt = 0;
 	let returnFrom = 0;
 	let returnTo = 0;
+	let focusFrom = 0;
+	let focusTo = 0;
 	const camFrom = new THREE.Vector3();
 	const camTo = new THREE.Vector3();
 
 	export function beginReturn() {
-		const rect = get(monitorRect);
-		if (!rect) return;
+		if (!get(monitorRect)) return;
 		rt = 0;
 		returnFrom = frustum;
+		focusFrom = landingDepth();
+		focusTo = focusFrom;
 		camFrom.copy(world.camera.position);
+		const room = panes[target]?.getRoom?.();
 		// If the glass cannot be located the zoom still runs, just not centred —
 		// better than a calculator that never leaves the monitor.
-		const centre = panes[target]?.getRoom?.()?.glassCentre?.();
-		camTo.copy(centre ?? camFrom).setZ(camFrom.z);
-		returnTo = Math.max(
-			frustum * Math.min(rect.width / window.innerWidth, rect.height / window.innerHeight),
-			0.05
-		);
+		const centre = room?.glassCentre?.();
+		camTo.copy(centre ?? camFrom);
+		if (centre) focusTo = centre.z;
+
+		// And it stops SHORT of filling the frame. RETURN_FILL is how much of the
+		// viewport the glass ends up covering — under one, so the bedroom is still
+		// round the machine when it gets there, which is where the next run is
+		// operated from. config/layout.js.
+		//
+		// Worked out from the glass's REAL SIZE, not from how big it currently
+		// looks. Predicting the framing from its on-screen size is right under an
+		// orthographic camera and wrong under a lens — the glass hangs in front of
+		// the plane being framed, so it grows faster than the frustum shrinks and
+		// the flight lands about twice as far in as asked. Framed at the glass's
+		// own plane, with the glass's own extent, the sum is exact.
+		const g = room?.glassExtent?.();
+		const a = window.innerWidth / window.innerHeight;
+		returnTo = g
+			? Math.max(Math.min(g.h, g.w / a) / RETURN_FILL, 0.05)
+			: Math.max(frustum * 0.3, 0.05);
 	}
 
 	export function stepReturn(dt) {
@@ -494,6 +533,9 @@
 		frustum = lerp(returnFrom, returnTo, k);
 		world.camera.position.x = lerp(camFrom.x, camTo.x, k);
 		world.camera.position.y = lerp(camFrom.y, camTo.y, k);
+		// The focus walks from the room's back wall onto the glass, so the frame is
+		// measured at whatever it is actually flying at.
+		world.setFocus(lerp(focusFrom, focusTo, k));
 		world.applyFrustum(frustum);
 		publishMonitor();
 	}

@@ -229,36 +229,44 @@ perpendicular planes the whole second half is built on — the same three the
 golden rectangles lie in — so the thing being swum at is already carrying the
 figure it becomes.
 
-### And the core carries the wave
+### And the core carries the wave that divides
 
 `coreMaterial()` in `world/materials.js` draws a scalar field on that surface and
-displaces the skin by it. The field has two states and one number crossfading
-them:
+displaces the skin by it:
 
-- **the ripple** — travelling wavefronts out of the point the swimmer entered at,
-  `sin(kθ − ωt)` falling off with angular distance. The impact.
-- **the harmonic** — the lowest standing wave a sphere has that is invariant under
-  the icosahedral group:
+```
+f(n) = Σ wᵢ · P₆(n · aᵢ)     over the icosahedron's six five-fold axes
+```
 
-  ```
-  f(n) = Σ P₆(n · aᵢ)     over the six five-fold axes
-  ```
+`P₆` is the sixth Legendre polynomial and the `aᵢ` are the axes through opposite
+vertices. Degree 6 is the **first** degree at which a non-constant icosahedral
+invariant exists at all — the degree-2 and degree-4 sums vanish identically — so
+the completed field is not a pattern chosen to look icosahedral, it is the only
+thing of its kind there is, and its twelve antinodes are the twelve vertices.
 
-  `P₆` is the sixth Legendre polynomial. Degree 6 is the **first** degree at which
-  a non-constant icosahedral invariant exists at all — the degree-2 and degree-4
-  sums vanish identically — so this is not a pattern chosen to look icosahedral,
-  it is the only thing of its kind there is. Normalised to 1 at a vertex, where
-  all twelve of its antinodes are.
+What makes it a conception rather than a diagram is that the axes come in **one
+at a time** (`uGrow`, 0→6):
 
-`uRelax` takes one into the other, and that crossfade is the conception: a
-disturbance on a sphere settling into the lowest mode its symmetry allows, and
-the twelve places it settles hardest being exactly the twelve places the
-icosahedron's corners are struck four seconds later.
+| axes in | antinodes |                                                     |
+| ------- | --------- | --------------------------------------------------- |
+| 1       | 2         | a sphere pulling into a dumbbell. Mitosis.          |
+| 2       | 4         |                                                     |
+| 3       | 6         |                                                     |
+| …       | …         |                                                     |
+| 6       | 12        | and twelve antinodes on a sphere is an icosahedron. |
 
-It is drawn as a **contour map** rather than a shaded ball — level sets every
-fifth of the range, and the nodal set (where the field is zero) brightest of all,
-because that curve system IS the figure. A gold sphere is a bauble; this is a
-readout.
+Every step is a division, the count doubles and doubles again, and the thing it
+converges on is the answer. Nothing is drawn that is not forced by the symmetry
+being assembled. `uRing` is the mode's own oscillation, damped out as it settles
+— an excited normal mode relaxing, which is the honest version of a ripple.
+
+It is normalised by its live peak so the amplitude does not lurch as axes arrive:
+all six axes meet each other at `arccos(1/√5)`, so the largest the sum can be is
+`0.328·ΣW + 0.672·max(w)`, worked out in the shader.
+
+Drawn as a **contour map** rather than a shaded ball — level sets every fifth of
+the range, and the nodal set (where the field is zero) brightest of all, because
+that curve system IS the figure. A gold sphere is a bauble; this is a readout.
 
 ---
 
@@ -313,7 +321,7 @@ each when you find them the hard way:
 
 ## Scene 2 is a flight, and a flight needs LENGTH
 
-The ovum is **360 world units away** and it takes **fourteen and a half seconds**
+The ovum is **490 world units away** and it takes **fourteen and a half seconds**
 to reach it. Both numbers are large on purpose and neither is negotiable.
 
 V1 put its ovum 250 units off and took twenty seconds to get there at a flat 12.7
@@ -349,7 +357,7 @@ Four things carry it:
   for it (`tunnel.setFov`), so the only thing in the shot that changes size is
   the thing you are travelling toward.
 
-`EGG_SCREEN` is **above one**: the thing you have flown three hundred units to
+`EGG_SCREEN` is **above one**: the thing you have flown five hundred units to
 reach should not fit on the screen.
 
 ### The rotation is V1's, and it is not a roll
@@ -428,49 +436,39 @@ on was never legible in it.
 
 ## Scene 3, and what it proves
 
-The conception DERIVES the icosahedron, and it is an actual proof — every length
-in it is exact and the arithmetic is written down in `world/construction.js`:
+**Two beats, and neither of them is a drawing.**
 
-|                    |                                         |                                              |
-| ------------------ | --------------------------------------- | -------------------------------------------- |
-| the **circle**     | the solid's own circumcircle            | radius √(1+φ²)                               |
-| the **pentagon**   | regular, inscribed in it                | side s = 2R·sin36° = √5                      |
-| the **pentagram**  | its five diagonals                      | d = 2R·sin72° = √5·φ, so **d/s IS φ**        |
-| the **ratio bar**  | s and d end to end, both scaled by 2/√5 | which is exactly 2 and 2φ                    |
-| the **rectangles** | three, in that ratio, flat in the page  | 2 × 2φ — the solid's golden rectangle        |
-| the **fold**       | two stand up perpendicular to the first | their twelve corners are the twelve vertices |
+There used to be three: a generic ripple, then the icosahedral mode, then a
+compass-and-pentagon derivation — circle, pentagon, pentagram, ratio bar, three
+golden rectangles, fold — that rebuilt from scratch the exact thing the mode had
+already produced. All of that is gone. It was good geometry standing in the wrong
+place: the wave IS the icosahedron by the time it has finished, and re-deriving it
+afterwards is the scene stopping to explain itself.
 
-Nothing is fudged to make the fold land: it lands because it is the shape.
+So:
 
-### But the wave gets there first
+1. **It divides.** The standing wave comes up on the ovum's core and the six
+   five-fold axes come in one at a time — 2 antinodes, 4, 6, 8, 10, 12. See _And
+   the core carries the wave that divides_ above; every step of it is forced by
+   the algebra rather than chosen.
 
-The derivation is the second half of the scene. The first half is the **wave**:
-the swimmer has just gone in, the surface answers, and a ring of travelling
-wavefronts relaxes into the lowest icosahedrally-symmetric standing wave a sphere
-has (see _The ovum is two spheres_ above). Its twelve antinodes are the twelve
-vertices; they are struck as points; and then the machine writes down what the
-physics has already shown it.
+2. **It is the solid.** Nothing is rebuilt. The twelve antinodes are struck as
+   the twelve corners, in place. The six axes the sum was taken over are drawn as
+   the six long diagonals — because that is literally what they are. The thirty
+   edges close between corners that are already there. The surface stays, dropped
+   to a ghost, as the shell the frame sits in.
 
-It ends where it began: the union's twelve corners land on the twelve antinodes
-the wave put there four seconds earlier, in the same pose, to the pixel.
-
-### The page turns twice
-
-The flat work happens at **identity**, because that is the one attitude in which
-the first golden rectangle is exactly square to the camera. The wave happens at
-`ICOSA.tilt`, because that is the attitude the twelve vertices are legible in —
-at identity the solid is looked at down a two-fold axis and six pairs of them
-land on top of each other.
-
-So the page turns out of the solid's pose to be drawn on, and back into it as the
-drawing stands up. The drawing becoming a solid and the page turning away are one
-move.
+The whole scene is at `ICOSA.tilt` and never turns. There is no page to square up
+any more, because the drawing and the solid are the same object.
 
 It ends on the **union**: the last edge closes and the whole figure answers at
-once — the twelve corners strike, the line-work overdrives, the rim flares.
-Everything it drives is additively blended, which is why it can be given a level
-above 1 at all. Without that beat this is a geometry lecture standing where a
-conception ought to be.
+once — the corners strike, the line-work overdrives, the rim flares. Everything it
+drives is additively blended, which is why it can be given a level above 1 at all.
+
+The φ arithmetic did not disappear with the compass, incidentally. It is drawn in
+scene 4, on every pane, by `GoldenRectangleSchematic` — dimension lines, the 1:φ
+bar, the spiral — which is where working belongs: next to the thing being worked
+out.
 
 ---
 
@@ -486,6 +484,12 @@ assembly, fully out, turning, before a single decade is chosen — the beat V2 h
 and every version since dropped, and dropping it is why the clocking afterwards
 never landed: a machine cannot be seen to select from a set you have never been
 shown.
+
+Its yaw is a **full sine** — out one way, back through the rest pose, out the
+other, home — rather than a single swing to somewhere. That is both livelier and,
+more to the point, it ends the beat **flat and facing**, which is where the search
+has to start from. A survey that finishes on an arbitrary oblique leaves the first
+turn of the search un-doing it.
 
 It is also the only place in the run with any perspective in it. The lattice
 camera is a **lens**, not a box — `applyFrustum()` parks it at whatever range
@@ -513,15 +517,24 @@ Two things it deliberately does **not** do, and both were tried:
 - **the camera does not move.** Not a lean, not a nudge, nothing. A frustum that
   pumps in on every candidate is the single loudest way to make a precise
   instrument look like a slideshow transition.
-- **the other rooms do not pulse.** They STEP back — on over a twentieth of the
-  slot (`searchSnap`), held for the whole look, off on the next turn. A sine in
-  and out reads as five rooms sighing; a step reads as a machine selecting one,
-  and the rigidity IS the character.
+- **nothing fades on the beat.** The other five rooms do not dim, pulse or step
+  back. Six rooms flickering at each other four times running is a slideshow with
+  a transition on it; the turn, and the stop at the end of it, are the whole
+  event.
 
 And the fall at the end is a plain, dead-centre zoom on the **whole scene**, on
 one symmetric ease, with nothing in it staggered. The depth-parallax version —
 the bed rushing past first, then the desk, then the screen — pulls the room apart
 at the exact moment it is supposed to become a place.
+
+**It lands full-bleed.** Two offsets have to be right for that, and neither
+existed under the orthographic camera this replaced: the pane is `paneReach` out
+along its own axis (pure depth at the landing pose), and the room's artwork hangs
+`ICOSA.roomDepth` further back again, because the back wall is the deepest layer.
+`landingDepth()` focuses on the wall, not the pane — focus on the pane and the
+room comes up a quarter too small, with the void showing round it. The frustum is
+then taken from the wall's own size (`coverExtent()`), not the golden rectangle's,
+because the wall is a cover layer and overflows the rectangle on one axis.
 
 Behind all of it is the **cage**: a 24-cell, the regular 4-polytope whose 24
 vertices are every permutation of (±1, ±1, 0, 0), projected from four dimensions
@@ -553,22 +566,47 @@ It is **one move seen from two sides**, and both sides share one duration
 (`SCENES.calculator.arrive`):
 
 - The **camera** flies into the room's monitor. `Computation.stepReturn()` walks
-  the frustum down until the glass fills the frame, republishing `monitorRect`
-  every step. The Stage drives it, because by then the scene is not running —
-  it is being held on screen.
+  the frustum down toward the glass, republishing `monitorRect` every step. The
+  Stage drives it, because by then the scene is not running — it is being held on
+  screen.
 - The **calculator** grows out of that monitor. Its `outOfMonitor` transition
   reads the **live** `monitorRect` every frame rather than a snapshot, so it
-  stays locked to the glass while the glass is moving, and blends toward
-  identity so it lands square on the viewport at the end.
+  stays locked to the glass while the glass is moving.
 
 Reading a snapshot instead is the bug it looks like: the screen zooms and the
 room behind it sits still.
 
-The controls are held back until it is nearly home
-(`SCENES.calculator.controlsAt`) — at monitor scale they are a few unreadable
-pixels. `director.settled()` then releases the room, and the Stage holds the
-room's last frame for exactly as long as `monitorRect` is set, which is
-precisely that window.
+### And it stays in the room
+
+The move used to finish by clearing the transform: the glass ended up covering
+the viewport, the machine was simply full-screen again, and the bedroom you had
+spent nine seconds flying into was gone.
+
+It stops short now. `RETURN_FILL` (config/layout.js) is how much of the viewport
+the glass ends up covering — **under one** — so the machine lands sitting on the
+desk, in the monitor, with the room round it. That is where the second run is
+operated from, and it is the one place in the site where two scenes are on screen
+at once. `monitorRect` therefore stays live for good; the calculator keeps fitting
+itself to it, and the Stage keeps drawing the room behind it. It is cleared when
+the next run reaches the computation, which is the moment the room stops being
+the thing behind the machine.
+
+The launch composes with that fit, because the machine is no longer full-screen
+when it leaves: `intoLens` warps out of the **glass**, written about the window's
+own centre with explicit translates rather than a `transform-origin`, since the
+origin would have to apply to the fit as well and the fit is measured from the
+top-left of the page.
+
+**Framing the flight** is the one sum that is easy to get wrong here, and it was:
+predicting the final frustum from the glass's current on-screen size is right
+under an orthographic camera and wrong under a lens. The glass hangs in front of
+the plane being framed, so it magnifies faster than the frustum shrinks and the
+flight lands about twice as far in as asked. `beginReturn()` takes the glass's
+**real world size** (`glassExtent()`) and walks the focus plane onto the glass as
+it goes, which is exact.
+
+The controls are held back until it is nearly home — at monitor scale they are a
+few unreadable pixels.
 
 Going round again deliberately **keeps** the birthday and the spice —
 `director.clearResult()` clears only what the run produced.

@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { createEgg } from './egg';
-import { createConstruction } from './construction';
 import { lineMaterial, dotMaterial, grower, segmentAttributes } from './materials';
 import { VERTICES, EDGES, PENTAGONS, PENTAGON_PAIRS, edgePositions } from '../geometry/icosahedron';
 import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, VOID } from '$lib/config';
@@ -10,8 +9,8 @@ import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, VOID } from '$lib/config';
 // long lens, a gold circle, and the icosahedron drawn inside it.
 //
 // Two scenes share it so the cut between them cannot move anything. The
-// conception derives the wireframe; the computation projects panes off the very
-// same frame. Neither builds it.
+// conception grows the wireframe out of the ovum's own standing wave; the
+// computation projects panes off the very same frame. Neither builds it.
 //
 // ── It DOES continue the fly-in's ovum ───────────────────────────────────────
 // It used to not: the fly-in ended in a white-out and the sphere here appeared
@@ -244,11 +243,6 @@ export function createLattice() {
 	// frame's attitude, so it turns with the solid without being part of it.
 	const cage = createCage();
 
-	// The conception's derivation, in the frame's own coordinates so that every
-	// point it arrives at is a point of the solid.
-	const construction = createConstruction();
-	frame.add(construction.group);
-
 	// The line-work, in a group of its own. Built at the raw vertex scale so the
 	// panes — which GoldenRectangle builds from the same raw coordinates — sit
 	// exactly on the frame's own edges at projection 0.
@@ -312,6 +306,16 @@ export function createLattice() {
 	const spokes = new THREE.LineSegments(spokeGeo, spokeMat);
 	wire.add(spokes);
 
+	// ── The twelve ───────────────────────────────────────────────────────────
+	// The corners, as points. They are struck where the standing wave's twelve
+	// antinodes are, because they ARE those antinodes — see world/materials.js
+	// coreMaterial(), and scenes/Conception.svelte.
+	const cornerMat = dotMaterial(ICOSA_INK.bright, 12);
+	const cornerGeo = new THREE.BufferGeometry();
+	cornerGeo.setAttribute('position', new THREE.Float32BufferAttribute(VERTICES.flat(), 3));
+	const corners = new THREE.Points(cornerGeo, cornerMat);
+	wire.add(corners);
+
 	// ── The 12 pentagons ─────────────────────────────────────────────────────
 	// Each vertex figure as its own object, oriented so a plain rotation about
 	// its local Z is a turn about that vertex's axis. Two nested objects on
@@ -371,7 +375,7 @@ export function createLattice() {
 		paneGroup,
 		edges,
 		spokes,
-		construction,
+		corners,
 		cage,
 		// Each pentagon is its own object with its own spin axis, so a scene can
 		// turn them individually — nothing does at the moment, but the structure
@@ -397,6 +401,11 @@ export function createLattice() {
 				pn.grow(v);
 				pn.line.visible = v > 0.001;
 			});
+		},
+		// 0..1 — the twelve corners. Additive, so above 1 is legal.
+		setCorners(o) {
+			cornerMat.uniforms.uOpacity.value = o;
+			corners.visible = o > 0.004;
 		},
 		setLineOpacity(v) {
 			edgeMat.uniforms.uOpacity.value = v;
@@ -489,12 +498,11 @@ export function createLattice() {
 			this.setPentagons(0);
 			this.setLineOpacity(1);
 			this.setCage(0);
-			construction.reset();
-			construction.show(null);
+			this.setCorners(0);
 			egg.setShell(0);
 			egg.setCore(0);
 			egg.setCoreRimGain(0);
-			egg.setWave({ glow: 0, amp: 0, ripple: 0, relax: 0, phase: 0 });
+			egg.setWave({ grow: 0, glow: 0, amp: 0, ring: 0, phase: 0 });
 			egg.group.scale.setScalar(1);
 			egg.group.quaternion.copy(TILT);
 			camera.position.set(ICOSA.camPos[0], ICOSA.camPos[1], camera.position.z);
@@ -505,8 +513,9 @@ export function createLattice() {
 
 		dispose() {
 			egg.dispose();
-			construction.dispose();
 			cage.dispose();
+			cornerGeo.dispose();
+			cornerMat.dispose();
 			edgeGeo.dispose();
 			edgeMat.dispose();
 			spokeGeo.dispose();

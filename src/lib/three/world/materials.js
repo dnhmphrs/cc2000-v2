@@ -344,31 +344,39 @@ export function dotMaterial(color, size) {
 // one. It occludes the cage's far half, and the moment it does, the cage has an
 // inside and an outside.
 //
-// The second is the whole hinge of the run. It carries a WAVE, and the wave has
-// two states it moves between:
+// ── The second job is the conception ─────────────────────────────────────────
+// It carries a standing wave, and the wave DIVIDES.
 //
-//   THE RIPPLE     travelling wavefronts out of the point the swimmer entered
-//                  at: sin(kθ − ωt) falling off with angular distance. This is
-//                  the impact.
+// The field is
 //
-//   THE HARMONIC   the lowest standing wave a sphere has that is invariant under
-//                  the icosahedral group:
+//     f(n) = Σ wᵢ · P₆(n · aᵢ)
 //
-//                      f(n) = Σ P₆(n · aᵢ)   over the six five-fold axes
+// over the six five-fold axes of the icosahedron — the axes through opposite
+// vertices — with P₆ the sixth Legendre polynomial. Degree 6 is the FIRST degree
+// at which a non-constant icosahedral invariant exists at all: the degree-2 and
+// degree-4 sums vanish identically. So the completed field is not a pattern
+// chosen to look icosahedral, it is the only thing of its kind there is, and its
+// twelve antinodes are the twelve vertices.
 //
-//                  P₆ is the sixth Legendre polynomial and the aᵢ are the six
-//                  axes through opposite vertices. Degree 6 is the FIRST degree
-//                  at which a non-constant icosahedral invariant exists at all —
-//                  the degree-2 and degree-4 sums are identically zero — so this
-//                  is not a pattern chosen to look icosahedral, it is the only
-//                  thing of its kind there is. Normalised to 1 at a vertex,
-//                  where all twelve of its antinodes are.
+// What makes it a conception rather than a diagram is that the axes come in ONE
+// AT A TIME (uGrow, 0→6):
 //
-// uRelax crossfades one into the other. That crossfade is the conception: a
-// disturbance on a sphere settling into the lowest mode its symmetry allows, and
-// the twelve places it settles hardest are the twelve places the icosahedron's
-// corners are about to be struck. The geometry that follows is the machine
-// WRITING DOWN what the physics has already done.
+//     one axis    two antinodes.   A sphere pulling into a dumbbell. Mitosis.
+//     two         four.
+//     …
+//     six         twelve, and it is the icosahedron.
+//
+// Every step is a division, the count doubles and doubles again, and the thing
+// it converges on is the answer. Nothing is drawn on the surface that is not
+// forced by the symmetry being assembled on it.
+//
+// It is normalised by its own live peak so the amplitude does not lurch as axes
+// arrive: all six axes meet each other at arccos(1/√5), so the largest value the
+// sum can take is 0.328·ΣW + 0.672·max(w), worked out in the shader.
+//
+// uRing is the mode RINGING — a standing oscillation at the mode's own
+// frequency, damped out as it settles. That is the ripple, and it is the honest
+// one: an excited normal mode relaxing, not a texture scrolling.
 //
 // The field is evaluated twice — once per vertex to displace the surface, once
 // per fragment to draw on it — because a wave you can only see is a texture and
@@ -383,37 +391,33 @@ const FIVE_FOLD = (() => {
 	return out; // six of them
 })();
 
-// Σ P₆(n·aᵢ) at a vertex: 1 + 5·P₆(1/√5). The five-fold axes meet at arccos(1/√5).
-const HARMONIC_PEAK = (() => {
-	const p6 = (x) => (231 * x ** 6 - 315 * x ** 4 + 105 * x ** 2 - 5) / 16;
-	return 1 + 5 * p6(1 / Math.sqrt(5));
-})();
-
 const WAVE_FIELD = `
 	uniform vec3 uAxes[6];
-	uniform vec3 uEntry;
-	uniform float uRipple;
-	uniform float uRelax;
+	uniform float uGrow;
+	uniform float uRing;
 	uniform float uPhase;
-	uniform float uPeak;
 
 	float waveField(vec3 n) {
-		// The impact: wavefronts running away from where it went in.
-		float th = acos(clamp(dot(n, uEntry), -1.0, 1.0));
-		float ripple = sin(th * 7.0 - uPhase * 4.2) * exp(-th * 0.5);
-
-		// The lowest icosahedral standing wave. Twelve antinodes, at the twelve
-		// vertices, and it is the only degree-6 invariant the group has.
 		float h = 0.0;
+		float total = 0.0;
+		float top = 0.0;
 		for (int i = 0; i < 6; i++) {
+			// Each axis eases in over its own unit of uGrow, so the count of
+			// antinodes doubles, and doubles, and doubles.
+			float w = clamp(uGrow - float(i), 0.0, 1.0);
+			w = w * w * (3.0 - 2.0 * w);
 			float x = dot(n, uAxes[i]);
 			float x2 = x * x;
 			float x4 = x2 * x2;
-			h += (231.0 * x4 * x2 - 315.0 * x4 + 105.0 * x2 - 5.0) / 16.0;
+			h += w * (231.0 * x4 * x2 - 315.0 * x4 + 105.0 * x2 - 5.0) / 16.0;
+			total += w;
+			top = max(top, w);
 		}
-		h /= uPeak;
-
-		return mix(ripple * uRipple, h, uRelax);
+		// The largest the sum can be: the axes meet each other at arccos(1/sqrt5),
+		// where P6 is 0.328.
+		h /= max(0.328 * total + 0.672 * top, 0.001);
+		// And the mode rings as it settles.
+		return h * (1.0 + uRing * sin(uPhase * 5.5));
 	}
 `;
 
@@ -441,11 +445,10 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 			uGlow: { value: 0 },
 			uAmp: { value: 0 },
 			uAxes: { value: FIVE_FOLD.map((v) => v.clone()) },
-			uEntry: { value: new THREE.Vector3(0, 0, 1) },
-			uRipple: { value: 0 },
-			uRelax: { value: 0 },
-			uPhase: { value: 0 },
-			uPeak: { value: HARMONIC_PEAK }
+			// How many of the six axes are in, 0..6. This is the whole scene.
+			uGrow: { value: 0 },
+			uRing: { value: 0 },
+			uPhase: { value: 0 }
 		},
 		vertexShader: `
 			${WAVE_FIELD}

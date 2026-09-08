@@ -159,6 +159,25 @@ function vars(kind) {
 	};
 }
 
+// Where the machine's window sits down the viewport, 0..1. The launch warps the
+// screen into the lens about that point, and it has to be readable from JS as a
+// number now that the launch also has a fit to compose with. Same source as
+// --win-y, so the two cannot drift.
+export function windowY(kind) {
+	return (CHASSIS[kind] || CHASSIS.landscape).winY;
+}
+
+// ── The way home ─────────────────────────────────────────────────────────────
+// How much of the viewport the room's monitor glass ends up covering when the
+// camera has finished flying into it.
+//
+// BELOW ONE, and that is the whole of the change: the run used to end with the
+// glass filling the frame, at which point the calculator was simply fullscreen
+// again and the bedroom you had just been delivered into was gone. Stopping
+// short leaves the machine sitting IN the room, on the desk, with the room
+// round it — which is where the second run is operated from.
+export const RETURN_FILL = 0.55;
+
 // Written onto :root so the CSS can lay the chassis out from the same numbers
 // the 3D uses. Called on mount and on every resize.
 export function applyChassisVars(kind) {

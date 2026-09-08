@@ -75,6 +75,11 @@
 		if (entered === name) return;
 		entered = name;
 		held = next;
+		// A new run has taken the screen, so the last one's flight home is over.
+		// It cannot be reset in the idle branch below any more: the room stays on
+		// screen behind the machine now, so that branch is only reached on a cold
+		// load. See scenes/director.js settled().
+		returning = false;
 		next.enter();
 	}
 
@@ -112,8 +117,9 @@
 		if (!active) {
 			// A DOM screen is up. Which frame sits behind it depends on whether a
 			// run has left one: monitorRect is set from the moment a room lands
-			// until the calculator has flown back out of that room's monitor, so
-			// it is exactly the window in which the room must stay on screen.
+			// until the NEXT run reaches the computation — so after a run the room
+			// stays on screen for good, with the machine sitting in its monitor.
+			// That is the end of the loop now; it does not go back to full screen.
 			if (held && $monitorRect) {
 				// On the way home the room is not merely held — the camera flies
 				// into its monitor while the calculator grows out of it. Two sides
