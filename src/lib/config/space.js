@@ -152,8 +152,6 @@ export const ICOSA = {
 	// composition.
 	paneReach: 4.6,
 	paneReachPortrait: 3.2,
-	// How much the resting frustum may be opened out on a narrow screen.
-	frustumWiden: 1.45,
 	roomDepth: 3.0,
 
 	// How much the sphere opens out as the rooms come through it. It starts as
@@ -177,14 +175,25 @@ export const ICOSA = {
 	searchOblique: [0.18, -0.45, 0.04]
 };
 
-// The resting frustum for the viewport we are actually in. Landscape gets
-// ICOSA.frustum as typed; anything narrower than the reference shape opens the
-// height out to buy back width, up to frustumWiden.
+// The frustum is a HEIGHT, so a tall viewport sees a much narrower slice of the
+// world than a wide one — and both of these scenes are as wide as they are high.
+// Each therefore names the world WIDTH it has to fit and opens the height out
+// until it does. On any landscape screen both come back exactly as typed.
+function fit(base, need, w, h) {
+	return Math.max(base, need / (w / h));
+}
+
+// The conception: the circumcircle has to fit across, with a little air.
+export function conceptionFrustum(w = 1, h = 1) {
+	return fit(ICOSA.conceptionFrustum, CIRCUMRADIUS * 2.12, w, h);
+}
+
+// The computation: the panes reach out sideways exactly as far as they reach up.
+// A little clipping at the extremes is deliberate — fitting the outermost corner
+// of the outermost pane on a phone shrinks the whole assembly to nothing.
 export function restFrustum(w = 1, h = 1) {
-	const REF = 1.6;
-	const a = w / h;
-	if (a >= REF) return ICOSA.frustum;
-	return ICOSA.frustum * Math.min(ICOSA.frustumWiden, REF / a);
+	const reach = aspectKind(w, h) === 'portrait' ? ICOSA.paneReachPortrait : ICOSA.paneReach;
+	return fit(ICOSA.frustum, reach * 1.9, w, h);
 }
 
 // The sphere the frame is drawn inside. It IS the circumsphere: the twelve

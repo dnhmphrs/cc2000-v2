@@ -162,6 +162,13 @@ export const SCENES = scale({
 		cFold: [0.56, 0.82],
 		cEdges: [0.74, 0.95],
 		cRim: [0.58, 0.78],
+		// THE UNION, and the reason the scene has the name it does. The last edge
+		// closes and the whole figure answers at once: the twelve corners strike,
+		// the line-work overdrives, the rim flares. One event you feel, on the beat
+		// the twelve separate things become one thing. Without it this scene is a
+		// geometry lecture standing where a conception ought to be.
+		cUnion: [0.86, 1.0],
+		cUnionPeak: 1.3,
 
 		// ── strike: the impact ───────────────────────────────────────────────
 		// A singularity, twelve vertices thrown out of it on trails, and thirty

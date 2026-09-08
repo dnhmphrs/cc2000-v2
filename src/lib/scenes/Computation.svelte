@@ -13,6 +13,7 @@
 		easeInOutPower,
 		ICOSA,
 		restFrustum,
+		conceptionFrustum,
 		VOID
 	} from '$lib/config';
 	import { assignDecades, shuffle } from '$lib/data/roomElements';
@@ -80,8 +81,9 @@
 	let decadeAssignments = [];
 
 	let frustum = ICOSA.frustum;
-	// What the pull-back is heading for. Measured on entry, because it depends on
-	// the shape of the viewport.
+	// Where the pull-back starts and where it is heading. Both measured on entry,
+	// because both depend on the shape of the viewport.
+	let from = ICOSA.conceptionFrustum;
 	let rest = ICOSA.frustum;
 	let landFrustum = 8;
 	let target = -1;
@@ -209,7 +211,8 @@
 		facing = null;
 		// Picks up exactly where the conception left off — close on the solid —
 		// and pulls back from there.
-		frustum = ICOSA.conceptionFrustum;
+		frustum = conceptionFrustum(window.innerWidth, window.innerHeight);
+		from = frustum;
 		rest = restFrustum(window.innerWidth, window.innerHeight);
 		world.applyFrustum(frustum);
 		world.setPanesVisible(true);
@@ -249,7 +252,7 @@
 		// little on each decade it stops at — see `push` below — so the frustum is
 		// worked out here and applied once the search has had its say.
 		const zoom = span(p, T.zoom);
-		const pulled = lerp(ICOSA.conceptionFrustum, rest, easeInOutCubic(span(p, T.pullBack)));
+		const pulled = lerp(from, rest, easeInOutCubic(span(p, T.pullBack)));
 		let push = 0;
 
 		// ── The panes come out ───────────────────────────────────────────────
@@ -448,6 +451,7 @@
 	}
 
 	export function resize() {
+		from = conceptionFrustum(window.innerWidth, window.innerHeight);
 		rest = restFrustum(window.innerWidth, window.innerHeight);
 		world.applyFrustum(frustum);
 		panes.forEach((pane) => pane && pane.setPortrait(get(aspect) === 'portrait'));

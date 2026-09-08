@@ -46,11 +46,23 @@ function gradientTexture(stops) {
 // projected, so this is the one fresnel that is the same under both cameras.
 // Front faces only: drawing both hemispheres double-blends at the silhouette,
 // where the geometry is edge-on, and bands there.
-function shellMaterial({ shell, rim, rimPower, base, key, gloss }) {
+function shellMaterial({ shell, rim, rimPower, base, key, gloss, add }) {
+	// On the void the shell is a glow, so it ADDS — which is both the right model
+	// for light on black and the only way an opacity above 1 can mean anything.
+	// On the blue it is a surface, and surfaces occlude.
+	const blend = add
+		? {
+				blending: THREE.CustomBlending,
+				blendSrc: THREE.OneFactor,
+				blendDst: THREE.OneFactor,
+				blendEquation: THREE.AddEquation
+		  }
+		: {};
 	return new THREE.ShaderMaterial({
 		transparent: true,
 		depthWrite: false,
 		side: THREE.FrontSide,
+		...blend,
 		uniforms: {
 			uColor: { value: new THREE.Color(shell) },
 			uRim: { value: new THREE.Color(rim) },
@@ -115,6 +127,7 @@ export function createEgg(radius, opts = {}) {
 	// void wants and what a wet egg on the deep blue very much does not.
 	const key = opts.key ?? EGG.key;
 	const gloss = opts.gloss ?? EGG.gloss;
+	const add = opts.add ?? false;
 	const stops = opts.coreStops ?? EGG.coreStops;
 
 	// The yolk. A painted ramp for its colour and the SAME view-space lamp the
@@ -159,7 +172,7 @@ export function createEgg(radius, opts = {}) {
 			}
 		`
 	});
-	const shellMat = shellMaterial({ shell, rim, rimPower, base, key, gloss });
+	const shellMat = shellMaterial({ shell, rim, rimPower, base, key, gloss, add });
 
 	const core = new THREE.Mesh(new THREE.SphereGeometry(radius * EGG_CORE_RATIO, 48, 32), coreMat);
 	const shellMesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 32), shellMat);

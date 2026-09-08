@@ -176,12 +176,17 @@ export function createConstruction() {
 	geos.push(sparkGeo);
 	sGroup.add(new THREE.Points(sparkGeo, sparkMat));
 
-	const flungMat = keep(dotMaterial(ICOSA_INK.bright, 11));
+	// ── the twelve ───────────────────────────────────────────────────────────
+	// Shared by every variant, so it sits OUTSIDE all three: the impact throws
+	// them, the cleavage arrives at them, and the derivation strikes them all at
+	// once on the beat the scene is named after. Their own opacity is the only
+	// thing that decides whether they are there.
+	const flungMat = keep(dotMaterial(ICOSA_INK.bright, 12));
 	const flungGeo = new THREE.BufferGeometry();
 	const flungPos = new Float32Array(36);
 	flungGeo.setAttribute('position', new THREE.BufferAttribute(flungPos, 3));
 	geos.push(flungGeo);
-	sGroup.add(new THREE.Points(flungGeo, flungMat));
+	group.add(new THREE.Points(flungGeo, flungMat));
 
 	// ── divide: cleavage ─────────────────────────────────────────────────────
 	const dGroup = new THREE.Group();

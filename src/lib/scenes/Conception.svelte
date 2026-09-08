@@ -10,6 +10,7 @@
 		easeInOutCubic,
 		easeInOutPower,
 		ICOSA,
+		conceptionFrustum,
 		VOID,
 		CONCEPTION
 	} from '$lib/config';
@@ -72,7 +73,7 @@
 	export function enter() {
 		t = 0;
 		world.reset();
-		world.applyFrustum(ICOSA.conceptionFrustum);
+		world.applyFrustum(conceptionFrustum(window.innerWidth, window.innerHeight));
 		world.construction.show(CONCEPTION);
 		world.setLineOpacity(1);
 		update(0);
@@ -119,11 +120,22 @@
 
 		// The flat circle and the sphere's rim are the SAME circle on screen at
 		// the moment the fold starts, so one becomes the other and nothing has to
-		// appear.
-		world.egg.setShell(smoothstep(0, 1, span(p, T.cRim)) * ICOSA.shellSolid);
+		// appear. (The rim's own level is set with the union, below.)
 
 		// The edges close last, between corners that are already there.
 		world.setGrow(span(p, T.cEdges));
+
+		// THE UNION. The last edge closes and the whole figure answers at once —
+		// the twelve corners strike, the line-work overdrives, the rim flares. It
+		// is one beat and it is what makes this a conception rather than a
+		// derivation that happens to be standing in the right place.
+		//
+		// Everything it drives is additively blended, which is why it can be given
+		// a level above 1 at all: on black, more than full is simply more light.
+		const union = Math.sin(span(p, T.cUnion) * Math.PI) * T.cUnionPeak;
+		c.setThrow(1, union);
+		world.setLineOpacity(1 + union * 1.1);
+		world.egg.setShell(smoothstep(0, 1, span(p, T.cRim)) * ICOSA.shellSolid * (1 + union * 1.6));
 	}
 
 	// ── strike ───────────────────────────────────────────────────────────────
@@ -181,7 +193,7 @@
 	}
 
 	export function resize() {
-		world.resize();
+		world.applyFrustum(conceptionFrustum(window.innerWidth, window.innerHeight));
 	}
 
 	export function reset() {

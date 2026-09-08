@@ -320,7 +320,13 @@
 		const d = dimFactor * lineDim;
 		const g = t * draft * d;
 
-		if (outlineMaterial) outlineMaterial.opacity = t * d;
+		// The outline does NOT fade up from the projection. At projection 0 this
+		// rectangle lies exactly on four of the solid's own vertices — it is the
+		// same figure the conception folded up out of the page — so it is already
+		// on screen when this scene starts and simply travels outward. Fading it
+		// in from zero put three bright rectangles out at the cut and brought them
+		// back from nothing, which is the one visible seam the run had left.
+		if (outlineMaterial) outlineMaterial.opacity = d;
 		if (spiralMaterial) spiralMaterial.opacity = g * 0.85;
 		subdivisionMaterials.forEach(({ mat }) => (mat.opacity = g * 0.45));
 		traceLineMaterials.forEach((mat) => (mat.opacity = g * 0.6));

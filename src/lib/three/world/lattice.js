@@ -152,9 +152,11 @@ export function createLattice() {
 		rim: ICOSA_INK.bright,
 		rimPower: 8.0,
 		base: 0,
-		// No lamp: this is a drawn circle, not a surface.
+		// No lamp: this is a drawn circle, not a surface. Additive, so it is light
+		// on black rather than paint on it — and so a flash can push it past 1.
 		key: 0,
-		gloss: 1
+		gloss: 1,
+		add: true
 	});
 	egg.setCore(0);
 	scene.add(egg.group);
