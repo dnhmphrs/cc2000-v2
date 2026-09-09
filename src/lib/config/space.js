@@ -238,10 +238,6 @@ export const ICOSA = {
 	// number exactly.
 	schematicReach: 1.55,
 
-	// How much the sphere opens out as the rooms come through it. It starts as
-	// the frame's exact circumsphere and only ever eases off that.
-	sphereGrow: 1.35,
-
 	// The lattice cage — a 24-cell, projected from 4D, hung around the solid and
 	// turning with it. It is the same figure the blueprint field rules the ground
 	// with, in three dimensions instead of two, so the search happens inside the

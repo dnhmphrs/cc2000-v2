@@ -163,81 +163,97 @@ export const SCENES = scale({
 	},
 
 	// ── Conception ───────────────────────────────────────────────────────────
-	// It opens on the fly-in's last frame, unchanged, and it is the same object:
-	// the swimmer has just gone in.
+	// It opens on the fly-in's last frame, unchanged: a dark body with a gold rim,
+	// and the swimmer has just gone in.
 	//
-	// ONE MOVE, and five and a bit seconds of it. It was six and a half and it
-	// read as a sequence of separate events with air between them, because that
-	// is what it was: the wave finished, then the frame drew itself where you
-	// could not see it, then it all appeared at once. Everything below now
-	// overlaps its neighbours and nothing waits for anything to finish.
+	// ONE MOVE, in four overlapping parts, and none of them starts from rest —
+	// each is already under way when the next begins.
+	//
+	//   the SHIMMER  every mode of a struck sphere at once, RISING rather than
+	//                arriving. It used to be at full amplitude on the first frame,
+	//                which is a bang, not a strike. It comes up over a fifth of
+	//                the scene and only then starts to damp.
+	//   the SPLIT    the invariant's negative set — the nodal net between the
+	//                twelve caps — pulled INTO the skin, and pulled PAST where it
+	//                settles: `pinch` overshoots and relaxes back, which is a
+	//                cleavage furrow constricting rather than a groove appearing.
+	//   the LOBES    the twelve caps, swelling out of the net cut around them.
+	//   the SOLID    struck ON the caps at the top of their travel, closing while
+	//                the skin underneath is still moving.
 	//
 	// The field is the sum of P6(n.ai) over the icosahedron's six five-fold axes,
-	// with ALL SIX ALWAYS IN — degree 6 is the first degree at which a non-constant
+	// with ALL SIX ALWAYS IN. Degree 6 is the first degree at which a non-constant
 	// icosahedral invariant exists at all, so the figure is forced rather than
-	// chosen. What develops is not the symmetry, it is the DIVISION:
+	// chosen; what develops is the DIVISION, not the symmetry.
 	//
-	//   the CHURN    every other mode of a struck sphere, travelling and going
-	//                nowhere, damped away as the icosahedral one wins. Without
-	//                this the body simply arrives at the twelve, which is an
-	//                answer with no working.
-	//   the FURROW   the invariant's negative set — the nodal net between the
-	//                twelve caps — pulled INTO the skin. Scored before anything
-	//                comes out of it, which is the order a cell divides in.
-	//   the LOBES    the twelve caps, swelling out of the net cut around them.
-	//
-	//  0    .06        .30              .46          .72        .82      1.0
-	//  |wake|churn, damping ........ .40|
-	//     |furrow: the net cut in .30|
-	//         |lobes: the twelve out .46|
-	//              |corners, struck ON the caps .44|
-	//                 |spokes .58|edges ................. .76|
-	//                    |the body rounds up, the frame settles onto it .72|
-	//                                                        |union .....|
+	//  0      .20         .42      .60        .76      .94   1.0
+	//  |shimmer up|damping .... .52|
+	//    |split: the net cut in .42|
+	//              |pinch: over and back .60|
+	//          |lobes: the twelve out .58|
+	//               |corners, struck on the caps .60|
+	//                    |spokes .76|
+	//                      |edges ....................... .94|
+	//                       |the body rounds up, the frame settles .90|
+	//                                            |union: peaks as the last edge lands|
 	conception: {
-		duration: 5.2,
+		// Longer at the FRONT than the 5.2 that preceded it and shorter overall,
+		// which is the whole adjustment: what was rushed was the opening, not the
+		// scene — the entire shimmer used to happen inside the first tenth — and
+		// what was slack was the tail, where the union flared and died with the
+		// last edges already closed and nothing left to watch.
+		duration: 5.7,
 
-		// The field lights up on the surface it was already sitting on.
-		wake: [0.0, 0.06],
+		// The field lights up on the surface it was already sitting on — and it
+		// takes its time about it. At [0, 0.08] the body went from dark to full
+		// brightness in half a second, which is a switch rather than a shimmer.
+		wake: [0.0, 0.2],
 
-		// ── THE CHURN ────────────────────────────────────────────────────────
-		// Full at the strike and damped out as the division resolves. A DECAY
-		// window: 1 at the start of it, 0 at the end.
-		chop: [0.0, 0.4],
-		chopPeak: 0.62,
+		// ── THE SHIMMER ──────────────────────────────────────────────────────
+		// Up, then down. Two windows rather than one decay, because a decay alone
+		// means the loudest frame of the scene is its first.
+		chopIn: [0.0, 0.2],
+		chopOut: [0.24, 0.52],
+		chopPeak: 0.66,
 
-		// ── THE DIVISION ─────────────────────────────────────────────────────
-		furrow: [0.04, 0.3],
-		lobe: [0.14, 0.46],
+		// ── THE SPLIT ────────────────────────────────────────────────────────
+		furrow: [0.06, 0.42],
+		// And PAST itself. A half-sine over this window, added to the furrow, so
+		// the net constricts harder than it ends up and eases back — the shape a
+		// cleavage furrow actually makes. It has to be back at zero by the end or
+		// the hand-over is not the bare invariant.
+		pinch: [0.26, 0.6],
+		pinchPeak: 0.45,
+		lobe: [0.24, 0.58],
 		// The mode ringing as it is excited, damped as it settles.
-		ring: [0.0, 0.5],
-		ringPeak: 0.28,
+		ring: [0.0, 0.56],
+		ringPeak: 0.3,
 		// How far the whole relief moves the skin, as a fraction of the core's
 		// radius. Large: a body pulling itself into twelve is a change of shape.
-		amp: 0.15,
+		amp: 0.16,
 
 		// ── The solid, out of the division that is still happening ───────────
-		// The corners land at the TOP of the lobes' travel, ON the caps — they are
-		// not a new object arriving, they are the antinodes being marked — and the
-		// edges close between corners that are already there while the skin under
-		// them is still moving.
-		corners: [0.3, 0.44],
-		spokes: [0.36, 0.58],
-		edges: [0.4, 0.76],
+		corners: [0.44, 0.6],
+		spokes: [0.5, 0.76],
+		// The last edge lands ON the union's peak rather than well before it, so
+		// the flare IS the figure closing rather than a beat that follows it.
+		edges: [0.54, 0.94],
 		// The body rounds up again, carrying the frame down onto the circumsphere.
 		// This is the DISPLACEMENT relaxing and nothing else — the field itself
 		// does not fade, here or in the scene after this one.
-		round: [0.44, 0.72],
+		round: [0.58, 0.9],
 
 		// THE UNION. The last edge closes and the whole figure answers at once.
-		union: [0.82, 1.0],
+		// It has to come back to zero by p=1: the computation's enter() restates
+		// setLineOpacity(1), so a flare still up at the cut is a visible step.
+		union: [0.84, 1.0],
 		unionPeak: 1.3,
 
 		// ── WHAT IT HANDS OVER ───────────────────────────────────────────────
 		// The computation restates these in its enter(), so a seek straight into
-		// that scene draws the frame a run through it would draw. They are read by
-		// BOTH sides, and the conception reaches them by construction rather than
-		// by arithmetic that has to be kept in step by hand.
+		// that scene draws the frame a run through it would draw. Read by BOTH
+		// sides, and the conception reaches them by construction rather than by
+		// arithmetic kept in step by hand.
 		handoverGlow: 1.0,
 		handoverCore: 1.0
 	},
@@ -264,11 +280,14 @@ export const SCENES = scale({
 		// the only thing in the scene with any colour in it.
 		draftOut: [0.27, 0.44],
 
-		// The sphere stays — it is the thing the frame is held inside — but thins
-		// and opens out off the frame it was skin-tight on, so the rooms come
-		// THROUGH it rather than out from under it.
+		// The sphere stays — it is the thing the frame is held inside — and thins,
+		// so the artwork is not seen through a wash.
+		//
+		// It no longer GROWS off the frame. It used to open out to 1.35 while the
+		// frame stayed at 1, so the two things that are supposed to be one object
+		// visibly came apart: the sphere swelled and the icosahedron inside it did
+		// not. They are the same object now and share one scale and one attitude.
 		shellThin: [0.05, 0.22],
-		sphereGrow: [0.015, 0.28],
 
 		// The 24-cell hung around the scene. It belongs to the search and nothing
 		// else — it arrives with the panes and goes out with the zoom. It is a

@@ -138,13 +138,9 @@
 						held.beginReturn?.();
 					}
 					held.stepReturn?.(dt);
-				} else {
-					// The room is up and being looked at. It is six flat layers hung
-					// at different depths in front of a lens, so the one thing that
-					// makes it a place rather than a picture is moving your head:
-					// a couple of percent of camera truck, eased.
-					held.parallax?.(pointer[0], pointer[1], dt);
 				}
+				// The room, once landed, is simply held: nothing tracks the pointer.
+				// See Computation.svelte, where the parallax used to be.
 				const hb = held.backdrop();
 				ground(hb.color, hb.shader);
 				held.render(renderer);

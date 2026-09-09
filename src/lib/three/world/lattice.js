@@ -227,10 +227,6 @@ export function createLattice() {
 	//
 	// It is the same object the fly-in hands over, built from the same numbers.
 	const egg = createEgg(ICOSA_SPHERE_R, { wire: false, outer: false, core: 1 });
-	// The core carries the icosahedral standing wave, whose twelve antinodes are
-	// the twelve vertices — so it has to be in the pose those vertices are in.
-	egg.group.quaternion.copy(TILT);
-	scene.add(egg.group);
 
 	// Everything that turns. It rests on ICOSA.tilt, which is where the
 	// computation's search starts from; the conception turns it there from
@@ -238,6 +234,19 @@ export function createLattice() {
 	const frame = new THREE.Group();
 	frame.quaternion.copy(TILT);
 	scene.add(frame);
+
+	// ── ONE OBJECT ───────────────────────────────────────────────────────────
+	// The sphere is a CHILD of the frame, and that is the whole of it. It used to
+	// be a sibling carrying its own copy of the tilt, which meant the two things
+	// that are supposed to be one thing came apart the moment anything moved: the
+	// search turned the icosahedron to face a decade and the sphere it is
+	// inscribed in stayed exactly where it was, and the computation grew the
+	// sphere to 1.35 while the frame it is skin-tight on stayed at 1.
+	//
+	// The wave's twelve antinodes ARE the twelve vertices. They cannot be in
+	// different poses; there is nothing to keep in step because there is only one
+	// attitude and one scale now.
+	frame.add(egg.group);
 
 	// The cage is in its own scene — see createCage — and only borrows the
 	// frame's attitude, so it turns with the solid without being part of it.
@@ -516,9 +525,11 @@ export function createLattice() {
 			egg.setShell(0);
 			egg.setCore(0);
 			egg.setCoreRimGain(0);
-			egg.setWave({ furrow: 0, lobe: 0, chop: 0, glow: 0, amp: 0, ring: 0, phase: 0 });
+			egg.group.rotation.set(0, 0, 0);
+			egg.setWave({ furrow: 0, lobe: 0, chop: 0, grain: 0, glow: 0, amp: 0, ring: 0, phase: 0 });
 			egg.group.scale.setScalar(1);
-			egg.group.quaternion.copy(TILT);
+			// Identity, not the tilt: it is inside the frame, which carries it.
+			egg.group.quaternion.identity();
 			camera.position.set(ICOSA.camPos[0], ICOSA.camPos[1], camera.position.z);
 			camera.up.set(0, 1, 0);
 			camera.rotation.set(0, 0, 0);

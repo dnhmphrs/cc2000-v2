@@ -238,6 +238,16 @@
 		// of the air, so what it actually does at distance is read as a hole in the
 		// halo — a dark shape inside the warmth, before there is a cage round it.
 		world.egg.setCore(eggIn);
+		// ── AND IT HAS SOMETHING IN IT ───────────────────────────────────────
+		// A flat black disc inside a warm halo reads as a hole, not as a body, and
+		// you are looking at this one for the better part of ten seconds. So it
+		// carries a fine mottle on the way in — see coreMaterial's grain().
+		//
+		// It FADES OUT over the arrival, so the frame this scene hands over is the
+		// dark void the conception opens on. Driven from `t` rather than the
+		// swimmer's `elapsed`, so the core stays a pure function of progress and
+		// a ?at= seek draws what the run draws.
+		world.egg.setWave({ grain: eggIn * (1 - smoothstep(0.72, 0.95, p)), phase: t });
 		// The rim answers the entry. A nudge, not a flash — the wave that breaks
 		// across this surface at the top of the next scene is the payoff — and it
 		// is the CRISP rim that lifts, not the body's, or the whole disc washes.

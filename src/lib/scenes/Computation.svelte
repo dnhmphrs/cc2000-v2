@@ -253,8 +253,8 @@
 	// ── Run ──────────────────────────────────────────────────────────────────
 	export function enter() {
 		t = 0;
-		px = 0;
-		py = 0;
+		// camTo still belongs to the RETURN flight, which trucks the camera onto
+		// the room's monitor glass. It is only the pointer parallax that has gone.
 		camTo.set(0, 0, 0);
 		measured = false;
 		searchLatched = false;
@@ -368,9 +368,12 @@
 		// under a threshold to stop it (see egg.setCore).
 		world.egg.setCore(SCENES.conception.handoverCore, false);
 		world.setCorners(1 - thin);
-		world.egg.group.scale.setScalar(
-			lerp(1, ICOSA.sphereGrow, easeInOutCubic(span(p, T.sphereGrow)))
-		);
+		// AND THE SPHERE IS NOT TOUCHED. It used to open out to 1.35 here while
+		// the frame it is the circumsphere OF stayed at 1 — so the two things that
+		// are one object visibly came apart, the sphere swelling and the
+		// icosahedron inside it not. It is a child of the frame now (see
+		// world/lattice.js) and shares its scale and its attitude, which is also
+		// why it turns with the search instead of sitting still through it.
 
 		// ── The survey ───────────────────────────────────────────────────────
 		// The assembly, whole, turning, on an opening lens — before a single
@@ -575,27 +578,12 @@
 		publishMonitor();
 	}
 
-	// ── The room, being looked at ────────────────────────────────────────────
-	// A couple of percent of camera truck, following the cursor, for as long as
-	// the room is on screen. It costs nothing and it is the only thing that turns
-	// six flat layers hung at different depths into a room you are standing in —
-	// the lens does the rest, because the bed is three units nearer than the wall
-	// and moving the camera is the one way to say so.
-	//
-	// Eased hard, so it is a drift rather than a cursor-tracking gimmick, and
-	// republished so the result panel stays welded to the glass.
-	const PARALLAX = 0.028;
-	let px = 0;
-	let py = 0;
-
-	export function parallax(nx, ny, dt) {
-		const k = Math.min(1, dt * 2.4);
-		px += (nx * frustum * PARALLAX - px) * k;
-		py += (-ny * frustum * PARALLAX - py) * k;
-		world.camera.position.x = camTo.x + px;
-		world.camera.position.y = camTo.y + py;
-		publishMonitor();
-	}
+	// THERE IS NO PARALLAX ON THE ROOM. A couple of percent of camera truck
+	// following the cursor was tried, on the theory that six flat layers hung at
+	// different depths need a moving head to become a place. They do not: the
+	// fall has already flown you into it through its own depth, and a room that
+	// then drifts under the pointer stops being somewhere you landed and becomes
+	// a thing on a screen being nudged. The scene holds still.
 
 	export function render(r) {
 		world.render(r);
