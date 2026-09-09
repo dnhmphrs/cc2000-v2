@@ -151,7 +151,15 @@ export const ICOSA_INK = {
 	pentagon: 0xd0a340,
 	// The drafting layer: dimension lines, the ratio bar, the spiral, the
 	// subdivision squares. Quietest of all — it is meant to be found, not read.
-	draft: 0x6f5720,
+	//
+	// But it WAS too quiet. V2 drew this in the accent gold, which its renderer's
+	// sRGB encode lifted to a displayed rgb(226,208,123); this displayed
+	// rgb(111,87,32), a little under half of it, and the arms V2 is the gold
+	// standard for were a ghost. It sits between `inner` and the old value now —
+	// brighter, and still comfortably under both the frame and the structure
+	// behind it, because the hierarchy is the point and V2's drafting was in fact
+	// brighter than anything else in its own scene.
+	draft: 0x8d7130,
 	// The blueprint field behind everything.
 	grid: 0x6b5726,
 	// The solid faces, if a scene ever fills them.

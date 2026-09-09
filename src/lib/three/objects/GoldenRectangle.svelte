@@ -323,6 +323,20 @@
 		const t = lastProjection;
 		const d = dimFactor * lineDim;
 		const g = t * draft * d;
+		// ── THE ARM DOES NOT STEP BACK ───────────────────────────────────────
+		// `draft` carries the computation's draftOut, which takes the drafting to
+		// a fifth of its weight once the rooms are up. That is right for the
+		// drafting that is COPLANAR with a room — the spiral and the subdivision
+		// squares are drawn over the one thing in the scene with any colour in
+		// it, and at full weight they are clutter on top of it.
+		//
+		// It is wrong for the schematic and the traces. Those live three and a
+		// half units further out (ICOSA.schematicReach), over empty void, with
+		// nothing behind them to clutter — and they are the arm, which is the
+		// whole composition. Fading them with the rest is what left V2's
+		// extended rectangles technically present and impossible to see for the
+		// back half of the scene.
+		const arm = t * d;
 
 		// The outline does NOT fade up from the projection. At projection 0 this
 		// rectangle lies exactly on four of the solid's own vertices — it is the
@@ -333,8 +347,8 @@
 		if (outlineMaterial) outlineMaterial.opacity = d;
 		if (spiralMaterial) spiralMaterial.opacity = g * 0.85;
 		subdivisionMaterials.forEach(({ mat }) => (mat.opacity = g * 0.45));
-		traceLineMaterials.forEach((mat) => (mat.opacity = g * 0.6));
-		if (schematicComponent) schematicComponent.setLevel(g);
+		traceLineMaterials.forEach((mat) => (mat.opacity = arm * 0.6));
+		if (schematicComponent) schematicComponent.setLevel(arm);
 	}
 
 	export async function init() {
