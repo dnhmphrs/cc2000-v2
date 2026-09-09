@@ -169,12 +169,7 @@
 		z-index: 20;
 		pointer-events: auto;
 		display: grid;
-		/* LOW, not centred. Both questions are asked about the thing behind them —
-		   the swimmer for one, the ovum for the other — and both of those are dead
-		   centre in the frame. A panel on top of the subject is a panel asking you
-		   about something it is covering up. */
-		place-items: end center;
-		padding-bottom: clamp(28px, 9vh, 96px);
+		place-items: center;
 		font-family: var(--tech);
 		cursor: default;
 	}
