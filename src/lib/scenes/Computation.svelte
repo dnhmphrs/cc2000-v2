@@ -276,6 +276,11 @@
 		// wireframe that just drew itself, at the same weight.
 		world.egg.setShell(ICOSA.shellSolid);
 		world.egg.group.scale.setScalar(1);
+		// The conception hands the frame over flat on the circumsphere — it rode
+		// the division out and settled back — and the panes are built on those
+		// exact coordinates. Stated anyway, so a seek straight into this scene
+		// starts where a run through it would.
+		world.setWireScale(1);
 		// The camera's range belongs to applyFrustum now; only the truck is ours.
 		world.camera.position.x = ICOSA.camPos[0];
 		world.camera.position.y = ICOSA.camPos[1];
@@ -335,10 +340,14 @@
 		// conception drew it at, all the way to the fall.
 		const thin = easeInOutCubic(span(p, T.shellThin));
 		world.egg.setShell(lerp(ICOSA.shellSolid, ICOSA.shellFaint, thin));
-		// And the wave's own surface, which the conception left as a ghost, goes
-		// with it: it is the last opaque thing in the run and the rooms come
-		// through where it was.
-		world.egg.setCore(lerp(0.45, 0, thin));
+		// And the wave's own surface thins with it — but IT DOES NOT GO. The
+		// conception's field is still drawn on it, and it grows with the sphere,
+		// so the whole computation happens inside the thing the conception made:
+		// the frame, the six rooms and the drafting all hang in a faint icosahedral
+		// standing wave that was the ovum ten seconds ago. It is well under the
+		// threshold at which the core writes depth (see egg.setCore), so it tints
+		// and never occludes.
+		world.egg.setCore(lerp(0.45, ICOSA.coreGhost, thin));
 		world.setCorners(1 - thin);
 		world.egg.group.scale.setScalar(
 			lerp(1, ICOSA.sphereGrow, easeInOutCubic(span(p, T.sphereGrow)))
@@ -435,6 +444,9 @@
 			const fade = 1 - smoothstep(0.1, 0.75, z);
 			world.setLineOpacity(fade);
 			world.egg.setShell(ICOSA.shellFaint * (1 - smoothstep(0, 0.4, z)));
+			// The shell the whole run has been inside goes with it, on the way into
+			// the room. It is the last thing of the machine to leave.
+			world.egg.setCore(ICOSA.coreGhost * (1 - smoothstep(0, 0.35, z)));
 			panes.forEach((pane, i) => {
 				if (!pane) return;
 				if (i === target) pane.setLineDim(1 - smoothstep(0.15, 0.7, z));

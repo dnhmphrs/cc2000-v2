@@ -64,9 +64,15 @@
 		[1.0, 0.71, 0.29]
 	];
 	let stops = NEUTRAL.map((c) => c.slice());
-	let ground = [1, 1, 1];
 
 	const hexToRgb = (h) => [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
+
+	// SEEDED, not white. The ground eases toward the published backdrop at
+	// dt*3.2, which is about a second and a half to converge — so starting it at
+	// [1,1,1] meant the first thing a cold visitor saw through the calculator's
+	// window was a near-WHITE wash sliding down to the air. On a machine that has
+	// no white in it anywhere. It starts where it is going.
+	let ground = hexToRgb(get(backdrop).color);
 	const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 	function targetStops() {

@@ -15,9 +15,13 @@
 	//                   on four of the icosahedron's own vertices
 	//   the DRAFTING    the spiral, the subdivision squares, the traces back to
 	//                   the solid — and, in the sibling component, the dimension
-	//                   lines and the 1:phi bar. This is the machine showing its
-	//                   working, and it is the whole reason the scene reads as a
-	//                   computation rather than as a carousel
+	//                   lines and the 1:phi bar, hung a half again FURTHER OUT
+	//                   than the pane on the same axis. This is the machine
+	//                   showing its working, and it is the whole reason the scene
+	//                   reads as a computation rather than as a carousel. The
+	//                   reach past the pane is what makes the whole thing an ARM
+	//                   rather than a room with annotations on it —
+	//                   ICOSA.schematicReach
 	//   the ROOM        the decade diorama, which is the only thing in the second
 	//                   half of the run with any colour in it
 	//
@@ -319,6 +323,20 @@
 		const t = lastProjection;
 		const d = dimFactor * lineDim;
 		const g = t * draft * d;
+		// ── THE ARM DOES NOT STEP BACK ───────────────────────────────────────
+		// `draft` carries the computation's draftOut, which takes the drafting to
+		// a fifth of its weight once the rooms are up. That is right for the
+		// drafting that is COPLANAR with a room — the spiral and the subdivision
+		// squares are drawn over the one thing in the scene with any colour in
+		// it, and at full weight they are clutter on top of it.
+		//
+		// It is wrong for the schematic and the traces. Those live three and a
+		// half units further out (ICOSA.schematicReach), over empty void, with
+		// nothing behind them to clutter — and they are the arm, which is the
+		// whole composition. Fading them with the rest is what left V2's
+		// extended rectangles technically present and impossible to see for the
+		// back half of the scene.
+		const arm = t * d;
 
 		// The outline does NOT fade up from the projection. At projection 0 this
 		// rectangle lies exactly on four of the solid's own vertices — it is the
@@ -329,8 +347,8 @@
 		if (outlineMaterial) outlineMaterial.opacity = d;
 		if (spiralMaterial) spiralMaterial.opacity = g * 0.85;
 		subdivisionMaterials.forEach(({ mat }) => (mat.opacity = g * 0.45));
-		traceLineMaterials.forEach((mat) => (mat.opacity = g * 0.6));
-		if (schematicComponent) schematicComponent.setLevel(g);
+		traceLineMaterials.forEach((mat) => (mat.opacity = arm * 0.6));
+		if (schematicComponent) schematicComponent.setLevel(arm);
 	}
 
 	export async function init() {
@@ -352,13 +370,19 @@
 		lastProjection = projection;
 
 		const paneDist = projection * PANE_REACH;
+		// And the drafting goes on PAST it. See ICOSA.schematicReach: the arm is
+		// the thing being composed here, not the pane.
+		const draftDist = paneDist * ICOSA.schematicReach;
 		rectangleGroup.position.copy(axis.clone().multiplyScalar(paneDist * direction));
 
 		updateOpacities();
 
+		// The traces run the WHOLE way out — from the vertex they came off to the
+		// far end of the drafting, straight through the pane on the way. They are
+		// the arm.
 		traceLines.forEach((line) => {
 			const { startPos } = line.userData;
-			const endPos = startPos.clone().add(axis.clone().multiplyScalar(paneDist * direction));
+			const endPos = startPos.clone().add(axis.clone().multiplyScalar(draftDist * direction));
 
 			const positions = line.geometry.attributes.position.array;
 			positions[3] = endPos.x;
@@ -368,7 +392,7 @@
 			line.computeLineDistances();
 		});
 
-		if (schematicComponent) schematicComponent.updateProjection(paneDist);
+		if (schematicComponent) schematicComponent.updateProjection(draftDist);
 		if (roomComponent) roomComponent.updateProjection(projection);
 	}
 

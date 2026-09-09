@@ -52,7 +52,13 @@ export const MACHINE = {
 	dark: '#c9820f',
 	ink: '#17120c',
 	lamp: '#ff4d1f',
-	crt: '#0a1330',
+	// The glass in the machine's instruments — the CRT and the chassis portholes.
+	// The AIR: the window looks straight through to the tunnel idling behind it,
+	// which is fogged against exactly this, so a porthole beside it in any other
+	// black reads as a hole in the machine. It was a navy left over from the blue
+	// era, and the page ground was the same navy — which is what put a blue
+	// screen on the machine for the first second of every cold load.
+	crt: '#14120e',
 	// Two accents lifted off the room art — the red of the desk lamp and the
 	// teal of the shades — so the machine belongs to the same drawing.
 	red: '#e5372a',
@@ -145,7 +151,15 @@ export const ICOSA_INK = {
 	pentagon: 0xd0a340,
 	// The drafting layer: dimension lines, the ratio bar, the spiral, the
 	// subdivision squares. Quietest of all — it is meant to be found, not read.
-	draft: 0x6f5720,
+	//
+	// But it WAS too quiet. V2 drew this in the accent gold, which its renderer's
+	// sRGB encode lifted to a displayed rgb(226,208,123); this displayed
+	// rgb(111,87,32), a little under half of it, and the arms V2 is the gold
+	// standard for were a ghost. It sits between `inner` and the old value now —
+	// brighter, and still comfortably under both the frame and the structure
+	// behind it, because the hierarchy is the point and V2's drafting was in fact
+	// brighter than anything else in its own scene.
+	draft: 0x8d7130,
 	// The blueprint field behind everything.
 	grid: 0x6b5726,
 	// The solid faces, if a scene ever fills them.

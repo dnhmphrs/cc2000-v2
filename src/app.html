@@ -1,5 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" style="background: #0a246a">
+<!-- The ground, before a single byte of CSS or JS. AIR, from
+     config/palette.js — the calculator's window is transparent by design and
+     the tunnel idling behind it is fogged against exactly this, so the first
+     painted pixel and the first WebGL frame are the same colour and nothing
+     swaps. An inline style outranks the stylesheet, so this is the one that
+     decides; leaving it navy put a blue screen in the machine on every cold
+     load however the stylesheet was written. -->
+<html lang="en" style="background: #14120e">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.ico" />

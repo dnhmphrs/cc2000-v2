@@ -21,27 +21,41 @@
 	// in, and for a beat nothing happens.
 	//
 	// ── Then it divides ──────────────────────────────────────────────────────
-	// A standing wave comes up on the surface, and the wave DIVIDES. It is
+	// A standing wave comes up on the surface, and the body DIVIDES on it. The
+	// field is
 	//
-	//     f(n) = Σ wᵢ · P₆(n · aᵢ)
+	//     f(n) = Σ P₆(n · aᵢ)
 	//
-	// over the six five-fold axes of the icosahedron, and the axes come in ONE AT
-	// A TIME. One axis is a dumbbell: two antinodes, a sphere pulling into two.
-	// Two axes, four. Six axes, twelve — and twelve antinodes on a sphere, at
-	// arccos(1/√5) from each other, is an icosahedron.
-	//
+	// over the six five-fold axes of the icosahedron, with ALL SIX ALWAYS IN.
 	// Degree 6 is the first degree at which a non-constant icosahedral invariant
 	// exists at all; the degree-2 and degree-4 sums vanish identically. So this
-	// is not a pattern chosen to look right, it is the only one there is, and
-	// every step of the division is forced. See world/materials.js.
+	// is not a pattern chosen to look right, it is the only one there is, and its
+	// twelve antinodes are the twelve vertices.
+	//
+	// What develops is the CLEAVAGE, in two halves on two clocks:
+	//
+	//   the FURROW   the field's negative set — the nodal net between the twelve
+	//                caps — pulled INTO the skin. The sphere is scored into
+	//                twelve before anything comes out of it.
+	//   the LOBES    the twelve caps, swelling out of the net already cut around
+	//                them.
+	//
+	// That is the order a cell divides in. See world/materials.js.
+	//
+	// ── And it is ONE beat ───────────────────────────────────────────────────
+	// There is no moment where the wave finishes and a construction starts up.
+	// The twelve corners are struck at the TOP of the lobes' travel, ON the caps,
+	// in place — they are not a new object arriving, they are the antinodes being
+	// marked — and the six axes the sum was taken over are drawn as the six long
+	// diagonals, because that is literally what they are. The thirty edges close
+	// between corners that are already there, while the skin is still moving
+	// underneath them, and the skin relaxes back to a sphere under a frame that
+	// is already standing where its lobes were.
 	//
 	// ── And it does not go away ──────────────────────────────────────────────
-	// The wave IS the icosahedron by the time it is finished, so nothing is
-	// rebuilt from scratch afterwards. The twelve antinodes are struck as the
-	// twelve corners, in place; the six axes the field was summed over are drawn
-	// as the six long diagonals, because that is literally what they are; and the
-	// thirty edges close between corners that are already there. The surface
-	// stays, dropped to a ghost, as the shell the frame sits in.
+	// The surface drops to a ghost, but it stays, and the field stays drawn on
+	// it: it is the shell the whole rest of the run happens inside, all the way
+	// through the computation. See Computation.svelte.
 	//
 	// The whole scene is at ICOSA.tilt and never turns. There is no page to
 	// square up any more: the drawing and the solid are the same object.
@@ -71,23 +85,31 @@
 		const p = clamp01(t / T.duration);
 
 		// ── The division ─────────────────────────────────────────────────────
-		// One number: how many of the six axes are in. Everything else follows.
-		const grow = smootherstep(span(p, T.divide)) * 6;
+		// Two numbers, and the furrow leads: the nodal net is cut in, then the
+		// twelve caps swell out of it.
+		const furrow = smootherstep(span(p, T.furrow));
+		const lobe = smootherstep(span(p, T.lobe));
 		const lit = smoothstep(0, 1, span(p, T.wake));
 		// The mode rings as it is excited and damps as it settles, which is what
 		// an excited normal mode does and is the only motion on the surface.
 		const ring = (1 - smootherstep(span(p, T.ring))) * T.ringPeak;
-		// The surface drops to a ghost once the frame is on it — it has to, or
-		// thirty edges are drawn inside an opaque ball and none of them read.
+		// The skin rounds up again once the frame is standing on it — it has to,
+		// or thirty edges are drawn inside a twelve-lobed ball and none of them
+		// read. The FIELD is not what fades; the displacement is.
 		const ghost = easeInOutCubic(span(p, T.ghost));
 		const union = Math.sin(span(p, T.union) * Math.PI) * T.unionPeak;
+		// How far the caps stand proud of the sphere. The field peaks at exactly 1
+		// on the twelve, so this IS the cap height, and the frame rides it.
+		const amp = lit * T.amp * (1 - ghost);
 
 		world.egg.setWave({
-			grow,
+			furrow,
+			lobe,
 			glow: lit * (1 - ghost * 0.42) * (1 + union * 0.6),
-			// Big while it is dividing — a cell pulling itself in two is a shape
-			// change, not a shading change — and flat by the time the frame draws.
-			amp: lit * T.amp * (1 - ghost),
+			// Big while it is dividing — a body pulling itself into twelve is a
+			// shape change, not a shading change — and flat by the time the frame
+			// has closed over it.
+			amp,
 			ring,
 			phase: t
 		});
@@ -98,10 +120,18 @@
 		// this scene's `grid` be the same black at the hand-over.
 		fieldFade.set(smoothstep(0.05, 0.3, p));
 
-		// ── The solid, in the order the field builds it ───────────────────────
-		// The twelve, struck on the antinodes. The six axes the sum was taken
-		// over, drawn as the six long diagonals — they are the same six vectors.
-		// Then the thirty edges, between corners that are already there.
+		// ── The solid, out of the division that is still happening ────────────
+		// The twelve, struck on the caps at the top of their travel — not after
+		// them. The six axes the sum was taken over, drawn as the six long
+		// diagonals, because they are the same six vectors. Then the thirty edges,
+		// closing between corners that are already there while the skin under
+		// them is still moving.
+		// AND THE FRAME RIDES THE DIVISION. The twelve corners are the twelve
+		// caps, so while the caps stand proud the line-work stands out with them,
+		// and it settles onto the circumsphere as the body rounds up. Struck any
+		// other way, the corners are marked inside a surface that has swollen past
+		// them and not one of them is visible.
+		world.setWireScale(1 + amp * 1.02);
 		world.setCorners(span(p, T.corners) * (1 + union * 1.4));
 		world.setSpokes(smootherstep(span(p, T.spokes)));
 		world.setGrow(span(p, T.edges));

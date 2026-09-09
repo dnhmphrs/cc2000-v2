@@ -252,14 +252,18 @@ export function createEgg(radius, opts = {}) {
 			rim.visible = o > 0.004;
 		},
 
-		// The wave. `grow` is how many of the six five-fold axes are in (0..6) and
-		// is the whole of the conception; `glow` is how brightly the field is
-		// drawn; `amp` how far it moves the skin, as a fraction of the core's
-		// radius; `ring` the amplitude of the mode's own oscillation as it settles.
-		setWave({ grow = 0, glow = 0, amp = 0, ring = 0, phase = null } = {}) {
+		// The wave, and the division on it. All six five-fold axes are always in
+		// — the field is the whole icosahedral invariant or it is nothing — and
+		// what develops is the CLEAVAGE: `furrow` (0..1) cuts the nodal net into
+		// the skin and `lobe` (0..1) swells the twelve caps out of it, in that
+		// order. `glow` is how brightly the field is drawn, `amp` how far it moves
+		// the skin as a fraction of the core's radius, and `ring` the amplitude of
+		// the mode's own oscillation as it settles.
+		setWave({ furrow = 0, lobe = 0, glow = 0, amp = 0, ring = 0, phase = null } = {}) {
 			if (!coreMat) return;
 			const u = coreMat.uniforms;
-			u.uGrow.value = grow;
+			u.uFurrow.value = furrow;
+			u.uLobe.value = lobe;
 			u.uGlow.value = glow;
 			u.uAmp.value = amp;
 			u.uRing.value = ring;

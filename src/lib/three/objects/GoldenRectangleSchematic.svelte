@@ -232,9 +232,12 @@
 		if (schematicGroup) schematicGroup.visible = level > 0.004;
 	}
 
-	export function updateProjection(paneDist) {
+	// Note the distance handed in is NOT the pane's. The drafting hangs out past
+	// the room on the same axis — see ICOSA.schematicReach — because the arm is
+	// what is being composed, and an arm needs something on the end of it.
+	export function updateProjection(draftDist) {
 		if (!schematicGroup) return;
-		schematicGroup.position.copy(axis.clone().multiplyScalar(paneDist * direction));
+		schematicGroup.position.copy(axis.clone().multiplyScalar(draftDist * direction));
 	}
 
 	export function dispose() {

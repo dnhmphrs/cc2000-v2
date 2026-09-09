@@ -65,8 +65,10 @@ export const SCENES = scale({
 		launch: 1.6,
 
 		// Coming back the other way: the whole calculator is drawn 1:1 inside the
-		// room's monitor and then flown out of it.
-		arrive: 2.1
+		// room's monitor and then flown out of it — all the way out, until the
+		// glass covers the frame (RETURN_FILL). That is roughly twice the travel
+		// the half-way version had, so it gets the time to cover it.
+		arrive: 2.9
 	},
 
 	// ── FlyIn ────────────────────────────────────────────────────────────────
@@ -98,8 +100,22 @@ export const SCENES = scale({
 		motesIn: [0.0, 0.04],
 		motesOut: [0.8, 0.94],
 
-		// The swimmer comes past from behind and settles in front of the lens.
-		spermIn: [0.015, 0.13],
+		// ── THE PASS ─────────────────────────────────────────────────────────
+		// The swimmer comes past FROM BEHIND — sixteen units back, straight up the
+		// axis, entering low in the frame and rising as it pulls ahead. The shot at
+		// the top of Star Wars.
+		//
+		// IT ARRIVES WHERE THE MACHINE ENDS. The window opens at zero, but the
+		// swimmer is behind the lens for the first tenth of it and the calculator
+		// is over the whole frame anyway — so what you SEE is: the machine warps
+		// away, and the swimmer is there, coming up from under you. Then nearly
+		// five seconds of it pulling slowly ahead, on easeOutQuint: it covers the
+		// sixteen units behind the lens in the first quarter of the window and
+		// spends the other three quarters crawling the last few. That is what
+		// overtaking and then matching speed looks like, and it is the first thing
+		// the run shows you, so there is nothing to hurry it toward. The ovum does
+		// not begin to surface until it is most of the way done.
+		spermIn: [0.0, 0.46],
 
 		// It breaks formation and goes in. Its own curve, and a hard one: this is
 		// the only acceleration in the scene and it happens against a camera that
@@ -121,12 +137,12 @@ export const SCENES = scale({
 		// The glow first, then the ovum in it. The halo OPENS EARLIER and CLOSES
 		// EARLIER than the shell, which is the whole trick of the arrival: there
 		// is a warmth in the black before there is anything in the warmth.
-		haloIn: [0.05, 0.48],
+		haloIn: [0.3, 0.66],
 		haloOut: [0.8, 0.95],
 		haloPeak: 1.0,
 		// An ENABLE, not a fade: what actually brings the cage up is the fog
 		// thinning as the camera closes on it. See FlyIn.svelte.
-		eggIn: [0.06, 0.34],
+		eggIn: [0.34, 0.6],
 
 		// ── THE HAND-OVER ────────────────────────────────────────────────────
 		// There is no flash any more. The fly-in simply ENDS ON THE PICTURE THE
@@ -150,46 +166,63 @@ export const SCENES = scale({
 	// It opens on the fly-in's last frame, unchanged, and it is the same object:
 	// the swimmer has just gone in, and for a beat nothing happens.
 	//
-	// Then the surface answers, and it DIVIDES. A standing wave comes up on it —
-	// the sum of P₆(n·aᵢ) over the icosahedron's six five-fold axes — and the
-	// axes come in ONE AT A TIME. One axis is a dumbbell: two antinodes, a sphere
-	// pulling into two. Two axes, four. Six, twelve. And twelve antinodes on a
-	// sphere is an icosahedron.
+	// Then the body DIVIDES, and the icosahedron comes out of that division —
+	// ONE BEAT, not two. There is no moment where the wave finishes and a
+	// separate construction starts up: the corners are struck ON the twelve caps
+	// while the caps are still at full extension, and the surface relaxes back to
+	// a sphere underneath a frame that is already standing where they were.
 	//
-	// Degree 6 is the first degree at which a non-constant icosahedral invariant
-	// exists at all, so every step of that division is forced rather than chosen.
-	// See world/materials.js coreMaterial().
+	// The field is the sum of P₆(n·aᵢ) over the icosahedron's six five-fold axes,
+	// with ALL SIX ALWAYS IN. Degree 6 is the first degree at which a non-constant
+	// icosahedral invariant exists at all, so the figure is forced rather than
+	// chosen — and it is the whole figure or it is nothing. The axes used to
+	// arrive one at a time, which spends the first second of the scene showing a
+	// dumbbell and a clover: two blobs, then twelve. What develops now is the
+	// CLEAVAGE, not the symmetry.
 	//
-	// TWO BEATS, not three. There used to be a generic ripple, then the mode,
-	// then a compass-and-pentagon derivation that rebuilt from scratch what the
-	// mode had already produced. The wave IS the icosahedron by the time it has
-	// finished, so nothing is rebuilt: the twelve antinodes are struck in place,
-	// the six axes the sum was taken over are drawn as the six long diagonals —
-	// which is literally what they are — and the thirty edges close between
-	// corners that are already there.
+	//  0     .06       .28          .46             .76         .86     1.0
+	//  |wake |furrow: the nodal net cut in|          |            |union |
+	//        |lobe: the twelve caps swell out .46|
+	//                  |corners: struck ON the caps .46|
+	//                            |spokes .64|edges ........ .80|
+	//                                 |ghost: the body rounds up, and the frame
+	//                                  it is carrying settles onto the sphere .76|
 	conception: {
 		duration: 6.4,
 
 		// The field lights up on the surface it was already sitting on.
-		wake: [0.0, 0.09],
-		// And divides. 0 → 6 axes.
-		divide: [0.04, 0.54],
+		wake: [0.0, 0.07],
+
+		// ── THE DIVISION ─────────────────────────────────────────────────────
+		// The furrow LEADS. The nodal net — the zero set of the field, the curve
+		// system separating the twelve — is scored INTO the skin first, and only
+		// then do the caps swell out of it. That is the order a cell divides in:
+		// the furrow constricts, the daughters round up. Both together is a ball
+		// growing bumps.
+		furrow: [0.02, 0.28],
+		lobe: [0.12, 0.46],
 		// The mode ringing as it is excited, damped out as it settles. This is the
 		// only motion on the surface and it is an excited normal mode relaxing,
 		// not a texture scrolling.
-		ring: [0.0, 0.66],
+		ring: [0.0, 0.62],
 		ringPeak: 0.28,
 		// How far the wave moves the skin, as a fraction of the core's radius.
-		// Large: a cell pulling itself into two is a change of shape.
-		amp: 0.13,
+		// Large: a body pulling itself into twelve is a change of shape.
+		amp: 0.15,
 
-		// The solid, in the order the field builds it.
-		corners: [0.5, 0.6],
-		spokes: [0.58, 0.76],
-		edges: [0.62, 0.86],
-		// And the surface drops to a ghost, because thirty edges drawn inside an
-		// opaque ball are thirty edges nobody can see.
-		ghost: [0.58, 0.8],
+		// ── The solid, struck on the division that made it ───────────────────
+		// The corners land at the TOP of the lobes' travel, in place, on the caps
+		// — so the twelve are not a new object appearing, they are the twelve
+		// antinodes being marked. Everything else closes between corners that are
+		// already there while the skin is still moving under it.
+		corners: [0.32, 0.46],
+		spokes: [0.42, 0.64],
+		edges: [0.46, 0.8],
+		// And the skin relaxes back to a sphere, dropping to a ghost — because
+		// thirty edges drawn inside an opaque ball are thirty edges nobody can
+		// see, and because a shape that has finished dividing rounds up. It does
+		// NOT go away: the field stays on it, and stays through the next scene.
+		ghost: [0.46, 0.76],
 
 		// THE UNION. The last edge closes and the whole figure answers at once.
 		union: [0.86, 1.0],

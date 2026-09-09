@@ -345,34 +345,41 @@ export function dotMaterial(color, size) {
 // inside and an outside.
 //
 // ── The second job is the conception ─────────────────────────────────────────
-// It carries a standing wave, and the wave DIVIDES.
+// It carries a standing wave, and the body DIVIDES on it.
 //
 // The field is
 //
-//     f(n) = Σ wᵢ · P₆(n · aᵢ)
+//     f(n) = Σ P₆(n · aᵢ)
 //
 // over the six five-fold axes of the icosahedron — the axes through opposite
 // vertices — with P₆ the sixth Legendre polynomial. Degree 6 is the FIRST degree
 // at which a non-constant icosahedral invariant exists at all: the degree-2 and
-// degree-4 sums vanish identically. So the completed field is not a pattern
-// chosen to look icosahedral, it is the only thing of its kind there is, and its
-// twelve antinodes are the twelve vertices.
+// degree-4 sums vanish identically. So this is not a pattern chosen to look
+// icosahedral, it is the only thing of its kind there is, and its twelve
+// antinodes are the twelve vertices.
 //
-// What makes it a conception rather than a diagram is that the axes come in ONE
-// AT A TIME (uGrow, 0→6):
+// ALL SIX AXES ARE ALWAYS IN. They used to arrive one at a time — one axis two
+// antinodes, two axes four, six axes twelve — which is a lovely idea on paper
+// and on screen is a sphere that spends its first second as a dumbbell, then a
+// clover, and only becomes the answer at the end. Two blobs, then twelve. The
+// figure is the whole field or it is nothing, so the field is complete from the
+// first frame and what develops is the DIVISION, not the symmetry.
 //
-//     one axis    two antinodes.   A sphere pulling into a dumbbell. Mitosis.
-//     two         four.
-//     …
-//     six         twelve, and it is the icosahedron.
+// ── The division ────────────────────────────────────────────────────────────
+// The two halves of the field are driven separately, and the furrow LEADS:
 //
-// Every step is a division, the count doubles and doubles again, and the thing
-// it converges on is the answer. Nothing is drawn on the surface that is not
-// forced by the symmetry being assembled on it.
+//   uFurrow   the negative half, where the field dips. That set is the nodal
+//             net between the twelve caps, and pulling the skin IN along it
+//             scores the sphere into twelve — a cleavage furrow, cut.
+//   uLobe     the positive half. The twelve caps swell out of the net that has
+//             already been cut around them.
 //
-// It is normalised by its own live peak so the amplitude does not lurch as axes
-// arrive: all six axes meet each other at arccos(1/√5), so the largest value the
-// sum can take is 0.328·ΣW + 0.672·max(w), worked out in the shader.
+// That is the order a cell actually divides in: the furrow constricts first and
+// the daughters round up out of it. Driving both together is a ball growing
+// bumps; driving the furrow first is a body dividing.
+//
+// It is normalised by its own exact peak. At a vertex one axis reads 1 and the
+// other five read P₆(1/√5) = 0.328, so the sum tops out at 1 + 5(0.328) = 2.64.
 //
 // uRing is the mode RINGING — a standing oscillation at the mode's own
 // frequency, damped out as it settles. That is the ripple, and it is the honest
@@ -393,29 +400,20 @@ const FIVE_FOLD = (() => {
 
 const WAVE_FIELD = `
 	uniform vec3 uAxes[6];
-	uniform float uGrow;
 	uniform float uRing;
 	uniform float uPhase;
 
 	float waveField(vec3 n) {
 		float h = 0.0;
-		float total = 0.0;
-		float top = 0.0;
 		for (int i = 0; i < 6; i++) {
-			// Each axis eases in over its own unit of uGrow, so the count of
-			// antinodes doubles, and doubles, and doubles.
-			float w = clamp(uGrow - float(i), 0.0, 1.0);
-			w = w * w * (3.0 - 2.0 * w);
 			float x = dot(n, uAxes[i]);
 			float x2 = x * x;
 			float x4 = x2 * x2;
-			h += w * (231.0 * x4 * x2 - 315.0 * x4 + 105.0 * x2 - 5.0) / 16.0;
-			total += w;
-			top = max(top, w);
+			h += (231.0 * x4 * x2 - 315.0 * x4 + 105.0 * x2 - 5.0) / 16.0;
 		}
-		// The largest the sum can be: the axes meet each other at arccos(1/sqrt5),
-		// where P6 is 0.328.
-		h /= max(0.328 * total + 0.672 * top, 0.001);
+		// The exact peak: one axis reads 1 at a vertex and the other five read
+		// P6(1/sqrt5) = 0.328, so the sum tops out at 1 + 5(0.328).
+		h /= 2.64;
 		// And the mode rings as it settles.
 		return h * (1.0 + uRing * sin(uPhase * 5.5));
 	}
@@ -445,22 +443,29 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 			uGlow: { value: 0 },
 			uAmp: { value: 0 },
 			uAxes: { value: FIVE_FOLD.map((v) => v.clone()) },
-			// How many of the six axes are in, 0..6. This is the whole scene.
-			uGrow: { value: 0 },
+			// The division. 0..1 each, and the furrow leads the lobe.
+			uFurrow: { value: 0 },
+			uLobe: { value: 0 },
 			uRing: { value: 0 },
 			uPhase: { value: 0 }
 		},
 		vertexShader: `
 			${WAVE_FIELD}
 			uniform float uAmp;
+			uniform float uFurrow;
+			uniform float uLobe;
 			varying vec3 vN;
 			varying vec3 vV;
 			varying vec3 vLocal;
 			void main() {
 				vLocal = position;
 				vec3 n = normalize(position);
-				// The skin actually moves. Along its own normal, by the field.
-				vec3 p = position + n * (uAmp * waveField(n));
+				// The skin actually moves. Along its own normal, by the field —
+				// and the two halves of the field move it on their own clocks, so
+				// the nodal net is scored IN before the twelve caps swell OUT.
+				float f = waveField(n);
+				float d = f > 0.0 ? f * uLobe : f * uFurrow;
+				vec3 p = position + n * (uAmp * d);
 				vec4 mv = modelViewMatrix * vec4(p, 1.0);
 				vN = normalize(normalMatrix * n);
 				vV = normalize(-mv.xyz);
@@ -477,6 +482,8 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 			uniform float uRimGain;
 			uniform float uOpacity;
 			uniform float uGlow;
+			uniform float uFurrow;
+			uniform float uLobe;
 			varying vec3 vN;
 			varying vec3 vV;
 			varying vec3 vLocal;
@@ -506,12 +513,16 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 				float bands = rule(f * 5.0, 0.055);
 				float node = 1.0 - smoothstep(0.0, 0.045, abs(f));
 
+				// The drawing divides on the same two clocks the skin does. The
+				// nodal net and the dips come up with the FURROW — the score marks
+				// arrive as the cut does — and the caps, the crests and the level
+				// sets come up with the LOBES that are rising out of it.
 				vec3 col = uInk;
-				col = mix(col, uWave, lit * 0.42 * uGlow);
-				col = mix(col, uHot, crest * 0.34 * uGlow);
-				col += uWave * dip * 0.07 * uGlow;
-				col += uWave * bands * 0.3 * uGlow;
-				col += uHot * node * 0.75 * uGlow;
+				col = mix(col, uWave, lit * 0.42 * uGlow * uLobe);
+				col = mix(col, uHot, crest * 0.34 * uGlow * uLobe);
+				col += uWave * dip * 0.07 * uGlow * uFurrow;
+				col += uWave * bands * 0.3 * uGlow * uLobe;
+				col += uHot * node * 0.75 * uGlow * uFurrow;
 
 				// And the rim — against the RAY, for the reason skinMaterial gives.
 				float rim = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), uRimPower);

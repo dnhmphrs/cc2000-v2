@@ -121,9 +121,17 @@ export const TUNNEL = {
 	spermRings: 4,
 	spermLongs: 7,
 	spermGain: 1.0,
-	// Where it is when the scene starts — behind the camera and off the axis,
-	// because passing exactly through the lens is degenerate.
-	spermFrom: { x: 3.6, y: -1.7, z: 18 },
+	// Where it starts: `z` units BEHIND the lens, and low in the frame. It comes
+	// straight out from behind you and pulls slowly ahead — the opening shot of
+	// Star Wars, not something entering from the wings.
+	//
+	// x and y are in HALF-HEIGHTS OF THE FRAME at whatever distance it currently
+	// is, not world units, and that distinction is the whole of it: a fixed world
+	// offset a metre from the lens is nine screen-widths off to the side, which is
+	// exactly how it used to look — sliding in from the wings rather than coming
+	// up from underneath you. In screen terms it holds its place low in the frame
+	// and drifts to centre as it settles.
+	spermFrom: { x: 0.3, y: -1.45, z: 16 },
 
 	// The ovum turns too, slowly, about its own pole. rad/s.
 	eggSpin: 0.16,
@@ -206,6 +214,18 @@ export const ICOSA = {
 	shellSolid: 1.0,
 	shellFaint: 0.55,
 
+	// And the BODY inside it, in the computation. The conception's standing wave
+	// — the twelve-antinode icosahedral invariant the ovum divided into — is still
+	// drawn on this surface, and it stays for the whole search: the frame, the six
+	// rooms and the drafting all hang inside the thing that made them. It used to
+	// go to zero at the top of the computation, which threw away the one object in
+	// the run with any history in it.
+	//
+	// It has to be low. The core writes depth above 0.85 (see egg.setCore) and an
+	// occluder here would swallow the panes; at this weight it tints and nothing
+	// more, and the contour lines on it survive as a wash of gold behind the work.
+	coreGhost: 0.15,
+
 	// How far the panes travel out of the frame. The frustum is a HEIGHT, so a
 	// tall screen sees a much narrower slice of the world than a wide one — and
 	// the panes reach out sideways exactly as far as they reach up. Portrait
@@ -213,8 +233,22 @@ export const ICOSA = {
 	// even then it is a compromise: six rooms exploded off a solid is a landscape
 	// composition.
 	paneReach: 6.4,
-	paneReachPortrait: 4.2,
+	paneReachPortrait: 5.6,
 	roomDepth: 3.0,
+
+	// ── THE ARM ──────────────────────────────────────────────────────────────
+	// The drafting does NOT stop where the room does. V2 hung the dimension lines
+	// and the ratio bar three and a half units PAST the pane — 9.9 against 6.4 —
+	// with the dashed traces running the whole way out from the vertices of the
+	// solid, and that is the composition: a long thin arm reaching off the frame,
+	// a room on it, and the working carried on out past the end. Bring the two
+	// back level, as this had drifted into doing, and the arm stops being an arm.
+	// It becomes a room with some line-work stacked on top of it.
+	//
+	// Held as a MULTIPLE rather than V2's fixed +3.5 so it survives the shorter
+	// portrait reach: on a wide screen it is 6.4 × 1.55 = 9.9, which is V2's
+	// number exactly.
+	schematicReach: 1.55,
 
 	// How much the sphere opens out as the rooms come through it. It starts as
 	// the frame's exact circumsphere and only ever eases off that.
