@@ -265,6 +265,8 @@ export function createEgg(radius, opts = {}) {
 
 		// `chop` is the unresolved ringing the division comes out of — every other
 		// mode of a struck sphere, damped away as the icosahedral one wins.
+		// `grain` is the body's own mottle, which belongs to the APPROACH and is
+		// gone before the wave arrives.
 		//
 		// The wave, and the division on it. All six five-fold axes are always in
 		// — the field is the whole icosahedral invariant or it is nothing — and
@@ -273,12 +275,22 @@ export function createEgg(radius, opts = {}) {
 		// order. `glow` is how brightly the field is drawn, `amp` how far it moves
 		// the skin as a fraction of the core's radius, and `ring` the amplitude of
 		// the mode's own oscillation as it settles.
-		setWave({ furrow = 0, lobe = 0, chop = 0, glow = 0, amp = 0, ring = 0, phase = null } = {}) {
+		setWave({
+			furrow = 0,
+			lobe = 0,
+			chop = 0,
+			grain = 0,
+			glow = 0,
+			amp = 0,
+			ring = 0,
+			phase = null
+		} = {}) {
 			if (!coreMat) return;
 			const u = coreMat.uniforms;
 			u.uFurrow.value = furrow;
 			u.uLobe.value = lobe;
 			u.uChop.value = chop;
+			u.uGrain.value = grain;
 			u.uGlow.value = glow;
 			u.uAmp.value = amp;
 			u.uRing.value = ring;

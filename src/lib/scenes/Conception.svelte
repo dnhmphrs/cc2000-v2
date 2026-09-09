@@ -35,8 +35,9 @@
 	// What develops is the CLEAVAGE, in two halves on two clocks:
 	//
 	//   the FURROW   the field's negative set — the nodal net between the twelve
-	//                caps — pulled INTO the skin. The sphere is scored into
-	//                twelve before anything comes out of it.
+	//                caps — pulled INTO the skin, and pulled PAST where it
+	//                settles. The sphere is scored into twelve, hard, before
+	//                anything comes out of it.
 	//   the LOBES    the twelve caps, swelling out of the net already cut around
 	//                them.
 	//
@@ -93,9 +94,14 @@
 		const p = clamp01(t / T.duration);
 
 		// ── The division ─────────────────────────────────────────────────────
-		// Two numbers, and the furrow leads: the nodal net is cut in, then the
-		// twelve caps swell out of it.
-		const furrow = smootherstep(span(p, T.furrow));
+		// The furrow leads: the nodal net is cut in, then the twelve caps swell
+		// out of it. And the cut goes PAST where it settles — a half-sine over
+		// its own window, added on top — because a cleavage furrow constricts and
+		// eases back rather than opening to its final depth and stopping. It is
+		// zero at both ends of that window, so the state this scene hands over is
+		// still the bare invariant.
+		const furrow =
+			smootherstep(span(p, T.furrow)) + Math.sin(span(p, T.pinch) * Math.PI) * T.pinchPeak;
 		const lobe = smootherstep(span(p, T.lobe));
 		const lit = smoothstep(0, 1, span(p, T.wake));
 		// The mode rings as it is excited and damps as it settles, which is what
@@ -112,8 +118,10 @@
 		world.egg.setWave({
 			furrow,
 			lobe,
-			// Every other mode, damped out as the icosahedral one wins.
-			chop: (1 - smootherstep(span(p, T.chop))) * T.chopPeak,
+			// Every other mode — RISING first, then damped out as the icosahedral
+			// one wins. A decay alone makes the loudest frame of the scene its
+			// first, which is a bang where the shimmer should be.
+			chop: smootherstep(span(p, T.chopIn)) * (1 - smootherstep(span(p, T.chopOut))) * T.chopPeak,
 			glow: lit * T.handoverGlow * (1 + union * 0.6),
 			// Big while it is dividing — a body pulling itself into twelve is a
 			// shape change, not a shading change — and flat by the time the frame

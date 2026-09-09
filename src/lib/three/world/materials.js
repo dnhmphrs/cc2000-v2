@@ -405,6 +405,7 @@ const WAVE_FIELD = `
 	uniform float uChop;
 	uniform float uFurrow;
 	uniform float uLobe;
+	uniform float uGrain;
 
 	float waveField(vec3 n) {
 		float h = 0.0;
@@ -438,6 +439,27 @@ const WAVE_FIELD = `
 		s += sin(dot(n, vec3(-0.32, 0.86, 0.39)) * 3.7 - uPhase * 2.1);
 		s += sin(dot(n, vec3(0.21, -0.44, 0.87)) * 5.1 + uPhase * 3.3);
 		return s * 0.3333;
+	}
+
+	// ── SUBSTANCE ────────────────────────────────────────────────────────────
+	// The body is not a hole. Approached across three hundred units it was a
+	// flat black disc inside a warm halo, which reads as absence rather than as
+	// a thing — so it carries a fine mottle, held right down, turning over very
+	// slowly. Products of sines rather than a hash: it costs three multiplies an
+	// octave, it is continuous on the sphere, and what it gives is blobby and
+	// cellular rather than the even fizz a hash produces.
+	//
+	// It goes as the conception starts. The dark void the wave breaks across is
+	// the right opening for that scene and this would only be in the way of it —
+	// see FlyIn.svelte, which fades uGrain out over the arrival.
+	float grain(vec3 n) {
+		float g = sin(n.x * 21.0 + uPhase * 0.31) * sin(n.y * 19.0 - uPhase * 0.27) *
+			sin(n.z * 23.0 + uPhase * 0.23);
+		g += 0.5 * sin(n.x * 41.0 - uPhase * 0.19) * sin(n.y * 37.0 + uPhase * 0.22) *
+			sin(n.z * 43.0 - uPhase * 0.17);
+		g += 0.25 * sin(n.x * 79.0 + uPhase * 0.13) * sin(n.y * 83.0 - uPhase * 0.11) *
+			sin(n.z * 71.0 + uPhase * 0.15);
+		return g * 0.5714;
 	}
 
 	// What the skin is actually doing, all in. The two halves of the invariant
@@ -493,6 +515,8 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 			uLobe: { value: 0 },
 			// The unresolved ringing the division comes out of.
 			uChop: { value: 0 },
+			// The body's own substance, for the approach.
+			uGrain: { value: 0 },
 			uRing: { value: 0 },
 			uPhase: { value: 0 }
 		},
@@ -537,9 +561,22 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 
 			void main() {
 				vec3 n = normalize(vLocal);
-				// The SAME number the skin is displaced by, so what is drawn and
-				// what is moving are one thing rather than two that agree.
-				float f = relief(n);
+				// The same relief the skin is displaced by — so what is drawn and
+				// what is moving are one thing rather than two that agree — but
+				// NORMALISED BY ITS OWN CURRENT AMPLITUDE.
+				//
+				// That division is load-bearing. Every mark below is a threshold on
+				// f, and the nodal set is the widest of them: it draws wherever |f|
+				// is under 0.045. While the relief is still small — which is the
+				// whole opening of the conception — |f| is under that almost
+				// everywhere, so the nodal set stops being a curve system and
+				// becomes a wash across the entire body. Held against its own
+				// amplitude the contour density is constant, so the shimmer comes
+				// up as fine moving structure and grows in CONTRAST rather than in
+				// coverage. At the end, with both halves in and the churn gone, the
+				// divisor is 1 and this is exactly relief().
+				float amp = max(max(uLobe, uFurrow), uChop);
+				float f = relief(n) / max(amp, 0.001);
 
 				// It is drawn as a CONTOUR MAP, not as a shaded ball. The fill is
 				// held right back — a gold sphere is a bauble and this is a readout
@@ -561,6 +598,10 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 				// icosahedral net once it has resolved, without the drawing and
 				// the displacement being told the same story twice.
 				vec3 col = uInk;
+				// The mottle first, under everything — it is what the body is MADE
+				// of, not something drawn on it, and it is gone by the time the
+				// field arrives.
+				col += uWave * (grain(n) * 0.5 + 0.5) * 0.13 * uGrain;
 				col = mix(col, uWave, lit * 0.42 * uGlow);
 				col = mix(col, uHot, crest * 0.34 * uGlow);
 				col += uWave * dip * 0.07 * uGlow;
