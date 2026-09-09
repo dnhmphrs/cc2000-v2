@@ -18,7 +18,6 @@
 	} from '$lib/store/store';
 	import { SCENES } from '$lib/config';
 	import { begin, settled } from './director';
-	import { windowY } from '$lib/config';
 	import { resolve } from '$lib/functions/answer';
 	import Dial from '$lib/components/Dial.svelte';
 	import Lever from '$lib/components/Lever.svelte';
@@ -109,9 +108,23 @@
 	let root;
 	let landed = false;
 
+	// Put the node back the way a fresh load leaves it. The flight writes three
+	// things inline and all three are the flight's, not the machine's: the fit
+	// transform, the origin it is taken about, and --edge. A transform on a
+	// fixed, full-viewport element is also a containing block and a stacking
+	// context for everything inside it, and there is no reason to keep one once
+	// it has landed.
+	function normalise(node) {
+		if (!node) return;
+		node.style.transform = '';
+		node.style.transformOrigin = '';
+		node.style.removeProperty('--edge');
+	}
+
 	function land() {
 		if (landed) return;
 		landed = true;
+		normalise(root);
 		booting = false;
 		realised = true;
 		settled();
@@ -160,14 +173,8 @@
 	// the leftover — the monitor's shape and the viewport's are not the same, and
 	// a page pinned to the glass's corner reads as a mistake rather than a screen.
 	//
-	// It is remembered, because the LAUNCH has to start from it: the machine now
-	// lives in the monitor for good, so the way out of it is a warp out of the
-	// glass rather than a warp of a full-screen page.
-	let fitK = 1;
-	let fitX = 0;
-	let fitY = 0;
-
 	function fitTo(node, rect) {
+		let fitK, fitX, fitY;
 		if (!node || !rect) return;
 		const vw = window.innerWidth;
 		const vh = window.innerHeight;
@@ -189,44 +196,32 @@
 			tick: (t) => {
 				fitTo(node, get(monitorRect) ?? rect);
 				// The end of the move IS the moment it comes on, so it is taken
-				// from here rather than from a timer that could drift off it.
-				if (t === 1) land();
+				// from here rather than from a timer that could drift off it. By
+				// then the glass covers the viewport and the fit is the identity of
+				// its own accord — but it is cleared explicitly, and OUTSIDE
+				// land(), because the timer fallback can have called land() already
+				// and land() only runs once.
+				if (t === 1) {
+					normalise(node);
+					land();
+				} else {
+					fitTo(node, get(monitorRect) ?? rect);
+				}
 				calcZoom.set(t);
 			}
 		};
 	}
 
-	// AND IT STAYS THERE. The loop used to finish by clearing the transform and
-	// going fullscreen, which threw away the room it had just spent nine seconds
-	// flying into. The machine ends the run sitting on the desk, in the monitor,
-	// with the bedroom round it — so the fit is kept live for as long as there is
-	// a glass to sit in, and only a resize ever moves it.
-	$: if (landed && arrivingFrom && root && $monitorRect) fitTo(root, $monitorRect);
-
 	// Into the lens. Real perspective, so the frame warps outward as it goes —
 	// being sucked in, rather than a picture being scaled up.
 	//
-	// It composes with the fit, because the machine is not full-screen any more:
-	// on a second run it is a picture inside a bedroom monitor, and the warp has
-	// to leave THAT rather than the viewport. Written about the window's own
-	// centre with explicit translates rather than a transform-origin, because the
-	// origin would have to apply to the fit as well and the fit is measured from
-	// the top-left of the page.
 	function intoLens(node) {
-		node.style.transformOrigin = '0 0';
-		const ox = window.innerWidth / 2;
-		const oy = windowY(get(aspect)) * window.innerHeight;
-		const k = landed && arrivingFrom ? fitK : 1;
-		const x = landed && arrivingFrom ? fitX : 0;
-		const y = landed && arrivingFrom ? fitY : 0;
+		node.style.transformOrigin = '50% var(--win-y)';
 		return {
 			duration: T.launch * 1000,
 			easing: cubicIn,
 			tick: (t, u) => {
-				node.style.transform =
-					`translate(${x}px, ${y}px) scale(${k}) ` +
-					`translate(${ox}px, ${oy}px) perspective(760px) translateZ(${u * 700}px) ` +
-					`translate(${-ox}px, ${-oy}px)`;
+				node.style.transform = `perspective(760px) translateZ(${u * 700}px)`;
 				node.style.opacity = String(1 - u * u * u);
 				calcZoom.set(1 + u);
 			}

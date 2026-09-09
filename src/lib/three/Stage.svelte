@@ -59,6 +59,13 @@
 	// it to cover.
 	let flashT = Infinity;
 
+	// Where the cursor is, -1..1 across the viewport. Only the room reads it.
+	const pointer = [0, 0];
+	function handlePointer(e) {
+		pointer[0] = (e.clientX / window.innerWidth) * 2 - 1;
+		pointer[1] = (e.clientY / window.innerHeight) * 2 - 1;
+	}
+
 	// Which scene we last handed control to, so entering happens exactly once,
 	// and the last 3D scene to run, whose final frame is HELD while a DOM scene
 	// is on top of it.
@@ -131,6 +138,12 @@
 						held.beginReturn?.();
 					}
 					held.stepReturn?.(dt);
+				} else {
+					// The room is up and being looked at. It is six flat layers hung
+					// at different depths in front of a lens, so the one thing that
+					// makes it a place rather than a picture is moving your head:
+					// a couple of percent of camera truck, eased.
+					held.parallax?.(pointer[0], pointer[1], dt);
 				}
 				const hb = held.backdrop();
 				ground(hb.color, hb.shader);
@@ -212,6 +225,7 @@
 		canvasElement.style.opacity = '0';
 		canvasFadeStart = performance.now() / 1000;
 		window.addEventListener('resize', handleResize);
+		window.addEventListener('pointermove', handlePointer, { passive: true });
 
 		animate();
 	});
@@ -220,6 +234,7 @@
 		if (typeof window === 'undefined') return;
 		if (animationFrameId) cancelAnimationFrame(animationFrameId);
 		window.removeEventListener('resize', handleResize);
+		window.removeEventListener('pointermove', handlePointer);
 		computation?.dispose();
 		tunnel?.dispose();
 		lattice?.dispose();

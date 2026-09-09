@@ -94,20 +94,15 @@ ok(
 	})
 );
 
-// The loop home: the camera flies into the room's monitor and the machine grows
-// into that glass — and STAYS there, with the bedroom round it. So the test is
-// that it lands locked to the glass at roughly RETURN_FILL of the viewport, not
-// that it arrives at identity: going back to full screen is the bug this
-// replaced. A scale outside this range means either the fit was thrown away
-// (1.0) or the return never ran (tiny).
+// The loop home: one continuous move, so the calculator must arrive at identity.
 await p.click('.again');
 ok(
-	'calculator lands in the monitor, not full screen',
+	'calculator lands home square on the viewport',
 	await until(() => {
 		const c = document.querySelector('.calculator');
 		if (!c || !document.querySelector('.go')) return false;
-		const m = new DOMMatrixReadOnly(getComputedStyle(c).transform);
-		return m.a > 0.4 && m.a < 0.95;
+		const t = getComputedStyle(c).transform;
+		return t === 'none' || t === 'matrix(1, 0, 0, 1, 0, 0)';
 	})
 );
 ok('the machine is usable again', await p.evaluate(() => !!document.querySelector('.go')));
