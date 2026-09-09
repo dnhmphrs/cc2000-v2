@@ -1,9 +1,8 @@
 import * as THREE from 'three';
 import { createEgg } from './egg';
-import { createSheet } from './sheet';
 import { lineMaterial, dotMaterial, grower, segmentAttributes } from './materials';
 import { VERTICES, EDGES, PENTAGONS, PENTAGON_PAIRS, edgePositions } from '../geometry/icosahedron';
-import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, EGG, SHEET, VOID } from '$lib/config';
+import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, VOID } from '$lib/config';
 
 // ── The lattice ──────────────────────────────────────────────────────────────
 // The place the conception and the computation both happen in: the void, a very
@@ -228,27 +227,10 @@ export function createLattice() {
 	//
 	// It is the same object the fly-in hands over, built from the same numbers.
 	const egg = createEgg(ICOSA_SPHERE_R, { wire: false, outer: false, core: 1 });
-
-	// The same sheet the fly-in closed onto the ovum, at the same wrap angle and
-	// on the same ball. It opens this scene fully shut — the flower the swimmer
-	// went into — and goes as the wave underneath it divides. See world/sheet.js.
-	const sheet = createSheet({
-		fog: VOID,
-		fogDensity: 0,
-		ink: ICOSA_INK.line,
-		fill: EGG.core,
-		radius: ICOSA_SPHERE_R * SHEET.shell
-	});
-	sheet.setClose(1);
-	sheet.setExp(1);
 	// The core carries the icosahedral standing wave, whose twelve antinodes are
 	// the twelve vertices — so it has to be in the pose those vertices are in.
 	egg.group.quaternion.copy(TILT);
 	scene.add(egg.group);
-	// NOT in the egg's group: the fly-in hands this over unrotated, and the egg's
-	// group carries ICOSA.tilt. A quarter turn of the seams across the cut is
-	// exactly the kind of thing the whole hand-over exists to avoid.
-	scene.add(sheet.mesh);
 
 	// Everything that turns. It rests on ICOSA.tilt, which is where the
 	// computation's search starts from; the conception turns it there from
@@ -388,7 +370,6 @@ export function createLattice() {
 		scene,
 		camera,
 		egg,
-		sheet,
 		frame,
 		wire,
 		paneGroup,
@@ -521,9 +502,6 @@ export function createLattice() {
 			egg.setShell(0);
 			egg.setCore(0);
 			egg.setCoreRimGain(0);
-			sheet.setOpacity(0);
-			sheet.setClose(1);
-			sheet.setExp(1);
 			egg.setWave({ grow: 0, glow: 0, amp: 0, ring: 0, phase: 0 });
 			egg.group.scale.setScalar(1);
 			egg.group.quaternion.copy(TILT);
@@ -535,7 +513,6 @@ export function createLattice() {
 
 		dispose() {
 			egg.dispose();
-			sheet.dispose();
 			cage.dispose();
 			cornerGeo.dispose();
 			cornerMat.dispose();

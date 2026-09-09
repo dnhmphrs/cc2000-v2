@@ -82,30 +82,16 @@
 		const ghost = easeInOutCubic(span(p, T.ghost));
 		const union = Math.sin(span(p, T.union) * Math.PI) * T.unionPeak;
 
-		// The flower the fly-in shut over it is still there. It goes as the field
-		// comes up through it — the lattice on the sphere becoming the wave on the
-		// sphere. Same object, same wrap angle, so this scene opens on exactly the
-		// frame the last one closed on.
-		const opened = smootherstep(span(p, T.sheetOut));
-		world.sheet.setOpacity(1 - opened);
-
 		world.egg.setWave({
 			grow,
 			glow: lit * (1 - ghost * 0.42) * (1 + union * 0.6),
 			// Big while it is dividing — a cell pulling itself in two is a shape
 			// change, not a shading change — and flat by the time the frame draws.
-			// It waits for the flower: the surface cannot move while there is still
-			// a lattice wrapped tight around it, and a tenth of a radius of
-			// displacement pushes straight through one.
-			amp: opened * T.amp * (1 - ghost),
+			amp: lit * T.amp * (1 - ghost),
 			ring,
 			phase: t
 		});
-		// The core is on from the FIRST FRAME, at the level the fly-in handed it
-		// over — `lit` is the field lighting up on it, not the body arriving. A
-		// core that fades in leaves the first half-second of this scene showing
-		// the inside of the flower's far side through a sphere that is not there.
-		world.egg.setCore(1 - ghost * 0.55);
+		world.egg.setCore(lit * (1 - ghost * 0.55));
 
 		// The blueprint field rules itself on under the wave. It is at zero on the
 		// frame this scene opens on, which is what lets the fly-in's `deep` and

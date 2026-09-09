@@ -54,7 +54,6 @@
 	const ROOM_DEPTH = ICOSA.roomDepth;
 
 	let rectangleGroup;
-	let draftGroup;
 	let traceLines = [];
 	let schematicComponent;
 	let roomComponent;
@@ -268,6 +267,14 @@
 		]);
 		rectGroup.add(new THREE.LineSegments(outline, outlineMaterial));
 
+		// The drafting, in its own group so it can be faded independently of the
+		// rectangle it annotates.
+		const { squares, arcCenters } = computeGoldenRectangleData();
+		const draft = new THREE.Group();
+		draft.add(createGoldenSpiral(arcCenters));
+		draft.add(createSubdivisionLines(squares));
+		rectGroup.add(draft);
+
 		return rectGroup;
 	}
 
@@ -332,15 +339,6 @@
 		rectangleGroup = createRectangle();
 		group.add(rectangleGroup);
 
-		// The drafting rides its OWN arm, ICOSA.draftReach further out than the
-		// pane — see config/space.js. It is the machine's working rather than part
-		// of the room, and it is thrown clear of it.
-		const { squares, arcCenters } = computeGoldenRectangleData();
-		draftGroup = new THREE.Group();
-		draftGroup.add(createGoldenSpiral(arcCenters));
-		draftGroup.add(createSubdivisionLines(squares));
-		group.add(draftGroup);
-
 		traceLines = createTraceLines();
 
 		await tick();
@@ -355,8 +353,6 @@
 
 		const paneDist = projection * PANE_REACH;
 		rectangleGroup.position.copy(axis.clone().multiplyScalar(paneDist * direction));
-		const draftDist = paneDist * ICOSA.draftReach;
-		if (draftGroup) draftGroup.position.copy(axis.clone().multiplyScalar(draftDist * direction));
 
 		updateOpacities();
 
@@ -372,7 +368,7 @@
 			line.computeLineDistances();
 		});
 
-		if (schematicComponent) schematicComponent.updateProjection(draftDist);
+		if (schematicComponent) schematicComponent.updateProjection(paneDist);
 		if (roomComponent) roomComponent.updateProjection(projection);
 	}
 
@@ -429,11 +425,6 @@
 			line.geometry.dispose();
 			line.material.dispose();
 		});
-		if (draftGroup) {
-			group.remove(draftGroup);
-			draftGroup.traverse((o) => o.geometry?.dispose());
-			draftGroup = null;
-		}
 		if (schematicComponent && schematicComponent.dispose) schematicComponent.dispose();
 		if (roomComponent && roomComponent.dispose) roomComponent.dispose();
 	}
