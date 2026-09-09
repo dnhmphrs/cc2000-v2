@@ -15,9 +15,13 @@
 	//                   on four of the icosahedron's own vertices
 	//   the DRAFTING    the spiral, the subdivision squares, the traces back to
 	//                   the solid — and, in the sibling component, the dimension
-	//                   lines and the 1:phi bar. This is the machine showing its
-	//                   working, and it is the whole reason the scene reads as a
-	//                   computation rather than as a carousel
+	//                   lines and the 1:phi bar, hung a half again FURTHER OUT
+	//                   than the pane on the same axis. This is the machine
+	//                   showing its working, and it is the whole reason the scene
+	//                   reads as a computation rather than as a carousel. The
+	//                   reach past the pane is what makes the whole thing an ARM
+	//                   rather than a room with annotations on it —
+	//                   ICOSA.schematicReach
 	//   the ROOM        the decade diorama, which is the only thing in the second
 	//                   half of the run with any colour in it
 	//
@@ -352,13 +356,19 @@
 		lastProjection = projection;
 
 		const paneDist = projection * PANE_REACH;
+		// And the drafting goes on PAST it. See ICOSA.schematicReach: the arm is
+		// the thing being composed here, not the pane.
+		const draftDist = paneDist * ICOSA.schematicReach;
 		rectangleGroup.position.copy(axis.clone().multiplyScalar(paneDist * direction));
 
 		updateOpacities();
 
+		// The traces run the WHOLE way out — from the vertex they came off to the
+		// far end of the drafting, straight through the pane on the way. They are
+		// the arm.
 		traceLines.forEach((line) => {
 			const { startPos } = line.userData;
-			const endPos = startPos.clone().add(axis.clone().multiplyScalar(paneDist * direction));
+			const endPos = startPos.clone().add(axis.clone().multiplyScalar(draftDist * direction));
 
 			const positions = line.geometry.attributes.position.array;
 			positions[3] = endPos.x;
@@ -368,7 +378,7 @@
 			line.computeLineDistances();
 		});
 
-		if (schematicComponent) schematicComponent.updateProjection(paneDist);
+		if (schematicComponent) schematicComponent.updateProjection(draftDist);
 		if (roomComponent) roomComponent.updateProjection(projection);
 	}
 

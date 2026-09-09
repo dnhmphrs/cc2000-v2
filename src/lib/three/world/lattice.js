@@ -407,6 +407,19 @@ export function createLattice() {
 			cornerMat.uniforms.uOpacity.value = o;
 			corners.visible = o > 0.004;
 		},
+		// The line-work's own radius, as a multiple of the circumsphere's. The
+		// conception drives it: while the body is divided, the twelve caps stand
+		// proud of the sphere by exactly the wave's amplitude, and the twelve
+		// corners ARE those caps — so the frame is born out at the cap peaks and
+		// settles onto the circumsphere as the body rounds up. Without it the
+		// corners are struck inside a surface that has swollen past them and
+		// nothing is visible at all.
+		//
+		// It lands at exactly 1 when the wave flattens, which is what the panes
+		// need: they are built on the frame's own raw coordinates.
+		setWireScale(k) {
+			wire.scale.setScalar(k);
+		},
 		setLineOpacity(v) {
 			edgeMat.uniforms.uOpacity.value = v;
 			spokeMat.uniforms.uOpacity.value = v * 0.85;
@@ -499,10 +512,11 @@ export function createLattice() {
 			this.setLineOpacity(1);
 			this.setCage(0);
 			this.setCorners(0);
+			wire.scale.setScalar(1);
 			egg.setShell(0);
 			egg.setCore(0);
 			egg.setCoreRimGain(0);
-			egg.setWave({ grow: 0, glow: 0, amp: 0, ring: 0, phase: 0 });
+			egg.setWave({ furrow: 0, lobe: 0, glow: 0, amp: 0, ring: 0, phase: 0 });
 			egg.group.scale.setScalar(1);
 			egg.group.quaternion.copy(TILT);
 			camera.position.set(ICOSA.camPos[0], ICOSA.camPos[1], camera.position.z);

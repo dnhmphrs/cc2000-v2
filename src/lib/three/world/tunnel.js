@@ -364,7 +364,7 @@ export function createTunnel() {
 			this.setFov(TUNNEL.fovStart);
 			egg.setCoreRatio(TUNNEL.coreRatio);
 			egg.setCoreRimGain(0);
-			egg.setWave({ grow: 0, glow: 0, amp: 0, ring: 0, phase: 0 });
+			egg.setWave({ furrow: 0, lobe: 0, glow: 0, amp: 0, ring: 0, phase: 0 });
 			camera.position.set(0, 0, TUNNEL.camStart);
 			camera.rotation.set(0, 0, 0);
 			this.setCamZ(TUNNEL.camStart);
