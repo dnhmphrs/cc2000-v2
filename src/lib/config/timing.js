@@ -164,69 +164,82 @@ export const SCENES = scale({
 
 	// ── Conception ───────────────────────────────────────────────────────────
 	// It opens on the fly-in's last frame, unchanged, and it is the same object:
-	// the swimmer has just gone in, and for a beat nothing happens.
+	// the swimmer has just gone in.
 	//
-	// Then the body DIVIDES, and the icosahedron comes out of that division —
-	// ONE BEAT, not two. There is no moment where the wave finishes and a
-	// separate construction starts up: the corners are struck ON the twelve caps
-	// while the caps are still at full extension, and the surface relaxes back to
-	// a sphere underneath a frame that is already standing where they were.
+	// ONE MOVE, and five and a bit seconds of it. It was six and a half and it
+	// read as a sequence of separate events with air between them, because that
+	// is what it was: the wave finished, then the frame drew itself where you
+	// could not see it, then it all appeared at once. Everything below now
+	// overlaps its neighbours and nothing waits for anything to finish.
 	//
-	// The field is the sum of P₆(n·aᵢ) over the icosahedron's six five-fold axes,
-	// with ALL SIX ALWAYS IN. Degree 6 is the first degree at which a non-constant
+	// The field is the sum of P6(n.ai) over the icosahedron's six five-fold axes,
+	// with ALL SIX ALWAYS IN — degree 6 is the first degree at which a non-constant
 	// icosahedral invariant exists at all, so the figure is forced rather than
-	// chosen — and it is the whole figure or it is nothing. The axes used to
-	// arrive one at a time, which spends the first second of the scene showing a
-	// dumbbell and a clover: two blobs, then twelve. What develops now is the
-	// CLEAVAGE, not the symmetry.
+	// chosen. What develops is not the symmetry, it is the DIVISION:
 	//
-	//  0     .06       .28          .46             .76         .86     1.0
-	//  |wake |furrow: the nodal net cut in|          |            |union |
-	//        |lobe: the twelve caps swell out .46|
-	//                  |corners: struck ON the caps .46|
-	//                            |spokes .64|edges ........ .80|
-	//                                 |ghost: the body rounds up, and the frame
-	//                                  it is carrying settles onto the sphere .76|
+	//   the CHURN    every other mode of a struck sphere, travelling and going
+	//                nowhere, damped away as the icosahedral one wins. Without
+	//                this the body simply arrives at the twelve, which is an
+	//                answer with no working.
+	//   the FURROW   the invariant's negative set — the nodal net between the
+	//                twelve caps — pulled INTO the skin. Scored before anything
+	//                comes out of it, which is the order a cell divides in.
+	//   the LOBES    the twelve caps, swelling out of the net cut around them.
+	//
+	//  0    .06        .30              .46          .72        .82      1.0
+	//  |wake|churn, damping ........ .40|
+	//     |furrow: the net cut in .30|
+	//         |lobes: the twelve out .46|
+	//              |corners, struck ON the caps .44|
+	//                 |spokes .58|edges ................. .76|
+	//                    |the body rounds up, the frame settles onto it .72|
+	//                                                        |union .....|
 	conception: {
-		duration: 6.4,
+		duration: 5.2,
 
 		// The field lights up on the surface it was already sitting on.
-		wake: [0.0, 0.07],
+		wake: [0.0, 0.06],
+
+		// ── THE CHURN ────────────────────────────────────────────────────────
+		// Full at the strike and damped out as the division resolves. A DECAY
+		// window: 1 at the start of it, 0 at the end.
+		chop: [0.0, 0.4],
+		chopPeak: 0.62,
 
 		// ── THE DIVISION ─────────────────────────────────────────────────────
-		// The furrow LEADS. The nodal net — the zero set of the field, the curve
-		// system separating the twelve — is scored INTO the skin first, and only
-		// then do the caps swell out of it. That is the order a cell divides in:
-		// the furrow constricts, the daughters round up. Both together is a ball
-		// growing bumps.
-		furrow: [0.02, 0.28],
-		lobe: [0.12, 0.46],
-		// The mode ringing as it is excited, damped out as it settles. This is the
-		// only motion on the surface and it is an excited normal mode relaxing,
-		// not a texture scrolling.
-		ring: [0.0, 0.62],
+		furrow: [0.04, 0.3],
+		lobe: [0.14, 0.46],
+		// The mode ringing as it is excited, damped as it settles.
+		ring: [0.0, 0.5],
 		ringPeak: 0.28,
-		// How far the wave moves the skin, as a fraction of the core's radius.
-		// Large: a body pulling itself into twelve is a change of shape.
+		// How far the whole relief moves the skin, as a fraction of the core's
+		// radius. Large: a body pulling itself into twelve is a change of shape.
 		amp: 0.15,
 
-		// ── The solid, struck on the division that made it ───────────────────
-		// The corners land at the TOP of the lobes' travel, in place, on the caps
-		// — so the twelve are not a new object appearing, they are the twelve
-		// antinodes being marked. Everything else closes between corners that are
-		// already there while the skin is still moving under it.
-		corners: [0.32, 0.46],
-		spokes: [0.42, 0.64],
-		edges: [0.46, 0.8],
-		// And the skin relaxes back to a sphere, dropping to a ghost — because
-		// thirty edges drawn inside an opaque ball are thirty edges nobody can
-		// see, and because a shape that has finished dividing rounds up. It does
-		// NOT go away: the field stays on it, and stays through the next scene.
-		ghost: [0.46, 0.76],
+		// ── The solid, out of the division that is still happening ───────────
+		// The corners land at the TOP of the lobes' travel, ON the caps — they are
+		// not a new object arriving, they are the antinodes being marked — and the
+		// edges close between corners that are already there while the skin under
+		// them is still moving.
+		corners: [0.3, 0.44],
+		spokes: [0.36, 0.58],
+		edges: [0.4, 0.76],
+		// The body rounds up again, carrying the frame down onto the circumsphere.
+		// This is the DISPLACEMENT relaxing and nothing else — the field itself
+		// does not fade, here or in the scene after this one.
+		round: [0.44, 0.72],
 
 		// THE UNION. The last edge closes and the whole figure answers at once.
-		union: [0.86, 1.0],
-		unionPeak: 1.3
+		union: [0.82, 1.0],
+		unionPeak: 1.3,
+
+		// ── WHAT IT HANDS OVER ───────────────────────────────────────────────
+		// The computation restates these in its enter(), so a seek straight into
+		// that scene draws the frame a run through it would draw. They are read by
+		// BOTH sides, and the conception reaches them by construction rather than
+		// by arithmetic that has to be kept in step by hand.
+		handoverGlow: 1.0,
+		handoverCore: 1.0
 	},
 
 	// ── Computation ──────────────────────────────────────────────────────────
@@ -262,7 +275,12 @@ export const SCENES = scale({
 		// SPACE, so it never comes above a whisper: the moment it is as bright as
 		// the drafting it stops being the room and becomes furniture in it.
 		cageIn: [0.1, 0.28],
-		cagePeak: 0.5,
+		// A WHISPER, and quieter than it was. It is a SPACE — the room the search
+		// happens inside — and the moment it is as bright as the projected arms it
+		// stops being the room and starts competing with them. Two lattices of
+		// gold line-work at the same weight, one of them 4D and one of them the
+		// answer, is a tangle rather than a scene.
+		cagePeak: 0.2,
 
 		// ── THE SURVEY ───────────────────────────────────────────────────────
 		// The whole assembly, fully out, BEFORE the machine starts choosing. This

@@ -516,7 +516,7 @@ export function createLattice() {
 			egg.setShell(0);
 			egg.setCore(0);
 			egg.setCoreRimGain(0);
-			egg.setWave({ furrow: 0, lobe: 0, glow: 0, amp: 0, ring: 0, phase: 0 });
+			egg.setWave({ furrow: 0, lobe: 0, chop: 0, glow: 0, amp: 0, ring: 0, phase: 0 });
 			egg.group.scale.setScalar(1);
 			egg.group.quaternion.copy(TILT);
 			camera.position.set(ICOSA.camPos[0], ICOSA.camPos[1], camera.position.z);

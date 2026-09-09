@@ -214,18 +214,6 @@ export const ICOSA = {
 	shellSolid: 1.0,
 	shellFaint: 0.55,
 
-	// And the BODY inside it, in the computation. The conception's standing wave
-	// — the twelve-antinode icosahedral invariant the ovum divided into — is still
-	// drawn on this surface, and it stays for the whole search: the frame, the six
-	// rooms and the drafting all hang inside the thing that made them. It used to
-	// go to zero at the top of the computation, which threw away the one object in
-	// the run with any history in it.
-	//
-	// It has to be low. The core writes depth above 0.85 (see egg.setCore) and an
-	// occluder here would swallow the panes; at this weight it tints and nothing
-	// more, and the contour lines on it survive as a wash of gold behind the work.
-	coreGhost: 0.15,
-
 	// How far the panes travel out of the frame. The frustum is a HEIGHT, so a
 	// tall screen sees a much narrower slice of the world than a wide one — and
 	// the panes reach out sideways exactly as far as they reach up. Portrait
