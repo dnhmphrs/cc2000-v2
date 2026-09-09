@@ -163,12 +163,23 @@ function vars(kind) {
 // How much of the viewport the room's monitor glass ends up covering when the
 // camera has finished flying into it.
 //
-// BELOW ONE, and that is the whole of the change: the run used to end with the
-// glass filling the frame, at which point the calculator was simply fullscreen
-// again and the bedroom you had just been delivered into was gone. Stopping
-// short leaves the machine sitting IN the room, on the desk, with the room
-// round it — which is where the second run is operated from.
-export const RETURN_FILL = 0.55;
+// EXACTLY ONE, and the word exactly is the whole of it. The calculator paints
+// itself into the live glass rect every frame (Calculator.svelte fitTo), so at
+// the end of the flight its fit is min(rect.w/vw, rect.h/vh) — and at 1.0 the
+// glass COVERS the viewport, that ratio is 1, and the fit has become the
+// identity of its own accord. The move simply arrives.
+//
+// At 0.55 it did not. The camera stopped with the glass a bit over half the
+// frame, the calculator was still painted at 0.55 inside it, and then the
+// landing cleared the transform — which is a cut from a screen on a desk to a
+// full-screen machine, in one frame, at the end of an otherwise continuous
+// zoom. It read as a flash back to the homepage, because that is what it was.
+//
+// So the run goes all the way in. The last thing you see of the room is the
+// glass filling out to the edges — and what is painted on it by then is one
+// flat yellow panel (see `booting`), so it fills to yellow and the machine
+// comes up on top of it.
+export const RETURN_FILL = 1.0;
 
 // Written onto :root so the CSS can lay the chassis out from the same numbers
 // the 3D uses. Called on mount and on every resize.

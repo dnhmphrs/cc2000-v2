@@ -169,6 +169,39 @@
 	// On-screen width of the chassis edge, in real pixels, at any scale.
 	const EDGE_PX = 3;
 
+	// The glass, painted. The fit below is a CONTAIN fit — the viewport's shape
+	// and the monitor's are not the same, so the machine is letterboxed inside
+	// the glass — and what showed in the letterbox was the room's own CRT, which
+	// is black. Flying ALL the way in (RETURN_FILL) makes that black most of the
+	// frame for the last half-second of the move, and the run ends on a black
+	// screen with a yellow window in it rather than on yellow.
+	//
+	// So the glass is filled. One panel behind the machine, in viewport
+	// coordinates, tracking the same live rect: the monitor is simply ON, and
+	// what the camera flies into is a screen that is already the right colour.
+	//
+	// It is a SIBLING of the machine and not a child of it, because the machine
+	// carries a transform and a transform is a containing block — a fixed
+	// element inside it would be positioned against it rather than the viewport.
+	let bleed;
+
+	// A little PAST the rect. screenRect() measures the glass quad the machine is
+	// painted on, and the room's monitor is drawn with a black CRT face a shade
+	// larger than it — so a panel at exactly the rect leaves a black margin all
+	// the way round, which is the very thing this exists to remove. The artwork
+	// is one drawing at one scale, so the overshoot is a constant.
+	const GLASS_BLEED = 1.17;
+
+	function fillGlass(rect) {
+		if (!bleed || !rect) return;
+		const w = rect.width * GLASS_BLEED;
+		const h = rect.height * GLASS_BLEED;
+		bleed.style.left = `${rect.left - (w - rect.width) / 2}px`;
+		bleed.style.top = `${rect.top - (h - rect.height) / 2}px`;
+		bleed.style.width = `${w}px`;
+		bleed.style.height = `${h}px`;
+	}
+
 	// The fit itself: the whole viewport painted into the glass rect, centred in
 	// the leftover — the monitor's shape and the viewport's are not the same, and
 	// a page pinned to the glass's corner reads as a mistake rather than a screen.
@@ -183,6 +216,7 @@
 		fitY = rect.top + (rect.height - vh * fitK) / 2;
 		node.style.transformOrigin = '0 0';
 		node.style.transform = `translate(${fitX}px, ${fitY}px) scale(${fitK})`;
+		fillGlass(rect);
 		// Undo the scale for the chassis edge, so it is the same number of real
 		// pixels wide at any size. See .calculator::after.
 		node.style.setProperty('--edge', `${(EDGE_PX / Math.max(fitK, 0.02)).toFixed(2)}px`);
@@ -286,6 +320,11 @@
 		begin();
 	}
 </script>
+
+{#if booting}
+	<!-- The monitor, on. See fillGlass(). -->
+	<div class="bleed" bind:this={bleed} />
+{/if}
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
@@ -491,32 +530,23 @@
 		--lever-h: clamp(150px, 22vh, 260px);
 	}
 
-	/* The machine's edge, and ONLY on the way home. A machine that fills the
-	   screen has no need of a frame — but the same machine drawn inside the
-	   room's monitor at a fifth of the size is a flat yellow rectangle floating
-	   in the glass, and that does. So it is on .cold, which is exactly the window
-	   in which the calculator is small and yellow, and gone the moment it lands.
-	   
-	   Orange rather than ink: a black frame on a yellow panel inside a black-
-	   bezelled monitor is three dark edges in a row, and it read as a mistake.
-	   
-	   The width is constant ON SCREEN rather than in the layout: at a fifth scale
-	   a plain 3px border renders as less than one, so outOfMonitor divides --edge
-	   by the scale it is fitting at and it holds its weight all the way in.
-	   
-	   A pseudo-element because .cold blanks the real children, and this has to
-	   survive that. */
-	.calculator.cold::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		border: var(--edge, 3px) solid var(--machine-orange);
-		/* Curved, and by the same scale-compensated number, so the corners keep
-		   their radius rather than going square as the frame grows. */
-		border-radius: calc(var(--edge, 3px) * 3);
+	/* The room's monitor glass, filled with the machine's own yellow for as long
+	   as the machine is inside it. Positioned from the live rect in fillGlass();
+	   it is only ever on screen during the flight home. */
+	.bleed {
+		position: fixed;
+		z-index: 19;
+		background: var(--machine);
 		pointer-events: none;
-		z-index: 5;
 	}
+
+	/* THERE IS NO FRAME ROUND THE MACHINE ANY MORE. There used to be, and only
+	   on the way home: at a fifth of the size the flat yellow panel was floating
+	   in black glass and needed an edge to be an object at all. The glass is
+	   painted now (.bleed above), so the panel and the screen it is on are the
+	   same yellow and a rounded orange rectangle inset in the middle of that is
+	   not an edge, it is a stray box. --edge survives because the chassis rule
+	   below still scales its own line by it. */
 
 	/* Coming home, the whole machine is one flat yellow panel until the move has
 	   landed, and then cross-fades into itself. The background goes with it —

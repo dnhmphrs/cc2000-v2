@@ -65,8 +65,10 @@ export const SCENES = scale({
 		launch: 1.6,
 
 		// Coming back the other way: the whole calculator is drawn 1:1 inside the
-		// room's monitor and then flown out of it.
-		arrive: 2.1
+		// room's monitor and then flown out of it — all the way out, until the
+		// glass covers the frame (RETURN_FILL). That is roughly twice the travel
+		// the half-way version had, so it gets the time to cover it.
+		arrive: 2.9
 	},
 
 	// ── FlyIn ────────────────────────────────────────────────────────────────
