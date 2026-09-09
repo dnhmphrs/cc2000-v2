@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createEgg } from './egg';
+import { createSheet } from './sheet';
 import { holoMaterial, ADD } from './materials';
-import { TUNNEL, AIR, HOLO } from '$lib/config';
+import { TUNNEL, AIR, HOLO, EGG, ICOSA_INK, SHEET } from '$lib/config';
 
 // ── The tunnel ───────────────────────────────────────────────────────────────
 // The place the fly-in happens. BLACK air, an ovum three hundred units down it,
@@ -143,6 +144,7 @@ export function createTunnel() {
 	const scene = new THREE.Scene();
 	scene.fog = new THREE.FogExp2(AIR, TUNNEL.fogDensity);
 	let air = AIR;
+	let idleT = 0;
 
 	const camera = new THREE.PerspectiveCamera(
 		TUNNEL.fov,
@@ -199,6 +201,20 @@ export function createTunnel() {
 	halo.position.z = TUNNEL.eggZ - TUNNEL.shellR * 1.2;
 	halo.renderOrder = -1;
 	scene.add(halo);
+
+	// The ruled sheet that hangs behind the ovum, turns into its own exponential
+	// and closes onto it. See world/sheet.js — it is the same object the
+	// conception opens with, at the same wrap angle, which is why the two scenes
+	// can hand it over.
+	const sheet = createSheet({
+		fog: AIR,
+		fogDensity: TUNNEL.fogDensity,
+		ink: ICOSA_INK.line,
+		fill: EGG.core,
+		radius: TUNNEL.shellR * TUNNEL.coreRatio * SHEET.shell
+	});
+	sheet.mesh.position.z = TUNNEL.eggZ;
+	scene.add(sheet.mesh);
 
 	const motes = createMotes();
 	scene.add(motes.lines);
@@ -307,6 +323,7 @@ export function createTunnel() {
 		spinner,
 		spermMaterial,
 		motes,
+		sheet,
 
 		setAir(hex) {
 			air = hex;
@@ -314,9 +331,30 @@ export function createTunnel() {
 			// The hand-applied fog in the sperm's material has to walk with the
 			// scene's, or it is the one thing that stays blue while the air whites.
 			spermMaterial.uniforms.uFogColor.value.set(hex);
+			sheet.setAir(hex);
 		},
 		getAir() {
 			return air;
+		},
+
+		// ── Idling ───────────────────────────────────────────────────────────
+		// What the machine's window looks at while it waits for an operator: the
+		// ovum, a very long way down the tunnel, turning. Deep in the fog and at a
+		// whisper — it is a viewfinder, not a scene — but it is the thing the
+		// button is about to fly you at, and a window onto nothing is a hole in
+		// the chassis.
+		idle(dt) {
+			idleT += dt;
+			camera.position.set(0, 0, TUNNEL.camStart);
+			this.setCamZ(TUNNEL.camStart);
+			this.setMotes(TUNNEL.idleMotes);
+			this.setHalo(TUNNEL.idleHalo);
+			egg.setWire(TUNNEL.idleEgg);
+			egg.setShell(TUNNEL.idleEgg);
+			egg.setCore(1);
+			egg.setCoreRim(TUNNEL.idleEgg);
+			egg.group.rotation.y = idleT * TUNNEL.eggSpin;
+			egg.group.rotation.x = Math.sin(idleT * 0.17) * 0.22;
 		},
 
 		// The one clock in the scene: the band crawling along the body.
@@ -364,6 +402,9 @@ export function createTunnel() {
 			this.setFov(TUNNEL.fovStart);
 			egg.setCoreRatio(TUNNEL.coreRatio);
 			egg.setCoreRimGain(0);
+			sheet.setOpacity(0);
+			sheet.setExp(0);
+			sheet.setClose(0);
 			egg.setWave({ grow: 0, glow: 0, amp: 0, ring: 0, phase: 0 });
 			camera.position.set(0, 0, TUNNEL.camStart);
 			camera.rotation.set(0, 0, 0);
@@ -390,6 +431,7 @@ export function createTunnel() {
 
 		dispose() {
 			egg.dispose();
+			sheet.dispose();
 			spermMaterial.dispose();
 			haloMat.dispose();
 			halo.geometry.dispose();

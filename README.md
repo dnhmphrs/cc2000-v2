@@ -43,16 +43,33 @@ hand-over is arranged.
 
 ## The colour walk
 
-The machine is yellow on deep blue and the bedrooms are their own colour. Between
-them, **the middle three scenes are one world: black and gold.**
+**The whole site is black and gold**, and the bedrooms are the one place any
+other colour appears.
 
 ```
-  yellow machine        ┌─────────────────────────────────────────────┐        the room's
-  on deep blue     →    │  black air · gold ovum · blue swimmer       │   →    own colour
-                        │  black void · gold line-work · blue is gone │
-                        └─────────────────────────────────────────────┘
-                          2 FlyIn        3 Conception     4 Computation
+  ┌──────────────────────────────────────────────────────────────┐        the room's
+  │  1  a dark instrument on the void, etched in gold            │   →    own colour
+  │  2  black air · gold ovum · blue swimmer                     │
+  │  3  black void · gold line-work · blue is gone               │
+  │  4  the same void, and the rooms in colour on it             │
+  └──────────────────────────────────────────────────────────────┘
 ```
+
+The machine used to be a yellow cartoon on deep blue, which meant the homepage
+belonged to a different site from the one it is the front of: you pressed a
+button on a children's toy and thirty seconds of black-and-gold instrument came
+out of it. `--machine-ink` — the pen the whole chassis is drawn with, every
+outline, label and dial marking — is now THE gold, the same one the
+icosahedron's thirty edges are in, and the chassis under it is the void with a
+shade of warmth. The hairline is 1px and the hard offset drop is gone: three
+pixels of outline with a five-pixel shadow is how a cartoon is inked.
+
+It also has an **edge** (`--rim`): on anything wider than the chassis cap the
+machine stops short and the void it is standing on shows down both sides, ruled
+by the same blueprint field the second half of the run is drawn on. And its
+window looks down the tunnel it is about to fly you into — the ovum, three
+hundred units off, turning (`tunnel.idle()`). A window onto nothing is a hole in
+the chassis.
 
 Blue survives as the one **cold** thing in it — the swimmer and the debris in the
 air — and there is none of it left after the conception. Everything else is gold
@@ -434,6 +451,46 @@ on was never legible in it.
 
 ---
 
+## The flower
+
+`world/sheet.js`. A flat ruled grid hangs in the air behind the ovum — five
+parallel bands of it, facing you — and then does two things, both of them the
+real map rather than an impression of one.
+
+**1. The exponential.** `w = (e^{sz} − 1)/s` on the strip `x ∈ [−a, a]`,
+`y ∈ [−π, π]`. At `s → 0` that is the identity: the rectangle, ruled. At `s = 1`
+it is the exponential — horizontal lines become rays, vertical lines become
+circles, and the five bands become five petals radiating from the middle. `s`
+runs continuously between them, so the grid does not cut from one to the other,
+it **turns into it**, every line bending through its own logarithmic spiral on
+the way. (The `−1` and the `/s` are what keep it continuous at zero; a scale
+factor divides the exponential's growth back out so the figure holds its size on
+screen while its shape changes.)
+
+**2. The Riemann wrap.** For a sphere of radius R tangent to the plane at the
+origin, the point at plane-distance d goes to polar angle
+
+```
+φ = 2·atan(d / 2R)
+```
+
+which is inverse stereographic projection. At R infinite it is the plane; at
+finite R the sheet wraps round the ball and its far edge runs toward the far pole
+without reaching it. Driving **1/R** up from nothing to the ovum's own curvature
+closes the petals over it — and what they close into is a grid ON the sphere,
+which is the surface the conception's standing wave comes up on.
+
+It is the same object in both worlds, on the same relative ball at the same wrap
+angle, so the fly-in hands it to the conception unchanged. The wave's
+displacement waits for it to open: a tenth of a radius pushes straight through a
+lattice wrapped tight.
+
+Five petals, and not for decoration — five is the order of the icosahedron's own
+rotation about a vertex, so the flower that closes on the ovum already has the
+symmetry the wave inside it is about to find.
+
+---
+
 ## Scene 3, and what it proves
 
 **Two beats, and neither of them is a drawing.**
@@ -576,26 +633,15 @@ It is **one move seen from two sides**, and both sides share one duration
 Reading a snapshot instead is the bug it looks like: the screen zooms and the
 room behind it sits still.
 
-### And it stays in the room
+### It goes all the way home
 
-The move used to finish by clearing the transform: the glass ended up covering
-the viewport, the machine was simply full-screen again, and the bedroom you had
-spent nine seconds flying into was gone.
+Stopping short of that was tried — `RETURN_FILL` under one, leaving the machine
+sitting in the bedroom's monitor with the room round it — and it is worse: half a
+run's worth of bedroom hanging around the edges of a control panel is neither the
+room nor the machine, and the second run then starts from a frame that is already
+busy. The loop ends on the machine, full screen, exactly as a cold load draws it.
 
-It stops short now. `RETURN_FILL` (config/layout.js) is how much of the viewport
-the glass ends up covering — **under one** — so the machine lands sitting on the
-desk, in the monitor, with the room round it. That is where the second run is
-operated from, and it is the one place in the site where two scenes are on screen
-at once. `monitorRect` therefore stays live for good; the calculator keeps fitting
-itself to it, and the Stage keeps drawing the room behind it. It is cleared when
-the next run reaches the computation, which is the moment the room stops being
-the thing behind the machine.
-
-The launch composes with that fit, because the machine is no longer full-screen
-when it leaves: `intoLens` warps out of the **glass**, written about the window's
-own centre with explicit translates rather than a `transform-origin`, since the
-origin would have to apply to the fit as well and the fit is measured from the
-top-left of the page.
+What is kept from that attempt is the sum:
 
 **Framing the flight** is the one sum that is easy to get wrong here, and it was:
 predicting the final frustum from the glass's current on-screen size is right
@@ -607,6 +653,10 @@ it goes, which is exact.
 
 The controls are held back until it is nearly home — at monitor scale they are a
 few unreadable pixels.
+
+While the room is on screen it gets a **slight mouse parallax** — a couple of
+percent of camera truck, eased hard. Six flat layers hung at different depths in
+front of a lens, and moving the camera is the one thing that says so.
 
 Going round again deliberately **keeps** the birthday and the spice —
 `director.clearResult()` clears only what the run produced.

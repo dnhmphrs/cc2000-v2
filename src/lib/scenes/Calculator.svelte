@@ -18,7 +18,6 @@
 	} from '$lib/store/store';
 	import { SCENES } from '$lib/config';
 	import { begin, settled } from './director';
-	import { windowY } from '$lib/config';
 	import { resolve } from '$lib/functions/answer';
 	import Dial from '$lib/components/Dial.svelte';
 	import Lever from '$lib/components/Lever.svelte';
@@ -109,9 +108,23 @@
 	let root;
 	let landed = false;
 
+	// Put the node back the way a fresh load leaves it. The flight writes three
+	// things inline and all three are the flight's, not the machine's: the fit
+	// transform, the origin it is taken about, and --edge. A transform on a
+	// fixed, full-viewport element is also a containing block and a stacking
+	// context for everything inside it, and there is no reason to keep one once
+	// it has landed.
+	function normalise(node) {
+		if (!node) return;
+		node.style.transform = '';
+		node.style.transformOrigin = '';
+		node.style.removeProperty('--edge');
+	}
+
 	function land() {
 		if (landed) return;
 		landed = true;
+		normalise(root);
 		booting = false;
 		realised = true;
 		settled();
@@ -119,6 +132,38 @@
 	let timer;
 	let power = 0;
 	let ticker;
+
+	// ── Walking the operator through it ──────────────────────────────────────
+	// The machine has four controls on four different edges and no instructions,
+	// and every one of them starts on a valid default — so it looks finished the
+	// moment it comes on and there is nothing to tell you that the answer it is
+	// about to give you is for the first of January 2000 rather than for you.
+	//
+	// So it asks, one thing at a time: the screen says what it wants next and the
+	// control it wants gets a ring round it. What counts as "done" is being
+	// TOUCHED, not being valid — the defaults are already valid, which is the
+	// whole problem — and the button stays live throughout, because somebody
+	// genuinely born on 01 JAN 2000 must not be locked out by their own birthday.
+	const STEPS = [
+		{
+			say: 'set the month and the day',
+			wide: 'the two dials, left of the screen',
+			tall: 'the first two pickers below'
+		},
+		{ say: 'tune the year', wide: 'the band under the screen', tall: 'the third picker below' },
+		{
+			say: 'how spicy do your parents like it',
+			wide: 'the lever, right of the screen',
+			tall: 'the slider below'
+		},
+		{ say: 'press calculate', wide: 'the machine has what it needs', tall: 'it has what it needs' }
+	];
+	let didMonth = false;
+	let didDay = false;
+	let didYear = false;
+	let didSpicy = false;
+	$: step = !(didMonth && didDay) ? 0 : !didYear ? 1 : !didSpicy ? 2 : 3;
+	$: hint = STEPS[step][$aspect === 'portrait' ? 'tall' : 'wide'];
 
 	// bind:value, not value={...}: a plain value on a <select> whose <option>
 	// list re-renders does not stick, and the day list changes with the month.
@@ -159,15 +204,8 @@
 	// The fit itself: the whole viewport painted into the glass rect, centred in
 	// the leftover — the monitor's shape and the viewport's are not the same, and
 	// a page pinned to the glass's corner reads as a mistake rather than a screen.
-	//
-	// It is remembered, because the LAUNCH has to start from it: the machine now
-	// lives in the monitor for good, so the way out of it is a warp out of the
-	// glass rather than a warp of a full-screen page.
-	let fitK = 1;
-	let fitX = 0;
-	let fitY = 0;
-
 	function fitTo(node, rect) {
+		let fitK, fitX, fitY;
 		if (!node || !rect) return;
 		const vw = window.innerWidth;
 		const vh = window.innerHeight;
@@ -189,44 +227,31 @@
 			tick: (t) => {
 				fitTo(node, get(monitorRect) ?? rect);
 				// The end of the move IS the moment it comes on, so it is taken
-				// from here rather than from a timer that could drift off it.
-				if (t === 1) land();
+				// from here rather than from a timer that could drift off it. By
+				// then the glass covers the viewport and the fit is the identity of
+				// its own accord — but it is cleared explicitly, and OUTSIDE
+				// land(), because the timer fallback can have called land() already
+				// and land() only runs once.
+				if (t === 1) {
+					normalise(node);
+					land();
+				} else {
+					fitTo(node, get(monitorRect) ?? rect);
+				}
 				calcZoom.set(t);
 			}
 		};
 	}
 
-	// AND IT STAYS THERE. The loop used to finish by clearing the transform and
-	// going fullscreen, which threw away the room it had just spent nine seconds
-	// flying into. The machine ends the run sitting on the desk, in the monitor,
-	// with the bedroom round it — so the fit is kept live for as long as there is
-	// a glass to sit in, and only a resize ever moves it.
-	$: if (landed && arrivingFrom && root && $monitorRect) fitTo(root, $monitorRect);
-
 	// Into the lens. Real perspective, so the frame warps outward as it goes —
 	// being sucked in, rather than a picture being scaled up.
-	//
-	// It composes with the fit, because the machine is not full-screen any more:
-	// on a second run it is a picture inside a bedroom monitor, and the warp has
-	// to leave THAT rather than the viewport. Written about the window's own
-	// centre with explicit translates rather than a transform-origin, because the
-	// origin would have to apply to the fit as well and the fit is measured from
-	// the top-left of the page.
 	function intoLens(node) {
-		node.style.transformOrigin = '0 0';
-		const ox = window.innerWidth / 2;
-		const oy = windowY(get(aspect)) * window.innerHeight;
-		const k = landed && arrivingFrom ? fitK : 1;
-		const x = landed && arrivingFrom ? fitX : 0;
-		const y = landed && arrivingFrom ? fitY : 0;
+		node.style.transformOrigin = '50% var(--win-y)';
 		return {
 			duration: T.launch * 1000,
 			easing: cubicIn,
 			tick: (t, u) => {
-				node.style.transform =
-					`translate(${x}px, ${y}px) scale(${k}) ` +
-					`translate(${ox}px, ${oy}px) perspective(760px) translateZ(${u * 700}px) ` +
-					`translate(${-ox}px, ${-oy}px)`;
+				node.style.transform = `perspective(760px) translateZ(${u * 700}px)`;
 				node.style.opacity = String(1 - u * u * u);
 				calcZoom.set(1 + u);
 			}
@@ -339,11 +364,16 @@
 						<dt>how spicy do your parents like it?</dt>
 						<dd>{String($spicy).padStart(2, '0')} / 10</dd>
 					</div>
-					<div>
-						<dt>status</dt>
-						<dd class:ready={complete}>{complete ? 'ready' : 'awaiting input'}</dd>
-					</div>
 				</dl>
+
+				<!-- What to do next, and where the thing that does it is. The
+				     machine is four controls on four edges with no instructions;
+				     this is the instructions. -->
+				<div class="prompt">
+					<span class="n">{step + 1} / {STEPS.length}</span>
+					<span class="say">{STEPS[step].say}</span>
+					<span class="hint">{hint}</span>
+				</div>
 			{/if}
 		</div>
 	</div>
@@ -381,7 +411,7 @@
 	     leaves a second month/day/year in the document for anything that walks it
 	     rather than looks at it. -->
 	{#if $aspect !== 'portrait'}
-		<div class="dials" on:click|stopPropagation>
+		<div class="dials" class:cue={step === 0} on:click|stopPropagation>
 			<Dial
 				label="month"
 				min={1}
@@ -389,7 +419,10 @@
 				start={6}
 				value={$dobMonth}
 				format={(v) => MONTHS[v - 1].toUpperCase()}
-				on:change={(e) => dobMonth.set(e.detail)}
+				on:change={(e) => {
+					dobMonth.set(e.detail);
+					didMonth = true;
+				}}
 			/>
 			<Dial
 				label="day"
@@ -397,24 +430,30 @@
 				max={maxDay}
 				start={15}
 				value={$dobDay}
-				on:change={(e) => dobDay.set(e.detail)}
+				on:change={(e) => {
+					dobDay.set(e.detail);
+					didDay = true;
+				}}
 			/>
 		</div>
 
 		<!-- The year, under the screen, as the band on a car radio. -->
-		<div class="tuner" on:click|stopPropagation>
+		<div class="tuner" class:cue={step === 1} on:click|stopPropagation>
 			<Tuner
 				label="year"
 				min={MIN_YEAR}
 				max={MAX_YEAR}
 				start={1990}
 				value={$dobYear}
-				on:change={(e) => dobYear.set(e.detail)}
+				on:change={(e) => {
+					dobYear.set(e.detail);
+					didYear = true;
+				}}
 			/>
 		</div>
 
 		<!-- And how spicy, on the right. -->
-		<div class="switches" on:click|stopPropagation>
+		<div class="switches" class:cue={step === 2} on:click|stopPropagation>
 			<Lever
 				label="spicy"
 				min={1}
@@ -422,7 +461,10 @@
 				low="spicy?"
 				high="how"
 				value={$spicy}
-				on:change={(e) => spicy.set(e.detail)}
+				on:change={(e) => {
+					spicy.set(e.detail);
+					didSpicy = true;
+				}}
 			/>
 		</div>
 	{/if}
@@ -430,27 +472,34 @@
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	{#if $aspect === 'portrait'}
 		<div class="controls" on:click|stopPropagation>
-			<div class="ctl">
+			<div class="ctl" class:cue={step <= 1}>
 				<span class="lab">date of birth</span>
 				<div class="dob">
-					<select bind:value={$dobMonth} aria-label="month">
+					<select bind:value={$dobMonth} on:change={() => (didMonth = true)} aria-label="month">
 						<option value="" disabled>mth</option>
 						{#each MONTHS as m, i}<option value={i + 1}>{m}</option>{/each}
 					</select>
-					<select bind:value={$dobDay} aria-label="day">
+					<select bind:value={$dobDay} on:change={() => (didDay = true)} aria-label="day">
 						<option value="" disabled>day</option>
 						{#each days as d}<option value={d}>{d}</option>{/each}
 					</select>
-					<select bind:value={$dobYear} aria-label="year">
+					<select bind:value={$dobYear} on:change={() => (didYear = true)} aria-label="year">
 						<option value="" disabled>year</option>
 						{#each YEARS as y}<option value={y}>{y}</option>{/each}
 					</select>
 				</div>
 			</div>
 
-			<div class="ctl">
+			<div class="ctl" class:cue={step === 2}>
 				<span class="lab">how spicy do you like it?</span>
-				<input type="range" bind:value={$spicy} min="1" max="10" aria-label="spicy" />
+				<input
+					type="range"
+					bind:value={$spicy}
+					on:input={() => (didSpicy = true)}
+					min="1"
+					max="10"
+					aria-label="spicy"
+				/>
 				<div class="ends"><span>how</span><span>spicy?</span></div>
 			</div>
 		</div>
@@ -463,6 +512,7 @@
 	<button
 		class="go"
 		class:armed={complete}
+		class:cue={step === 3}
 		on:click|stopPropagation={calculate}
 		disabled={!complete}
 	>
@@ -580,14 +630,14 @@
 		background: var(--machine);
 	}
 	.body.top {
-		left: 0;
-		right: 0;
+		left: var(--rim);
+		right: var(--rim);
 		top: 0;
 		height: calc(var(--win-y) - var(--winh) / 2);
 	}
 	.body.bottom {
-		left: 0;
-		right: 0;
+		left: var(--rim);
+		right: var(--rim);
 		top: calc(var(--win-y) + var(--winh) / 2);
 		bottom: 0;
 	}
@@ -595,15 +645,15 @@
 	   hairline seam wherever the layout rounds. */
 	.body.left,
 	.body.right {
-		width: calc(50% - var(--win) / 2 + 1px);
+		width: calc(50% - var(--win) / 2 - var(--rim) + 1px);
 		top: calc(var(--win-y) - var(--winh) / 2 - 1px);
 		height: calc(var(--winh) + 2px);
 	}
 	.body.left {
-		left: 0;
+		left: var(--rim);
 	}
 	.body.right {
-		right: 0;
+		right: var(--rim);
 	}
 
 	.window {
@@ -644,10 +694,13 @@
 			rgba(0, 0, 0, 0.18) 68%,
 			rgba(0, 0, 0, 0.46) 100%
 		);
-		padding: 14px 16px;
+		padding: clamp(14px, 2.2vh, 26px) clamp(14px, 2vw, 30px);
 		display: flex;
 		flex-direction: column;
-		justify-content: center;
+		/* The readout at the TOP, the instruction pinned to the bottom, and the
+		   ovum the machine is looking at in the gap between them. Centred, all
+		   three land on top of each other and on the thing behind the glass. */
+		justify-content: flex-start;
 		gap: 2px;
 		overflow: hidden;
 	}
@@ -660,11 +713,14 @@
 	   lays them over the site for the flight and nothing else — over the two
 	   ends of the loop, this one and the bedroom, they would be a second 3px
 	   pitch on top of a screen that already has one: a moiré, not a CRT. */
+	/* Held right back. A hard diagonal streak across the glass is how a cartoon
+	   says "this is shiny", and this is an instrument. */
 	.gleam {
 		position: absolute;
 		inset: 0;
 		pointer-events: none;
 		background: var(--glass);
+		opacity: 0.4;
 	}
 
 	.screen p {
@@ -724,8 +780,45 @@
 		letter-spacing: 0.08em;
 		color: rgba(240, 242, 248, 0.85);
 	}
-	.readout dd.ready {
-		color: var(--yellow);
+	/* The instruction. It sits at the bottom of the glass, under the readout,
+	   because the readout is what the machine KNOWS and this is what it WANTS. */
+	.prompt {
+		position: absolute;
+		left: clamp(14px, 2vw, 30px);
+		right: clamp(14px, 2vw, 30px);
+		bottom: clamp(12px, 2vh, 24px);
+		display: flex;
+		align-items: baseline;
+		flex-wrap: wrap;
+		gap: 0 0.9em;
+		border-top: 1px solid rgba(240, 196, 92, 0.28);
+		padding-top: clamp(6px, 1vh, 12px);
+		/* The glass is transparent and there is a lit ovum turning behind it, so
+		   the one thing on this screen that has to be READ gets its own ground. */
+		background: linear-gradient(
+			to top,
+			rgba(7, 7, 10, 0.94) 0%,
+			rgba(7, 7, 10, 0.9) 72%,
+			rgba(7, 7, 10, 0) 100%
+		);
+		box-shadow: 0 clamp(12px, 2vh, 24px) 0 rgba(7, 7, 10, 0.94);
+	}
+	.prompt .n {
+		font-size: clamp(7px, 0.72vw, 9px);
+		letter-spacing: 0.24em;
+		color: rgba(240, 196, 92, 0.6);
+	}
+	.prompt .say {
+		font-size: clamp(9px, 1vw, 13px);
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--machine-ink);
+	}
+	.prompt .hint {
+		flex: 1 0 100%;
+		font-size: clamp(7px, 0.74vw, 10px);
+		letter-spacing: 0.12em;
+		color: rgba(240, 242, 248, 0.42);
 	}
 
 	.verdict p {
@@ -818,11 +911,11 @@
 		align-items: center;
 	}
 	.trim.left {
-		left: max(2.5vw, 16px);
+		left: calc(var(--rim) + max(2.5vw, 16px));
 		gap: clamp(12px, 2.2vh, 26px);
 	}
 	.trim.right {
-		right: max(2.5vw, 16px);
+		right: calc(var(--rim) + max(2.5vw, 16px));
 		gap: clamp(10px, 1.8vh, 22px);
 	}
 
@@ -877,7 +970,7 @@
 		width: 100%;
 		height: 52%;
 		border-radius: 5px;
-		background: var(--machine-teal);
+		background: var(--machine-ink);
 	}
 
 	.dials {
@@ -979,11 +1072,11 @@
 		);
 	}
 	.vent.left {
-		left: max(3vw, 18px);
+		left: calc(var(--rim) + max(3vw, 18px));
 		transform: rotate(-1.6deg);
 	}
 	.vent.right {
-		right: max(3vw, 18px);
+		right: calc(var(--rim) + max(3vw, 18px));
 		transform: rotate(1.6deg);
 	}
 
@@ -1022,11 +1115,15 @@
 		opacity: 0.55;
 	}
 	.calculator.realised .go.armed {
-		background: var(--machine-red);
-		color: #fff5ec;
+		background: var(--machine-ink);
+		color: #0b0a08;
 		opacity: 1;
 		cursor: pointer;
-		animation: pulse 1.5s ease-in-out infinite;
+	}
+	/* And it only asks to be pressed once everything else has been set. Before
+	   that it is a lit key you may press; after it, it is the next thing to do. */
+	.calculator.realised .go.armed.cue {
+		animation: pulse 1.6s ease-in-out infinite;
 	}
 	/* A real press: the whole button travels down onto its own shadow. */
 	.go.armed:active {
@@ -1042,11 +1139,34 @@
 	@keyframes pulse {
 		0%,
 		100% {
-			background: var(--machine-red);
+			background: var(--machine-ink);
 		}
 		50% {
-			background: #ff7a4a;
+			background: #fff0c8;
 		}
+	}
+
+	/* ── The cue ──────────────────────────────────────────────────────────────
+	   Which control the operator is being asked for. A ring round it, breathing,
+	   and the machine says the same thing in words on its own screen — see
+	   STEPS below. Outline rather than border or box-shadow: it does not take
+	   part in layout, so nothing under it moves when it comes and goes. */
+	.cue {
+		outline: 1px solid var(--machine-ink);
+		outline-offset: clamp(8px, 1.4vw, 18px);
+		animation: cue 1.6s ease-in-out infinite;
+	}
+	@keyframes cue {
+		0%,
+		100% {
+			outline-color: rgba(240, 196, 92, 0.85);
+		}
+		50% {
+			outline-color: rgba(240, 196, 92, 0.16);
+		}
+	}
+	.go.cue {
+		outline: none;
 	}
 
 	.screw {
@@ -1065,19 +1185,19 @@
 		transform: rotate(28deg);
 	}
 	.screw.tl {
-		left: 16px;
+		left: calc(var(--rim) + 16px);
 		top: 16px;
 	}
 	.screw.tr {
-		right: 16px;
+		right: calc(var(--rim) + 16px);
 		top: 16px;
 	}
 	.screw.bl {
-		left: 16px;
+		left: calc(var(--rim) + 16px);
 		bottom: 16px;
 	}
 	.screw.br {
-		right: 16px;
+		right: calc(var(--rim) + 16px);
 		bottom: 16px;
 	}
 

@@ -2,8 +2,14 @@
 	import { onMount, onDestroy, tick } from 'svelte';
 	import { get } from 'svelte/store';
 	import * as THREE from 'three';
-	import { scene as sceneStore, sceneTone, monitorRect, backdrop } from '$lib/store/store';
-	import { CANVAS_FADE, FLASH_HOLD, FLASH_FALL, clamp01, DEV, DEV_AT } from '$lib/config';
+	import {
+		scene as sceneStore,
+		sceneTone,
+		monitorRect,
+		backdrop,
+		fieldFade
+	} from '$lib/store/store';
+	import { CANVAS_FADE, FLASH_HOLD, FLASH_FALL, clamp01, VOID, DEV, DEV_AT } from '$lib/config';
 	import { createTunnel } from './world/tunnel';
 	import { createLattice } from './world/lattice';
 	import { advance } from '$lib/scenes/director';
@@ -59,6 +65,13 @@
 	// it to cover.
 	let flashT = Infinity;
 
+	// Where the cursor is, -1..1 across the viewport. Only the room reads it.
+	const pointer = [0, 0];
+	function handlePointer(e) {
+		pointer[0] = (e.clientX / window.innerWidth) * 2 - 1;
+		pointer[1] = (e.clientY / window.innerHeight) * 2 - 1;
+	}
+
 	// Which scene we last handed control to, so entering happens exactly once,
 	// and the last 3D scene to run, whose final frame is HELD while a DOM scene
 	// is on top of it.
@@ -76,9 +89,6 @@
 		entered = name;
 		held = next;
 		// A new run has taken the screen, so the last one's flight home is over.
-		// It cannot be reset in the idle branch below any more: the room stays on
-		// screen behind the machine now, so that branch is only reached on a cold
-		// load. See scenes/director.js settled().
 		returning = false;
 		next.enter();
 	}
@@ -117,9 +127,8 @@
 		if (!active) {
 			// A DOM screen is up. Which frame sits behind it depends on whether a
 			// run has left one: monitorRect is set from the moment a room lands
-			// until the NEXT run reaches the computation — so after a run the room
-			// stays on screen for good, with the machine sitting in its monitor.
-			// That is the end of the loop now; it does not go back to full screen.
+			// until the calculator has flown back out of that room's monitor, so
+			// it is exactly the window in which the room must stay on screen.
 			if (held && $monitorRect) {
 				// On the way home the room is not merely held — the camera flies
 				// into its monitor while the calculator grows out of it. Two sides
@@ -131,6 +140,13 @@
 						held.beginReturn?.();
 					}
 					held.stepReturn?.(dt);
+				} else {
+					// The room is up and being looked at. It is six flat layers hung
+					// at different depths in front of a lens, so the one thing that
+					// makes it a place rather than a picture is moving your head:
+					// a couple of percent of camera truck, eased, and the bed comes
+					// off the wall.
+					held.parallax?.(pointer[0], pointer[1], dt);
 				}
 				const hb = held.backdrop();
 				ground(hb.color, hb.shader);
@@ -146,7 +162,14 @@
 				tunnel.reset();
 				lattice.reset();
 			}
-			ground(tunnel.getAir(), 'flat');
+			// The machine idles on the SAME ground as the rest of the run — the
+			// void, ruled — rather than on a block colour of its own, and its
+			// window looks down the tunnel it is about to fly you into. The
+			// homepage used to be a yellow machine on deep blue in front of a flat
+			// fill, which is a different site from the one it is the front of.
+			tunnel.idle(dt);
+			fieldFade.set(1);
+			ground(VOID, 'grid');
 			renderer.render(tunnel.scene, tunnel.camera);
 			return;
 		}
@@ -212,6 +235,7 @@
 		canvasElement.style.opacity = '0';
 		canvasFadeStart = performance.now() / 1000;
 		window.addEventListener('resize', handleResize);
+		window.addEventListener('pointermove', handlePointer, { passive: true });
 
 		animate();
 	});
@@ -220,6 +244,7 @@
 		if (typeof window === 'undefined') return;
 		if (animationFrameId) cancelAnimationFrame(animationFrameId);
 		window.removeEventListener('resize', handleResize);
+		window.removeEventListener('pointermove', handlePointer);
 		computation?.dispose();
 		tunnel?.dispose();
 		lattice?.dispose();

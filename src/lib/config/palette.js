@@ -42,17 +42,21 @@ export const VOID = 0x0a0a0c;
 export const AIR = 0x14120e;
 
 // ── The machine ──────────────────────────────────────────────────────────────
-// Drawn like the bedrooms it flies into: flat saturated fills and a heavy black
-// ink outline, not a rendered plastic panel. `ink` is a near-black rather than a
-// brown, because the room artwork outlines in near-black and the machine has to
-// look like it came off the same pen.
+// BLACK AND GOLD, like the rest of the site. It was a yellow cartoon machine on
+// deep blue, which meant the homepage belonged to a different site from the one
+// it is the front of — you pressed a button on a children's toy and thirty
+// seconds of black-and-gold instrument came out of it.
+//
+// So `body` is the void with a shade of warmth in it and `ink` — the pen the
+// whole chassis is drawn with, every outline, label and dial marking — is THE
+// GOLD, the same one the icosahedron's thirty edges are drawn in.
 export const MACHINE = {
-	body: '#f2b427',
-	light: '#ffdc63',
-	dark: '#c9820f',
-	ink: '#17120c',
-	lamp: '#ff4d1f',
-	crt: '#0a1330',
+	body: '#100f0d',
+	light: '#1c1a16',
+	dark: '#070706',
+	ink: '#f0c45c',
+	lamp: '#ff5a2a',
+	crt: '#07070a',
 	// Two accents lifted off the room art — the red of the desk lamp and the
 	// teal of the shades — so the machine belongs to the same drawing.
 	red: '#e5372a',
