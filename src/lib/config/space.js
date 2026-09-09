@@ -136,6 +136,14 @@ export const TUNNEL = {
 	// The ovum turns too, slowly, about its own pole. rad/s.
 	eggSpin: 0.16,
 
+	// ── Idling ───────────────────────────────────────────────────────────────
+	// What the calculator's window is looking at while it waits. The ovum, three
+	// hundred units off, at a whisper: it is a viewfinder onto the flight the
+	// button is about to start, not a scene.
+	idleEgg: 0.34,
+	idleHalo: 0.2,
+	idleMotes: 0.28,
+
 	// ── The motes ────────────────────────────────────────────────────────────
 	// The field of debris the camera flies through. Without it the flight is a
 	// zoom: there is nothing between the lens and the ovum for three hundred

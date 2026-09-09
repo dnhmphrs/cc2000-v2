@@ -2,8 +2,14 @@
 	import { onMount, onDestroy, tick } from 'svelte';
 	import { get } from 'svelte/store';
 	import * as THREE from 'three';
-	import { scene as sceneStore, sceneTone, monitorRect, backdrop } from '$lib/store/store';
-	import { CANVAS_FADE, FLASH_HOLD, FLASH_FALL, clamp01, DEV, DEV_AT } from '$lib/config';
+	import {
+		scene as sceneStore,
+		sceneTone,
+		monitorRect,
+		backdrop,
+		fieldFade
+	} from '$lib/store/store';
+	import { CANVAS_FADE, FLASH_HOLD, FLASH_FALL, clamp01, VOID, DEV, DEV_AT } from '$lib/config';
 	import { createTunnel } from './world/tunnel';
 	import { createLattice } from './world/lattice';
 	import { advance } from '$lib/scenes/director';
@@ -156,7 +162,14 @@
 				tunnel.reset();
 				lattice.reset();
 			}
-			ground(tunnel.getAir(), 'flat');
+			// The machine idles on the SAME ground as the rest of the run — the
+			// void, ruled — rather than on a block colour of its own, and its
+			// window looks down the tunnel it is about to fly you into. The
+			// homepage used to be a yellow machine on deep blue in front of a flat
+			// fill, which is a different site from the one it is the front of.
+			tunnel.idle(dt);
+			fieldFade.set(1);
+			ground(VOID, 'grid');
 			renderer.render(tunnel.scene, tunnel.camera);
 			return;
 		}

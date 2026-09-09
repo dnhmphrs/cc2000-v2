@@ -144,6 +144,7 @@ export function createTunnel() {
 	const scene = new THREE.Scene();
 	scene.fog = new THREE.FogExp2(AIR, TUNNEL.fogDensity);
 	let air = AIR;
+	let idleT = 0;
 
 	const camera = new THREE.PerspectiveCamera(
 		TUNNEL.fov,
@@ -334,6 +335,26 @@ export function createTunnel() {
 		},
 		getAir() {
 			return air;
+		},
+
+		// ── Idling ───────────────────────────────────────────────────────────
+		// What the machine's window looks at while it waits for an operator: the
+		// ovum, a very long way down the tunnel, turning. Deep in the fog and at a
+		// whisper — it is a viewfinder, not a scene — but it is the thing the
+		// button is about to fly you at, and a window onto nothing is a hole in
+		// the chassis.
+		idle(dt) {
+			idleT += dt;
+			camera.position.set(0, 0, TUNNEL.camStart);
+			this.setCamZ(TUNNEL.camStart);
+			this.setMotes(TUNNEL.idleMotes);
+			this.setHalo(TUNNEL.idleHalo);
+			egg.setWire(TUNNEL.idleEgg);
+			egg.setShell(TUNNEL.idleEgg);
+			egg.setCore(1);
+			egg.setCoreRim(TUNNEL.idleEgg);
+			egg.group.rotation.y = idleT * TUNNEL.eggSpin;
+			egg.group.rotation.x = Math.sin(idleT * 0.17) * 0.22;
 		},
 
 		// The one clock in the scene: the band crawling along the body.
