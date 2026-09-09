@@ -98,8 +98,22 @@ export const SCENES = scale({
 		motesIn: [0.0, 0.04],
 		motesOut: [0.8, 0.94],
 
-		// The swimmer comes past from behind and settles in front of the lens.
-		spermIn: [0.015, 0.13],
+		// ── THE PASS ─────────────────────────────────────────────────────────
+		// The swimmer comes past FROM BEHIND — sixteen units back, straight up the
+		// axis, entering low in the frame and rising as it pulls ahead. The shot at
+		// the top of Star Wars.
+		//
+		// IT ARRIVES WHERE THE MACHINE ENDS. The window opens at zero, but the
+		// swimmer is behind the lens for the first tenth of it and the calculator
+		// is over the whole frame anyway — so what you SEE is: the machine warps
+		// away, and the swimmer is there, coming up from under you. Then nearly
+		// five seconds of it pulling slowly ahead, on easeOutQuint: it covers the
+		// sixteen units behind the lens in the first quarter of the window and
+		// spends the other three quarters crawling the last few. That is what
+		// overtaking and then matching speed looks like, and it is the first thing
+		// the run shows you, so there is nothing to hurry it toward. The ovum does
+		// not begin to surface until it is most of the way done.
+		spermIn: [0.0, 0.46],
 
 		// It breaks formation and goes in. Its own curve, and a hard one: this is
 		// the only acceleration in the scene and it happens against a camera that
@@ -121,12 +135,12 @@ export const SCENES = scale({
 		// The glow first, then the ovum in it. The halo OPENS EARLIER and CLOSES
 		// EARLIER than the shell, which is the whole trick of the arrival: there
 		// is a warmth in the black before there is anything in the warmth.
-		haloIn: [0.05, 0.48],
+		haloIn: [0.3, 0.66],
 		haloOut: [0.8, 0.95],
 		haloPeak: 1.0,
 		// An ENABLE, not a fade: what actually brings the cage up is the fog
 		// thinning as the camera closes on it. See FlyIn.svelte.
-		eggIn: [0.06, 0.34],
+		eggIn: [0.34, 0.6],
 
 		// ── THE HAND-OVER ────────────────────────────────────────────────────
 		// There is no flash any more. The fly-in simply ENDS ON THE PICTURE THE

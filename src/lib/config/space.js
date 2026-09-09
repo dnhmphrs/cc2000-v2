@@ -121,9 +121,17 @@ export const TUNNEL = {
 	spermRings: 4,
 	spermLongs: 7,
 	spermGain: 1.0,
-	// Where it is when the scene starts — behind the camera and off the axis,
-	// because passing exactly through the lens is degenerate.
-	spermFrom: { x: 3.6, y: -1.7, z: 18 },
+	// Where it starts: `z` units BEHIND the lens, and low in the frame. It comes
+	// straight out from behind you and pulls slowly ahead — the opening shot of
+	// Star Wars, not something entering from the wings.
+	//
+	// x and y are in HALF-HEIGHTS OF THE FRAME at whatever distance it currently
+	// is, not world units, and that distinction is the whole of it: a fixed world
+	// offset a metre from the lens is nine screen-widths off to the side, which is
+	// exactly how it used to look — sliding in from the wings rather than coming
+	// up from underneath you. In screen terms it holds its place low in the frame
+	// and drifts to centre as it settles.
+	spermFrom: { x: 0.3, y: -1.45, z: 16 },
 
 	// The ovum turns too, slowly, about its own pole. rad/s.
 	eggSpin: 0.16,
@@ -213,7 +221,7 @@ export const ICOSA = {
 	// even then it is a compromise: six rooms exploded off a solid is a landscape
 	// composition.
 	paneReach: 6.4,
-	paneReachPortrait: 4.2,
+	paneReachPortrait: 5.6,
 	roomDepth: 3.0,
 
 	// How much the sphere opens out as the rooms come through it. It starts as
