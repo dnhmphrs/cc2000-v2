@@ -94,6 +94,9 @@
 
 	let shown = LINES.map(() => 0);
 	let typed = !!arrivingFrom; // no manifesto second time round
+	// The manifesto has finished writing itself. It does NOT clear on its own
+	// from here — it holds until the operator clicks off it.
+	let spielDone = !!arrivingFrom;
 	let realised = !arrivingFrom; // are the real controls allowed on screen yet
 	// Cold until it has actually landed. On the way home the machine is a picture
 	// inside somebody's monitor, a few dozen pixels across: the chassis, the
@@ -276,7 +279,11 @@
 
 		let li = 0;
 		const step = () => {
-			if (li >= LINES.length) return (typed = true);
+			// FINISHED WRITING IS NOT FINISHED. It used to clear itself the instant
+			// the last character landed, which gives you no time to read the thing
+			// and no say in when the machine moves on. It stays up, with a prompt
+			// under it, until you click.
+			if (li >= LINES.length) return (spielDone = true);
 			if (shown[li] >= LINES[li].length) {
 				li += 1;
 				timer = setTimeout(step, T.lineGap * 1000);
@@ -294,10 +301,16 @@
 		clearInterval(ticker);
 	});
 
+	// Click anywhere and the manifesto goes: part-written, it snaps to complete
+	// and clears in the same move. Bound on POINTERDOWN IN THE CAPTURE PHASE, so
+	// it fires before the dials, the tuner and the lever stop the event — reach
+	// for a control while the spiel is up and the spiel gets out of the way,
+	// rather than the machine silently taking input behind a screen of text.
 	function skip() {
 		if (typed) return;
 		clearTimeout(timer);
 		shown = LINES.map((l) => l.length);
+		spielDone = true;
 		typed = true;
 	}
 
@@ -334,7 +347,7 @@
 	class:realised
 	in:outOfMonitor={{ rect: arrivingFrom }}
 	out:intoLens
-	on:click={skip}
+	on:pointerdown|capture={skip}
 >
 	<!-- The body. Four bars around the window rather than one element spreading
 	     a shadow: a shadow scales with its element, so a machine drawn at monitor
@@ -348,15 +361,33 @@
 
 	<div class="window">
 		<div class="screen">
+			<!-- The tube is scanned from the first frame it is on. It used to be
+			     drawn on the full-screen glass and nowhere else, so the machine's
+			     own CRT was the one screen in the site with no lines on it. Under
+			     the gleam, because the gleam is a reflection off the FRONT of the
+			     glass and the raster is behind it. -->
+			<div class="scan" />
 			<div class="gleam" />
 			{#if !typed}
-				{#each LINES as line, i}
-					<p class:lit={i === LINES.length - 1}>
-						{line.slice(0, shown[i])}{#if shown[i] > 0 && shown[i] < line.length}<span
-								class="caret"
-							/>{/if}
-					</p>
-				{/each}
+				<!-- Centred as a BLOCK and set left inside it. Centring the lines
+				     themselves makes each one crawl sideways as it is typed. -->
+				<div class="spiel">
+					{#each LINES as line, i}
+						<!-- Each line is sized by the WHOLE line, hidden, with the part
+						     that has been written so far laid over it. Otherwise the
+						     measure grows as the text arrives and a centred line crawls
+						     sideways the entire time it is being typed. -->
+						<p class:lit={i === LINES.length - 1}>
+							<span class="ghost">{line}</span>
+							<span class="live"
+								>{line.slice(0, shown[i])}{#if shown[i] > 0 && shown[i] < line.length}<span
+										class="caret"
+									/>{/if}</span
+							>
+						</p>
+					{/each}
+					<span class="prompt" class:up={spielDone}>click anywhere to begin</span>
+				</div>
 			{:else if $edge}
 				<!-- Out of range. The machine says so and stays where it is. -->
 				<div class="verdict">
@@ -364,14 +395,54 @@
 					<p class="msg">{EDGE[$edge].line}</p>
 				</div>
 			{:else}
+				<!-- THE READOUT IS ALSO THE KEYBOARD. In landscape the two lines the
+				     operator has to fill in are real form controls, sitting on the
+				     glass where the answer is read — so the machine can be driven
+				     either by turning the knobs on the chassis or by typing into
+				     its own screen, and the two are the same three stores. Turn a
+				     dial and the fields follow it; pick a field and the dial turns.
+
+				     Portrait already had the plain controls, in the panel under the
+				     window, and keeps them: its screen is too small to hold a row
+				     of selects and the panel would then be a second copy of them in
+				     the document. Which is the rule for the whole machine — exactly
+				     one control of each kind EXISTS at any width. -->
 				<dl class="readout">
 					<div>
 						<dt>subject dob</dt>
-						<dd>{readout}</dd>
+						{#if $aspect === 'portrait'}
+							<dd>{readout}</dd>
+						{:else}
+							<dd class="entry">
+								<select bind:value={$dobDay} aria-label="day">
+									<option value="" disabled>--</option>
+									{#each days as d}<option value={d}>{String(d).padStart(2, '0')}</option>{/each}
+								</select>
+								<select bind:value={$dobMonth} aria-label="month">
+									<option value="" disabled>---</option>
+									{#each MONTHS as m, i}<option value={i + 1}>{m.toUpperCase()}</option>{/each}
+								</select>
+								<select bind:value={$dobYear} aria-label="year">
+									<option value="" disabled>----</option>
+									{#each YEARS as y}<option value={y}>{y}</option>{/each}
+								</select>
+							</dd>
+						{/if}
 					</div>
 					<div>
 						<dt>how spicy do your parents like it?</dt>
-						<dd>{String($spicy).padStart(2, '0')} / 10</dd>
+						{#if $aspect === 'portrait'}
+							<dd>{String($spicy).padStart(2, '0')} / 10</dd>
+						{:else}
+							<dd class="entry">
+								<select bind:value={$spicy} aria-label="spicy">
+									{#each Array.from({ length: 10 }, (_, i) => i + 1) as n}
+										<option value={n}>{String(n).padStart(2, '0')}</option>
+									{/each}
+								</select>
+								<span class="of">/ 10</span>
+							</dd>
+						{/if}
 					</div>
 					<div>
 						<dt>status</dt>
@@ -490,6 +561,82 @@
 		</div>
 	{/if}
 
+	<!-- ── The instrument columns ────────────────────────────────────────────
+	     What was here was nothing: two full-height strips of flat yellow between
+	     the trim on the rim and the controls by the screen, on the widest and
+	     most-used shape of screen. The machine is an INSTRUMENT, and an
+	     instrument has readouts on it — so these are two of them, drawn in the
+	     register of the thing the operator is about to be flown into rather than
+	     the register of the chassis they are bolted to: black glass, gold
+	     line-work, scanned. The swimmer, the ovum, and the ratio the whole
+	     second half of the run is built on.
+
+	     They are decoration and say so — pointer-events:none, aria-hidden, no
+	     state of their own. Landscape and the square middle only; portrait has
+	     no gap to fill and its controls live where these would be. -->
+	{#if $aspect !== 'portrait'}
+		<div class="gauges left" aria-hidden="true">
+			<!-- The swimmer, on a scope. The tail is one path scaled about the
+			     midpiece from +1 to -1, which passes through dead straight on the
+			     way — which is what a flagellum actually does. -->
+			<div class="port">
+				<svg viewBox="0 0 100 100">
+					<g class="swimmer">
+						<path class="tail" d="M54 50 C 43 36, 35 64, 25 50 S 9 36, 3 49" />
+						<ellipse class="solid" cx="66" cy="50" rx="10.5" ry="7.5" />
+					</g>
+				</svg>
+				<span class="raster" />
+			</div>
+			<span class="tag">specimen a</span>
+
+			<div class="meter">
+				<svg viewBox="0 0 100 58">
+					<path d="M9 51 A41 41 0 0 1 91 51" />
+					<path class="hair" d="M18 27 l4 4 M50 10 l0 5 M82 27 l-4 4" />
+					<line class="needle" x1="50" y1="51" x2="50" y2="15" />
+					<circle class="solid" cx="50" cy="51" r="4" />
+				</svg>
+			</div>
+			<span class="tag">motility</span>
+		</div>
+
+		<div class="gauges right" aria-hidden="true">
+			<!-- The ovum, as the fly-in draws it: a wire globe with three great
+			     circles. The upright meridian flattens and opens again, which is
+			     what the silhouette of a turning globe does. -->
+			<div class="port">
+				<svg viewBox="0 0 100 100">
+					<circle cx="50" cy="50" r="31" />
+					<ellipse cx="50" cy="50" rx="31" ry="11" />
+					<ellipse class="mer" cx="50" cy="50" rx="31" ry="11" transform="rotate(90 50 50)" />
+					<ellipse class="hair" cx="50" cy="50" rx="31" ry="21" transform="rotate(-27 50 50)" />
+					<circle class="solid" cx="50" cy="50" r="3" />
+				</svg>
+				<span class="raster" />
+			</div>
+			<span class="tag">specimen b</span>
+
+			<!-- And the ratio the whole second half of the run is built on: the
+			     golden rectangle, cut square by square, with the spiral through
+			     the arcs. The same construction the panes carry out of the
+			     icosahedron — see three/objects/GoldenRectangle.svelte. -->
+			<div class="port wide">
+				<svg viewBox="0 0 100 63">
+					<rect x="1.5" y="1.5" width="97" height="60" />
+					<path class="hair" d="M61.5 1.5 v60 M61.5 38.5 h37 M75.5 38.5 v23 M61.5 47.5 h14" />
+					<path
+						class="spiral"
+						d="M1.5 61.5 A60 60 0 0 1 61.5 1.5 A37 37 0 0 1 98.5 38.5 A23 23 0 0 1 75.5 61.5 A14 14 0 0 1 61.5 47.5"
+					/>
+				</svg>
+				<span class="raster" />
+			</div>
+			<span class="tag">1 : 1.618</span>
+			<span class="count">12 · 30 · 20</span>
+		</div>
+	{/if}
+
 	<div class="vent left" />
 	<div class="vent right" />
 	<div class="grille" />
@@ -520,6 +667,11 @@
 		font-family: var(--tech);
 		color: var(--machine-ink);
 		cursor: default;
+		/* The machine is a DRAWING. Dragging across it and lighting its labels up
+		   in ::selection yellow makes a cartoon object look like a web page that
+		   has gone wrong, and there is nothing on it anybody wants to copy. */
+		user-select: none;
+		-webkit-user-select: none;
 		/* Laid out from config/layout.js, which +layout.svelte writes onto :root
 		   for the current aspect. --below is the chassis line under the glass. */
 		--winh: calc(var(--win) / var(--win-aspect));
@@ -690,6 +842,112 @@
 		inset: 0;
 		pointer-events: none;
 		background: var(--glass);
+	}
+	/* The raster. Same variable the full-screen glass uses, because they are the
+	   same pane seen from in front of it and then from inside it. Positioned, so
+	   it paints over the static text underneath exactly as the gleam does. */
+	.scan {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background: var(--scanlines);
+	}
+
+	/* ── The manifesto ─────────────────────────────────────────────────────
+	   Centred as a block, set left inside it, at a width fixed in ch. All three
+	   of those are load-bearing: centre the LINES and each one crawls sideways
+	   as it is typed, and let the block shrink-wrap and its left edge crawls
+	   instead. A fixed measure holds still while the text arrives into it. */
+	.spiel {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		gap: 0.35em;
+		padding: 14px 16px;
+	}
+	.spiel p {
+		position: relative;
+		max-width: 100%;
+	}
+	.spiel .ghost {
+		visibility: hidden;
+	}
+	.spiel .live {
+		position: absolute;
+		inset: 0;
+		white-space: pre;
+	}
+	/* And then it WAITS. Half a beat after the last character, so it does not
+	   arrive on top of the line still being written. */
+	.prompt {
+		margin-top: 1.6em;
+		font-size: clamp(7px, 0.72vw, 9px);
+		letter-spacing: 0.24em;
+		text-transform: uppercase;
+		color: var(--yellow);
+		opacity: 0;
+		transition: opacity 0.5s ease 0.45s;
+	}
+	.prompt.up {
+		opacity: 1;
+		/* NOT `pulse`. The calculate button already owns that name in this
+		   component and the later declaration wins, so this used to draw itself
+		   with the button's own red-to-orange background animation — a solid
+		   orange box behind the words. Keyframe names are scoped to the file, not
+		   to the rule that uses them. */
+		animation: breathe 2.1s ease-in-out 0.95s infinite;
+	}
+	@keyframes breathe {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.36;
+		}
+	}
+
+	/* ── Typed entry, on the glass ─────────────────────────────────────────
+	   Real selects, drawn as the readout they replace: no box, no chrome, one
+	   underline in the machine's yellow so it is legible as something you can
+	   press. The chassis knobs and these write the same three stores, so either
+	   one moves the other. */
+	.entry {
+		margin: 0;
+		display: flex;
+		align-items: baseline;
+		gap: clamp(6px, 0.7vw, 12px);
+	}
+	.entry select {
+		font: inherit;
+		font-size: clamp(10px, 1.05vw, 14px);
+		letter-spacing: 0.08em;
+		color: var(--yellow);
+		background: transparent;
+		border: 0;
+		border-bottom: 1px dashed rgba(255, 212, 38, 0.45);
+		border-radius: 0;
+		padding: 0 0 2px;
+		cursor: pointer;
+		outline: none;
+	}
+	.entry select:focus-visible {
+		border-bottom-style: solid;
+		border-bottom-color: var(--yellow);
+	}
+	/* The list itself is drawn by the OS, so it gets the tube's own colours
+	   rather than a white sheet dropping out of a black screen. */
+	.entry select option {
+		background: var(--machine-crt);
+		color: rgba(240, 242, 248, 0.85);
+	}
+	.entry .of {
+		font-size: clamp(9px, 0.9vw, 12px);
+		letter-spacing: 0.08em;
+		color: rgba(240, 242, 248, 0.5);
 	}
 
 	.screen p {
@@ -987,6 +1245,224 @@
 		text-transform: uppercase;
 		color: var(--machine-ink);
 		opacity: 0.75;
+	}
+
+	/* ── The instrument columns ────────────────────────────────────────────
+	   Anchored in the GAP rather than at a fixed offset: from just clear of the
+	   trim on the rim to just clear of the controls by the screen, both edges
+	   written from the same expressions those two are placed with, so the column
+	   tracks them at any width instead of drifting into one of them.
+
+	   Below a laptop there is no gap to be in — the trim and the controls very
+	   nearly meet — so they simply are not drawn. */
+	.gauges {
+		position: absolute;
+		top: var(--win-y);
+		transform: translateY(-50%);
+		display: none;
+		flex-direction: column;
+		align-items: center;
+		gap: clamp(5px, 0.9vh, 11px);
+		/* The two gaps are not the same width — the dial by the screen is wider
+		   than the lever opposite it — so both columns are capped at the narrower
+		   one's measure and centred in whatever they are given. Two instrument
+		   stacks of visibly different sizes read as a mistake. */
+		max-width: 150px;
+		margin-left: auto;
+		margin-right: auto;
+		/* Decoration. It must never take a click off the machine underneath it. */
+		pointer-events: none;
+	}
+	.gauges.left {
+		left: calc(max(2.5vw, 16px) + clamp(30px, 3vw, 48px) + clamp(10px, 1.3vw, 22px));
+		right: calc(
+			50% + var(--win) / 2 + clamp(16px, 2.4vw, 54px) + var(--dial) + clamp(10px, 1.3vw, 22px)
+		);
+	}
+	.gauges.right {
+		/* .flip is a fixed 24px, unlike the knobs opposite. */
+		right: calc(max(2.5vw, 16px) + 24px + clamp(10px, 1.3vw, 22px));
+		left: calc(
+			50% + var(--win) / 2 + clamp(16px, 2.4vw, 54px) + var(--dial) * 0.62 +
+				clamp(10px, 1.3vw, 22px)
+		);
+	}
+	@media (min-width: 1100px) {
+		.gauges {
+			display: flex;
+		}
+	}
+
+	/* A screen on the chassis: the void behind glass, with the same bezel the
+	   big window has, at a fifth of the weight. */
+	.port {
+		position: relative;
+		width: 100%;
+		aspect-ratio: 1;
+		border-radius: 50%;
+		overflow: hidden;
+		background: var(--machine-crt);
+		border: var(--ink) solid var(--machine-ink);
+		box-shadow: 0 var(--drop) 0 var(--machine-ink), inset 0 0 18px rgba(0, 0, 0, 0.75);
+	}
+	.port.wide {
+		aspect-ratio: 100 / 63;
+		border-radius: 8px;
+	}
+	.port svg {
+		display: block;
+		width: 100%;
+		height: 100%;
+		fill: none;
+		stroke: var(--yellow);
+		stroke-width: 2.2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		opacity: 0.82;
+	}
+	.port.wide svg {
+		stroke-width: 1.6;
+	}
+	/* Everything on these is line-work except the two things that are bodies:
+	   the swimmer's head and the needle's boss. */
+	.port :global(.solid) {
+		fill: var(--yellow);
+		stroke: none;
+	}
+	/* The construction under the drawing, held right back — it is what the
+	   figure was built from, not the figure. */
+	.port :global(.hair) {
+		opacity: 0.34;
+		stroke-width: 1.2;
+	}
+	.port :global(.spiral) {
+		stroke-width: 2.4;
+	}
+	/* The tail carries the whole read of the animal — the head is one blob — so
+	   it is drawn a shade heavier than the rest of the line-work. */
+	.port :global(.tail) {
+		stroke-width: 2.8;
+	}
+	/* Scanned, like every other piece of glass in the site. */
+	.raster {
+		position: absolute;
+		inset: 0;
+		background: var(--scanlines);
+		pointer-events: none;
+	}
+
+	/* THE TAIL BEATS by being scaled about the midpiece from +1 through 0 to -1.
+	   Through zero it is dead straight, which is the middle of a real stroke. */
+	.port :global(.tail) {
+		transform-box: view-box;
+		transform-origin: 54px 50px;
+		animation: beat 0.66s ease-in-out infinite alternate;
+	}
+	@keyframes beat {
+		from {
+			transform: scaleY(1);
+		}
+		to {
+			transform: scaleY(-1);
+		}
+	}
+	/* And the whole animal wanders, slowly, so it is swimming rather than
+	   flapping on the spot. */
+	.port :global(.swimmer) {
+		transform-box: view-box;
+		transform-origin: 50px 50px;
+		animation: wander 7.5s ease-in-out infinite alternate;
+	}
+	@keyframes wander {
+		from {
+			transform: translate(-5px, 4px) rotate(-7deg);
+		}
+		to {
+			transform: translate(5px, -4px) rotate(7deg);
+		}
+	}
+	/* The upright great circle opens and closes, which is what the silhouette of
+	   a turning globe does — and is honest, where spinning the whole drawing
+	   would just be a wheel. */
+	.port :global(.mer) {
+		transform-box: view-box;
+		transform-origin: 50px 50px;
+		animation: turn 9s ease-in-out infinite alternate;
+	}
+	@keyframes turn {
+		from {
+			transform: rotate(90deg) scaleY(1);
+		}
+		to {
+			transform: rotate(90deg) scaleY(0.07);
+		}
+	}
+
+	/* An analogue face, and this one belongs to the CHASSIS rather than to what
+	   is behind the window: yellow, inked, with a needle that never settles. */
+	.meter {
+		width: 100%;
+		aspect-ratio: 100 / 58;
+		padding: 5px 7px 3px;
+		border-radius: 8px;
+		background: var(--machine-light);
+		border: var(--ink) solid var(--machine-ink);
+		box-shadow: 0 var(--drop) 0 var(--machine-ink);
+	}
+	.meter svg {
+		display: block;
+		width: 100%;
+		height: 100%;
+		fill: none;
+		stroke: var(--machine-ink);
+		stroke-width: 2.4;
+		stroke-linecap: round;
+	}
+	.meter :global(.solid) {
+		fill: var(--machine-ink);
+		stroke: none;
+	}
+	.meter :global(.hair) {
+		stroke-width: 2;
+		opacity: 0.55;
+	}
+	.meter :global(.needle) {
+		transform-box: view-box;
+		transform-origin: 50px 51px;
+		stroke: var(--machine-red);
+		animation: sweep 4.6s ease-in-out infinite alternate;
+	}
+	@keyframes sweep {
+		from {
+			transform: rotate(-41deg);
+		}
+		to {
+			transform: rotate(37deg);
+		}
+	}
+
+	.tag,
+	.count {
+		font-family: var(--tech);
+		font-size: clamp(6px, 0.58vw, 8px);
+		letter-spacing: 0.22em;
+		text-transform: uppercase;
+		color: var(--machine-ink);
+		opacity: 0.62;
+		white-space: nowrap;
+	}
+	.count {
+		letter-spacing: 0.16em;
+		opacity: 0.5;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.port :global(.tail),
+		.port :global(.swimmer),
+		.port :global(.mer),
+		.meter :global(.needle) {
+			animation: none;
+		}
 	}
 
 	.vent {

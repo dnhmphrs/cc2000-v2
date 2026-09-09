@@ -2,11 +2,18 @@
 @import '$lib/styles/fonts.css';
 
 :root {
-	/* The ground is the deep blue, and the machine's yellow is the colour event
-	   on it. Kept in step with DEEP_BLUE in config/palette.js. */
+	/* The ground is the VOID, and the machine's yellow is the colour event on it.
+	   Kept in step with VOID in config/palette.js.
+
+	   It used to be the deep blue this site was built on before the middle three
+	   scenes became one black-and-gold shot, and the calculator's window looks
+	   STRAIGHT THROUGH to whatever is behind the page — so on a cold load, for as
+	   long as it takes the canvas to arrive, the machine sat there with a bright
+	   navy screen in it that then swapped to black. The page ground and the air
+	   behind the window are now the same colour, and there is nothing to swap. */
 	--ink-rgb: 240, 242, 248;
 
-	--bg: #0a246a;
+	--bg: #0a0a0c;
 	--panel: rgba(5, 18, 60, 0.92);
 
 	--ink: rgba(var(--ink-rgb), 1);
@@ -25,6 +32,10 @@
 	--machine-red: #e5372a;
 	--machine-teal: #2fb3a6;
 	--machine-orange: #e8802a;
+	/* The glass in the machine's own instruments: the CRT and the two portholes
+	   on the chassis. The void, exactly — what is behind the window IS the void,
+	   so a porthole beside it that is any other black reads as a hole. */
+	--machine-crt: #0a0a0c;
 
 	/* The machine is DRAWN, not rendered: one heavy ink weight and one hard,
 	   unblurred drop, used on everything bolted to the chassis. Keeping both as
@@ -67,6 +78,13 @@
 
 	/* NB Architekt is the site's own face and carries the whole interface. */
 	--face: 'nb-architekt', ui-sans-serif, system-ui, -apple-system, sans-serif;
+	/* And the machine's own face, which is the same one — but it is MONOSPACED,
+	   and every readout, dial label and line of the manifesto is set in it on the
+	   assumption that it is. This was used in six files and defined in none, so
+	   `font-family: var(--tech)` was invalid at computed-value time and quietly
+	   inherited whatever was above it. The fallback matters as much as the face:
+	   a proportional stand-in re-flows the whole machine when the real one lands. */
+	--tech: 'nb-architekt', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 html,
@@ -280,7 +298,7 @@ input[type='range']::-moz-range-thumb {
 	border-color: var(--yellow);
 }
 .panel select option {
-	background: #0a246a;
+	background: var(--machine-crt);
 	color: var(--ink);
 }
 

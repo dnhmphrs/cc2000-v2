@@ -3,23 +3,30 @@
    element that asked for them silently fell back — one of the several
    half-migrations this redesign clears out. */
 
+/* BLOCK, not swap, and the faces are preloaded in +layout.svelte so the block
+   period is over before anything wants to paint. The machine is a DRAWING and
+   its type is part of the drawing: a proportional stand-in for a monospaced
+   technical face re-flows every label, readout and manifesto line on the page
+   the moment the real one arrives, and that re-flow is most of what made a cold
+   load feel jerky. Better to wait a few frames and paint once. */
+
 @font-face {
 	font-family: nb-architekt;
 	src: url(/fonts/NB-Architekt-Pro-Light.woff) format('woff');
 	font-weight: 300;
-	font-display: swap;
+	font-display: block;
 }
 
 @font-face {
 	font-family: nb-architekt;
 	src: url(/fonts/NB-Architekt-Pro-Regular.woff) format('woff');
 	font-weight: 400;
-	font-display: swap;
+	font-display: block;
 }
 
 @font-face {
 	font-family: nb-architekt;
 	src: url(/fonts/NB-Architekt-Pro-Bold.woff) format('woff');
 	font-weight: 700;
-	font-display: swap;
+	font-display: block;
 }
