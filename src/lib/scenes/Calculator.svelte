@@ -52,7 +52,8 @@
 		'in the earth year 2000, human technology advanced',
 		'allowing all of mankind to calculate the song playing',
 		'at their exact moment of conception',
-		'with the statistical accuracy only the internet can provide'
+		'with the statistical accuracy',
+		'only the internet can provide'
 	];
 
 	const MIN_YEAR = 1958;

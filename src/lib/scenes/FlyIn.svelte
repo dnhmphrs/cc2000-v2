@@ -18,7 +18,9 @@
 		VOID
 	} from '$lib/config';
 	import { CIRCUMRADIUS } from '$lib/three/geometry/icosahedron';
-	import { fieldFade } from '$lib/store/store';
+	import { DEV, DEV_AT } from '$lib/config';
+	import { get } from 'svelte/store';
+	import { fieldFade, gate } from '$lib/store/store';
 
 	// ── Scene 2: the fly in ──────────────────────────────────────────────────
 	// Black air, one swimmer riding the lens, and three hundred units of travel
@@ -112,17 +114,54 @@
 		return k / Math.sqrt(1 + (k * k) / (END_D * END_D)) / TUNNEL.shellR;
 	}
 
+	// The two questions this scene stops to ask, latched so each fires once per
+	// run — a `p > x` test is not a latch, because at any normal frame rate a
+	// short window advances past itself in a single frame.
+	let askedDob = false;
+	let askedSpicy = false;
+
 	export function enter() {
 		t = 0;
+		askedDob = false;
+		askedSpicy = false;
 		world.reset();
 		world.egg.setCoreRatio(coreRatio());
 	}
 
 	export function update(dt) {
+		// ── THE FLIGHT TAKES THE ANSWERS ─────────────────────────────────────
+		// There is no machine in this build, so the run asks its two questions on
+		// the way in — and while either is open the scene HOLDS. `t` stops and
+		// `elapsed` does not: the swimmer goes on rolling and the mote field goes
+		// on drifting, so what is on screen is a flight waiting rather than a
+		// paused frame.
+		//
+		// Holding t, rather than running a second clock alongside it, is what
+		// keeps every frame a pure function of progress. The frame drawn at a held
+		// t IS the frame the run would draw at that p, so ?at= is still exact and
+		// every screenshot check in the project still means what it meant.
+		const held = get(gate);
 		elapsed += dt;
-		t += dt;
+		if (!held) t += dt;
 		world.tick(dt);
 		const p = clamp01(t / T.duration);
+
+		// The questions, in the order the shot makes room for them: the birthday
+		// while the swimmer is the only thing on screen, the spice once the ovum
+		// is up and there is something to swim at.
+		//
+		// NOT while the scene is pinned. ?at= is for looking at one frame of the
+		// flight, and a popup over it is the one thing that stops you seeing it —
+		// every contact sheet past askDob would come back with a dialog on it.
+		if (!held && !(DEV.on && DEV_AT != null)) {
+			if (!askedDob && p >= T.askDob) {
+				askedDob = true;
+				gate.set('dob');
+			} else if (!askedSpicy && p >= T.askSpicy) {
+				askedSpicy = true;
+				gate.set('spicy');
+			}
+		}
 
 		// ── The camera ───────────────────────────────────────────────────────
 		// Flat out, and then a stop. The lens has to be set BEFORE anything reads

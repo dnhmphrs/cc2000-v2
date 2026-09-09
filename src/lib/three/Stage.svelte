@@ -2,7 +2,13 @@
 	import { onMount, onDestroy, tick } from 'svelte';
 	import { get } from 'svelte/store';
 	import * as THREE from 'three';
-	import { scene as sceneStore, sceneTone, monitorRect, backdrop } from '$lib/store/store';
+	import {
+		scene as sceneStore,
+		sceneTone,
+		monitorRect,
+		backdrop,
+		goingBack
+	} from '$lib/store/store';
 	import { CANVAS_FADE, FLASH_HOLD, FLASH_FALL, clamp01, DEV, DEV_AT } from '$lib/config';
 	import { createTunnel } from './world/tunnel';
 	import { createLattice } from './world/lattice';
@@ -128,11 +134,11 @@
 			// stays on screen for good, with the machine sitting in its monitor.
 			// That is the end of the loop now; it does not go back to full screen.
 			if (held && $monitorRect) {
-				// On the way home the room is not merely held — the camera flies
-				// into its monitor while the calculator grows out of it. Two sides
-				// of one move, so they are driven from the same duration and the
-				// calculator locks itself to the rect this republishes.
-				if (name === 'calculator') {
+				// On the way home the camera flies THROUGH the monitor. The room is
+				// still the scene on screen while it happens — nothing else has been
+				// handed the run yet — so the signal is a store rather than a scene
+				// change. See director.again().
+				if ($goingBack) {
 					if (!returning) {
 						returning = true;
 						held.beginReturn?.();

@@ -131,6 +131,19 @@ export const SCENES = scale({
 		// not begin to surface until it is most of the way done.
 		spermIn: [0.0, 0.5],
 
+		// ── WHERE THE FLIGHT STOPS TO ASK ────────────────────────────────────
+		// Two progress marks, not windows: the scene HOLDS at each until the popup
+		// is answered (see the `gate` store), so what follows each one is however
+		// long the operator takes.
+		//
+		//   askDob    the swimmer is past the lens and pulling ahead, and it is the
+		//             only thing on screen — the halo has not opened yet, so there
+		//             is nothing behind the popup but black and a mote field.
+		//   askSpicy  the ovum is up and the swimmer has something to swim at, so
+		//             the second question is asked over the thing it is about.
+		askDob: 0.24,
+		askSpicy: 0.66,
+
 		// It breaks formation and goes in. Its own curve, and a hard one: this is
 		// the only acceleration in the scene and it happens against a camera that
 		// is by then slowing down.
