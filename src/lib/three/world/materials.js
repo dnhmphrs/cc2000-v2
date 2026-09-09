@@ -402,6 +402,9 @@ const WAVE_FIELD = `
 	uniform vec3 uAxes[6];
 	uniform float uRing;
 	uniform float uPhase;
+	uniform float uChop;
+	uniform float uFurrow;
+	uniform float uLobe;
 
 	float waveField(vec3 n) {
 		float h = 0.0;
@@ -417,11 +420,53 @@ const WAVE_FIELD = `
 		// And the mode rings as it settles.
 		return h * (1.0 + uRing * sin(uPhase * 5.5));
 	}
+
+	// ── EVERYTHING ELSE ──────────────────────────────────────────────────────
+	// A struck sphere does not ring in one mode. It rings in all of them at once
+	// and the high ones damp fastest, and what is left at the end is the lowest
+	// symmetric mode there is. waveField() above is that end state. This is the
+	// mess it comes out of: three travelling wavefronts on incommensurate axes,
+	// going nowhere in particular, at frequencies that share no common period so
+	// the surface never repeats.
+	//
+	// Without it the body simply arrives at the twelve, which is an answer with
+	// no working. With it the skin churns first and the icosahedron RESOLVES out
+	// of the churn, which is the whole difference between a shape appearing and
+	// a body dividing.
+	float chop(vec3 n) {
+		float s = sin(dot(n, vec3(0.93, 0.29, 0.23)) * 4.3 + uPhase * 2.6);
+		s += sin(dot(n, vec3(-0.32, 0.86, 0.39)) * 3.7 - uPhase * 2.1);
+		s += sin(dot(n, vec3(0.21, -0.44, 0.87)) * 5.1 + uPhase * 3.3);
+		return s * 0.3333;
+	}
+
+	// What the skin is actually doing, all in. The two halves of the invariant
+	// are on their own clocks — the furrow is cut before the caps come out — and
+	// the unresolved ringing is laid over both and damped away as they win.
+	//
+	// At uChop 0 with both halves in, this IS waveField(): the end state is
+	// untouched, and every frame before it is on the way there.
+	float relief(vec3 n) {
+		float f = waveField(n);
+		float d = f > 0.0 ? f * uLobe : f * uFurrow;
+		return d + uChop * chop(n);
+	}
 `;
 
 export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 	return new THREE.ShaderMaterial({
 		transparent: true,
+		// THE ONE OVER-BLENDED SHADER IN THE SITE, and it has to say so. Every
+		// other material here is ADD, where the blend factors are given
+		// explicitly and this flag is irrelevant. This one takes three.js's
+		// NormalBlending, and three.js picks the blend function from
+		// material.premultipliedAlpha — which defaults to FALSE, meaning
+		// (SRC_ALPHA, ONE_MINUS_SRC_ALPHA). The fragment below already hands back
+		// premultiplied colour, as the file header requires, so leaving this
+		// unset multiplied the whole surface by alpha a SECOND time: the field
+		// landed at a-squared and the conception's own body was drawn at a fifth
+		// of the weight the numbers said.
+		premultipliedAlpha: true,
 		// IT OCCLUDES. That is the point of it, and it is the one material in the
 		// site that writes depth: the cage's far half has to go behind something.
 		depthWrite: true,
@@ -446,26 +491,24 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 			// The division. 0..1 each, and the furrow leads the lobe.
 			uFurrow: { value: 0 },
 			uLobe: { value: 0 },
+			// The unresolved ringing the division comes out of.
+			uChop: { value: 0 },
 			uRing: { value: 0 },
 			uPhase: { value: 0 }
 		},
 		vertexShader: `
 			${WAVE_FIELD}
 			uniform float uAmp;
-			uniform float uFurrow;
-			uniform float uLobe;
 			varying vec3 vN;
 			varying vec3 vV;
 			varying vec3 vLocal;
 			void main() {
 				vLocal = position;
 				vec3 n = normalize(position);
-				// The skin actually moves. Along its own normal, by the field —
-				// and the two halves of the field move it on their own clocks, so
-				// the nodal net is scored IN before the twelve caps swell OUT.
-				float f = waveField(n);
-				float d = f > 0.0 ? f * uLobe : f * uFurrow;
-				vec3 p = position + n * (uAmp * d);
+				// The skin actually moves, along its own normal, by the relief:
+				// the churn first, the furrow cut into it, then the twelve caps
+				// out of that.
+				vec3 p = position + n * (uAmp * relief(n));
 				vec4 mv = modelViewMatrix * vec4(p, 1.0);
 				vN = normalize(normalMatrix * n);
 				vV = normalize(-mv.xyz);
@@ -482,8 +525,6 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 			uniform float uRimGain;
 			uniform float uOpacity;
 			uniform float uGlow;
-			uniform float uFurrow;
-			uniform float uLobe;
 			varying vec3 vN;
 			varying vec3 vV;
 			varying vec3 vLocal;
@@ -496,7 +537,9 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 
 			void main() {
 				vec3 n = normalize(vLocal);
-				float f = waveField(n);
+				// The SAME number the skin is displaced by, so what is drawn and
+				// what is moving are one thing rather than two that agree.
+				float f = relief(n);
 
 				// It is drawn as a CONTOUR MAP, not as a shaded ball. The fill is
 				// held right back — a gold sphere is a bauble and this is a readout
@@ -513,16 +556,16 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 				float bands = rule(f * 5.0, 0.055);
 				float node = 1.0 - smoothstep(0.0, 0.045, abs(f));
 
-				// The drawing divides on the same two clocks the skin does. The
-				// nodal net and the dips come up with the FURROW — the score marks
-				// arrive as the cut does — and the caps, the crests and the level
-				// sets come up with the LOBES that are rising out of it.
+				// No separate gating on the two halves any more — relief() already
+				// carries them, so the contours ARE the churn early on and the
+				// icosahedral net once it has resolved, without the drawing and
+				// the displacement being told the same story twice.
 				vec3 col = uInk;
-				col = mix(col, uWave, lit * 0.42 * uGlow * uLobe);
-				col = mix(col, uHot, crest * 0.34 * uGlow * uLobe);
-				col += uWave * dip * 0.07 * uGlow * uFurrow;
-				col += uWave * bands * 0.3 * uGlow * uLobe;
-				col += uHot * node * 0.75 * uGlow * uFurrow;
+				col = mix(col, uWave, lit * 0.42 * uGlow);
+				col = mix(col, uHot, crest * 0.34 * uGlow);
+				col += uWave * dip * 0.07 * uGlow;
+				col += uWave * bands * 0.3 * uGlow;
+				col += uHot * node * 0.75 * uGlow;
 
 				// And the rim — against the RAY, for the reason skinMaterial gives.
 				float rim = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), uRimPower);

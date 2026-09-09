@@ -52,10 +52,18 @@
 	// underneath them, and the skin relaxes back to a sphere under a frame that
 	// is already standing where its lobes were.
 	//
-	// ── And it does not go away ──────────────────────────────────────────────
-	// The surface drops to a ghost, but it stays, and the field stays drawn on
-	// it: it is the shell the whole rest of the run happens inside, all the way
-	// through the computation. See Computation.svelte.
+	// ── And it does not fade. At all. ────────────────────────────────────────
+	// The body stays at full weight, and the field stays drawn on it at full
+	// weight, for the whole of this scene and the whole of the next one. What
+	// relaxes is the DISPLACEMENT — the skin rounds up once it has finished
+	// dividing — and nothing else.
+	//
+	// It can do that because occlusion and opacity are asked for separately (see
+	// egg.setCore). Every edge of the icosahedron is a chord and therefore inside
+	// this surface, so while the body writes depth there is nothing to see
+	// however far the frame has drawn itself. It stops writing depth the moment
+	// the corners are struck — before anything is drawn inside it — and from
+	// there the frame draws over a body that is still fully there.
 	//
 	// The whole scene is at ICOSA.tilt and never turns. There is no page to
 	// square up any more: the drawing and the solid are the same object.
@@ -91,21 +99,22 @@
 		const lobe = smootherstep(span(p, T.lobe));
 		const lit = smoothstep(0, 1, span(p, T.wake));
 		// The mode rings as it is excited and damps as it settles, which is what
-		// an excited normal mode does and is the only motion on the surface.
+		// an excited normal mode does.
 		const ring = (1 - smootherstep(span(p, T.ring))) * T.ringPeak;
-		// The skin rounds up again once the frame is standing on it — it has to,
-		// or thirty edges are drawn inside a twelve-lobed ball and none of them
-		// read. The FIELD is not what fades; the displacement is.
-		const ghost = easeInOutCubic(span(p, T.ghost));
+		// The skin rounds up once it has finished dividing. This is the
+		// DISPLACEMENT relaxing — the field is not touched.
+		const round = easeInOutCubic(span(p, T.round));
 		const union = Math.sin(span(p, T.union) * Math.PI) * T.unionPeak;
-		// How far the caps stand proud of the sphere. The field peaks at exactly 1
-		// on the twelve, so this IS the cap height, and the frame rides it.
-		const amp = lit * T.amp * (1 - ghost);
+		// How far the caps stand proud of the sphere. The relief peaks at exactly
+		// 1 on the twelve, so this IS the cap height, and the frame rides it.
+		const amp = lit * T.amp * (1 - round);
 
 		world.egg.setWave({
 			furrow,
 			lobe,
-			glow: lit * (1 - ghost * 0.42) * (1 + union * 0.6),
+			// Every other mode, damped out as the icosahedral one wins.
+			chop: (1 - smootherstep(span(p, T.chop))) * T.chopPeak,
+			glow: lit * T.handoverGlow * (1 + union * 0.6),
 			// Big while it is dividing — a body pulling itself into twelve is a
 			// shape change, not a shading change — and flat by the time the frame
 			// has closed over it.
@@ -113,7 +122,10 @@
 			ring,
 			phase: t
 		});
-		world.egg.setCore(lit * (1 - ghost * 0.55));
+		// FULL WEIGHT, and it stays there. What it stops doing is OCCLUDING, the
+		// moment the corners are struck — which is before a single edge is drawn,
+		// so nothing is hidden and then revealed.
+		world.egg.setCore(lit * T.handoverCore, p < T.corners[0]);
 
 		// The blueprint field rules itself on under the wave. It is at zero on the
 		// frame this scene opens on, which is what lets the fly-in's `deep` and

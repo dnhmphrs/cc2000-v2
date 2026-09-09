@@ -234,14 +234,25 @@ export function createEgg(radius, opts = {}) {
 		// 0..1 — the core's body. It writes depth, so at zero it is switched off
 		// outright rather than merely faded: an invisible occluder is still an
 		// occluder, and in the void it would swallow the icosahedron whole.
-		setCore(o) {
+		// `occlude` overrides the depth-write rule. Left null it is the old
+		// behaviour — write depth once actually opaque, because a part-faded
+		// occluder is the worst of both: it hides what is behind it while you can
+		// still see through it. That is right in the fly-in, where this body is
+		// what gives the cage an inside and an outside.
+		//
+		// It is WRONG in the void, where the icosahedron is built inside this
+		// sphere. Every edge is a chord and therefore inside the surface, so
+		// while the body occludes there is nothing to see however far the frame
+		// has drawn itself — and when the threshold is finally crossed a beat's
+		// worth of line-work appears in one frame. Tying opacity and occlusion
+		// together also makes them impossible to ask for separately, and this
+		// scene wants exactly that: a body at full weight that does not hide what
+		// is inside it.
+		setCore(o, occlude = null) {
 			if (!coreMat) return;
 			coreMat.uniforms.uOpacity.value = o;
 			body.visible = o > 0.004;
-			// And it only writes depth once it is actually opaque. A part-faded
-			// occluder is the worst of both: it hides what is behind it while you
-			// can still see through it.
-			coreMat.depthWrite = o > 0.85;
+			coreMat.depthWrite = occlude === null ? o > 0.85 : occlude;
 		},
 
 		// The core's own rim, when it is not the outermost thing — i.e. in the
@@ -252,6 +263,9 @@ export function createEgg(radius, opts = {}) {
 			rim.visible = o > 0.004;
 		},
 
+		// `chop` is the unresolved ringing the division comes out of — every other
+		// mode of a struck sphere, damped away as the icosahedral one wins.
+		//
 		// The wave, and the division on it. All six five-fold axes are always in
 		// — the field is the whole icosahedral invariant or it is nothing — and
 		// what develops is the CLEAVAGE: `furrow` (0..1) cuts the nodal net into
@@ -259,11 +273,12 @@ export function createEgg(radius, opts = {}) {
 		// order. `glow` is how brightly the field is drawn, `amp` how far it moves
 		// the skin as a fraction of the core's radius, and `ring` the amplitude of
 		// the mode's own oscillation as it settles.
-		setWave({ furrow = 0, lobe = 0, glow = 0, amp = 0, ring = 0, phase = null } = {}) {
+		setWave({ furrow = 0, lobe = 0, chop = 0, glow = 0, amp = 0, ring = 0, phase = null } = {}) {
 			if (!coreMat) return;
 			const u = coreMat.uniforms;
 			u.uFurrow.value = furrow;
 			u.uLobe.value = lobe;
+			u.uChop.value = chop;
 			u.uGlow.value = glow;
 			u.uAmp.value = amp;
 			u.uRing.value = ring;

@@ -281,6 +281,25 @@
 		// exact coordinates. Stated anyway, so a seek straight into this scene
 		// starts where a run through it would.
 		world.setWireScale(1);
+		// AND SO IS THE FIELD, which is the whole of what this scene inherits.
+		// It used to be carried by nothing but uniform state left behind by the
+		// conception, so the scene was not a function of its own progress: run
+		// into from scene 3 it drew the icosahedral field across the core, and
+		// entered by a ?at= seek or the dev jump — after lattice.reset() has
+		// zeroed those uniforms — it drew a bare unmarked ball. Two different
+		// pictures at the same progress, and the seek is what every contact sheet
+		// of this scene was taken with.
+		//
+		// The numbers come from SCENES.conception, which is where the other side
+		// of the hand-over reaches them, so the two cannot drift apart.
+		world.egg.setWave({
+			furrow: 1,
+			lobe: 1,
+			chop: 0,
+			glow: SCENES.conception.handoverGlow,
+			amp: 0,
+			ring: 0
+		});
 		// The camera's range belongs to applyFrustum now; only the truck is ours.
 		world.camera.position.x = ICOSA.camPos[0];
 		world.camera.position.y = ICOSA.camPos[1];
@@ -340,14 +359,14 @@
 		// conception drew it at, all the way to the fall.
 		const thin = easeInOutCubic(span(p, T.shellThin));
 		world.egg.setShell(lerp(ICOSA.shellSolid, ICOSA.shellFaint, thin));
-		// And the wave's own surface thins with it — but IT DOES NOT GO. The
-		// conception's field is still drawn on it, and it grows with the sphere,
-		// so the whole computation happens inside the thing the conception made:
-		// the frame, the six rooms and the drafting all hang in a faint icosahedral
-		// standing wave that was the ovum ten seconds ago. It is well under the
-		// threshold at which the core writes depth (see egg.setCore), so it tints
-		// and never occludes.
-		world.egg.setCore(lerp(0.45, ICOSA.coreGhost, thin));
+		// AND THE FIELD DOES NOT THIN. It is the one object in the run with any
+		// history in it — the frame, the six rooms and the drafting all hang
+		// inside the thing that was the ovum ten seconds ago — and every version
+		// of this that faded it, to a ghost or to nothing, threw that away. It is
+		// held at exactly the weight the conception hands over, for the whole
+		// scene, and it is told explicitly not to occlude rather than being kept
+		// under a threshold to stop it (see egg.setCore).
+		world.egg.setCore(SCENES.conception.handoverCore, false);
 		world.setCorners(1 - thin);
 		world.egg.group.scale.setScalar(
 			lerp(1, ICOSA.sphereGrow, easeInOutCubic(span(p, T.sphereGrow)))
@@ -445,8 +464,9 @@
 			world.setLineOpacity(fade);
 			world.egg.setShell(ICOSA.shellFaint * (1 - smoothstep(0, 0.4, z)));
 			// The shell the whole run has been inside goes with it, on the way into
-			// the room. It is the last thing of the machine to leave.
-			world.egg.setCore(ICOSA.coreGhost * (1 - smoothstep(0, 0.35, z)));
+			// the room. It is the last thing of the machine to leave, and the only
+			// place in the run where it is allowed to.
+			world.egg.setCore(SCENES.conception.handoverCore * (1 - smoothstep(0, 0.35, z)), false);
 			panes.forEach((pane, i) => {
 				if (!pane) return;
 				if (i === target) pane.setLineDim(1 - smoothstep(0.15, 0.7, z));
