@@ -253,9 +253,6 @@
 	// ── Run ──────────────────────────────────────────────────────────────────
 	export function enter() {
 		t = 0;
-		px = 0;
-		py = 0;
-		camTo.set(0, 0, 0);
 		measured = false;
 		searchLatched = false;
 		zoomLatched = false;
@@ -540,28 +537,6 @@
 		// measured at whatever it is actually flying at.
 		world.setFocus(lerp(focusFrom, focusTo, k));
 		world.applyFrustum(frustum);
-		publishMonitor();
-	}
-
-	// ── The room, being looked at ────────────────────────────────────────────
-	// A couple of percent of camera truck, following the cursor, for as long as
-	// the room is on screen. It costs nothing and it is the only thing that turns
-	// six flat layers hung at different depths into a room you are standing in —
-	// the lens does the rest, because the bed is three units nearer than the wall
-	// and moving the camera is the one way to say so.
-	//
-	// Eased hard, so it is a drift rather than a cursor-tracking gimmick, and
-	// republished so the result panel stays welded to the glass.
-	const PARALLAX = 0.028;
-	let px = 0;
-	let py = 0;
-
-	export function parallax(nx, ny, dt) {
-		const k = Math.min(1, dt * 2.4);
-		px += (nx * frustum * PARALLAX - px) * k;
-		py += (-ny * frustum * PARALLAX - py) * k;
-		world.camera.position.x = camTo.x + px;
-		world.camera.position.y = camTo.y + py;
 		publishMonitor();
 	}
 

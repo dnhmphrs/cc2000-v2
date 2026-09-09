@@ -7,12 +7,9 @@
 		clamp01,
 		glide,
 		accelerate,
-		easeOutCubic,
 		easeInOutCubic,
 		smoothstep,
-		smootherstep,
 		TUNNEL,
-		SHEET,
 		CAM_END,
 		ICOSA,
 		conceptionFrustum,
@@ -178,45 +175,26 @@
 		const inside = TUNNEL.eggZ + TUNNEL.shellR * coreRatio() * 0.35;
 		const ahead =
 			dive <= 0
-				? lerp(-TUNNEL.spermFrom.z, lead, easeOutCubic(arrive))
+				? lerp(-TUNNEL.spermFrom.z, lead, accelerate(arrive, 0.6))
 				: lerp(lead, camZ - inside, accelerate(dive, T.divePower));
 
 		// It rides in front of the LENS, so it goes where the lens goes: leaving
 		// it on the world axis while the camera wandered pushed it into the corner
 		// of the frame for the whole middle of the scene.
-		//
-		// And its entry offset is measured ON SCREEN — spermFrom.x/y are
-		// half-heights of the frame at whatever distance it currently is, so it
-		// keeps its place low in the frame and drifts to centre. A fixed WORLD
-		// offset, which is what was here, is nine screen-widths off to the side
-		// when the thing is a unit from the lens: it slid in from the wings
-		// instead of coming up from behind you.
 		const off = 1 - arrive;
-		const half = Math.max(ahead, 0.2) * Math.tan((world.camera.fov * Math.PI) / 360);
 		world.sperm.position.set(
-			world.camera.position.x + TUNNEL.spermFrom.x * off * half,
-			world.camera.position.y + TUNNEL.spermFrom.y * off * half,
+			world.camera.position.x + TUNNEL.spermFrom.x * off,
+			world.camera.position.y + TUNNEL.spermFrom.y * off,
 			camZ - ahead
 		);
 
-		// On once it is properly clear of the near plane — the body is two units
-		// long and centred, so anything closer is a body cut in half by the lens —
-		// and off once it is inside. Driven by where it ACTUALLY is rather than by
-		// the clock, so it can never be faded up while still behind the camera.
-		const shown = smoothstep(1.2, 3.4, ahead);
+		// On the moment it is clear of the near plane, off once it is inside.
+		// Driven by where it ACTUALLY is rather than by the clock, so it can never
+		// be faded up while still behind the camera.
+		const shown = smoothstep(0.5, 3.0, ahead);
 		const o = shown * (1 - span(p, T.spermGone));
 		world.spermMaterial.uniforms.uOpacity.value = o;
 		world.sperm.visible = o > 0.004;
-
-		// ── The flower ───────────────────────────────────────────────────────
-		// A ruled grid, flat and facing you, hanging behind the ovum. It turns
-		// into its own exponential — five bands becoming five petals — and then
-		// closes onto the ovum by inverse stereographic projection. What it shuts
-		// into is the lattice the next scene's wave runs on. See world/sheet.js.
-		world.sheet.setRadius(TUNNEL.shellR * coreRatio() * SHEET.shell);
-		world.sheet.setOpacity(smootherstep(span(p, T.sheetIn)));
-		world.sheet.setExp(smootherstep(span(p, T.sheetTurn)));
-		world.sheet.setClose(easeInOutCubic(span(p, T.sheetClose)));
 
 		// ── The ovum ─────────────────────────────────────────────────────────
 		// The halo arrives BEFORE anything else does, which is what makes it read

@@ -159,6 +159,14 @@ function vars(kind) {
 	};
 }
 
+// Where the machine's window sits down the viewport, 0..1. The launch warps the
+// screen into the lens about that point, and it has to be readable from JS as a
+// number now that the launch also has a fit to compose with. Same source as
+// --win-y, so the two cannot drift.
+export function windowY(kind) {
+	return (CHASSIS[kind] || CHASSIS.landscape).winY;
+}
+
 // ── The way home ─────────────────────────────────────────────────────────────
 // How much of the viewport the room's monitor glass ends up covering when the
 // camera has finished flying into it.

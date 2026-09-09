@@ -2,52 +2,36 @@
 @import '$lib/styles/fonts.css';
 
 :root {
-	/* The ground is the VOID, and gold is the only colour on it. The site used to
-	   open on deep blue with a yellow machine sitting on it and then spend the
-	   next thirty seconds in black and gold, which meant the homepage belonged to
-	   a different site from the one it was the front of. Kept in step with VOID
-	   in config/palette.js. */
-	--ink-rgb: 236, 226, 202;
+	/* The ground is the deep blue, and the machine's yellow is the colour event
+	   on it. Kept in step with DEEP_BLUE in config/palette.js. */
+	--ink-rgb: 240, 242, 248;
 
-	--bg: #0a0a0c;
-	--panel: rgba(10, 10, 12, 0.9);
+	--bg: #0a246a;
+	--panel: rgba(5, 18, 60, 0.92);
 
 	--ink: rgba(var(--ink-rgb), 1);
 	--ink-dim: rgba(var(--ink-rgb), 0.66);
 	--ink-faint: rgba(var(--ink-rgb), 0.34);
 
-	--yellow: #f0c45c;
+	--yellow: #ffd426;
 
-	/* The Conception Calculator's own chassis. BLACK AND GOLD, like everything
-	   else: a dark instrument panel with its line-work etched in gold, not a
-	   yellow plastic toy. `--machine-ink` is the pen the whole thing is drawn
-	   with, and it is the gold — so every outline, every label and every dial
-	   marking on the machine is the same gold as the icosahedron.
+	/* The Conception Calculator's own chassis — the landing is the machine.
 	   Kept in step with config/palette.js MACHINE. */
-	--machine: #100f0d;
-	--machine-light: #1c1a16;
-	--machine-dark: #070706;
-	--machine-ink: #f0c45c;
-	--machine-lamp: #ff5a2a;
+	--machine: #f2b427;
+	--machine-light: #ffdc63;
+	--machine-dark: #c9820f;
+	--machine-ink: #17120c;
+	--machine-lamp: #ff4d1f;
 	--machine-red: #e5372a;
 	--machine-teal: #2fb3a6;
-	--machine-orange: #c99433;
+	--machine-orange: #e8802a;
 
-	/* One line weight and one drop, used on everything bolted to the chassis, so
-	   every part is drawn by the same pen.
-
-	   The weight is a HAIRLINE and the drop is GONE. Three-pixel outlines with a
-	   five-pixel hard offset shadow is how a cartoon is inked, and this is meant
-	   to be an instrument: the same drawing at one pixel with no drop reads as
-	   etched rather than as printed. */
-	--ink: 1px;
-	--drop: 0px;
-
-	/* How far the machine's chassis stops short of the viewport on a wide screen,
-	   so the void it is standing on shows down both sides. The site is otherwise
-	   dead centred and edge to edge, and a machine with no edge is a background,
-	   not an object. */
-	--rim: max(0px, calc((100vw - 1180px) / 2));
+	/* The machine is DRAWN, not rendered: one heavy ink weight and one hard,
+	   unblurred drop, used on everything bolted to the chassis. Keeping both as
+	   single variables is what stops it becoming a pile of unrelated ornament —
+	   every part is outlined by the same pen and lit from the same direction. */
+	--ink: 3px;
+	--drop: 5px;
 
 	/* The two halves of the glass, each defined ONCE and used wherever glass is
 	   drawn — the CRT in the calculator and the full-screen sheet — because they

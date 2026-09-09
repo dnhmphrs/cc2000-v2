@@ -98,11 +98,8 @@ export const SCENES = scale({
 		motesIn: [0.0, 0.04],
 		motesOut: [0.8, 0.94],
 
-		// The swimmer comes past FROM BEHIND — thirty-four units back, straight up
-		// the axis, easing the whole way — and settles in front of the lens. Four
-		// seconds of it, because the shot it is doing is the one at the top of
-		// Star Wars and that shot is slow.
-		spermIn: [0.0, 0.32],
+		// The swimmer comes past from behind and settles in front of the lens.
+		spermIn: [0.015, 0.13],
 
 		// It breaks formation and goes in. Its own curve, and a hard one: this is
 		// the only acceleration in the scene and it happens against a camera that
@@ -130,20 +127,6 @@ export const SCENES = scale({
 		// An ENABLE, not a fade: what actually brings the cage up is the fog
 		// thinning as the camera closes on it. See FlyIn.svelte.
 		eggIn: [0.06, 0.34],
-
-		// ── THE FLOWER ───────────────────────────────────────────────────────
-		// A ruled grid hanging in the air behind the ovum, five parallel bands of
-		// it, flat and facing you. Then it TURNS INTO ITS OWN EXPONENTIAL — the
-		// bands curling into five petals radiating from the middle, every line
-		// bending through its own logarithmic spiral on the way — and then the
-		// whole plane CLOSES onto the ovum by inverse stereographic projection,
-		// shutting over it and the swimmer like a flower at dusk.
-		//
-		// What it closes into is a grid ON the sphere, which is the surface the
-		// next scene's standing wave comes up on. See world/sheet.js.
-		sheetIn: [0.4, 0.58],
-		sheetTurn: [0.5, 0.78],
-		sheetClose: [0.66, 0.99],
 
 		// ── THE HAND-OVER ────────────────────────────────────────────────────
 		// There is no flash any more. The fly-in simply ENDS ON THE PICTURE THE
@@ -187,9 +170,6 @@ export const SCENES = scale({
 	conception: {
 		duration: 6.4,
 
-		// The flower is still shut over it. It goes as the field comes up through
-		// it — the lattice on the sphere becoming the wave on the sphere.
-		sheetOut: [0.05, 0.3],
 		// The field lights up on the surface it was already sitting on.
 		wake: [0.0, 0.09],
 		// And divides. 0 → 6 axes.
@@ -231,17 +211,12 @@ export const SCENES = scale({
 		// through that once it is out, which is what stops the two reading as one
 		// undifferentiated bloom, and what makes the machine look as though it is
 		// working the answer out rather than displaying it.
-		open: [0.0, 0.17],
-		schematic: [0.015, 0.19],
-		// A BEAT ON THE WORKING ALONE. The arms are out, the spirals are turning at
-		// the ends of them, and there is nothing else on screen — the rooms do not
-		// start arriving until a second and a half later. That gap is the only
-		// chance in the run to actually read the golden rectangle's subdivision,
-		// and it was two frames long.
-		rooms: [0.26, 0.42],
+		open: [0.0, 0.16],
+		schematic: [0.015, 0.2],
+		rooms: [0.16, 0.34],
 		// And the drafting steps back once the rooms are up, or it is clutter over
 		// the only thing in the scene with any colour in it.
-		draftOut: [0.34, 0.5],
+		draftOut: [0.27, 0.44],
 
 		// The sphere stays — it is the thing the frame is held inside — but thins
 		// and opens out off the frame it was skin-tight on, so the rooms come
@@ -253,7 +228,7 @@ export const SCENES = scale({
 		// else — it arrives with the panes and goes out with the zoom. It is a
 		// SPACE, so it never comes above a whisper: the moment it is as bright as
 		// the drafting it stops being the room and becomes furniture in it.
-		cageIn: [0.12, 0.3],
+		cageIn: [0.1, 0.28],
 		cagePeak: 0.5,
 
 		// ── THE SURVEY ───────────────────────────────────────────────────────
@@ -267,7 +242,7 @@ export const SCENES = scale({
 		// match, which is a true dolly zoom: the framing does not change and the
 		// SPACE does. Near rooms swell off the frame, far ones fall away, and the
 		// thing stops being a diagram for two and a half seconds.
-		survey: [0.34, 0.54],
+		survey: [0.28, 0.5],
 		// Yaw and pitch it walks through, in radians. The yaw is a FULL sine — out
 		// one way, back through the rest pose, out the other, home — so the beat
 		// both moves properly and ends flat and facing, which is where the search
@@ -278,7 +253,7 @@ export const SCENES = scale({
 		// The search: turn a decade square to camera, HOLD it, turn to the next.
 		// The point is not to fake a search — it is that each turn shows another
 		// decade's artwork, which is otherwise built and never seen.
-		search: [0.54, 0.87],
+		search: [0.5, 0.87],
 		// Three decades visited before the answer, then the answer itself.
 		searchSteps: 4,
 		// Fraction of each step spent turning; the rest is the hold. The last step
