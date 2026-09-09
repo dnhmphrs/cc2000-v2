@@ -219,7 +219,6 @@
 		mounted = true;
 		await tick(); // let the scene components exist
 
-		await computation.init();
 		handleResize();
 
 		canvasElement.style.opacity = '0';
@@ -228,6 +227,22 @@
 		window.addEventListener('pointermove', handlePointer, { passive: true });
 
 		animate();
+
+		// ── The rooms, AFTER the first frame ─────────────────────────────────
+		// Building the computation loads six panes of decade artwork — three 4K
+		// backgrounds among them — and every one of those decodes on the main
+		// thread and then blocks it again on the GPU upload. Awaiting all of that
+		// before the first frame put the whole stall underneath the calculator's
+		// opening titles, which is exactly where it was most visible: the machine
+		// types, stops, types.
+		//
+		// Nothing on the calculator needs a single room texture, and nothing sees
+		// one for twenty seconds. So the first frame goes out first and this fills
+		// in behind it. The computation guards its own update() with `ready`, so
+		// arriving before it has finished is safe rather than merely unlikely.
+		const warm = () => computation?.init().catch(() => {});
+		if (typeof requestIdleCallback === 'function') requestIdleCallback(warm, { timeout: 2000 });
+		else setTimeout(warm, 250);
 	});
 
 	onDestroy(() => {

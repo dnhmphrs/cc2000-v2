@@ -53,12 +53,12 @@ export const MACHINE = {
 	ink: '#17120c',
 	lamp: '#ff4d1f',
 	// The glass in the machine's instruments — the CRT and the chassis portholes.
-	// The VOID, exactly: the window looks straight through to the void, so a
-	// porthole beside it in any other black reads as a hole in the machine. It
-	// was a navy left over from the blue era, and the page ground was the same
-	// navy, which is what put a blue screen on the machine for the first second
-	// of every cold load.
-	crt: '#0a0a0c',
+	// The AIR: the window looks straight through to the tunnel idling behind it,
+	// which is fogged against exactly this, so a porthole beside it in any other
+	// black reads as a hole in the machine. It was a navy left over from the blue
+	// era, and the page ground was the same navy — which is what put a blue
+	// screen on the machine for the first second of every cold load.
+	crt: '#14120e',
 	// Two accents lifted off the room art — the red of the desk lamp and the
 	// teal of the shades — so the machine belongs to the same drawing.
 	red: '#e5372a',

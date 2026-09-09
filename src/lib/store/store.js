@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import { AIR, aspectKind } from '$lib/config';
 
 // ── State ────────────────────────────────────────────────────────────────────
 // Every store the site has. Writers are named in each comment; if you find
@@ -82,14 +83,27 @@ export const calcZoom = writable(1);
 // ── Device ───────────────────────────────────────────────────────────────────
 // 'portrait' | 'square' | 'landscape' — see aspectKind() in config/space.js.
 // Written by: routes/+layout.svelte.
-export const aspect = writable('landscape');
+//
+// SEEDED FROM THE REAL VIEWPORT, not from a guess. The page is prerendered, so
+// a plain 'landscape' default meant a phone's very first client render drew the
+// landscape branch of the machine — the knob rails, the dials, the tuner and
+// now the instrument columns — against portrait geometry, and then destroyed
+// five blocks and built one the moment +layout's onMount corrected it. On the
+// server there is no viewport to ask, so it keeps the old default there.
+export const aspect = writable(
+	typeof window === 'undefined' ? 'landscape' : aspectKind(window.innerWidth, window.innerHeight)
+);
 export const screenSize = writable({ width: 0, height: 0 });
 
 // ── The backdrop ─────────────────────────────────────────────────────────────
 // Which shader is behind the 3D, and the colour it is given. The Stage sets
 // this from the active scene's backdrop(); components/Background.svelte reads
 // it and recompiles when the name changes. See three/shaders/index.js.
-export const backdrop = writable({ shader: 'flat', color: 0x0a1f4a });
+// It starts on the AIR — the colour of the tunnel that idles behind the
+// calculator, and the colour <html> is painted before any of this exists. It was
+// a navy left over from the blue era, so the very first thing the WebGL ground
+// eased toward was a colour nothing in the run uses.
+export const backdrop = writable({ shader: 'flat', color: AIR });
 
 // The rotation the field is carried by, as a column-major mat3. NOT a store:
 // the computation writes it every frame and the background reads it in its own

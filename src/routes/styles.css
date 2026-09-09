@@ -2,8 +2,10 @@
 @import '$lib/styles/fonts.css';
 
 :root {
-	/* The ground is the VOID, and the machine's yellow is the colour event on it.
-	   Kept in step with VOID in config/palette.js.
+	/* The ground is the fly-in's AIR, and the machine's yellow is the colour event
+	   on it. Kept in step with AIR in config/palette.js — and with the inline
+	   style on <html> in src/app.html, which paints before this file is even
+	   fetched and is therefore the one that actually decides.
 
 	   It used to be the deep blue this site was built on before the middle three
 	   scenes became one black-and-gold shot, and the calculator's window looks
@@ -13,7 +15,12 @@
 	   behind the window are now the same colour, and there is nothing to swap. */
 	--ink-rgb: 240, 242, 248;
 
-	--bg: #0a0a0c;
+	--bg: #14120e;
+	/* The pen. What is written ON the site's yellow — the buttons, the selection
+	   — which is a near-black ink and has nothing to do with the ground. It was
+	   var(--bg), which happened to be legible while the ground was navy and is a
+	   coincidence rather than a decision. */
+	--on-yellow: #17120c;
 	--panel: rgba(5, 18, 60, 0.92);
 
 	--ink: rgba(var(--ink-rgb), 1);
@@ -33,9 +40,10 @@
 	--machine-teal: #2fb3a6;
 	--machine-orange: #e8802a;
 	/* The glass in the machine's own instruments: the CRT and the two portholes
-	   on the chassis. The void, exactly — what is behind the window IS the void,
-	   so a porthole beside it that is any other black reads as a hole. */
-	--machine-crt: #0a0a0c;
+	   on the chassis. The AIR, exactly — what is behind the big window on this
+	   screen is the tunnel, fogged against the air, so a porthole beside it in
+	   any other black reads as a hole in the machine. */
+	--machine-crt: #14120e;
 
 	/* The machine is DRAWN, not rendered: one heavy ink weight and one hard,
 	   unblurred drop, used on everything bolted to the chassis. Keeping both as
@@ -163,13 +171,13 @@ button {
 button:hover:not(:disabled) {
 	background: var(--yellow);
 	border-color: var(--yellow);
-	color: var(--bg);
+	color: var(--on-yellow);
 }
 
 button.go {
 	background: var(--yellow);
 	border-color: var(--yellow);
-	color: var(--bg);
+	color: var(--on-yellow);
 	font-weight: 700;
 }
 
@@ -239,7 +247,7 @@ input[type='range']::-moz-range-thumb {
 
 ::selection {
 	background: var(--yellow);
-	color: var(--bg);
+	color: var(--on-yellow);
 }
 
 /* ── Question panel ────────────────────────────────────────────────────────
