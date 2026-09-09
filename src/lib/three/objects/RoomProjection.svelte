@@ -19,6 +19,9 @@
 	let dimFactor = 1;
 	let lastProjection = 0;
 	let zoomK = 0; // 0..1 final-zoom progress; scales layers by depth for parallax
+	// Where the head is, -1..1 in each axis, for the desk parallax. See setHead().
+	let headU = 0;
+	let headV = 0;
 	// How far up the artwork is. NOT derived from the projection: the computation
 	// brings the drafting out first and then fades the rooms up through it, which
 	// is two beats, and deriving both from one number collapses them into one.
@@ -144,12 +147,30 @@
 		// Ride outward with the pane.
 		roomGroup.position.copy(n.clone().multiplyScalar(projection * paneReach));
 
+		// ── THE DESK PARALLAX ────────────────────────────────────────────────
+		// The BACK of the room drifts and the front of it does not, weighted by
+		// each layer's own depth. That is the wrong way round for a camera and the
+		// right way round for an eye: sitting at a desk you fixate the monitor, so
+		// its retinal motion is nulled and what you see move is the wall behind
+		// it — in the same direction your head went, by the difference of the two
+		// reciprocal distances.
+		//
+		// Trucking the camera instead, which is what this used to do, gives the
+		// exact opposite: the NEAREST things swing hardest, so the bed and the desk
+		// slide about in front of a wall that barely moves. Six flat layers doing
+		// that is the wobble, and no amount of turning it down fixes the direction.
+		const drift = f.right
+			.clone()
+			.multiplyScalar(headU * HEAD_SHIFT)
+			.add(f.up.clone().multiplyScalar(headV * HEAD_SHIFT));
+
 		layers.forEach((entry) => {
 			const back = n.clone().multiplyScalar(-entry.cfg.depth * maxDepth * projection);
 			const pos = basis.center
 				.clone()
 				.add(entry.inPlane || new THREE.Vector3())
-				.add(back);
+				.add(back)
+				.add(drift.clone().multiplyScalar(entry.cfg.depth * projection));
 			entry.mesh.position.copy(pos);
 			// Depth parallax on the final zoom: nearer layers surge forward far more
 			// than the back wall, so you feel the bed rush past first, then the desk,
@@ -201,6 +222,18 @@
 	export function setReveal(v) {
 		if (v === reveal) return;
 		reveal = v;
+		apply(lastProjection);
+	}
+
+	// Where the head is, each -1..1. Only the room's own depth answers it; see the
+	// drift in apply(). It is a fraction of the pane's own size, so it holds at
+	// any framing.
+	const HEAD_SHIFT = 0.042;
+
+	export function setHead(u, v) {
+		if (u === headU && v === headV) return;
+		headU = u;
+		headV = v;
 		apply(lastProjection);
 	}
 

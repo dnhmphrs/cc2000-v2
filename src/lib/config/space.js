@@ -131,7 +131,15 @@ export const TUNNEL = {
 	// exactly how it used to look — sliding in from the wings rather than coming
 	// up from underneath you. In screen terms it holds its place low in the frame
 	// and drifts to centre as it settles.
-	spermFrom: { x: 0.3, y: -1.45, z: 16 },
+	// WHERE IT COMES FROM. Dead centre and straight up the axis: x and y are zero
+	// and stay zero, so the swimmer starts directly behind you, out of sight, and
+	// flies through the middle of the lens. It used to start off-centre and low
+	// and RISE into the middle, which is a thing sliding into position rather
+	// than a thing coming at you — and because it was off the axis it faded up in
+	// front of the camera instead of emerging from behind it.
+	//
+	// z is how far behind the lens it starts, in world units.
+	spermFrom: { x: 0, y: 0, z: 16 },
 
 	// The ovum turns too, slowly, about its own pole. rad/s.
 	eggSpin: 0.16,
@@ -185,20 +193,28 @@ export const ICOSA = {
 	near: 0.1,
 	far: 400,
 
-	// The resting orientation, and it is worth being fussy about. Looked at down
-	// any of its symmetry axes an icosahedron COLLAPSES: pairs of vertices land
-	// on top of each other in projection and thirty edges read as a flat star.
+	// The resting orientation: straight down a FIVE-FOLD axis, so the nearest
+	// vertex sits exactly on top of the farthest one and the figure is the
+	// symmetric projection of itself.
 	//
-	// This pose was picked by maximising the smallest gap between any two of the
-	// twelve vertices on screen, subject to one extra condition — that the first
-	// golden rectangle stays nearly square to the camera. It scores 0.412 of the
-	// circumradius, which is the global maximum to three figures, at 0.92 face-on
-	// and a silhouette almost exactly as wide as it is tall.
+	// This reverses an earlier decision, and the earlier reasoning was that down
+	// any symmetry axis an icosahedron COLLAPSES — pairs of vertices land on each
+	// other and thirty edges read as a flat star — so the pose was chosen instead
+	// by maximising the smallest on-screen gap between any two vertices. It
+	// scored 0.412 of the circumradius and sat 11.89 degrees off the axis, which
+	// is near enough to look like a mistake rather than like a choice.
 	//
-	// (The pose it replaced scored 0.21 on the same measure and 0.71 face-on,
-	// which is why the frame read as a tangle and the rectangle the whole of
-	// scene 4 is built on was never legible in it.)
-	tilt: [0.27, 0.302, 1.135],
+	// The reasoning was wrong about the cost. Down this axis exactly ONE pair
+	// coincides — the two the axis runs through, which is the point — and every
+	// other pair sits at 0.553 R, a third BETTER separated than the old pose's
+	// worst. Nothing collapses that was not meant to.
+	//
+	// What it does cost: the first golden rectangle is 0.851 face-on rather than
+	// 0.920. Scene 4 is built on that rectangle, so it is the number to watch if
+	// the panes ever stop reading as coming squarely out of the frame. The
+	// silhouette is very slightly better balanced in exchange, 0.986 wide-to-tall
+	// against 1.047.
+	tilt: [0.250894, 0.498826, 1.078968],
 
 	// NOTE, and it has bitten once: the wireframe is built at the RAW vertex
 	// scale — circumradius √(1+φ²) ≈ 1.902 — and must stay there. The decade

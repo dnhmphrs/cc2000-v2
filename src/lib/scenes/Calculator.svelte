@@ -2,6 +2,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
 	import { cubicIn } from 'svelte/easing';
+	import { fade } from 'svelte/transition';
 	import {
 		dobMonth,
 		dobDay,
@@ -94,9 +95,6 @@
 
 	let shown = LINES.map(() => 0);
 	let typed = !!arrivingFrom; // no manifesto second time round
-	// The manifesto has finished writing itself. It does NOT clear on its own
-	// from here — it holds until the operator clicks off it.
-	let spielDone = !!arrivingFrom;
 	let realised = !arrivingFrom; // are the real controls allowed on screen yet
 	// Cold until it has actually landed. On the way home the machine is a picture
 	// inside somebody's monitor, a few dozen pixels across: the chassis, the
@@ -279,11 +277,13 @@
 
 		let li = 0;
 		const step = () => {
-			// FINISHED WRITING IS NOT FINISHED. It used to clear itself the instant
-			// the last character landed, which gives you no time to read the thing
-			// and no say in when the machine moves on. It stays up, with a prompt
-			// under it, until you click.
-			if (li >= LINES.length) return (spielDone = true);
+			// It holds a beat on the finished text and then hands over. Not a
+			// click — there is nothing on screen to click, and asking someone to
+			// dismiss four lines they have just read is a step that does no work.
+			if (li >= LINES.length) {
+				timer = setTimeout(() => (typed = true), T.titleHold * 1000);
+				return;
+			}
 			if (shown[li] >= LINES[li].length) {
 				li += 1;
 				timer = setTimeout(step, T.lineGap * 1000);
@@ -301,16 +301,13 @@
 		clearInterval(ticker);
 	});
 
-	// Click anywhere and the manifesto goes: part-written, it snaps to complete
-	// and clears in the same move. Bound on POINTERDOWN IN THE CAPTURE PHASE, so
-	// it fires before the dials, the tuner and the lever stop the event — reach
-	// for a control while the spiel is up and the spiel gets out of the way,
-	// rather than the machine silently taking input behind a screen of text.
+	// A SKIP, not the way through. The title card hands over on its own; this is
+	// only here so somebody who has read it before does not have to sit through
+	// the typing again.
 	function skip() {
 		if (typed) return;
 		clearTimeout(timer);
 		shown = LINES.map((l) => l.length);
-		spielDone = true;
 		typed = true;
 	}
 
@@ -339,63 +336,76 @@
 	<div class="bleed" bind:this={bleed} />
 {/if}
 
+<!-- ── THE TITLE CARD ──────────────────────────────────────────────────────
+     Before the machine there is nothing but the text, on black, scanned. The
+     manifesto used to be typed INSIDE the machine's own little CRT, which meant
+     the first thing a cold visitor met was a fully-built cartoon calculator
+     sitting there doing nothing while four lines crawled across a five-inch
+     screen in the middle of it. The words come first and the machine arrives
+     after them.
+
+     It is not a click-through. It types, holds a beat, and hands over. A
+     pointerdown skips the rest of the typing for anyone who has read it before,
+     but nothing waits on one. -->
+{#if !typed}
+	<div class="prelude" out:fade={{ duration: 420 }} on:pointerdown={skip}>
+		<div class="scan" />
+		<div class="spiel">
+			{#each LINES as line, i}
+				<!-- Each line is sized by the WHOLE line, hidden, with the part that
+				     has been written so far laid over it. Otherwise the measure grows
+				     as the text arrives and a centred line crawls sideways the entire
+				     time it is being typed. -->
+				<p>
+					<span class="ghost">{line}</span>
+					<span class="live"
+						>{line.slice(0, shown[i])}{#if shown[i] > 0 && shown[i] < line.length}<span
+								class="caret"
+							/>{/if}</span
+					>
+				</p>
+			{/each}
+		</div>
+	</div>
+{/if}
+
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div
-	bind:this={root}
-	class="calculator"
-	class:cold={booting}
-	class:realised
-	in:outOfMonitor={{ rect: arrivingFrom }}
-	out:intoLens
-	on:pointerdown|capture={skip}
->
-	<!-- The body. Four bars around the window rather than one element spreading
+{#if typed}
+	<div
+		bind:this={root}
+		class="calculator"
+		class:cold={booting}
+		class:realised
+		in:outOfMonitor={{ rect: arrivingFrom }}
+		out:intoLens
+	>
+		<!-- The body. Four bars around the window rather than one element spreading
 	     a shadow: a shadow scales with its element, so a machine drawn at monitor
 	     size would still flood the whole frame with yellow. This way the window
 	     stays truly transparent AND the machine can be a small object sitting
 	     inside the room's screen. -->
-	<div class="body top" />
-	<div class="body bottom" />
-	<div class="body left" />
-	<div class="body right" />
+		<div class="body top" />
+		<div class="body bottom" />
+		<div class="body left" />
+		<div class="body right" />
 
-	<div class="window">
-		<div class="screen">
-			<!-- The tube is scanned from the first frame it is on. It used to be
+		<div class="window">
+			<div class="screen">
+				<!-- The tube is scanned from the first frame it is on. It used to be
 			     drawn on the full-screen glass and nowhere else, so the machine's
 			     own CRT was the one screen in the site with no lines on it. Under
 			     the gleam, because the gleam is a reflection off the FRONT of the
 			     glass and the raster is behind it. -->
-			<div class="scan" />
-			<div class="gleam" />
-			{#if !typed}
-				<!-- Centred as a BLOCK and set left inside it. Centring the lines
-				     themselves makes each one crawl sideways as it is typed. -->
-				<div class="spiel">
-					{#each LINES as line, i}
-						<!-- Each line is sized by the WHOLE line, hidden, with the part
-						     that has been written so far laid over it. Otherwise the
-						     measure grows as the text arrives and a centred line crawls
-						     sideways the entire time it is being typed. -->
-						<p class:lit={i === LINES.length - 1}>
-							<span class="ghost">{line}</span>
-							<span class="live"
-								>{line.slice(0, shown[i])}{#if shown[i] > 0 && shown[i] < line.length}<span
-										class="caret"
-									/>{/if}</span
-							>
-						</p>
-					{/each}
-					<span class="prompt" class:up={spielDone}>click anywhere to begin</span>
-				</div>
-			{:else if $edge}
-				<!-- Out of range. The machine says so and stays where it is. -->
-				<div class="verdict">
-					<p class="err">{EDGE[$edge].head}</p>
-					<p class="msg">{EDGE[$edge].line}</p>
-				</div>
-			{:else}
-				<!-- THE READOUT IS ALSO THE KEYBOARD. In landscape the two lines the
+				<div class="scan" />
+				<div class="gleam" />
+				{#if $edge}
+					<!-- Out of range. The machine says so and stays where it is. -->
+					<div class="verdict">
+						<p class="err">{EDGE[$edge].head}</p>
+						<p class="msg">{EDGE[$edge].line}</p>
+					</div>
+				{:else}
+					<!-- THE READOUT IS ALSO THE KEYBOARD. In landscape the two lines the
 				     operator has to fill in are real form controls, sitting on the
 				     glass where the answer is read — so the machine can be driven
 				     either by turning the knobs on the chassis or by typing into
@@ -407,178 +417,179 @@
 				     of selects and the panel would then be a second copy of them in
 				     the document. Which is the rule for the whole machine — exactly
 				     one control of each kind EXISTS at any width. -->
-				<dl class="readout">
-					<div>
-						<dt>subject dob</dt>
-						{#if $aspect === 'portrait'}
-							<dd>{readout}</dd>
-						{:else}
-							<dd class="entry">
-								<select bind:value={$dobDay} aria-label="day">
-									<option value="" disabled>--</option>
-									{#each days as d}<option value={d}>{String(d).padStart(2, '0')}</option>{/each}
-								</select>
-								<select bind:value={$dobMonth} aria-label="month">
-									<option value="" disabled>---</option>
-									{#each MONTHS as m, i}<option value={i + 1}>{m.toUpperCase()}</option>{/each}
-								</select>
-								<select bind:value={$dobYear} aria-label="year">
-									<option value="" disabled>----</option>
-									{#each YEARS as y}<option value={y}>{y}</option>{/each}
-								</select>
-							</dd>
-						{/if}
-					</div>
-					<div>
-						<dt>how spicy do your parents like it?</dt>
-						{#if $aspect === 'portrait'}
-							<dd>{String($spicy).padStart(2, '0')} / 10</dd>
-						{:else}
-							<dd class="entry">
-								<select bind:value={$spicy} aria-label="spicy">
-									{#each Array.from({ length: 10 }, (_, i) => i + 1) as n}
-										<option value={n}>{String(n).padStart(2, '0')}</option>
-									{/each}
-								</select>
-								<span class="of">/ 10</span>
-							</dd>
-						{/if}
-					</div>
-					<div>
-						<dt>status</dt>
-						<dd class:ready={complete}>{complete ? 'ready' : 'awaiting input'}</dd>
-					</div>
-				</dl>
-			{/if}
+					<dl class="readout">
+						<div>
+							<dt>subject dob</dt>
+							{#if $aspect === 'portrait'}
+								<dd>{readout}</dd>
+							{:else}
+								<dd class="entry">
+									<select bind:value={$dobDay} aria-label="day">
+										<option value="" disabled>--</option>
+										{#each days as d}<option value={d}>{String(d).padStart(2, '0')}</option>{/each}
+									</select>
+									<select bind:value={$dobMonth} aria-label="month">
+										<option value="" disabled>---</option>
+										{#each MONTHS as m, i}<option value={i + 1}>{m.toUpperCase()}</option>{/each}
+									</select>
+									<select bind:value={$dobYear} aria-label="year">
+										<option value="" disabled>----</option>
+										{#each YEARS as y}<option value={y}>{y}</option>{/each}
+									</select>
+								</dd>
+							{/if}
+						</div>
+						<div>
+							<dt>how spicy do your parents like it?</dt>
+							{#if $aspect === 'portrait'}
+								<dd>{String($spicy).padStart(2, '0')} / 10</dd>
+							{:else}
+								<dd class="entry">
+									<select bind:value={$spicy} aria-label="spicy">
+										{#each Array.from({ length: 10 }, (_, i) => i + 1) as n}
+											<option value={n}>{String(n).padStart(2, '0')}</option>
+										{/each}
+									</select>
+									<span class="of">/ 10</span>
+								</dd>
+							{/if}
+						</div>
+						<div>
+							<dt>status</dt>
+							<dd class:ready={complete}>{complete ? 'ready' : 'awaiting input'}</dd>
+						</div>
+					</dl>
+				{/if}
+			</div>
 		</div>
-	</div>
 
-	<div class="plate">
-		<span class="model">model cc-2000</span>
-		<span class="name">Conception Calculator</span>
-	</div>
+		<div class="plate">
+			<span class="model">model cc-2000</span>
+			<span class="name">Conception Calculator</span>
+		</div>
 
-	<div class="lamps">
-		{#each [0, 1, 2, 3, 4, 5, 6] as n}
-			<i class:on={n <= power} />
-		{/each}
-	</div>
+		<div class="lamps">
+			{#each [0, 1, 2, 3, 4, 5, 6] as n}
+				<i class:on={n <= power} />
+			{/each}
+		</div>
 
-	{#if $aspect !== 'portrait'}
-		<!-- The chassis furniture: knobs and flip switches that do nothing, out on
+		{#if $aspect !== 'portrait'}
+			<!-- The chassis furniture: knobs and flip switches that do nothing, out on
 		     the edges of the machine where decoration belongs. -->
-		<div class="trim left">
-			{#each [22, -48, 71, -14] as deg, i}
-				<span class="knob" style="--deg:{deg}deg; --d:{i * 0.7}s"><i /></span>
-			{/each}
-		</div>
-		<div class="trim right">
-			{#each [1, 0, 1, 1, 0] as up}
-				<span class="flip" class:up><i /></span>
-			{/each}
-		</div>
-	{/if}
+			<div class="trim left">
+				{#each [22, -48, 71, -14] as deg, i}
+					<span class="knob" style="--deg:{deg}deg; --d:{i * 0.7}s"><i /></span>
+				{/each}
+			</div>
+			<div class="trim right">
+				{#each [1, 0, 1, 1, 0] as up}
+					<span class="flip" class:up><i /></span>
+				{/each}
+			</div>
+		{/if}
 
-	<!-- The controls sit BY THE SCREEN, and the decoration is out on the rim —
+		<!-- The controls sit BY THE SCREEN, and the decoration is out on the rim —
 	     what you reach for is next to what you are reading. The panel below the
 	     window is the portrait fallback. They are swapped with
 	     {#if} rather than CSS, so exactly one of each control EXISTS — hiding one
 	     leaves a second month/day/year in the document for anything that walks it
 	     rather than looks at it. -->
-	{#if $aspect !== 'portrait'}
-		<div class="dials" on:click|stopPropagation>
-			<Dial
-				label="month"
-				min={1}
-				max={12}
-				start={6}
-				value={$dobMonth}
-				format={(v) => MONTHS[v - 1].toUpperCase()}
-				on:change={(e) => dobMonth.set(e.detail)}
-			/>
-			<Dial
-				label="day"
-				min={1}
-				max={maxDay}
-				start={15}
-				value={$dobDay}
-				on:change={(e) => dobDay.set(e.detail)}
-			/>
-		</div>
+		{#if $aspect !== 'portrait'}
+			<div class="dials" on:click|stopPropagation>
+				<Dial
+					label="month"
+					min={1}
+					max={12}
+					start={6}
+					value={$dobMonth}
+					format={(v) => MONTHS[v - 1].toUpperCase()}
+					on:change={(e) => dobMonth.set(e.detail)}
+				/>
+				<Dial
+					label="day"
+					min={1}
+					max={maxDay}
+					start={15}
+					value={$dobDay}
+					on:change={(e) => dobDay.set(e.detail)}
+				/>
+			</div>
 
-		<!-- The year, under the screen, as the band on a car radio. -->
-		<div class="tuner" on:click|stopPropagation>
-			<Tuner
-				label="year"
-				min={MIN_YEAR}
-				max={MAX_YEAR}
-				start={1990}
-				value={$dobYear}
-				on:change={(e) => dobYear.set(e.detail)}
-			/>
-		</div>
+			<!-- The year, under the screen, as the band on a car radio. -->
+			<div class="tuner" on:click|stopPropagation>
+				<Tuner
+					label="year"
+					min={MIN_YEAR}
+					max={MAX_YEAR}
+					start={1990}
+					value={$dobYear}
+					on:change={(e) => dobYear.set(e.detail)}
+				/>
+			</div>
 
-		<!-- And how spicy, on the right. -->
-		<div class="switches" on:click|stopPropagation>
-			<Lever
-				label="spicy"
-				min={1}
-				max={10}
-				low="spicy?"
-				high="how"
-				value={$spicy}
-				on:change={(e) => spicy.set(e.detail)}
-			/>
-		</div>
-	{/if}
+			<!-- And how spicy, on the right. -->
+			<div class="switches" on:click|stopPropagation>
+				<Lever
+					label="spicy"
+					min={1}
+					max={10}
+					low="spicy?"
+					high="how"
+					value={$spicy}
+					on:change={(e) => spicy.set(e.detail)}
+				/>
+			</div>
+		{/if}
 
-	<!-- svelte-ignore a11y-click-events-have-key-events -->
-	{#if $aspect === 'portrait'}
-		<div class="controls" on:click|stopPropagation>
-			<div class="ctl">
-				<span class="lab">date of birth</span>
-				<div class="dob">
-					<select bind:value={$dobMonth} aria-label="month">
-						<option value="" disabled>mth</option>
-						{#each MONTHS as m, i}<option value={i + 1}>{m}</option>{/each}
-					</select>
-					<select bind:value={$dobDay} aria-label="day">
-						<option value="" disabled>day</option>
-						{#each days as d}<option value={d}>{d}</option>{/each}
-					</select>
-					<select bind:value={$dobYear} aria-label="year">
-						<option value="" disabled>year</option>
-						{#each YEARS as y}<option value={y}>{y}</option>{/each}
-					</select>
+		<!-- svelte-ignore a11y-click-events-have-key-events -->
+		{#if $aspect === 'portrait'}
+			<div class="controls" on:click|stopPropagation>
+				<div class="ctl">
+					<span class="lab">date of birth</span>
+					<div class="dob">
+						<select bind:value={$dobMonth} aria-label="month">
+							<option value="" disabled>mth</option>
+							{#each MONTHS as m, i}<option value={i + 1}>{m}</option>{/each}
+						</select>
+						<select bind:value={$dobDay} aria-label="day">
+							<option value="" disabled>day</option>
+							{#each days as d}<option value={d}>{d}</option>{/each}
+						</select>
+						<select bind:value={$dobYear} aria-label="year">
+							<option value="" disabled>year</option>
+							{#each YEARS as y}<option value={y}>{y}</option>{/each}
+						</select>
+					</div>
+				</div>
+
+				<div class="ctl">
+					<span class="lab">how spicy do you like it?</span>
+					<input type="range" bind:value={$spicy} min="1" max="10" aria-label="spicy" />
+					<div class="ends"><span>how</span><span>spicy?</span></div>
 				</div>
 			</div>
+		{/if}
 
-			<div class="ctl">
-				<span class="lab">how spicy do you like it?</span>
-				<input type="range" bind:value={$spicy} min="1" max="10" aria-label="spicy" />
-				<div class="ends"><span>how</span><span>spicy?</span></div>
-			</div>
-		</div>
-	{/if}
+		<div class="vent left" />
+		<div class="vent right" />
+		<div class="grille" />
 
-	<div class="vent left" />
-	<div class="vent right" />
-	<div class="grille" />
+		<button
+			class="go"
+			class:armed={complete}
+			on:click|stopPropagation={calculate}
+			disabled={!complete}
+		>
+			calculate
+		</button>
 
-	<button
-		class="go"
-		class:armed={complete}
-		on:click|stopPropagation={calculate}
-		disabled={!complete}
-	>
-		calculate
-	</button>
-
-	<span class="screw tl" />
-	<span class="screw tr" />
-	<span class="screw bl" />
-	<span class="screw br" />
-</div>
+		<span class="screw tl" />
+		<span class="screw tr" />
+		<span class="screw bl" />
+		<span class="screw br" />
+	</div>
+{/if}
 
 <style>
 	.calculator {
@@ -777,24 +788,46 @@
 		background: var(--scanlines);
 	}
 
-	/* ── The manifesto ─────────────────────────────────────────────────────
-	   Centred as a block, set left inside it, at a width fixed in ch. All three
-	   of those are load-bearing: centre the LINES and each one crawls sideways
-	   as it is typed, and let the block shrink-wrap and its left edge crawls
-	   instead. A fixed measure holds still while the text arrives into it. */
-	.spiel {
-		position: absolute;
+	/* ── The title card ────────────────────────────────────────────────────
+	   The whole viewport, black, scanned, with nothing on it but the words. The
+	   machine does not exist yet. */
+	.prelude {
+		position: fixed;
 		inset: 0;
+		z-index: 20;
+		pointer-events: auto;
+		background: var(--bg);
+		display: grid;
+		place-items: center;
+		font-family: var(--tech);
+		cursor: default;
+		user-select: none;
+		-webkit-user-select: none;
+	}
+
+	/* Centred as a block, set left inside it, at a width fixed by the whole line.
+	   All three matter: centre the LINES and each one crawls sideways as it is
+	   typed, and let the block shrink-wrap and its left edge crawls instead. */
+	.spiel {
 		display: flex;
 		flex-direction: column;
-		justify-content: center;
 		align-items: center;
-		gap: 0.35em;
-		padding: 14px 16px;
+		gap: 0.55em;
+		padding: 6vh 6vw;
+		max-width: 100%;
 	}
 	.spiel p {
 		position: relative;
+		margin: 0;
 		max-width: 100%;
+		/* Read at arm's length, not squinted at: this is the only thing on screen
+		   and it used to be set at the size it needed to fit a five-inch CRT. */
+		font-size: clamp(13px, 1.45vw, 21px);
+		line-height: 1.6;
+		letter-spacing: 0.04em;
+		/* ONE colour. The last line used to come up yellow, which reads as the
+		   punchline being flagged for you. */
+		color: rgba(240, 242, 248, 0.82);
 	}
 	.spiel .ghost {
 		visibility: hidden;
@@ -803,35 +836,6 @@
 		position: absolute;
 		inset: 0;
 		white-space: pre;
-	}
-	/* And then it WAITS. Half a beat after the last character, so it does not
-	   arrive on top of the line still being written. */
-	.prompt {
-		margin-top: 1.6em;
-		font-size: clamp(7px, 0.72vw, 9px);
-		letter-spacing: 0.24em;
-		text-transform: uppercase;
-		color: var(--yellow);
-		opacity: 0;
-		transition: opacity 0.5s ease 0.45s;
-	}
-	.prompt.up {
-		opacity: 1;
-		/* NOT `pulse`. The calculate button already owns that name in this
-		   component and the later declaration wins, so this used to draw itself
-		   with the button's own red-to-orange background animation — a solid
-		   orange box behind the words. Keyframe names are scoped to the file, not
-		   to the rule that uses them. */
-		animation: breathe 2.1s ease-in-out 0.95s infinite;
-	}
-	@keyframes breathe {
-		0%,
-		100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.36;
-		}
 	}
 
 	/* ── Typed entry, on the glass ─────────────────────────────────────────
@@ -872,17 +876,6 @@
 		font-size: clamp(9px, 0.9vw, 12px);
 		letter-spacing: 0.08em;
 		color: rgba(240, 242, 248, 0.5);
-	}
-
-	.screen p {
-		margin: 0;
-		font-size: clamp(8px, 0.9vw, 11px);
-		line-height: 1.5;
-		letter-spacing: 0.03em;
-		color: rgba(240, 242, 248, 0.72);
-	}
-	.screen p.lit {
-		color: var(--yellow);
 	}
 
 	.caret {

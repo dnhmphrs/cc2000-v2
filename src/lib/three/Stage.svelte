@@ -138,9 +138,12 @@
 						held.beginReturn?.();
 					}
 					held.stepReturn?.(dt);
+				} else {
+					// The room is up and being looked at. A little desk parallax —
+					// the room's own back drifting against its front, not the camera
+					// moving. See Computation.parallax().
+					held.parallax?.(pointer[0], pointer[1], dt);
 				}
-				// The room, once landed, is simply held: nothing tracks the pointer.
-				// See Computation.svelte, where the parallax used to be.
 				const hb = held.backdrop();
 				ground(hb.color, hb.shader);
 				held.render(renderer);

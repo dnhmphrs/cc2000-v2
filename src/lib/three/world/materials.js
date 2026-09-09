@@ -506,9 +506,8 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 			// the moment the swimmer goes in.
 			uRimGain: { value: 0 },
 			uOpacity: { value: 0 },
-			// How brightly the field is drawn, and how far it moves the skin.
+			// How brightly the field is drawn.
 			uGlow: { value: 0 },
-			uAmp: { value: 0 },
 			uAxes: { value: FIVE_FOLD.map((v) => v.clone()) },
 			// The division. 0..1 each, and the furrow leads the lobe.
 			uFurrow: { value: 0 },
@@ -521,20 +520,21 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 			uPhase: { value: 0 }
 		},
 		vertexShader: `
-			${WAVE_FIELD}
-			uniform float uAmp;
 			varying vec3 vN;
 			varying vec3 vV;
 			varying vec3 vLocal;
 			void main() {
+				// THE SKIN DOES NOT MOVE. It carried the relief as a displacement
+				// once — the twelve caps physically swelling out of the sphere —
+				// and what that actually gives you is a lumpy potato: the moment
+				// the surface leaves the sphere, the silhouette stops being a
+				// circle and the icosahedron inscribed in it stops reading as
+				// inscribed in anything. Everything the field does is DRAWN on a
+				// perfect sphere, which is also what the rest of this site does
+				// with everything else.
 				vLocal = position;
-				vec3 n = normalize(position);
-				// The skin actually moves, along its own normal, by the relief:
-				// the churn first, the furrow cut into it, then the twelve caps
-				// out of that.
-				vec3 p = position + n * (uAmp * relief(n));
-				vec4 mv = modelViewMatrix * vec4(p, 1.0);
-				vN = normalize(normalMatrix * n);
+				vec4 mv = modelViewMatrix * vec4(position, 1.0);
+				vN = normalize(normalMatrix * normalize(position));
 				vV = normalize(-mv.xyz);
 				gl_Position = projectionMatrix * mv;
 			}
@@ -601,7 +601,16 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 				// The mottle first, under everything — it is what the body is MADE
 				// of, not something drawn on it, and it is gone by the time the
 				// field arrives.
-				col += uWave * (grain(n) * 0.5 + 0.5) * 0.13 * uGrain;
+				//
+				// CONTOURS, not a wash. Every other mark in this scene is line-work
+				// — the level sets of the field, its nodal set, thirty edges — and
+				// a soft blobby fill was the one thing in the frame that was not,
+				// which is why it read as fog on the lens rather than as substance
+				// in the body. Ruled at the same kind of interval the field is, so
+				// the two belong to one instrument.
+				float g = grain(n);
+				col += uWave * rule(g * 5.0, 0.075) * 0.5 * uGrain;
+				col += uWave * (g * 0.5 + 0.5) * 0.025 * uGrain;
 				col = mix(col, uWave, lit * 0.42 * uGlow);
 				col = mix(col, uHot, crest * 0.34 * uGlow);
 				col += uWave * dip * 0.07 * uGlow;
