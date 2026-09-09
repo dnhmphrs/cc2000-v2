@@ -60,6 +60,13 @@ const setDate = async (month, day, year) => {
 };
 
 await p.goto(`${BASE}/?speed=6`, { waitUntil: 'networkidle' });
+
+// The run opens on a TITLE CARD — a black field, the manifesto, and no machine
+// at all — which hands over to the machine on its own after a beat. Everything
+// below drives the machine, so wait for it to exist rather than racing it.
+// ?speed=6 scales the card's own timings too, so this is a short wait.
+await p.locator('.calculator').waitFor({ state: 'attached', timeout: 30000 });
+
 await setDate(7, 14, 1986);
 
 // An out-of-range date is reported in place and must not fly anywhere. The

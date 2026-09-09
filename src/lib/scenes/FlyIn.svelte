@@ -189,19 +189,21 @@
 		// WORLD offset, which is what was here, is nine screen-widths off to the
 		// side when the thing is a unit from the lens: it slid in from the wings
 		// instead of coming up from behind you.
-		const off = 1 - arrive;
-		const half = Math.max(ahead, 0.2) * Math.tan((world.camera.fov * Math.PI) / 360);
-		world.sperm.position.set(
-			world.camera.position.x + TUNNEL.spermFrom.x * off * half,
-			world.camera.position.y + TUNNEL.spermFrom.y * off * half,
-			camZ - ahead
-		);
+		// DEAD CENTRE, the whole way. It sits on the camera's own x and y — see
+		// TUNNEL.spermFrom, which is zero in both — so it starts directly behind
+		// you, comes up the axis and goes out through the middle of the lens.
+		// There is no lateral move to watch, which is what makes it an approach
+		// rather than a thing sliding into place.
+		world.sperm.position.set(world.camera.position.x, world.camera.position.y, camZ - ahead);
 
-		// On once it is properly clear of the near plane — the body is two units
-		// long and centred, so anything closer is a body cut in half by the lens —
-		// and off once it is inside. Driven by where it ACTUALLY is rather than by
-		// the clock, so it can never be faded up while still behind the camera.
-		const shown = smoothstep(1.2, 3.4, ahead);
+		// On the moment it is past the lens. It used to wait until three and a half
+		// units clear, which on the axis means it fades up ALREADY IN FRONT of you
+		// — the one thing this shot must not do, because the whole point is that it
+		// arrives from behind. It comes through the near plane at full size and
+		// partly cut by it, which is what passing something at arm's length looks
+		// like. Driven by where it ACTUALLY is rather than by the clock, so it can
+		// never be lit while still behind the camera.
+		const shown = smoothstep(0.3, 1.0, ahead);
 		const o = shown * (1 - span(p, T.spermGone));
 		world.spermMaterial.uniforms.uOpacity.value = o;
 		world.sperm.visible = o > 0.004;

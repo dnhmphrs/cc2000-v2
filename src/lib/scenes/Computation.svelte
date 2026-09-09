@@ -276,11 +276,6 @@
 		// wireframe that just drew itself, at the same weight.
 		world.egg.setShell(ICOSA.shellSolid);
 		world.egg.group.scale.setScalar(1);
-		// The conception hands the frame over flat on the circumsphere — it rode
-		// the division out and settled back — and the panes are built on those
-		// exact coordinates. Stated anyway, so a seek straight into this scene
-		// starts where a run through it would.
-		world.setWireScale(1);
 		// AND SO IS THE FIELD, which is the whole of what this scene inherits.
 		// It used to be carried by nothing but uniform state left behind by the
 		// conception, so the scene was not a function of its own progress: run
@@ -578,12 +573,28 @@
 		publishMonitor();
 	}
 
-	// THERE IS NO PARALLAX ON THE ROOM. A couple of percent of camera truck
-	// following the cursor was tried, on the theory that six flat layers hung at
-	// different depths need a moving head to become a place. They do not: the
-	// fall has already flown you into it through its own depth, and a room that
-	// then drifts under the pointer stops being somewhere you landed and becomes
-	// a thing on a screen being nudged. The scene holds still.
+	// ── The room, being sat in front of ─────────────────────────────────────
+	// The parallax you get at a desk, and nothing more than that. The CAMERA does
+	// not move — trucking it swings the nearest layers hardest, which is how six
+	// flat panes ended up sliding around in front of each other — and instead the
+	// room's own back drifts against its front, weighted by depth. See
+	// RoomProjection.setHead(), which is where the direction is argued.
+	//
+	// Eased hard, so it is a drift rather than a cursor-tracking gimmick, and it
+	// republishes the glass rect because the returning calculator is welded to it.
+	const HEAD_EASE = 2.2;
+	let hx = 0;
+	let hy = 0;
+
+	export function parallax(nx, ny, dt) {
+		const k = Math.min(1, dt * HEAD_EASE);
+		hx += (nx - hx) * k;
+		hy += (-ny - hy) * k;
+		const room = panes[target]?.getRoom?.();
+		if (!room?.setHead) return;
+		room.setHead(hx, hy);
+		publishMonitor();
+	}
 
 	export function render(r) {
 		world.render(r);

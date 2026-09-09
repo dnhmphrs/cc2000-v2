@@ -38,6 +38,7 @@ function scale(scenes) {
 			'charInterval',
 			'lineGap',
 			'typeDelay',
+			'titleHold',
 			'launch',
 			'arrive',
 			'resultIn',
@@ -55,10 +56,18 @@ export const SCENES = scale({
 	// makes, and `launch` has to agree with flyIn.warp below, because they are
 	// the same move seen from the DOM and from the camera.
 	calculator: {
-		// Typing on the CRT.
+		// Typing on the title card — the black field the run opens on, before the
+		// machine exists at all. See Calculator.svelte.
 		charInterval: 0.022,
 		lineGap: 0.22,
 		typeDelay: 0.6,
+		// And the beat it holds on the finished text before handing over to the
+		// machine. Long enough to read the last line twice.
+		//
+		// NOT called `settle`: flyIn already has one of those and it is a window,
+		// not a duration. Two keys with one name in one file is a trap even when
+		// the scale() guard below happens to handle both.
+		titleHold: 1.4,
 
 		// Pressing calculate: the screen is pushed into the lens with real
 		// perspective, so the frame warps outward rather than flatly scaling.
@@ -86,7 +95,12 @@ export const SCENES = scale({
 	//  |motes|swimmer |the long haul, orbit closing   |dive  |in   |hold
 	//       |halo, then the ovum in it .58|
 	flyIn: {
-		duration: 14.5,
+		// ELEVEN, down from fourteen and a half. The pass keeps very nearly the
+		// time it had — half the scene rather than 46% of a longer one, 5.5s
+		// against 6.7 — and the whole of the cut comes out of the run-in after it,
+		// which was 7.8 seconds of holding one speed toward a thing that was not
+		// getting much bigger. Three hundred units still, covered a third faster.
+		duration: 11.0,
 
 		// The calculator is still on screen, warping into the lens. Documentation
 		// only — the machine runs its own `launch` in seconds — but the two have
@@ -115,7 +129,7 @@ export const SCENES = scale({
 		// overtaking and then matching speed looks like, and it is the first thing
 		// the run shows you, so there is nothing to hurry it toward. The ovum does
 		// not begin to surface until it is most of the way done.
-		spermIn: [0.0, 0.46],
+		spermIn: [0.0, 0.5],
 
 		// It breaks formation and goes in. Its own curve, and a hard one: this is
 		// the only acceleration in the scene and it happens against a camera that
@@ -137,12 +151,12 @@ export const SCENES = scale({
 		// The glow first, then the ovum in it. The halo OPENS EARLIER and CLOSES
 		// EARLIER than the shell, which is the whole trick of the arrival: there
 		// is a warmth in the black before there is anything in the warmth.
-		haloIn: [0.3, 0.66],
+		haloIn: [0.34, 0.68],
 		haloOut: [0.8, 0.95],
 		haloPeak: 1.0,
 		// An ENABLE, not a fade: what actually brings the cage up is the fog
 		// thinning as the camera closes on it. See FlyIn.svelte.
-		eggIn: [0.34, 0.6],
+		eggIn: [0.38, 0.64],
 
 		// ── THE HAND-OVER ────────────────────────────────────────────────────
 		// There is no flash any more. The fly-in simply ENDS ON THE PICTURE THE
@@ -177,7 +191,10 @@ export const SCENES = scale({
 	//                twelve caps — pulled INTO the skin, and pulled PAST where it
 	//                settles: `pinch` overshoots and relaxes back, which is a
 	//                cleavage furrow constricting rather than a groove appearing.
-	//   the LOBES    the twelve caps, swelling out of the net cut around them.
+	//   the LOBES    the twelve caps, coming up out of the net cut around them.
+	//
+	// None of it displaces the surface. The body is a perfect sphere throughout
+	// and every one of these is drawn on its skin — see world/materials.js.
 	//   the SOLID    struck ON the caps at the top of their travel, closing while
 	//                the skin underneath is still moving.
 	//
@@ -194,7 +211,6 @@ export const SCENES = scale({
 	//               |corners, struck on the caps .60|
 	//                    |spokes .76|
 	//                      |edges ....................... .94|
-	//                       |the body rounds up, the frame settles .90|
 	//                                            |union: peaks as the last edge lands|
 	conception: {
 		// Longer at the FRONT than the 5.2 that preceded it and shorter overall,
@@ -228,21 +244,12 @@ export const SCENES = scale({
 		// The mode ringing as it is excited, damped as it settles.
 		ring: [0.0, 0.56],
 		ringPeak: 0.3,
-		// How far the whole relief moves the skin, as a fraction of the core's
-		// radius. Large: a body pulling itself into twelve is a change of shape.
-		amp: 0.16,
-
 		// ── The solid, out of the division that is still happening ───────────
 		corners: [0.44, 0.6],
 		spokes: [0.5, 0.76],
 		// The last edge lands ON the union's peak rather than well before it, so
 		// the flare IS the figure closing rather than a beat that follows it.
 		edges: [0.54, 0.94],
-		// The body rounds up again, carrying the frame down onto the circumsphere.
-		// This is the DISPLACEMENT relaxing and nothing else — the field itself
-		// does not fade, here or in the scene after this one.
-		round: [0.58, 0.9],
-
 		// THE UNION. The last edge closes and the whole figure answers at once.
 		// It has to come back to zero by p=1: the computation's enter() restates
 		// setLineOpacity(1), so a flare still up at the cut is a visible step.

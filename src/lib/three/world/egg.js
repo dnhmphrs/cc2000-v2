@@ -273,18 +273,11 @@ export function createEgg(radius, opts = {}) {
 		// what develops is the CLEAVAGE: `furrow` (0..1) cuts the nodal net into
 		// the skin and `lobe` (0..1) swells the twelve caps out of it, in that
 		// order. `glow` is how brightly the field is drawn, `amp` how far it moves
-		// the skin as a fraction of the core's radius, and `ring` the amplitude of
-		// the mode's own oscillation as it settles.
-		setWave({
-			furrow = 0,
-			lobe = 0,
-			chop = 0,
-			grain = 0,
-			glow = 0,
-			amp = 0,
-			ring = 0,
-			phase = null
-		} = {}) {
+		// the skin, and `ring` the amplitude of the mode's own oscillation as it
+		// settles. Nothing here displaces the surface any more — see the vertex
+		// shader in world/materials.js; the body stays a perfect sphere and the
+		// whole of the conception is drawn on it.
+		setWave({ furrow = 0, lobe = 0, chop = 0, grain = 0, glow = 0, ring = 0, phase = null } = {}) {
 			if (!coreMat) return;
 			const u = coreMat.uniforms;
 			u.uFurrow.value = furrow;
@@ -292,7 +285,6 @@ export function createEgg(radius, opts = {}) {
 			u.uChop.value = chop;
 			u.uGrain.value = grain;
 			u.uGlow.value = glow;
-			u.uAmp.value = amp;
 			u.uRing.value = ring;
 			if (phase !== null) u.uPhase.value = phase;
 		},

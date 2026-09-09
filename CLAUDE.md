@@ -43,3 +43,9 @@ Two traps that have already cost a round each:
   anti-aliasing on thirty thin lines, anything more is a real seam.
 
 Write scratch scripts and screenshots to the scratchpad, never into `scripts/`.
+A script living there cannot resolve the project's `node_modules`, so import by
+absolute path: `from '/home/user/cc2000-v2/node_modules/playwright/index.mjs'`.
+
+`scripts/verify.mjs` drives the machine, and the run now opens on a title card
+with no machine in the DOM at all — anything that drives the UI has to wait for
+`.calculator` rather than race it.

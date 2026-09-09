@@ -65,13 +65,15 @@
 		transparent 35%
 	);
 	/* Dark lines rather than light ones, and a strong line plus a weak one over a
-	   4px pitch: that pairing is what reads as tape rather than as a faint
-	   texture. Heavier than a CRT would really be, on purpose. */
+	   6px pitch: that pairing is what reads as tape rather than as a faint
+	   texture. Heavier than a CRT would really be, on purpose — the warmth is the
+	   whole point of it, and at a 4px pitch with a single dark pixel it was
+	   closer to a screen-door than to a raster. */
 	--scanlines: repeating-linear-gradient(
 		to bottom,
-		rgba(0, 0, 0, 0.22) 0 1px,
-		rgba(0, 0, 0, 0.07) 1px 2px,
-		transparent 2px 4px
+		rgba(0, 0, 0, 0.34) 0 2px,
+		rgba(0, 0, 0, 0.13) 2px 3px,
+		transparent 3px 6px
 	);
 
 	/* Copy sits on the deep blue for the first half of a run and on white for

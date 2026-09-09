@@ -6,7 +6,6 @@
 		clamp01,
 		smoothstep,
 		smootherstep,
-		easeInOutCubic,
 		ICOSA,
 		conceptionFrustum,
 		VOID
@@ -35,29 +34,32 @@
 	// What develops is the CLEAVAGE, in two halves on two clocks:
 	//
 	//   the FURROW   the field's negative set — the nodal net between the twelve
-	//                caps — pulled INTO the skin, and pulled PAST where it
-	//                settles. The sphere is scored into twelve, hard, before
-	//                anything comes out of it.
-	//   the LOBES    the twelve caps, swelling out of the net already cut around
-	//                them.
+	//                caps — cut hard INTO the drawing, and past where it settles,
+	//                before anything else resolves.
+	//   the LOBES    the twelve caps, coming up out of the net already cut
+	//                around them.
 	//
 	// That is the order a cell divides in. See world/materials.js.
 	//
+	// ── AND NOTHING MOVES OFF THE SPHERE ─────────────────────────────────────
+	// All of it is DRAWN. The relief used to displace the surface as well — the
+	// twelve caps physically swelling — and what that gives you is a lumpy
+	// potato: the silhouette stops being a circle, and an icosahedron inscribed
+	// in a lumpy potato is not visibly inscribed in anything. The body is a
+	// perfect sphere for the whole scene and the field lives on its skin, which
+	// is what the rest of the site does with everything else.
+	//
 	// ── And it is ONE beat ───────────────────────────────────────────────────
 	// There is no moment where the wave finishes and a construction starts up.
-	// The twelve corners are struck at the TOP of the lobes' travel, ON the caps,
-	// in place — they are not a new object arriving, they are the antinodes being
-	// marked — and the six axes the sum was taken over are drawn as the six long
-	// diagonals, because that is literally what they are. The thirty edges close
-	// between corners that are already there, while the skin is still moving
-	// underneath them, and the skin relaxes back to a sphere under a frame that
-	// is already standing where its lobes were.
+	// The twelve corners are struck ON the caps, in place — they are not a new
+	// object arriving, they are the antinodes being marked — and the six axes the
+	// sum was taken over are drawn as the six long diagonals, because that is
+	// literally what they are. The thirty edges close between corners that are
+	// already there, while the field under them is still resolving.
 	//
 	// ── And it does not fade. At all. ────────────────────────────────────────
 	// The body stays at full weight, and the field stays drawn on it at full
-	// weight, for the whole of this scene and the whole of the next one. What
-	// relaxes is the DISPLACEMENT — the skin rounds up once it has finished
-	// dividing — and nothing else.
+	// weight, for the whole of this scene and the whole of the next one.
 	//
 	// It can do that because occlusion and opacity are asked for separately (see
 	// egg.setCore). Every edge of the icosahedron is a chord and therefore inside
@@ -107,14 +109,7 @@
 		// The mode rings as it is excited and damps as it settles, which is what
 		// an excited normal mode does.
 		const ring = (1 - smootherstep(span(p, T.ring))) * T.ringPeak;
-		// The skin rounds up once it has finished dividing. This is the
-		// DISPLACEMENT relaxing — the field is not touched.
-		const round = easeInOutCubic(span(p, T.round));
 		const union = Math.sin(span(p, T.union) * Math.PI) * T.unionPeak;
-		// How far the caps stand proud of the sphere. The relief peaks at exactly
-		// 1 on the twelve, so this IS the cap height, and the frame rides it.
-		const amp = lit * T.amp * (1 - round);
-
 		world.egg.setWave({
 			furrow,
 			lobe,
@@ -123,10 +118,6 @@
 			// first, which is a bang where the shimmer should be.
 			chop: smootherstep(span(p, T.chopIn)) * (1 - smootherstep(span(p, T.chopOut))) * T.chopPeak,
 			glow: lit * T.handoverGlow * (1 + union * 0.6),
-			// Big while it is dividing — a body pulling itself into twelve is a
-			// shape change, not a shading change — and flat by the time the frame
-			// has closed over it.
-			amp,
 			ring,
 			phase: t
 		});
@@ -146,12 +137,6 @@
 		// diagonals, because they are the same six vectors. Then the thirty edges,
 		// closing between corners that are already there while the skin under
 		// them is still moving.
-		// AND THE FRAME RIDES THE DIVISION. The twelve corners are the twelve
-		// caps, so while the caps stand proud the line-work stands out with them,
-		// and it settles onto the circumsphere as the body rounds up. Struck any
-		// other way, the corners are marked inside a surface that has swollen past
-		// them and not one of them is visible.
-		world.setWireScale(1 + amp * 1.02);
 		world.setCorners(span(p, T.corners) * (1 + union * 1.4));
 		world.setSpokes(smootherstep(span(p, T.spokes)));
 		world.setGrow(span(p, T.edges));
