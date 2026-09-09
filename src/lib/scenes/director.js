@@ -6,6 +6,7 @@ import {
 	decade,
 	conceived,
 	edge,
+	monitorRect,
 	fieldDecade,
 	flare,
 	calcZoom
@@ -73,16 +74,9 @@ export function clearResult() {
 	flare.set(0);
 }
 
-// The calculator is home and settled — but the room is NOT let go of. The
-// machine ends the loop sitting in the bedroom's monitor, at RETURN_FILL of the
-// viewport, with the room still rendered round it; that is where the next run is
-// operated from, and it is the one place in the site where two scenes are on
-// screen at once. monitorRect therefore stays live: it is what the calculator
-// keeps fitting itself to (scenes/Calculator.svelte) and what tells the stage to
-// keep drawing the room behind it (three/Stage.svelte).
-//
-// It is cleared when the next run reaches the computation, which is the moment
-// the room stops being the thing behind the machine.
+// The calculator is home and settled. Now the room can be let go of: the loop
+// ends on the machine, full screen, exactly as a cold load draws it.
 export function settled() {
+	monitorRect.set(null);
 	calcZoom.set(1);
 }

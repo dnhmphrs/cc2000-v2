@@ -121,9 +121,17 @@ export const TUNNEL = {
 	spermRings: 4,
 	spermLongs: 7,
 	spermGain: 1.0,
-	// Where it is when the scene starts — behind the camera and off the axis,
-	// because passing exactly through the lens is degenerate.
-	spermFrom: { x: 3.6, y: -1.7, z: 18 },
+	// Where it starts: `z` units BEHIND the lens, and low in frame. It comes
+	// straight out from behind you and pulls slowly ahead — the opening shot of
+	// Star Wars, not something entering from the wings.
+	//
+	// x and y are in HALF-HEIGHTS OF THE FRAME at whatever distance it currently
+	// is, not world units, and that distinction is the whole of it: a fixed world
+	// offset a metre from the lens is nine screen-widths off to the right, which
+	// is exactly how it used to appear — sliding in from the side rather than
+	// coming up from underneath you. In screen terms it holds its place and
+	// drifts to centre.
+	spermFrom: { x: 0.3, y: -1.45, z: 16 },
 
 	// The ovum turns too, slowly, about its own pole. rad/s.
 	eggSpin: 0.16,
@@ -144,6 +152,52 @@ export const TUNNEL = {
 export const CAM_END =
 	TUNNEL.eggZ + TUNNEL.shellR / (EGG_SCREEN * Math.tan((TUNNEL.fovEnd * Math.PI) / 360));
 
+// ── The sheet (scenes 2–3) ───────────────────────────────────────────────────
+// The ruled grid that hangs behind the ovum, exponentiates into five petals and
+// closes onto it. See world/sheet.js for the two maps; these are their numbers.
+export const SHEET = {
+	// FIVE, and not for decoration: five is the order of the icosahedron's own
+	// rotation about a vertex, so the flower that closes on the ovum already has
+	// the symmetry the wave inside it is about to find.
+	petals: 5,
+	// It closes onto a ball slightly LARGER than the ovum's core, so it is a
+	// shell around it rather than a skin welded to it — the wave underneath
+	// displaces that surface by a tenth of its radius and would otherwise push
+	// straight through the lattice wrapped on it.
+	shell: 1.03,
+	// Grid resolution of one petal. The exponential stretches the far end of a
+	// petal enormously, so it is worth having segments to bend.
+	along: 40,
+	across: 14,
+	// Half-width of the source strip in log-radius. With the height fixed at ±π
+	// this is what decides whether the flat state reads as square: 3.2 against
+	// 3.14 is as near as makes no difference.
+	extentX: 3.2,
+	// How far the figure reaches, as a MULTIPLE OF THE BALL IT CLOSES ONTO — the
+	// scale in world/sheet.js divides the exponential's growth back out so this
+	// holds while the shape changes. As a multiple rather than a length because
+	// the wrap angle it ends at is 2·atan(reach/2), and the fly-in's ovum and the
+	// void's sphere are very different sizes: fixing the ratio is what makes the
+	// closed sheet the same picture in both, which is what lets one scene hand it
+	// to the other.
+	reachR: 8.0,
+	// How far behind the ball's centre the flat plane hangs, same units. It comes
+	// forward as it closes.
+	farR: 5.3,
+	// Lines across the source strip, per unit. Radial rays and circles once the
+	// exponential has run.
+	cellsX: 3.4,
+	cellsY: 2.6,
+	// How solid the ground between the rules is. Well under one: once it has
+	// closed it is a shell round the ovum, and an opaque one hides the very thing
+	// it has just wrapped itself around.
+	fill: 0.4,
+	// How much of the fly-in's fog it takes. Under one on purpose: it is a
+	// construct the machine is drawing rather than matter hanging in the air, and
+	// at these distances full fog would mean it is simply never there.
+	fogTake: 0.4
+};
+
 // ── The icosahedron (scenes 3–4) ─────────────────────────────────────────────
 export const ICOSA = {
 	// Orthographic frustum HEIGHT. Width follows the viewport aspect.
@@ -155,7 +209,7 @@ export const ICOSA = {
 	// computation lerps from one to the other as the panes open, and that move
 	// is most of why the panes read as coming OUT.
 	conceptionFrustum: 4.9,
-	frustum: 13.0,
+	frustum: 15.5,
 	camPos: [0, 0, 14],
 
 	// ── The lens ─────────────────────────────────────────────────────────────
@@ -215,6 +269,19 @@ export const ICOSA = {
 	paneReach: 6.4,
 	paneReachPortrait: 4.2,
 	roomDepth: 3.0,
+
+	// And the DRAFTING goes nearly twice as far again. The golden rectangle's
+	// spiral, its subdivision squares and its dimension schematic are not the
+	// room — they are the machine's working, and in the build this is taken from
+	// they were flung out well past the thing they annotate, on long arms, with
+	// the spirals turning at the ends of them. Six rooms in a tight ball is a
+	// diagram; six rooms with their working thrown out around them is a machine
+	// mid-calculation.
+	//
+	// The outermost arms run off the frame at the extremes and that is deliberate
+	// — fitting the far corner of the far spiral on a phone shrinks the whole
+	// assembly to nothing.
+	draftReach: 1.9,
 
 	// How much the sphere opens out as the rooms come through it. It starts as
 	// the frame's exact circumsphere and only ever eases off that.
