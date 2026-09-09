@@ -28,6 +28,7 @@
 		VOID
 	} from '$lib/config';
 	import { assignDecades, shuffle } from '$lib/data/roomElements';
+	import { settled } from './director';
 	import GoldenRectangle from '$lib/three/objects/GoldenRectangle.svelte';
 	import { RECTANGLES, VERTICES } from '$lib/three/geometry/icosahedron';
 
@@ -529,6 +530,7 @@
 	export function beginReturn() {
 		if (!get(monitorRect)) return;
 		rt = 0;
+		handedOver = false;
 		returnFrom = frustum;
 		focusFrom = landingDepth();
 		focusTo = focusFrom;
@@ -558,6 +560,10 @@
 			: Math.max(frustum * 0.3, 0.05);
 	}
 
+	// Latched, because the step below clamps at RETURN_DUR and would otherwise
+	// hand the run over on every frame after it.
+	let handedOver = false;
+
 	export function stepReturn(dt) {
 		if (!returnFrom) return;
 		rt = Math.min(rt + dt, RETURN_DUR);
@@ -571,6 +577,16 @@
 		world.setFocus(lerp(focusFrom, focusTo, k));
 		world.applyFrustum(frustum);
 		publishMonitor();
+
+		// THROUGH the glass. At RETURN_FILL 1.0 the monitor covers the viewport
+		// exactly, and what is on it is black — the CRT is off. The tunnel behind
+		// the next run is the same black, so the hand-over is not covered, it is
+		// simply invisible: the room's screen fills the frame and the frame is
+		// already the fly-in. See director.settled().
+		if (!handedOver && rt >= RETURN_DUR) {
+			handedOver = true;
+			settled();
+		}
 	}
 
 	// ── The room, being sat in front of ─────────────────────────────────────

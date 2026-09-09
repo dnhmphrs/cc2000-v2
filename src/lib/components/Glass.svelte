@@ -1,22 +1,17 @@
 <script>
-	import { scene } from '$lib/store/store';
-
 	// ── The glass ────────────────────────────────────────────────────────────
-	// Scanlines over the whole site, for the three 3D scenes and those only.
+	// Scanlines over the whole site, ALWAYS.
 	//
-	// They belong to the flight, not to the furniture. The calculator has its own
-	// CRT and draws its own gleam on it — laying a second pitch over that is a
-	// moiré, not a screen — and the bedroom you land in is a room, photographed
-	// on nothing, so scanlines over it read as a filter rather than as a set.
-	//
-	// Between those two ends you are inside the machine, and that is where they
-	// earn their keep.
-	$: inFlight = $scene === 'flyIn' || $scene === 'conception' || $scene === 'computation';
+	// They used to be gated to the three 3D scenes, on the reasoning that the
+	// calculator had its own CRT and a second pitch over it was a moiré, and that
+	// the bedroom is a room photographed on nothing. There is no calculator in
+	// this build, and the argument about the bedroom had it backwards: the raster
+	// is the screen the whole thing is being WATCHED on, not a layer inside any
+	// one scene, so switching it off at the ends is the site stepping out of its
+	// own frame twice per run.
 </script>
 
-{#if inFlight}
-	<div class="scanlines" />
-{/if}
+<div class="scanlines" />
 
 <style>
 	.scanlines {

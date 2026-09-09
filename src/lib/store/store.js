@@ -17,7 +17,7 @@ import { AIR, aspectKind } from '$lib/config';
 //   room         the answer, in the room's monitor
 //
 // Written by: scenes/director.js and three/Stage.svelte. Nobody else.
-export const scene = writable('calculator');
+export const scene = writable('flyIn');
 
 // Bumped once per run. Components that need to forget everything on a fresh
 // run can key off this rather than trying to reset themselves.
@@ -79,6 +79,36 @@ export const fieldFade = writable(1);
 // and coming home brings it from 0 back to 1.
 // Written by: scenes/Calculator.svelte.
 export const calcZoom = writable(1);
+
+// ── The way back ─────────────────────────────────────────────────────────────
+// True while the camera is flying THROUGH the room's monitor on the way to
+// another run. There is no machine to fly home into in this build, so nothing
+// changes the scene when "calculate again" is pressed — the room stays up and
+// this says the return flight is on. Computation.stepReturn() clears it, and
+// hands the run to the fly-in, when the glass has filled the frame.
+//
+// Written by: scenes/director.js again(), scenes/director.js settled().
+export const goingBack = writable(false);
+
+// ── The gate ─────────────────────────────────────────────────────────────────
+// V3 has no machine to take the answers on, so the flight takes them instead —
+// and a flight that is waiting for a date has to STOP. This is the one thing
+// standing between the fly-in and its own clock:
+//
+//   null       flying
+//   'prelude'  the title card is up. The scene is mounted and held at progress
+//              zero, which is black air with motes in it, so the card is black
+//              over black and the flight is ALREADY RUNNING when it lifts.
+//   'dob'      the first popup, over the swimmer
+//   'spicy'    the second, once the ovum is up
+//
+// Written by: scenes/FlyIn.svelte (opens them) and the popups (close them).
+//
+// While a gate is open FlyIn holds `t` and keeps advancing `elapsed`, so the
+// swimmer goes on rolling and the scene does not freeze — it waits. Holding t
+// rather than running a second clock is what keeps every frame a pure function
+// of progress, which is what ?at= depends on.
+export const gate = writable('prelude');
 
 // ── Device ───────────────────────────────────────────────────────────────────
 // 'portrait' | 'square' | 'landscape' — see aspectKind() in config/space.js.

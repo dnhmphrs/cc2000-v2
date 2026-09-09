@@ -9,7 +9,7 @@ import {
 	monitorRect,
 	fieldDecade,
 	flare,
-	calcZoom
+	goingBack
 } from '$lib/store/store';
 
 // ── The director ─────────────────────────────────────────────────────────────
@@ -28,22 +28,19 @@ import {
 // The stage advances the three 3D scenes itself as each one finishes (they know
 // their own durations); the two ends of the loop are driven from the DOM.
 
-export const ORDER = ['calculator', 'flyIn', 'conception', 'computation', 'room'];
+// NO CALCULATOR. This build has no machine: the run opens on the title card,
+// which is a DOM overlay held over a fly-in that is already mounted, and the two
+// answers are taken mid-flight by popups. See store.js `gate`.
+export const ORDER = ['flyIn', 'conception', 'computation', 'room'];
 
 export function is(name) {
 	return get(scene) === name;
 }
 
-// Pressing calculate. The calculator stays mounted for its own launch — it is
-// being pushed into the lens, and the fly-in is running behind it.
-//
-// It does NOT clear the result: the calculator works the answer out BEFORE
-// calling this, and the whole cinematic is that answer being delivered. Clearing
-// here wipes the track and the room renders empty.
+// Starting a run. There is nothing to press: the fly-in is mounted from the
+// first frame and the title card lifts off it, so this only marks the run.
 export function begin() {
-	if (!is('calculator')) return;
 	runId.update((n) => n + 1);
-	scene.set('flyIn');
 }
 
 // The stage calls this as each 3D scene runs out.
@@ -53,14 +50,21 @@ export function advance(from) {
 	scene.set(ORDER[Math.min(i + 1, ORDER.length - 1)]);
 }
 
-// Going round again. The calculator is drawn inside the room's monitor and the
-// camera flies into that monitor while it grows out of it. The operator's
-// ANSWERS are kept on purpose — only what the run produced is cleared.
+// Going round again. The camera flies THROUGH the room's monitor and comes out
+// the other side already in the tunnel — the glass is black and so is the air
+// behind it, so there is nothing to cover the cut with because there is no cut
+// to see. The title card does not come back; the second run opens on the flight.
+//
+// The operator's ANSWERS are kept on purpose — only what the run produced is
+// cleared — but both questions are asked again, because asking them is the shape
+// of the run rather than a form to be filled in once.
 export function again() {
 	if (!is('room')) return;
 	clearResult();
-	calcZoom.set(0);
-	scene.set('calculator');
+	// The return flight owns the scene change: it runs in the computation, whose
+	// room is still on screen, and hands over when the glass has filled the frame.
+	// See Computation.stepReturn().
+	goingBack.set(true);
 }
 
 // Everything a run produced. Not the answers, and not monitorRect — the
@@ -74,9 +78,10 @@ export function clearResult() {
 	flare.set(0);
 }
 
-// The calculator is home and settled. Now the room can be let go of: the loop
-// ends on the machine, full screen, exactly as a cold load draws it.
+// Through the glass. The room is let go of and the flight starts.
 export function settled() {
+	goingBack.set(false);
 	monitorRect.set(null);
-	calcZoom.set(1);
+	scene.set('flyIn');
+	runId.update((n) => n + 1);
 }
