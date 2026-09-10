@@ -198,11 +198,6 @@
 		// Brightness and EXISTENCE are separate: the out-fade dims the field as a
 		// whole, the in-window switches motes on one at a time. See tunnel.js.
 		world.setMotes(1 - easeInOutCubic(span(p, T.motesOut)), span(p, T.motesIn));
-		// And the clocks, tumbling past on the way back for your record.
-		world.setClocks(
-			smoothstep(0, 1, span(p, T.clocksIn)) * (1 - easeInOutCubic(span(p, T.clocksOut))),
-			camZ
-		);
 
 		// ── The swimmer ──────────────────────────────────────────────────────
 		// The roll, about the axis you are looking down. V1's exactly, and the one

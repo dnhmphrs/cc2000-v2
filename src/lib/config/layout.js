@@ -42,39 +42,43 @@ export function glassAspect(decadeKey) {
 	return (g.w / g.h) * g.art;
 }
 
-// ── The result panel ─────────────────────────────────────────────────────────
-// The answer is drawn INSIDE the monitor the run landed in, and those are four
-// different shapes. One fixed layout cannot serve all of them: sized off width
-// alone it is a widescreen band, which is right for the 2010s and leaves the
-// three squarish sets showing a letterbox floating in a mostly empty screen.
+// ── The readout ──────────────────────────────────────────────────────────────
+// What goes in the monitor, now that only TYPE goes in the monitor. The player
+// used to share the glass and it was always the wrong call: Spotify's embed has
+// a size below which it does not draw, and three of these four rooms have a
+// screen barely larger than that, so the two of them spent the whole time
+// crushing each other. The player is in the corner now — see scenes/Room.svelte
+// — and this sizes the four lines that are left.
 //
-// So the panel picks a reference box by the shape of the glass it is in and
-// fills it. `ref` is the size the panel is drawn 1:1 at; the scale is whichever
-// of the two dimensions runs out first. A NARROWER reference buys bigger type
-// in a narrow screen, paid for in title lines — which a tall screen has room
-// for and a wide one does not.
+// The four monitors are four different shapes, and one fixed layout cannot
+// serve all of them: sized off width alone it is a widescreen band, which is
+// right for the 2010s and leaves the three squarish sets showing a letterbox
+// floating in a mostly empty screen.
+//
+// So the readout picks a reference box by the shape of the glass it is in and
+// fills it. `ref` is the size it is drawn 1:1 at; the scale is whichever of the
+// two dimensions runs out first. A NARROWER reference buys bigger type in a
+// narrow screen, paid for in title lines — which a tall screen has room for and
+// a wide one does not.
+//
+// The boxes came DOWN when the player left, which is the point: the same glass
+// now fits a reference two thirds the height, so the same monitor sets its type
+// a size and a half larger. The 90s CRT — the tightest of the four, square to
+// within two parts in a thousand and about 230px across at landing — went from
+// 0.70 to 0.82.
 export const RESULT_PANEL = {
-	// How small the panel may be drawn before it stops being readable, and how
+	// How small the readout may be drawn before it stops being readable, and how
 	// large before it stops reading as a screen.
 	scale: [0.55, 1.35],
 
-	// Spotify's own compact card is 152px tall and it draws nothing bigger until
-	// 232. Past 152 the embed would only be stretched, so whatever height is left
-	// over becomes breathing space around the panel instead. Real pixels, not
-	// scaled ones — the breakpoint is the player's, not ours.
-	playerMax: 152,
-
-	// Smallest the player may be squeezed to, in panel units.
-	playerMin: 72,
-
 	// First match wins, so these run widest-first and the last one has to be 0.
 	shapes: [
-		{ name: 'wide', from: 1.45, ref: { w: 420, h: 190 }, titleLines: 2, artistLines: 1 },
-		{ name: 'square', from: 0.85, ref: { w: 330, h: 250 }, titleLines: 3, artistLines: 2 },
+		{ name: 'wide', from: 1.45, ref: { w: 390, h: 140 }, titleLines: 2, artistLines: 1 },
+		{ name: 'square', from: 0.85, ref: { w: 320, h: 185 }, titleLines: 3, artistLines: 2 },
 		// Nothing is this shape today. It is here so that a monitor taller than it
 		// is wide cannot land on the widescreen layout by default, which is the
 		// exact failure this config exists to fix.
-		{ name: 'tall', from: 0, ref: { w: 300, h: 330 }, titleLines: 4, artistLines: 2 }
+		{ name: 'tall', from: 0, ref: { w: 285, h: 210 }, titleLines: 4, artistLines: 2 }
 	]
 };
 
