@@ -111,7 +111,20 @@ export const SCENES = scale({
 		// scene happens behind the calculator, and what is underneath it has to be
 		// moving before the calculator clears. It goes out as you arrive — the
 		// last beat is the ovum and nothing else.
-		motesIn: [0.0, 0.04],
+		// SLOW, and piecemeal — each mote switches on at its own point in this
+		// window rather than the field fading up as one. It used to be four
+		// hundredths, up on the first frame, because the cut into this scene
+		// happened behind a calculator and what was underneath had to be moving
+		// before the machine cleared. There is no machine and no cut: the flight
+		// is already running under the title card, so the air can develop around
+		// the swimmer instead of being there waiting for it.
+		motesIn: [0.03, 0.42],
+
+		// The clocks. Up with the swimmer and gone before the ovum is the subject:
+		// they belong to the JOURNEY, and a clock tumbling past the thing you have
+		// come all this way to see is a clock in the way of it.
+		clocksIn: [0.06, 0.2],
+		clocksOut: [0.5, 0.66],
 		motesOut: [0.8, 0.94],
 
 		// ── THE PASS ─────────────────────────────────────────────────────────
@@ -136,13 +149,14 @@ export const SCENES = scale({
 		// is answered (see the `gate` store), so what follows each one is however
 		// long the operator takes.
 		//
-		//   askDob    the swimmer is past the lens and pulling ahead, and it is the
-		//             only thing on screen — the halo has not opened yet, so there
-		//             is nothing behind the popup but black and a mote field.
-		//   askSpicy  the ovum is up and the swimmer has something to swim at, so
-		//             the second question is asked over the thing it is about.
-		askDob: 0.24,
-		askSpicy: 0.66,
+		//   askDob    the ovum is IN SIGHT — the halo has opened and the cage is
+		//             resolving out of the fog behind the swimmer. Asked earlier
+		//             the popup had nothing behind it but black, and the run gave
+		//             you a form before it had shown you anything.
+		//   askSpicy  close on the ovum, just short of the dive, so the second
+		//             question is asked at the thing it is about.
+		askDob: 0.46,
+		askSpicy: 0.76,
 
 		// It breaks formation and goes in. Its own curve, and a hard one: this is
 		// the only acceleration in the scene and it happens against a camera that
@@ -222,8 +236,7 @@ export const SCENES = scale({
 	//              |pinch: over and back .60|
 	//          |lobes: the twelve out .58|
 	//               |corners, struck on the caps .60|
-	//                    |spokes .76|
-	//                      |edges ....................... .94|
+	//                    |spokes .66|edges .70|
 	//                                            |union: peaks as the last edge lands|
 	conception: {
 		// Longer at the FRONT than the 5.2 that preceded it and shorter overall,
@@ -258,15 +271,19 @@ export const SCENES = scale({
 		ring: [0.0, 0.56],
 		ringPeak: 0.3,
 		// ── The solid, out of the division that is still happening ───────────
-		corners: [0.44, 0.6],
-		spokes: [0.5, 0.76],
-		// The last edge lands ON the union's peak rather than well before it, so
-		// the flare IS the figure closing rather than a beat that follows it.
-		edges: [0.54, 0.94],
+		// TIGHTER, AND AS ONE DRAW. Head on down a five-fold axis the six spokes
+		// and the thirty edges overlap almost exactly in projection, so drawing
+		// them as two staggered animations reads as one thing being drawn twice
+		// rather than as a solid assembling. They now open two hundredths apart
+		// and close together, which is a single event, and the whole frame takes a
+		// third of the scene rather than half of it.
+		corners: [0.4, 0.5],
+		spokes: [0.46, 0.66],
+		edges: [0.48, 0.7],
 		// THE UNION. The last edge closes and the whole figure answers at once.
 		// It has to come back to zero by p=1: the computation's enter() restates
 		// setLineOpacity(1), so a flare still up at the cut is a visible step.
-		union: [0.84, 1.0],
+		union: [0.72, 1.0],
 		unionPeak: 1.3,
 
 		// ── WHAT IT HANDS OVER ───────────────────────────────────────────────

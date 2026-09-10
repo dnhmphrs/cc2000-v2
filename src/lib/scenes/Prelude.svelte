@@ -25,7 +25,7 @@
 		'allowing all of mankind to calculate the song playing',
 		'at their exact moment of conception',
 		'with the statistical accuracy',
-		'only the internet can provide'
+		'that only the internet can provide'
 	];
 
 	let shown = LINES.map(() => 0);

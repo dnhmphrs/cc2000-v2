@@ -1,6 +1,6 @@
 <script>
 	import * as THREE from 'three';
-	import { LAYERS, elementUrl } from '$lib/data/roomElements';
+	import { LAYERS, placement, elementUrl } from '$lib/data/roomElements';
 	import { SCREEN_GLASS, GLASS_SAFETY } from '$lib/config';
 
 	// Lives in the same worldGroup as everything else so it rotates together.
@@ -104,8 +104,9 @@
 	function layout(entry) {
 		const { cfg, aspect } = entry;
 		const { right, up, n, W, H } = frame();
-		// Portrait re-places elements to fill the tall frame.
-		const pos = portrait && cfg.port ? cfg.port : cfg;
+		// Portrait re-places elements to fill the tall frame, and each decade may
+		// override the shared placement — see roomElements.placement().
+		const pos = placement(cfg, decadeKey, portrait);
 
 		let w, h;
 		if (cfg.cover) {

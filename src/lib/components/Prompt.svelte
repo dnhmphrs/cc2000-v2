@@ -178,9 +178,9 @@
 	   than of a dialog box: no chrome, one hairline, and the ground behind it
 	   barely darkened so the swimmer still reads underneath. */
 	.ask {
-		min-width: min(30rem, 84vw);
+		min-width: min(21rem, 80vw);
 		max-width: 92vw;
-		padding: clamp(20px, 3.4vh, 34px) clamp(22px, 3vw, 40px);
+		padding: clamp(16px, 2.4vh, 24px) clamp(18px, 2.2vw, 30px);
 		background: rgba(10, 10, 12, 0.82);
 		border: 1px solid rgba(255, 212, 38, 0.28);
 		border-radius: 3px;
@@ -188,13 +188,13 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: clamp(12px, 2vh, 20px);
+		gap: clamp(10px, 1.5vh, 16px);
 		text-align: center;
 	}
 
 	.q {
 		margin: 0;
-		font-size: clamp(9px, 0.86vw, 12px);
+		font-size: clamp(8px, 0.74vw, 10px);
 		letter-spacing: 0.24em;
 		text-transform: uppercase;
 		color: rgba(240, 242, 248, 0.62);
@@ -206,17 +206,30 @@
 		gap: clamp(8px, 0.9vw, 16px);
 	}
 
-	/* The machine's own controls, lifted whole. */
+	/* The machine's own controls, lifted — but WITHOUT THE ARROW, which is most
+	   of why they read as huge. A native select reserves a chunk of width for a
+	   dropdown chevron it draws itself, in the platform's own weight and colour,
+	   and next to type this size it is the largest and least considered mark on
+	   the panel. Suppressing it leaves the value and its rule, which reads as a
+	   field rather than as a widget, and the whole panel comes in.
+
+	   `appearance: none` is set globally by the `*` reset in styles.css, but
+	   Chromium keeps the indicator on a select regardless: it takes the
+	   -webkit-appearance form specifically. */
 	.row select {
+		appearance: none;
+		-webkit-appearance: none;
 		font: inherit;
-		font-size: clamp(15px, 1.9vw, 26px);
-		letter-spacing: 0.08em;
+		font-size: clamp(12px, 1.15vw, 16px);
+		letter-spacing: 0.1em;
+		text-align: center;
+		text-align-last: center;
 		color: var(--yellow);
 		background: transparent;
 		border: 0;
-		border-bottom: 1px dashed rgba(255, 212, 38, 0.45);
+		border-bottom: 1px solid rgba(255, 212, 38, 0.32);
 		border-radius: 0;
-		padding: 0 0 3px;
+		padding: 0 0.15em 3px;
 		cursor: pointer;
 		outline: none;
 	}
@@ -231,15 +244,15 @@
 		color: rgba(240, 242, 248, 0.85);
 	}
 	.of {
-		font-size: clamp(11px, 1.2vw, 16px);
+		font-size: clamp(10px, 0.95vw, 13px);
 		letter-spacing: 0.08em;
 		color: rgba(240, 242, 248, 0.45);
 	}
 
 	.no {
 		margin: 0;
-		max-width: 34rem;
-		font-size: clamp(10px, 0.95vw, 13px);
+		max-width: 30rem;
+		font-size: clamp(9px, 0.82vw, 11px);
 		line-height: 1.65;
 		color: rgba(240, 242, 248, 0.7);
 	}
@@ -260,14 +273,14 @@
 	.go {
 		margin-top: 0.2em;
 		font: inherit;
-		font-size: clamp(9px, 0.86vw, 12px);
+		font-size: clamp(8px, 0.74vw, 10px);
 		letter-spacing: 0.26em;
 		text-transform: uppercase;
 		color: var(--yellow);
 		background: transparent;
 		border: 1px solid rgba(255, 212, 38, 0.4);
 		border-radius: 2px;
-		padding: 0.8em 2.4em;
+		padding: 0.75em 2.2em;
 		cursor: pointer;
 		transition: background 0.18s, color 0.18s, border-color 0.18s;
 	}

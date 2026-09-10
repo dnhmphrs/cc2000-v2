@@ -81,6 +81,16 @@ export const TUNNEL = {
 	// framing is angular, so the FORESHORTENING (how much bigger the near end of
 	// the body is than the far end) is fixed by the lens and by spermSpan, not by
 	// this. It only has to clear the near plane.
+	// ── The clocks ───────────────────────────────────────────────────────────
+	// Eight of them, tumbling past the lens on the way in. `clockSpan` is the
+	// slab of air they wrap inside, exactly as the motes do; `clockRadius` keeps
+	// them off the axis, because the swimmer is coming up the middle and a clock
+	// in front of it is a clock in the way.
+	clocks: 12,
+	clockSpan: 90,
+	clockRadius: 17,
+	clockSize: 1.25,
+
 	spermLead: 5.5,
 	// How much of the frame HEIGHT its CROSS-SECTION covers. V1's, measured off
 	// the file: 0.153 units across a frame 0.603 units high. The body points

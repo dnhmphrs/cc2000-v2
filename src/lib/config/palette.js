@@ -128,6 +128,10 @@ export const HOLO = {
 	// The debris streaming past the lens. Cold, like the swimmer — they are the
 	// only things in the air that are not gold, and they leave with it.
 	mote: 0x8ea6d8,
+	// The clocks tumbling past on the way in. The one WARM thing in this air, so
+	// they read as an intrusion from the machine's own palette rather than as
+	// more weather — which is the joke: it is going back for your record.
+	clock: 0xe8b23a,
 	// The glow the ovum comes up out of, which is the ovum's and therefore GOLD.
 	// It is the first thing in the run that is: a warmth in the black long
 	// before there is anything in the warmth.
