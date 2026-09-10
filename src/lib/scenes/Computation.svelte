@@ -10,6 +10,7 @@
 		monitorRect,
 		landing,
 		fieldRotation,
+		fieldRays,
 		fieldFade
 	} from '$lib/store/store';
 	import {
@@ -33,7 +34,7 @@
 	import { assignDecades, shuffle } from '$lib/data/roomElements';
 	import { settled } from './director';
 	import GoldenRectangle from '$lib/three/objects/GoldenRectangle.svelte';
-	import { RECTANGLES, VERTICES } from '$lib/three/geometry/icosahedron';
+	import { RECTANGLES, VERTICES, CIRCUMRADIUS } from '$lib/three/geometry/icosahedron';
 
 	// ── Scene 4: the computation ─────────────────────────────────────────────
 	// The panes come out of the sphere, the search turns through the decades,
@@ -468,6 +469,24 @@
 		// than sitting still behind it. See three/shaders/index.js (uRot).
 		ROT4.makeRotationFromQuaternion(world.frame.quaternion);
 		fieldRotation.set(ROT3.setFromMatrix4(ROT4).elements);
+
+		// ── And so do its axes ───────────────────────────────────────────────
+		// The six five-fold axes, continued off the solid and onto the paper —
+		// see three/shaders/grid.js. They are born on the SAME TWO BEATS the
+		// golden rectangles are, from the same two values: stroked on inside the
+		// solid with `drawn`, carried out past the frame with `open`. No new
+		// numbers, no second ease, and a ray and a rectangle cannot fall out of
+		// step because they are one thing arriving.
+		//
+		// Out with the fall, or twelve full-frame lines follow the camera into
+		// the monitor.
+		fieldRays[0] = drawn * (zoom > 0 ? 1 - smoothstep(0.1, 0.75, easeInOutCubic(zoom)) : 1);
+		fieldRays[1] = open;
+		// The solid's rim as a fraction of the frame height, so the rays clear
+		// it instead of piling into a sunburst on the thing they belong to.
+		// Written here rather than with the others because `frustum` is not
+		// settled for this frame until the branch above has run.
+		fieldRays[2] = (CIRCUMRADIUS * 1.14) / frustum;
 
 		// ── The fall into the room ───────────────────────────────────────────
 		if (zoom > 0) {

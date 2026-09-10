@@ -3,8 +3,8 @@
 //
 //   deep.js    the fly-in's air     — a lit channel falling to a dark rim, so
 //                                     the fog has somewhere to go
-//   grid.js    the blueprint field  — the void, ruled, with a lattice that
-//                                     turns with the solid in front of it
+//   grid.js    the blueprint field  — the void, ruled, with the solid's own
+//                                     six axes turning through it
 //   flat.js    a block colour       — the spare, and what the calculator idles
 //                                     on between runs
 //   theta.js   the Riemann theta field — kept, unused; a one-word swap
@@ -32,6 +32,20 @@
 //                                   are the same frame. That is what carries
 //                                   the fly-in into the conception without a
 //                                   cut. Every shader must honour it.
+//   uPx                      float  ONE CANVAS PIXEL, in frame heights. Every
+//                                   other width in these shaders is in frame
+//                                   heights so it is the same size on every
+//                                   screen; this is for the one case that
+//                                   cannot be — a line that TURNS and would
+//                                   crawl across the sample grid if it were
+//                                   allowed under a pixel. It follows the
+//                                   canvas, so a throttled field draws a
+//                                   heavier hairline; that is the trade for
+//                                   not shimmering at full resolution.
+//   uRays                    vec3   the solid's axes on the paper: x how much
+//                                   is drawn, y how far it reaches out, z the
+//                                   solid's own rim in frame heights. Only
+//                                   grid.js reads it — see store/store.js.
 //
 // vUv is 0..1 across the viewport.
 import { DEEP } from './deep';
@@ -65,6 +79,8 @@ export const PRELUDE = `
 	uniform float uTime;
 	uniform mat3 uRot;
 	uniform float uFade;
+	uniform float uPx;
+	uniform vec3 uRays;
 
 	float hSinh(float x) { return 0.5 * (exp(x) - exp(-x)); }
 	float hCosh(float x) { return 0.5 * (exp(x) + exp(-x)); }

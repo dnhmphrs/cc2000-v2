@@ -98,7 +98,7 @@ const fogUniforms = (color, density) => ({
 // line in the figure is not a thing to leave to the driver.)
 const W_RAMP = `
 	float wRamp(float w) {
-		return smoothstep(-0.05, 0.62, w) * (1.0 - smoothstep(0.80, 0.90, abs(w)));
+		return smoothstep(0.30, 0.72, w) * (1.0 - smoothstep(0.80, 0.90, abs(w)));
 	}
 `;
 

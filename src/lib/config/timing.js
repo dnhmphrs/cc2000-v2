@@ -466,12 +466,20 @@ export const SCENES = scale({
 		// SPACE, so it never comes above a whisper: the moment it is as bright as
 		// the drafting it stops being the room and becomes furniture in it.
 		cageIn: [0.1, 0.28],
-		// A WHISPER, and quieter than it was. It is a SPACE — the room the search
+		// A WHISPER, and quieter again. It is a SPACE — the room the search
 		// happens inside — and the moment it is as bright as the projected arms it
 		// stops being the room and starts competing with them. Two lattices of
 		// gold line-work at the same weight, one of them 4D and one of them the
 		// answer, is a tangle rather than a scene.
-		cagePeak: 0.3,
+		//
+		// And it is not the only lattice any more. The paper behind it now
+		// carries the solid's own six axes (three/shaders/grid.js), which is the
+		// structure this scene was asking the cage to provide and never got: 720
+		// edges of a 4-polytope seen edge-on is a mesh, and a mesh reads as
+		// texture. So the cage goes back to being weather and the axes carry the
+		// space. Together with the tighter w-ramp in world/materials.js this
+		// leaves about a third of the ink it had.
+		cagePeak: 0.18,
 
 		// ── THE SURVEY ───────────────────────────────────────────────────────
 		// The whole assembly, fully out, BEFORE the machine starts choosing. This

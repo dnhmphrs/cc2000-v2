@@ -16,7 +16,7 @@
 		VOID
 	} from '$lib/config';
 	import { CIRCUMRADIUS } from '$lib/three/geometry/icosahedron';
-	import { fieldRotation, fieldFade } from '$lib/store/store';
+	import { fieldRotation, fieldRays, fieldFade } from '$lib/store/store';
 
 	// ── Scene 3: conception ──────────────────────────────────────────────────
 	// It opens on the fly-in's last frame, unchanged. Same dark sphere, same gold
@@ -257,6 +257,11 @@
 		// — three/shaders/grid.js rules the void in these same coordinates.
 		ROT4.makeRotationFromQuaternion(world.frame.quaternion);
 		fieldRotation.set(ROT3.setFromMatrix4(ROT4).elements);
+		// The axes belong to the COMPUTATION — see three/shaders/grid.js. Held at
+		// nothing here so the cut into that scene is the bare invariant, and so
+		// a ?at= seek into this one cannot inherit a ray-set from a previous run.
+		fieldRays[0] = 0;
+		fieldRays[1] = 0;
 
 		return t >= T.duration;
 	}
