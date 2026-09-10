@@ -124,15 +124,18 @@
 		position: relative;
 		margin: 0;
 		max-width: 100%;
-		/* Read at arm's length, not squinted at: this is the only thing on screen —
-		   but it is a card, not a headline, and at 21px five lines of it filled
-		   the middle of a laptop. The floor stays at 12: below that a mono face
-		   at 0.04em tracking stops being readable on a phone. */
-		font-size: clamp(12px, 1.3vw, 19px);
+		/* Small and CRISP. This is a card, not a headline — at 21px five lines of
+		   it filled the middle of a laptop — and the thing that makes small type
+		   read on a black screen is contrast, not size. It was at 0.82 of the
+		   ink, which is a legible grey and still a grey; at full strength the
+		   same words at two thirds the size are sharper than they were.
+		   The floor stays at 11: below that a mono face at 0.04em tracking
+		   stops being readable on a phone. */
+		font-size: clamp(11px, 1.1vw, 16px);
 		line-height: 1.6;
 		letter-spacing: 0.04em;
 		/* ONE colour. A yellow last line reads as the punchline being flagged. */
-		color: rgba(240, 242, 248, 0.82);
+		color: var(--ink);
 	}
 	.spiel .ghost {
 		visibility: hidden;
@@ -148,7 +151,7 @@
 		width: 0.5em;
 		height: 0.9em;
 		vertical-align: text-bottom;
-		background: rgba(240, 242, 248, 0.8);
+		background: var(--ink);
 		animation: blink 1.05s steps(1) infinite;
 	}
 	@keyframes blink {

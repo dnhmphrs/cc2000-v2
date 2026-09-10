@@ -8,6 +8,7 @@
 		glide,
 		accelerate,
 		easeInOutCubic,
+		easeOutCubic,
 		smoothstep,
 		smootherstep,
 		TUNNEL,
@@ -21,6 +22,13 @@
 	import { DEV, DEV_AT } from '$lib/config';
 	import { get } from 'svelte/store';
 	import { fieldFade, gate, landing } from '$lib/store/store';
+
+	// The attitude the CONCEPTION holds this same body at — see the ovum's spin
+	// below. Built from the shared config rather than imported from the lattice
+	// because the fly-in never touches that world.
+	const LAND = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.tilt));
+	const TURN = new THREE.Euler();
+	const TURN_Q = new THREE.Quaternion();
 
 	// ── Scene 2: the fly in ──────────────────────────────────────────────────
 	// Black air, one swimmer riding the lens, and three hundred units of travel
@@ -316,16 +324,54 @@
 		// dark void the conception opens on. Driven from `t` rather than the
 		// swimmer's `elapsed`, so the core stays a pure function of progress and
 		// a ?at= seek draws what the run draws.
-		world.egg.setWave({ grain: eggIn * (1 - smoothstep(0.85, 0.985, p)), phase: t });
+		// AND IT DOES NOT FADE. It used to be taken out over the last of this
+		// scene so the conception could open on a bare sphere; the conception
+		// opens on the chaos now and removes it with the wave that the sperm
+		// starts. The front is parked below zero here — nothing has happened
+		// yet — which is exactly what the next scene opens on.
+		world.egg.setWave({
+			grain: eggIn,
+			// AND THE WAVE STARTS ON THE HIT. Parked below zero for the whole
+			// flight, then off the park on `strike` and walked to exactly the
+			// value the conception opens from — see SCENES.flyIn.frontParked.
+			// The last second of this scene is the front appearing at the point
+			// the nose went in and the very centre of the body beginning to
+			// settle; the next scene carries it out to the limb.
+			front: lerp(T.frontParked, SCENES.conception.frontFrom, smootherstep(span(p, T.strike))),
+			phase: t
+		});
 		// The rim answers the entry. A nudge, not a flash — the wave that breaks
 		// across this surface at the top of the next scene is the payoff — and it
 		// is the CRISP rim that lifts, not the body's, or the whole disc washes.
 		world.egg.setCoreRim(eggIn * clear * (1 + Math.sin(span(p, T.strike) * Math.PI) * 1.1));
 
-		// And it turns. A wire globe standing still is a diagram; a wire globe
-		// turning is an object being examined, which is what this scene is.
-		world.egg.group.rotation.y = elapsed * TUNNEL.eggSpin;
-		world.egg.group.rotation.x = Math.sin(elapsed * 0.17) * 0.22;
+		// ── And it turns, and it LANDS WHERE THE NEXT SCENE HOLDS IT ─────────
+		// A wire globe standing still is a diagram; a wire globe turning is an
+		// object being examined, which is what this scene is. But it has to
+		// arrive at identity, and it has to do it as a function of progress:
+		//
+		//   IDENTITY, because the conception draws the icosahedral field on this
+		//   same body with the twelve caps ON the twelve vertices. Any rotation
+		//   left on the egg at the hand-over would turn the field off its own
+		//   axes. So the spin is exactly ONE TURN, decelerating into place —
+		//   whole turns are the only ending that is also identity.
+		//
+		//   PROGRESS, because it was on `elapsed`, a real-time clock. That was
+		//   survivable while the mottle faded out before the cut and nothing
+		//   downstream could see the orientation. It is not survivable now that
+		//   the chaos carries into the next scene: two sides of the hand-over
+		//   were drawing the same mottle at different angles, which measured
+		//   2.10/255 across the seam against a floor of about 1.
+		//   AND IT LANDS ON THE CONCEPTION'S ATTITUDE, not on square. The next
+		//   scene keeps its egg inside a frame tilted by ICOSA.tilt
+		//   (world/lattice.js), and the mottle is drawn in OBJECT SPACE from the
+		//   surface normal — so two bodies at the same place, the same size and
+		//   the same brightness still draw two different mottles if they are
+		//   turned differently. Landing square left exactly that: the disc
+		//   matched to within half a level on the mean and the seam still read
+		//   2.68/255, all of it the substance being a different substance.
+		TURN.set(Math.sin(p * Math.PI) * 0.22, Math.PI * 2 * easeOutCubic(p), 0);
+		world.egg.group.quaternion.copy(LAND).multiply(TURN_Q.setFromEuler(TURN));
 
 		return t >= T.duration;
 	}

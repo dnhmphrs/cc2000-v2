@@ -303,7 +303,13 @@
 			chop: 0,
 			glow: SCENES.conception.handoverGlow,
 			amp: 0,
-			ring: 0
+			ring: 0,
+			// The same pair the conception ends on, not an equivalent picture
+			// reached another way: grain still at full, and the front past the
+			// limb so none of it is drawn. Restated rather than inherited, so a
+			// ?at= seek into this scene draws what a run through it draws.
+			grain: 1,
+			front: SCENES.conception.frontTo
 		});
 		// The camera's range belongs to applyFrustum now; only the truck is ours.
 		world.camera.position.x = ICOSA.camPos[0];

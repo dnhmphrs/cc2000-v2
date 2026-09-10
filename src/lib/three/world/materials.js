@@ -452,6 +452,7 @@ const WAVE_FIELD = `
 	uniform float uFurrow;
 	uniform float uLobe;
 	uniform float uGrain;
+	uniform float uFront;
 
 	float waveField(vec3 n) {
 		float h = 0.0;
@@ -490,11 +491,32 @@ const WAVE_FIELD = `
 	//
 	// It damps into the icosahedral invariant. That hand-over is the scene: what
 	// the impact starts, the symmetry finishes.
-	float splash(vec3 n) {
+	// The hyperbolic distance from the point of impact. Everything about the
+	// moment of conception is measured in this: the rings are spaced in it, and
+	// so is how far the disturbance has got. It runs 0 at the impact to about
+	// 3.57 at the limb, where the clamp stops the log running away.
+	float hyp(vec3 n) {
 		float c = dot(n, uSplashAxis);
 		float r = sqrt(max(1.0 - c * c, 0.0));
-		float d = 0.5 * log((1.0 + r) / max(1.0 - r, 0.0016));
-		return sin(d * 3.1 - uPhase * 2.2);
+		return 0.5 * log((1.0 + r) / max(1.0 - r, 0.0016));
+	}
+
+	float splash(vec3 n) {
+		return sin(hyp(n) * 3.1 - uPhase * 2.2);
+	}
+
+	// ── WHAT THE FRONT HAS NOT REACHED YET ───────────────────────────────────
+	// 1 where the skin is still churning, 0 where the wave has been through and
+	// left the invariant behind. uFront is the hyperbolic radius the
+	// disturbance has travelled to, so this is a circle opening out from the
+	// point of impact — and because it is measured in the SAME distance the
+	// rings are spaced in, the calm arrives exactly with the rings that carry
+	// it, not on a clock of its own that has to be kept in step by hand.
+	//
+	// Parked BELOW zero it returns 1 everywhere, which is the state the fly-in
+	// hands over: nothing has happened yet, and the whole surface is chaos.
+	float wild(vec3 n) {
+		return smoothstep(uFront - 0.7, uFront + 0.15, hyp(n));
 	}
 
 	// ── SUBSTANCE ────────────────────────────────────────────────────────────
@@ -570,6 +592,7 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 			uSplashAxis: { value: SPLASH_AXIS.clone() },
 			// The body's own substance, for the approach.
 			uGrain: { value: 0 },
+			uFront: { value: -0.9 },
 			uRing: { value: 0 },
 			uPhase: { value: 0 }
 		},
@@ -662,9 +685,13 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 				// which is why it read as fog on the lens rather than as substance
 				// in the body. Ruled at the same kind of interval the field is, so
 				// the two belong to one instrument.
+				// The mottle, and it is CALMED BY THE FRONT rather than faded out
+				// on a clock. What the wave passes over stops churning; what it
+				// has not reached yet goes on exactly as it was.
 				float g = grain(n);
-				col += uWave * rule(g * 5.0, 0.075) * 0.5 * uGrain;
-				col += uWave * (g * 0.5 + 0.5) * 0.025 * uGrain;
+				float chaos = uGrain * wild(n);
+				col += uWave * rule(g * 5.0, 0.075) * 0.5 * chaos;
+				col += uWave * (g * 0.5 + 0.5) * 0.025 * chaos;
 				col = mix(col, uWave, lit * 0.42 * uGlow);
 				col = mix(col, uHot, crest * 0.34 * uGlow);
 				col += uWave * dip * 0.07 * uGlow;
