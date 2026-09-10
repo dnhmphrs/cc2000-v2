@@ -46,7 +46,12 @@ export const TUNNEL = {
 	// See SCENES.flyIn.duration, and glide() in config/ease.js: the camera holds
 	// ONE speed for three quarters of the run and then stops. No ease-in-out —
 	// that spends the middle at double speed and reads as a camera being moved.
-	camStart: 150,
+	// FURTHER BACK. The two mid-flight popups HOLD progress while they are open,
+	// so the flight already takes longer than its duration says and there is room
+	// in it for more approach. 150 -> 240 takes the travel from 426 world units
+	// to 516 and starts the ovum 19% further off, which is 16% smaller and a
+	// good deal deeper in the fog.
+	camStart: 240,
 	eggZ: -340,
 	// World radius of the outer shell. How big it READS is EGG_SCREEN; the fly-in
 	// turns the two into a stopping distance.
@@ -182,7 +187,20 @@ export const ICOSA = {
 	// so it pulls back to make room for them. The pull-back is not a cut — the
 	// computation lerps from one to the other as the panes open, and that move
 	// is most of why the panes read as coming OUT.
-	conceptionFrustum: 4.9,
+	// A TOUCH WIDER than it was. At 4.9 the sphere's 3.80 world units of
+	// diameter took 78% of the frame height on a laptop, which is close enough
+	// that the figure has nothing round it; 5.5 puts it at 69% and gives the
+	// field somewhere to sit.
+	//
+	// It moves BOTH sides of the hand-over and that is by design: the fly-in
+	// does not carry its own number for how big the ovum ends up, it derives it
+	// from this one every frame (coreRatio() in FlyIn.svelte, against the void's
+	// own range), so the sphere the flight arrives at and the sphere the
+	// conception opens on are the same sphere however this is set.
+	//
+	// Landscape only, in practice. fit() takes the larger of this and what the
+	// aspect demands, and portrait already demands 8.7.
+	conceptionFrustum: 5.5,
 	frustum: 13.0,
 	camPos: [0, 0, 14],
 

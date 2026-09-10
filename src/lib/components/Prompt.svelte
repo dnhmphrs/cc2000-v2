@@ -245,7 +245,7 @@
 				</p>
 			{/if}
 		{:else}
-			<label id="ask-q" class="q" for="ask-spicy">how spicy do your parents like it?</label>
+			<label id="ask-q" class="q" for="ask-spicy">how spicy are your parents?</label>
 			<div class="row">
 				<select id="ask-spicy" bind:value={$spicy} aria-describedby="ask-status">
 					{#each Array.from({ length: 10 }, (_, i) => i + 1) as n}

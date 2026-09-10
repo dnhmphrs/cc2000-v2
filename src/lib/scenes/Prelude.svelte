@@ -25,7 +25,7 @@
 		'allowing all of mankind to calculate the song playing',
 		'at their exact moment of conception',
 		'with the statistical accuracy',
-		'that only the internet can provide.'
+		'that only the internet can provide'
 	];
 
 	let shown = LINES.map(() => 0);
@@ -124,8 +124,11 @@
 		position: relative;
 		margin: 0;
 		max-width: 100%;
-		/* Read at arm's length, not squinted at: this is the only thing on screen. */
-		font-size: clamp(13px, 1.45vw, 21px);
+		/* Read at arm's length, not squinted at: this is the only thing on screen —
+		   but it is a card, not a headline, and at 21px five lines of it filled
+		   the middle of a laptop. The floor stays at 12: below that a mono face
+		   at 0.04em tracking stops being readable on a phone. */
+		font-size: clamp(12px, 1.3vw, 19px);
 		line-height: 1.6;
 		letter-spacing: 0.04em;
 		/* ONE colour. A yellow last line reads as the punchline being flagged. */

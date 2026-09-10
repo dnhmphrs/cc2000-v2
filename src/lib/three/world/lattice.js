@@ -287,17 +287,30 @@ export function createLattice() {
 	const edgeMat = lineMaterial(ICOSA_INK.line);
 	const growEdges = grower(
 		edgeMat,
-		// Each edge still grows outward from the end nearer the seed vertex, so
-		// the strokes agree with each other instead of firing off in thirty
-		// directions. EDGES is ordered by vertex index, which is not that.
+		// ── OUT FROM THE CENTRE ──────────────────────────────────────────────
+		// Every edge draws from whichever of its two ends is nearer the middle
+		// OF THE PICTURE, and the ones nearest the middle go first. So the frame
+		// opens outward from the centre of the frame like something unfolding,
+		// rather than being written from one corner of the solid.
+		//
+		// It has to be the PROJECTED radius, not the 3D one: all twelve vertices
+		// are the same distance from the centre in space — they are on the
+		// circumsphere — so in three dimensions "nearer the centre" is not a
+		// thing an edge has. On screen it is, because the scene is locked head
+		// on down a five-fold axis at ICOSA.tilt and never turns. Which is also
+		// the catch: this is baked at build time against that tilt, and a scene
+		// that turned the frame would need it recomputed.
 		(() => {
-			const seed = new THREE.Vector3(...VERTICES[0]).normalize();
-			const reachOf = VERTICES.map((v) => 1 - new THREE.Vector3(...v).normalize().dot(seed));
+			const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.tilt));
+			const flat = VERTICES.map((v) => {
+				const p3 = new THREE.Vector3(...v).applyQuaternion(q);
+				return Math.hypot(p3.x, p3.y);
+			});
 			return segmentAttributes(
 				edgeGeo,
 				EDGES.length,
-				() => 0,
-				(i) => reachOf[EDGES[i][1]] < reachOf[EDGES[i][0]]
+				(i) => Math.min(flat[EDGES[i][0]], flat[EDGES[i][1]]),
+				(i) => flat[EDGES[i][1]] < flat[EDGES[i][0]]
 			);
 		})()
 	);
@@ -309,14 +322,14 @@ export function createLattice() {
 	// centre to its antipode. These are the only lines in the figure that are NOT
 	// edges — they are the five-fold axes — so this is the one piece of geometry
 	// that shows the solid has an inside.
-	const spokeSegs = [];
-	VERTICES.forEach((v, a) => {
-		const b = VERTICES.findIndex((w) => w.every((n, k) => Math.abs(n + v[k]) < 1e-9));
-		if (b > a) spokeSegs.push([a, b]);
-	});
+	// TWELVE HALF-SPOKES, not six whole ones. A diagonal drawn from a vertex
+	// through the centre to its antipode grows from one end to the other and
+	// passes through the middle on the way, which is the opposite of radiating
+	// from it. Split at the centre, each half draws outward from there, and the
+	// six axes arrive as twelve rays leaving the middle of the solid at once.
 	const spokePos = [];
-	spokeSegs.forEach(([a, b]) => {
-		spokePos.push(...VERTICES[a].map((n) => n * S), ...VERTICES[b].map((n) => n * S));
+	VERTICES.forEach((v) => {
+		spokePos.push(0, 0, 0, ...v.map((n) => n * S));
 	});
 	const spokeGeo = new THREE.BufferGeometry();
 	spokeGeo.setAttribute('position', new THREE.Float32BufferAttribute(spokePos, 3));
@@ -325,9 +338,13 @@ export function createLattice() {
 	// the frame's depth floor the far half of every one of them disappears and
 	// six diagonals read as six short stubs. Lifted so they carry all the way.
 	spokeMat.uniforms.uBack.value = 0.34;
+	// ALL AT ONCE, and all from the centre. They used to be staggered by index —
+	// delayOf was (i) => i — which spread six lines over the whole of the build
+	// and is exactly the "some lines complete sooner than others" the frame was
+	// being read for. aT runs 0 at the centre end, so no flip is needed.
 	const growSpokes = grower(
 		spokeMat,
-		segmentAttributes(spokeGeo, spokeSegs.length, (i) => i)
+		segmentAttributes(spokeGeo, VERTICES.length, () => 0)
 	);
 	const spokes = new THREE.LineSegments(spokeGeo, spokeMat);
 	wire.add(spokes);

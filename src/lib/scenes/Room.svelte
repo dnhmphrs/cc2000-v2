@@ -54,16 +54,18 @@
 	$: logicalW = Math.max(glass?.width ?? PLAYER.logical, PLAYER.logical);
 	// Whichever runs out first: the width of the monitor, or half its height.
 	$: k = glass
-		? Math.min(glass.width / logicalW, (glass.height * PLAYER.share) / PLAYER.height)
+		? Math.min(glass.width / logicalW, ((glass.height - PLAYER.cta) * PLAYER.share) / PLAYER.height)
 		: 1;
-	$: inGlass =
-		!!glass && k >= PLAYER.minScale && glass.height - PLAYER.height * k >= PLAYER.readout;
+	// The control is a fixed bar at the foot, so what the card and the readout
+	// have to share is the glass less that.
+	$: usable = glass ? glass.height - PLAYER.cta : 0;
+	$: inGlass = !!glass && k >= PLAYER.minScale && usable - PLAYER.height * k >= PLAYER.readout;
 	$: deckH = inGlass ? PLAYER.height * k : 0;
 
 	// Everything in the readout is sized in these units, so type, control and
 	// padding all scale together with the monitor — and it is measured against
 	// what the player LEAVES, not against the whole glass.
-	$: fit = glass ? panelFit($decade, glass.width, glass.height - deckH) : null;
+	$: fit = glass ? panelFit($decade, glass.width, usable - deckH) : null;
 	$: s = fit ? fit.scale : 1;
 	$: shape = fit ? fit.shape : RESULT_PANEL.shapes[0];
 
@@ -101,7 +103,6 @@
 				<p class="artist">{$track?.artist ?? ''}</p>
 			{/if}
 			<p class="acc">{accuracy}% accuracy</p>
-			<button class="again" on:click={again}>another conception</button>
 		</div>
 		{#if inGlass}
 			<!-- The card at its own size, shrunk by a transform. A transform does
@@ -121,6 +122,7 @@
 				</div>
 			</div>
 		{/if}
+		<button class="again" on:click={again}>go again</button>
 	</div>
 {:else if src}
 	<div class="stage" in:fade={IN}>
@@ -129,7 +131,7 @@
 			<h2>{$track?.title ?? ''}</h2>
 			<p class="artist">{$track?.artist ?? ''}</p>
 			<p class="acc">{accuracy}% accuracy</p>
-			<button class="again go" on:click={again}>another conception</button>
+			<button class="again go" on:click={again}>go again</button>
 		</div>
 	</div>
 {/if}
@@ -147,12 +149,14 @@
 	   `main` turns pointer-events off so the 3D shows through the UI layer, and
 	   this is the one thing in the site that MUST take a click. */
 	.deck.fitted {
-		flex: 0 0 auto;
+		flex: 1 1 auto;
 		overflow: hidden;
 		pointer-events: auto;
-		/* Centred, because capping the card at half the glass height can leave it
-		   narrower than the monitor it is in. */
+		/* Centred both ways: capping the card at half the glass height can leave
+		   it narrower than the monitor, and it now owns the slack between the
+		   readout and the control. */
 		display: flex;
+		align-items: center;
 		justify-content: center;
 	}
 	/* The holder that carries the RENDERED size. A transform does not change
@@ -225,14 +229,18 @@
 		pointer-events: auto;
 	}
 
-	/* Fills the glass rather than sitting in a band across the middle of it. */
+	/* ── THREE ROWS, AND THE CARD TAKES THE MIDDLE ───────────────────────────
+	   The readout is what you read first, so it is at the top and only as tall
+	   as its own type. The control is what you do last, so it is at the foot.
+	   The player gets everything between and centres in it — which is where the
+	   eye goes on a screen, and it was at the bottom fighting the control. */
 	.inner {
-		flex: 1 1 auto;
+		flex: 0 0 auto;
 		min-height: 0;
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		justify-content: center;
+		justify-content: flex-start;
 		padding: calc(10px * var(--s)) calc(12px * var(--s));
 		font-size: calc(1em * var(--s));
 		pointer-events: auto;
@@ -285,32 +293,44 @@
 	   far the type scales down — capped against the glass as well, because on a
 	   phone that glass can be under a hundred pixels tall and a fixed floor there
 	   is a fifth of the screen spent on one row. */
+	/* ── The one control, and it has to LOOK like one ────────────────────────
+	   It was a line of the readout with a hairline under it, which reads as the
+	   last line of the readout, which is what it was. A machine's screen ends
+	   in a softkey: a filled bar in the machine's own yellow, across the foot of
+	   the glass, in the one colour on the screen that nothing else uses as a
+	   ground. Nobody has to work out that it is pressable.
+
+	   It is the ONLY thing in the glass sized in real pixels rather than in
+	   panel units. Everything else scales with the monitor; a tap target that
+	   scales with the monitor is a 9px tap target on a 90s CRT. */
 	.again {
-		align-self: flex-start;
+		flex: 0 0 auto;
+		/* Pinned to the foot whatever is above it — including nothing, when the
+		   monitor is too small to hold the card and the player has gone outside. */
+		margin-top: auto;
 		display: flex;
 		align-items: center;
-		min-height: min(30px, 20%);
-		margin: calc(6px * var(--s)) 0 0;
-		padding: 0;
+		justify-content: center;
+		min-height: 30px;
+		padding: 6px 10px;
 		font: inherit;
-		font-size: calc(11px * var(--s));
-		letter-spacing: 0.1em;
+		font-size: clamp(9px, calc(11px * var(--s)), 13px);
+		letter-spacing: 0.18em;
 		text-transform: uppercase;
-		color: var(--yellow);
-		background: transparent;
+		color: var(--on-yellow);
+		background: var(--yellow);
 		border: 0;
-		border-bottom: 1px solid rgba(255, 212, 38, 0.42);
 		border-radius: 0;
 		cursor: pointer;
 		pointer-events: auto;
-		transition: border-color 0.18s, opacity 0.18s;
-	}
-	.again::before {
-		content: '> ';
-		opacity: 0.6;
+		transition: filter 0.18s;
 	}
 	.again:hover {
-		border-bottom-color: var(--yellow);
+		filter: brightness(1.12);
+	}
+	.again:focus-visible {
+		outline: 2px solid var(--yellow);
+		outline-offset: -4px;
 	}
 
 	/* Fallback card, when the room art could not be measured. */
