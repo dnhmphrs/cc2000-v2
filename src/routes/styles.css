@@ -27,6 +27,22 @@
 	--ink-dim: rgba(var(--ink-rgb), 0.66);
 	--ink-faint: rgba(var(--ink-rgb), 0.34);
 
+	/* ── The ink, by CONTRAST rather than by feel ────────────────────────────
+	   Three steps, chosen against the darkest ground in the site — the popup
+	   panel, rgba(10,10,12,0.82) over near-black 3D, which composites to about
+	   rgb(25,21,15) — and measured, not eyeballed. WCAG 2.1 wants 4.5:1 for
+	   normal text at AA, and on this ground that lands at alpha 0.476, so:
+
+	     --ink-strong  0.92   ~13.8:1   questions, headings
+	     --ink-body    0.82   ~11.1:1   copy
+	     --ink-soft    0.70    ~8.4:1   the FLOOR. AA with real slack.
+
+	   Anything under --ink-soft on this ground is decoration. --ink-faint is
+	   2.7:1 and can never carry text here; it is for rules and marks. */
+	--ink-strong: rgba(var(--ink-rgb), 0.92);
+	--ink-body: rgba(var(--ink-rgb), 0.82);
+	--ink-soft: rgba(var(--ink-rgb), 0.7);
+
 	--yellow: #ffd426;
 
 	/* The Conception Calculator's own chassis — the landing is the machine.

@@ -45,11 +45,14 @@ const until = async (fn, max = 120) => {
 	return false;
 };
 
-// Whichever popup is open. Both use the same selects the machine used to.
+// Whichever popup is open. Both use the same selects the machine used to —
+// addressed by id now rather than by aria-label, because the selects carry
+// real <label for> elements and an aria-label on top of one would override the
+// visible word.
 const answerDob = async (month, day, year) => {
-	await p.selectOption('select[aria-label=year]', String(year));
-	await p.selectOption('select[aria-label=month]', String(month));
-	await p.selectOption('select[aria-label=day]', String(day));
+	await p.selectOption('#ask-year', String(year));
+	await p.selectOption('#ask-month', String(month));
+	await p.selectOption('#ask-day', String(day));
 	await p.waitForTimeout(200);
 };
 
@@ -70,7 +73,7 @@ ok('the flight asks for a birthday', await until(() => !!document.querySelector(
 // and no room to fall into, so the popup is the only thing that can say so, and
 // it must not let the flight carry the date any further.
 const earliest = await p.evaluate(() => {
-	const sel = document.querySelector('select[aria-label=year]');
+	const sel = document.querySelector('#ask-year');
 	return +sel.options[sel.options.length - 1].value;
 });
 await answerDob(1, 14, earliest);
@@ -94,7 +97,7 @@ ok(
 	'the flight moves on and asks how spicy',
 	await until(() => /spicy/i.test(document.querySelector('.ask .q')?.textContent ?? ''), 80)
 );
-await p.selectOption('select[aria-label=spicy]', '4');
+await p.selectOption('#ask-spicy', '4');
 await p.click('button.go');
 ok('the second answer lets it dive', await until(() => !document.querySelector('.ask'), 20));
 

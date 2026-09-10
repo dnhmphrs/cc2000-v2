@@ -73,7 +73,36 @@ const fogUniforms = (color, density) => ({
 // fill, no hidden-line removal, every edge still there, but the near ones come
 // forward and the shape resolves. It is live, so a solid turning reads as
 // turning rather than as a flicker.
-export function lineMaterial(color, opacity = 1) {
+// ── The fourth-dimension ramp ────────────────────────────────────────────────
+// Opt-in, and only the cage asks for it. A 4-polytope projected into 3-space
+// puts its FAR half inside its near half — for the 600-cell the two poles both
+// land exactly on the origin, so two dozen edges converge on a single point
+// directly behind the solid and additively blend into a bright smudge. That is
+// what "messy in the centre" is, and it is a fact about depth in the fourth
+// dimension, not about radius in the third: a radial fade costs most of the ink
+// and removes almost none of the smudge, because nearly every edge lives in the
+// same band of 3D radius.
+//
+// So the kill is BY w. The first term takes out the far half; the second notches
+// the poles themselves, which are the two vertices that project to nothing and
+// drag their spokes into a knot. Carried per ENDPOINT and interpolated, so a
+// line fades ALONG its length and nothing pops as the twist carries an edge
+// across the threshold.
+//
+// What it leaves brightest, for free and at every instant of the twist, is the
+// shell at w = φ/2: the vertex figure. Which is an icosahedron.
+//
+// (The notch is written as 1 - smoothstep(lo, hi, …) rather than as a
+// smoothstep with its edges the other way round: GLSL leaves smoothstep
+// undefined when edge0 >= edge1, and an undefined term multiplied into every
+// line in the figure is not a thing to leave to the driver.)
+const W_RAMP = `
+	float wRamp(float w) {
+		return smoothstep(-0.05, 0.62, w) * (1.0 - smoothstep(0.80, 0.90, abs(w)));
+	}
+`;
+
+export function lineMaterial(color, opacity = 1, { wRamp = false } = {}) {
 	return new THREE.ShaderMaterial({
 		transparent: true,
 		depthWrite: false,
@@ -91,6 +120,7 @@ export function lineMaterial(color, opacity = 1) {
 		vertexShader: `
 			attribute float aT;
 			attribute float aDelay;
+			${wRamp ? 'attribute float aW; varying float vW;' : ''}
 			uniform float uRadius;
 			varying float vT;
 			varying float vDelay;
@@ -98,6 +128,7 @@ export function lineMaterial(color, opacity = 1) {
 			void main() {
 				vT = aT;
 				vDelay = aDelay;
+				${wRamp ? 'vW = aW;' : ''}
 				vec4 mv = modelViewMatrix * vec4(position, 1.0);
 				// Depth measured from the object's OWN centre, not the camera's,
 				// so it does not change when the camera dollies or the frustum
@@ -116,10 +147,13 @@ export function lineMaterial(color, opacity = 1) {
 			varying float vT;
 			varying float vDelay;
 			varying float vFront;
+			${wRamp ? 'varying float vW;' : ''}
+			${wRamp ? W_RAMP : ''}
 			void main() {
 				float local = clamp((uGrow - vDelay) / max(uSpan, 0.0001), 0.0, 1.0);
 				if (vT > local) discard;
 				float a = uOpacity * mix(uBack, 1.0, vFront * 0.5 + 0.5);
+				${wRamp ? 'a *= wRamp(vW);' : ''}
 				gl_FragColor = vec4(uInk * a, a);
 			}
 		`
@@ -304,7 +338,7 @@ export function skinMaterial({ ink, accent, power = 3, base = 0, add = false }) 
 
 // ── 4. The point ─────────────────────────────────────────────────────────────
 // A hard little core in a soft halo. A drawn point, not a blur.
-export function dotMaterial(color, size) {
+export function dotMaterial(color, size, { wRamp = false } = {}) {
 	return new THREE.ShaderMaterial({
 		transparent: true,
 		depthWrite: false,
@@ -315,8 +349,10 @@ export function dotMaterial(color, size) {
 			uSize: { value: size }
 		},
 		vertexShader: `
+			${wRamp ? 'attribute float aW; varying float vW;' : ''}
 			uniform float uSize;
 			void main() {
+				${wRamp ? 'vW = aW;' : ''}
 				gl_PointSize = uSize;
 				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 			}
@@ -324,10 +360,13 @@ export function dotMaterial(color, size) {
 		fragmentShader: `
 			uniform vec3 uInk;
 			uniform float uOpacity;
+			${wRamp ? 'varying float vW;' : ''}
+			${wRamp ? W_RAMP : ''}
 			void main() {
 				vec2 d = gl_PointCoord - 0.5;
 				float r = length(d) * 2.0;
 				float a = (exp(-r * r * 4.0) * 0.5 + (1.0 - smoothstep(0.2, 0.32, r)) * 0.95) * uOpacity;
+				${wRamp ? 'a *= wRamp(vW);' : ''}
 				gl_FragColor = vec4(uInk * a, a);
 			}
 		`

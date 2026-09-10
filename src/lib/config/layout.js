@@ -71,15 +71,66 @@ export const RESULT_PANEL = {
 	// large before it stops reading as a screen.
 	scale: [0.55, 1.35],
 
-	// First match wins, so these run widest-first and the last one has to be 0.
+	// ── THE PLAYER IS BACK IN THE GLASS, AND IT COSTS HEIGHT ─────────────────
+	// The embed does not scale itself. It is a cross-origin iframe and its
+	// internal layout is computed against its own pixel box, so below Spotify's
+	// compact card — 152px, the height its own oEmbed endpoint emits — it does
+	// not shrink, it CLIPS and grows a scrollbar. There is no compact parameter
+	// and no smaller layout: 152 is a floor.
+	//
+	// So the way to put a usable player in a 240px monitor is to give the iframe
+	// its natural size and scale the whole card with a CSS transform — see
+	// PLAYER below and scenes/Room.svelte. What that costs is HEIGHT, and the
+	// height it costs comes out of these boxes: the readout is now measured
+	// against what is left over rather than against the whole glass.
+	//
+	// Which is why the reference heights came down again and the widths came in.
+	// They describe four lines and a control, not a screenful.
 	shapes: [
-		{ name: 'wide', from: 1.45, ref: { w: 390, h: 140 }, titleLines: 2, artistLines: 1 },
-		{ name: 'square', from: 0.85, ref: { w: 320, h: 185 }, titleLines: 3, artistLines: 2 },
+		{ name: 'wide', from: 1.45, ref: { w: 340, h: 141 }, titleLines: 2, artistLines: 1 },
+		{ name: 'square', from: 0.85, ref: { w: 300, h: 141 }, titleLines: 2, artistLines: 1 },
 		// Nothing is this shape today. It is here so that a monitor taller than it
 		// is wide cannot land on the widescreen layout by default, which is the
 		// exact failure this config exists to fix.
-		{ name: 'tall', from: 0, ref: { w: 285, h: 210 }, titleLines: 4, artistLines: 2 }
+		{ name: 'tall', from: 0, ref: { w: 275, h: 163 }, titleLines: 3, artistLines: 1 }
 	]
+};
+
+// ── The player ───────────────────────────────────────────────────────────────
+// Spotify's compact card, and the two numbers that decide whether it can go in
+// a monitor at all.
+//
+//   height    152. Not a preference — it is what Spotify's own oEmbed emits and
+//             the smallest layout the current embed has. Under it the card
+//             clips and scrollbars rather than shrinking.
+//   logical   the width the iframe is GIVEN before the transform. Kept at or
+//             above 300 because the card's own layout starts wrapping under
+//             roughly that, and a wrapped card in a scaled box is a mess.
+//
+// The gate is the honest part, and it is a gate on the SCALE rather than on the
+// monitor's width, because the scale is what the play control's size actually
+// depends on. Spotify's compact card carries a play control of roughly 32 CSS
+// px; scale the card by k and the control goes with it, so k = 0.75 is a 24px
+// target, which is exactly what WCAG 2.2's Target Size (Minimum) asks for. That
+// is the floor. A player nobody can press is worse than no player.
+//
+// The second half of the gate is what is LEFT: the readout still has to fit
+// over the card, and `readout` is the least it can be given before it stops
+// being four lines and a control and starts being a clipped list.
+//
+// Under either bound the embed leaves the glass and goes back to the edge of
+// the screen at full size — top left in landscape, the bottom edge upright.
+// See scenes/Room.svelte.
+// And the card does not get the whole monitor. Fitted to width alone it takes
+// 152 of the 2010s screen's 257 — nearly two thirds — and the readout over it
+// clips its own title. `share` caps the card at half the glass and lets it sit
+// narrower than the screen, centred, which is what a wide monitor wants anyway.
+export const PLAYER = {
+	height: 152,
+	logical: 300,
+	share: 0.5,
+	minScale: 0.75,
+	readout: 88
 };
 
 // How to draw the panel in this decade's monitor at this size on screen.

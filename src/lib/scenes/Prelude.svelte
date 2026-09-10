@@ -25,7 +25,7 @@
 		'allowing all of mankind to calculate the song playing',
 		'at their exact moment of conception',
 		'with the statistical accuracy',
-		'that only the internet can provide'
+		'that only the internet can provide.'
 	];
 
 	let shown = LINES.map(() => 0);
@@ -92,7 +92,18 @@
 		   being watched on rather than a layer inside it. */
 		z-index: 20;
 		pointer-events: auto;
-		background: var(--bg);
+		/* NO GROUND OF ITS OWN. It used to paint var(--bg), a flat #14120e slab,
+		   and the fly-in underneath is not a flat anything: the `deep` shader
+		   shapes the air into a channel that measures (30,27,21) in the middle of
+		   the frame and (4,4,3) in the corners. So the card was a lighter, evenly
+		   lit rectangle sitting on a vignette — an off-black tinge over the thing
+		   it is supposed to be part of.
+		   
+		   Transparent is not a compromise here, it is the correct answer: the
+		   fly-in is ALREADY MOUNTED and held at progress zero under this, which
+		   is dark air with nothing in it yet, so the card gets the exact ground
+		   the run opens on and cannot drift away from it later. */
+		background: transparent;
 		display: grid;
 		place-items: center;
 		font-family: var(--tech);

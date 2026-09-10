@@ -1,4 +1,5 @@
 <script>
+	import { onMount, tick } from 'svelte';
 	import { get } from 'svelte/store';
 	import { fade, scale } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
@@ -73,9 +74,62 @@
 	// asked and the old answer is not about it.
 	$: if ($dobMonth || $dobDay || $dobYear) refused = null;
 
-	function submit() {
+	// ── What a screen reader is told ─────────────────────────────────────────
+	// A LIVE REGION THAT IS ALWAYS THERE. role="alert" on a node that is itself
+	// inserted is not reliably spoken — several screen readers only announce
+	// changes to a region that already existed — so this element is permanent
+	// and only its text changes. The visible machine-voice block stays exactly
+	// as it was and is hidden from AT so the refusal is not read twice.
+	let status = '';
+	// And a place to say why the button will not do anything yet, which is the
+	// thing `disabled` used to hide from the people who most needed it.
+	$: hint = which === 'dob' && !complete ? 'pick a day, a month and a year.' : '';
+
+	// The panel takes focus when it opens AND when the question changes: it is
+	// one component instance for both, so nothing else would move focus from
+	// the birthday to the spice.
+	let panel;
+	let yearSel;
+	const focusPanel = async () => {
+		await tick();
+		panel?.focus();
+	};
+	onMount(focusPanel);
+	$: if (which) focusPanel();
+
+	// ── The trap ─────────────────────────────────────────────────────────────
+	// A modal that cannot be escaped, deliberately: the flight is HELD until it
+	// is answered and there is no machine to fall back to, so there is nowhere
+	// for Escape to go. What that costs is a duty to keep every control inside
+	// reachable, which is why the submit button is aria-disabled rather than
+	// disabled — see below.
+	function corral(e) {
+		if (e.key !== 'Tab') return;
+		const f = [...panel.querySelectorAll('select, button')].filter((n) => !n.disabled);
+		if (!f.length) return;
+		const first = f[0];
+		const last = f[f.length - 1];
+		if (e.shiftKey && document.activeElement === first) {
+			e.preventDefault();
+			last.focus();
+		} else if (!e.shiftKey && document.activeElement === last) {
+			e.preventDefault();
+			first.focus();
+		}
+	}
+
+	// Nothing here is essential motion, and a panel scaling up over a moving 3D
+	// backdrop is exactly the kind of thing that provokes vestibular symptoms.
+	const reduced =
+		typeof window !== 'undefined' &&
+		window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+	async function submit() {
 		if (which === 'dob') {
-			if (!complete) return;
+			if (!complete) {
+				status = hint;
+				return;
+			}
 			const iso = `${$dobYear}-${String($dobMonth).padStart(2, '0')}-${String($dobDay).padStart(
 				2,
 				'0'
@@ -87,8 +141,14 @@
 			if (probe.edge) {
 				refused = probe.edge;
 				edge.set(probe.edge);
+				// Spoken, and then the caret is put on the field that is at fault:
+				// for both edges it is the year.
+				status = `out of range. ${EDGE[probe.edge]}`;
+				await tick();
+				yearSel?.focus();
 				return;
 			}
+			status = '';
 			edge.set(null);
 			date.set(iso);
 		} else {
@@ -116,23 +176,67 @@
 	}
 </script>
 
-<div class="veil" transition:fade={{ duration: 260 }}>
-	<div class="ask" in:scale={{ duration: 320, start: 0.94, easing: cubicOut }}>
+<div class="veil" transition:fade={{ duration: reduced ? 0 : 260 }}>
+	<!-- A DIALOG, and it says so. It was two bare divs, which means assistive
+	     technology was told nothing had appeared and the run simply stopped
+	     responding. Named by the question itself, focused on open, and Tab is
+	     corralled inside it — the flight is held until this is answered, so
+	     there is nowhere else for focus to usefully be. -->
+	<form
+		class="ask"
+		bind:this={panel}
+		on:submit|preventDefault={submit}
+		on:keydown={corral}
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="ask-q"
+		tabindex="-1"
+		in:scale={{ duration: reduced ? 0 : 320, start: reduced ? 1 : 0.94, easing: cubicOut }}
+	>
 		{#if which === 'dob'}
-			<p class="q">when were you born?</p>
-			<div class="row">
-				<select bind:value={$dobDay} aria-label="day">
-					{#each days as d}<option value={d}>{String(d).padStart(2, '0')}</option>{/each}
-				</select>
-				<select bind:value={$dobMonth} aria-label="month">
-					{#each MONTHS as m, i}<option value={i + 1}>{m.toUpperCase()}</option>{/each}
-				</select>
-				<select bind:value={$dobYear} aria-label="year">
-					{#each YEARS as y}<option value={y}>{y}</option>{/each}
-				</select>
-			</div>
+			<!-- fieldset/legend, so the three selects are a GROUP with a name. As
+			     three loose selects, a screen reader on the middle one said only
+			     "month" and never what the date was for. -->
+			<fieldset>
+				<legend id="ask-q" class="q">when were you born?</legend>
+				<div class="row">
+					<label class="sr-only" for="ask-day">day</label>
+					<select
+						id="ask-day"
+						bind:value={$dobDay}
+						autocomplete="bday-day"
+						aria-describedby="ask-status"
+						aria-invalid={refused ? 'true' : 'false'}
+					>
+						{#each days as d}<option value={d}>{String(d).padStart(2, '0')}</option>{/each}
+					</select>
+					<label class="sr-only" for="ask-month">month</label>
+					<select
+						id="ask-month"
+						bind:value={$dobMonth}
+						autocomplete="bday-month"
+						aria-describedby="ask-status"
+						aria-invalid={refused ? 'true' : 'false'}
+					>
+						{#each MONTHS as m, i}<option value={i + 1}>{m.toUpperCase()}</option>{/each}
+					</select>
+					<label class="sr-only" for="ask-year">year</label>
+					<select
+						id="ask-year"
+						bind:this={yearSel}
+						bind:value={$dobYear}
+						autocomplete="bday-year"
+						aria-describedby="ask-status"
+						aria-invalid={refused ? 'true' : 'false'}
+					>
+						{#each YEARS as y}<option value={y}>{y}</option>{/each}
+					</select>
+				</div>
+			</fieldset>
 			{#if refused}
-				<p class="no">
+				<!-- The machine's own voice, on screen. Hidden from AT because the
+				     live region below has already said it, in fewer words. -->
+				<p class="no" aria-hidden="true">
 					<span class="head">error — out of range</span>
 					{EDGE[refused]}
 					{#if refused === 'past'}
@@ -141,9 +245,9 @@
 				</p>
 			{/if}
 		{:else}
-			<p class="q">how spicy do your parents like it?</p>
+			<label id="ask-q" class="q" for="ask-spicy">how spicy do your parents like it?</label>
 			<div class="row">
-				<select bind:value={$spicy} aria-label="spicy">
+				<select id="ask-spicy" bind:value={$spicy} aria-describedby="ask-status">
 					{#each Array.from({ length: 10 }, (_, i) => i + 1) as n}
 						<option value={n}>{String(n).padStart(2, '0')}</option>
 					{/each}
@@ -152,10 +256,26 @@
 			</div>
 		{/if}
 
-		<button class="go" on:click={submit} disabled={which === 'dob' && !complete}>
-			{which === 'dob' ? 'confirm' : 'swim'}
+		<!-- ALWAYS IN THE DOM, never display:none, only its text changes. A
+		     role="alert" node that is itself inserted is not reliably spoken. -->
+		<p id="ask-status" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true">
+			{status}
+		</p>
+
+		<!-- aria-disabled, NOT disabled. `disabled` takes the button out of the
+		     tab order and out of most reading orders, so the one thing saying
+		     "this is not finished" became the one thing a keyboard user could
+		     not find — in a dialog with no way out. It stays reachable and says
+		     why when pressed. -->
+		<button
+			class="go"
+			type="submit"
+			aria-disabled={which === 'dob' && !complete}
+			aria-describedby={hint ? 'ask-status' : undefined}
+		>
+			{which === 'dob' ? 'confirm' : 'calculate'}
 		</button>
-	</div>
+	</form>
 </div>
 
 <style>
@@ -182,7 +302,7 @@
 		max-width: 92vw;
 		padding: clamp(16px, 2.4vh, 24px) clamp(18px, 2.2vw, 30px);
 		background: rgba(10, 10, 12, 0.82);
-		border: 1px solid rgba(255, 212, 38, 0.28);
+		border: 1px solid rgba(255, 212, 38, 0.45);
 		border-radius: 3px;
 		box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 24px 70px rgba(0, 0, 0, 0.55);
 		display: flex;
@@ -192,12 +312,50 @@
 		text-align: center;
 	}
 
+	/* A fieldset is not a flex container until it is told to be one, and a
+	   legend brings UA padding and a border cut-out with it. */
+	fieldset {
+		margin: 0;
+		padding: 0;
+		border: 0;
+		min-inline-size: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: inherit;
+	}
+	legend {
+		display: block;
+		float: none;
+		width: auto;
+		padding: 0;
+		margin: 0 0 clamp(10px, 1.5vh, 16px);
+	}
+
+	/* Present to a screen reader, absent to the eye. The labels are real
+	   <label for> elements rather than aria-label: translatable, and the
+	   accessible name IS the visible word for anyone driving by voice. */
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		clip-path: inset(50%);
+		white-space: nowrap;
+		border: 0;
+	}
+
 	.q {
 		margin: 0;
 		font-size: clamp(8px, 0.74vw, 10px);
 		letter-spacing: 0.24em;
 		text-transform: uppercase;
-		color: rgba(240, 242, 248, 0.62);
+		/* Was 0.62 — 6.8:1, an AA pass and still visibly grey. This is the one
+		   line on the panel that has to be read, so it takes the top step. */
+		color: var(--ink-strong);
 	}
 
 	.row {
@@ -227,14 +385,21 @@
 		color: var(--yellow);
 		background: transparent;
 		border: 0;
-		border-bottom: 1px solid rgba(255, 212, 38, 0.32);
+		/* This underline is the control's ONLY visual boundary — appearance is
+		   suppressed, the border is gone and the chevron with it — so 1.4.11
+		   Non-text Contrast applies to it and wants 3:1. At 0.32 it was 2.38. */
+		border-bottom: 1px solid rgba(255, 212, 38, 0.55);
 		border-radius: 0;
 		padding: 0 0.15em 3px;
 		cursor: pointer;
 		outline: none;
 	}
-	.row select:focus-visible {
-		border-bottom-style: solid;
+	/* A 1px underline changing shade, on a panel whose entire vocabulary is 1px
+	   yellow lines, is not a focus indicator you can find. */
+	.row select:focus-visible,
+	.go:focus-visible {
+		outline: 2px solid var(--yellow);
+		outline-offset: 3px;
 		border-bottom-color: var(--yellow);
 	}
 	/* The list is drawn by the OS, so it gets the void's own colours rather than
@@ -246,7 +411,8 @@
 	.of {
 		font-size: clamp(10px, 0.95vw, 13px);
 		letter-spacing: 0.08em;
-		color: rgba(240, 242, 248, 0.45);
+		/* 0.45 was 4.16:1 — under AA. */
+		color: var(--ink-soft);
 	}
 
 	.no {
@@ -254,7 +420,7 @@
 		max-width: 30rem;
 		font-size: clamp(9px, 0.82vw, 11px);
 		line-height: 1.65;
-		color: rgba(240, 242, 248, 0.7);
+		color: var(--ink-body);
 	}
 	.no .head {
 		display: block;
@@ -267,7 +433,8 @@
 	.no .hint {
 		display: block;
 		margin-top: 0.5em;
-		color: rgba(240, 242, 248, 0.4);
+		/* 0.40 was 3.55:1 — under AA. */
+		color: var(--ink-soft);
 	}
 
 	.go {
@@ -278,7 +445,7 @@
 		text-transform: uppercase;
 		color: var(--yellow);
 		background: transparent;
-		border: 1px solid rgba(255, 212, 38, 0.4);
+		border: 1px solid rgba(255, 212, 38, 0.55);
 		border-radius: 2px;
 		padding: 0.75em 2.2em;
 		cursor: pointer;
@@ -289,8 +456,14 @@
 		border-color: var(--yellow);
 		color: var(--on-yellow);
 	}
-	.go:disabled {
-		opacity: 0.35;
+	.go[aria-disabled='true'] {
+		opacity: 0.5;
 		cursor: default;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.go {
+			transition: none;
+		}
 	}
 </style>
