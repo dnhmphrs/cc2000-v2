@@ -80,6 +80,13 @@ export const fieldFade = writable(1);
 // Written by: scenes/Calculator.svelte.
 export const calcZoom = writable(1);
 
+// ── The landing ──────────────────────────────────────────────────────────────
+// 0..1 through the computation's final fall into the room. The scanlines ride it
+// out: the raster is the screen the run is being WATCHED on, and the last thing
+// the run does is stop being a screen and become a place. Written by:
+// scenes/Computation.svelte, reset by scenes/FlyIn.svelte enter().
+export const landing = writable(0);
+
 // ── The way back ─────────────────────────────────────────────────────────────
 // True while the camera is flying THROUGH the room's monitor on the way to
 // another run. There is no machine to fly home into in this build, so nothing

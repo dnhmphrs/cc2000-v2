@@ -1,17 +1,23 @@
 <script>
+	import { landing } from '$lib/store/store';
+
 	// ── The glass ────────────────────────────────────────────────────────────
-	// Scanlines over the whole site, ALWAYS.
+	// Scanlines over the whole site, for the whole run — and then out.
 	//
-	// They used to be gated to the three 3D scenes, on the reasoning that the
-	// calculator had its own CRT and a second pitch over it was a moiré, and that
-	// the bedroom is a room photographed on nothing. There is no calculator in
-	// this build, and the argument about the bedroom had it backwards: the raster
-	// is the screen the whole thing is being WATCHED on, not a layer inside any
-	// one scene, so switching it off at the ends is the site stepping out of its
-	// own frame twice per run.
+	// They used to be gated to the three 3D scenes, on the reasoning that a CRT
+	// under a second pitch is a moiré and that the bedroom is a room photographed
+	// on nothing. The first half of that went with the calculator. The second was
+	// backwards: the raster is the screen the whole thing is being WATCHED on,
+	// not a layer inside any one scene, so switching it off between scenes was
+	// the site stepping out of its own frame twice a run.
+	//
+	// But it does come off at the END, and it comes off ON the fall. The last
+	// thing the run does is stop being a screen and become a place; the raster
+	// riding the zoom out is that happening rather than being announced. See the
+	// `landing` store, which the computation writes across its final zoom.
 </script>
 
-<div class="scanlines" />
+<div class="scanlines" style="opacity:{(1 - $landing).toFixed(3)}" />
 
 <style>
 	.scanlines {

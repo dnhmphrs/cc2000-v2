@@ -388,6 +388,12 @@ export function dotMaterial(color, size) {
 // The field is evaluated twice — once per vertex to displace the surface, once
 // per fragment to draw on it — because a wave you can only see is a texture and
 // a wave that moves the skin is a wave.
+// Where the swimmer went in: the vertex facing the camera. ICOSA.tilt is exactly
+// five-fold now, so this direction is the one that maps to the view axis, and
+// the splash's rings are concentric on screen rather than merely on the sphere.
+// VERTICES[5] is (0, 1, PHI); its antipode sits directly behind it.
+const SPLASH_AXIS = new THREE.Vector3(...VERTICES[5]).normalize();
+
 const FIVE_FOLD = (() => {
 	const out = [];
 	VERTICES.forEach((v) => {
@@ -403,6 +409,7 @@ const WAVE_FIELD = `
 	uniform float uRing;
 	uniform float uPhase;
 	uniform float uChop;
+	uniform vec3 uSplashAxis;
 	uniform float uFurrow;
 	uniform float uLobe;
 	uniform float uGrain;
@@ -422,36 +429,43 @@ const WAVE_FIELD = `
 		return h * (1.0 + uRing * sin(uPhase * 5.5));
 	}
 
-	// ── EVERYTHING ELSE ──────────────────────────────────────────────────────
-	// A struck sphere does not ring in one mode. It rings in all of them at once
-	// and the high ones damp fastest, and what is left at the end is the lowest
-	// symmetric mode there is. waveField() above is that end state. This is the
-	// mess it comes out of: three travelling wavefronts on incommensurate axes,
-	// going nowhere in particular, at frequencies that share no common period so
-	// the surface never repeats.
+	// ── THE SPLASH ───────────────────────────────────────────────────────────
+	// Something went into this body, at one point on it, and the surface answers
+	// the way a surface answers: rings, travelling out from where it was hit.
 	//
-	// Without it the body simply arrives at the twelve, which is an answer with
-	// no working. With it the skin churns first and the icosahedron RESOLVES out
-	// of the churn, which is the whole difference between a shape appearing and
-	// a body dividing.
-	float chop(vec3 n) {
-		float s = sin(dot(n, vec3(0.93, 0.29, 0.23)) * 4.3 + uPhase * 2.6);
-		s += sin(dot(n, vec3(-0.32, 0.86, 0.39)) * 3.7 - uPhase * 2.1);
-		s += sin(dot(n, vec3(0.21, -0.44, 0.87)) * 5.1 + uPhase * 3.3);
-		return s * 0.3333;
+	// They are spaced on the POINCARÉ RADIUS rather than on the angle. Take the
+	// disc the sphere makes seen head on, with the impact at its centre and the
+	// silhouette as its rim, and give it the hyperbolic metric — then rings a
+	// constant hyperbolic distance apart bunch without limit toward the rim. One
+	// free variable, no angular term at all, and the rings stay perfect circles
+	// however many of them there are.
+	//
+	//     r = sin(theta)                 the projected radius, 0 at the impact
+	//     d = atanh(r)                   the hyperbolic distance to it
+	//     splash = sin(w*d - phase)      rings at constant spacing in d
+	//
+	// atanh is not in GLSL ES 1.0, so it is written out. Which is also the point
+	// of using it: the spacing goes as log(1/(1-r)) toward the rim, so the front
+	// of the body carries a few wide rings and the limb carries a hundred fine
+	// ones, and the whole system is one oscillation seen at every scale at once.
+	//
+	// It damps into the icosahedral invariant. That hand-over is the scene: what
+	// the impact starts, the symmetry finishes.
+	float splash(vec3 n) {
+		float c = dot(n, uSplashAxis);
+		float r = sqrt(max(1.0 - c * c, 0.0));
+		float d = 0.5 * log((1.0 + r) / max(1.0 - r, 0.0016));
+		return sin(d * 3.1 - uPhase * 2.2);
 	}
 
 	// ── SUBSTANCE ────────────────────────────────────────────────────────────
-	// The body is not a hole. Approached across three hundred units it was a
-	// flat black disc inside a warm halo, which reads as absence rather than as
-	// a thing — so it carries a fine mottle, held right down, turning over very
-	// slowly. Products of sines rather than a hash: it costs three multiplies an
-	// octave, it is continuous on the sphere, and what it gives is blobby and
-	// cellular rather than the even fizz a hash produces.
-	//
-	// It goes as the conception starts. The dark void the wave breaks across is
-	// the right opening for that scene and this would only be in the way of it —
-	// see FlyIn.svelte, which fades uGrain out over the arrival.
+	// The body is not a hole. Approached across three hundred units it was a flat
+	// black disc inside a warm halo, which reads as absence rather than as a
+	// thing — so it carries a fine mottle, ruled into contours rather than laid
+	// down as a fill, because every other mark on this body is line-work and a
+	// soft wash was the one thing in the frame that was not. Products of sines:
+	// three multiplies an octave, continuous on the sphere, and blobby rather
+	// than the even fizz a hash gives.
 	float grain(vec3 n) {
 		float g = sin(n.x * 21.0 + uPhase * 0.31) * sin(n.y * 19.0 - uPhase * 0.27) *
 			sin(n.z * 23.0 + uPhase * 0.23);
@@ -464,14 +478,14 @@ const WAVE_FIELD = `
 
 	// What the skin is actually doing, all in. The two halves of the invariant
 	// are on their own clocks — the furrow is cut before the caps come out — and
-	// the unresolved ringing is laid over both and damped away as they win.
+	// the splash is laid over both and damped away as they win.
 	//
 	// At uChop 0 with both halves in, this IS waveField(): the end state is
 	// untouched, and every frame before it is on the way there.
 	float relief(vec3 n) {
 		float f = waveField(n);
 		float d = f > 0.0 ? f * uLobe : f * uFurrow;
-		return d + uChop * chop(n);
+		return d + uChop * splash(n);
 	}
 `;
 
@@ -512,8 +526,9 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 			// The division. 0..1 each, and the furrow leads the lobe.
 			uFurrow: { value: 0 },
 			uLobe: { value: 0 },
-			// The unresolved ringing the division comes out of.
+			// The splash the division comes out of, and the point it came from.
 			uChop: { value: 0 },
+			uSplashAxis: { value: SPLASH_AXIS.clone() },
 			// The body's own substance, for the approach.
 			uGrain: { value: 0 },
 			uRing: { value: 0 },

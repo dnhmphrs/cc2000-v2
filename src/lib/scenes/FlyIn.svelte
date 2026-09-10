@@ -20,7 +20,7 @@
 	import { CIRCUMRADIUS } from '$lib/three/geometry/icosahedron';
 	import { DEV, DEV_AT } from '$lib/config';
 	import { get } from 'svelte/store';
-	import { fieldFade, gate } from '$lib/store/store';
+	import { fieldFade, gate, landing } from '$lib/store/store';
 
 	// ── Scene 2: the fly in ──────────────────────────────────────────────────
 	// Black air, one swimmer riding the lens, and three hundred units of travel
@@ -122,6 +122,8 @@
 
 	export function enter() {
 		t = 0;
+		// A new run is a screen again.
+		landing.set(0);
 		askedDob = false;
 		askedSpicy = false;
 		world.reset();
@@ -193,7 +195,14 @@
 		// The ground truth of how fast this is going, so they are never the thing
 		// that is missing — and gone by the arrival, which is the ovum and
 		// nothing else.
-		world.setMotes(span(p, T.motesIn) * (1 - easeInOutCubic(span(p, T.motesOut))));
+		// Brightness and EXISTENCE are separate: the out-fade dims the field as a
+		// whole, the in-window switches motes on one at a time. See tunnel.js.
+		world.setMotes(1 - easeInOutCubic(span(p, T.motesOut)), span(p, T.motesIn));
+		// And the clocks, tumbling past on the way back for your record.
+		world.setClocks(
+			smoothstep(0, 1, span(p, T.clocksIn)) * (1 - easeInOutCubic(span(p, T.clocksOut))),
+			camZ
+		);
 
 		// ── The swimmer ──────────────────────────────────────────────────────
 		// The roll, about the axis you are looking down. V1's exactly, and the one

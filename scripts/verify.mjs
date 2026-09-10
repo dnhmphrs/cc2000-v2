@@ -84,10 +84,16 @@ ok('and the flight is still held', await p.evaluate(() => !!document.querySelect
 await answerDob(7, 14, 1986);
 ok('the refusal clears on a new date', await p.evaluate(() => !document.querySelector('.ask .no')));
 await p.click('button.go');
-ok('answering lets the flight go on', await until(() => !document.querySelector('.ask'), 20));
 
-// ── And asks again, once the ovum is up ──────────────────────────────────────
-ok('the flight asks how spicy', await until(() => !!document.querySelector('.ask'), 80));
+// ── And asks again, closer in ────────────────────────────────────────────────
+// The two marks are three seconds apart in the flight, which at ?speed=6 is half
+// of one — far too short to catch the panel absent between them. So what is
+// checked is that the QUESTION CHANGED, which is the thing that actually matters
+// and does not depend on how fast the run is played.
+ok(
+	'the flight moves on and asks how spicy',
+	await until(() => /spicy/i.test(document.querySelector('.ask .q')?.textContent ?? ''), 80)
+);
 await p.selectOption('select[aria-label=spicy]', '4');
 await p.click('button.go');
 ok('the second answer lets it dive', await until(() => !document.querySelector('.ask'), 20));

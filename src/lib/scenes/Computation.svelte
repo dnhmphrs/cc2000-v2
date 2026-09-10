@@ -8,6 +8,7 @@
 		flare,
 		fieldDecade,
 		monitorRect,
+		landing,
 		fieldRotation,
 		fieldFade
 	} from '$lib/store/store';
@@ -327,6 +328,8 @@
 		// little on each decade it stops at — see `push` below — so the frustum is
 		// worked out here and applied once the search has had its say.
 		const zoom = span(p, T.zoom);
+		// The raster goes out with the fall — see components/Glass.svelte.
+		landing.set(easeInOutCubic(zoom));
 		const pulled = lerp(from, rest, easeInOutCubic(span(p, T.pullBack)));
 
 		// ── The panes come out ───────────────────────────────────────────────
