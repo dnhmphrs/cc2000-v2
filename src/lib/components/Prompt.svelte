@@ -305,11 +305,26 @@
 		border: 1px solid rgba(255, 212, 38, 0.45);
 		border-radius: 3px;
 		box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 24px 70px rgba(0, 0, 0, 0.55);
+		/* Both questions, always — see --edge in routes/styles.css. It sits one
+		   pixel out from the dark ring the box-shadow already draws, which is
+		   the white-then-dark the browser's own ring was. */
+		outline: 1px solid var(--edge);
+		outline-offset: 1px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: clamp(10px, 1.5vh, 16px);
 		text-align: center;
+	}
+
+	/* The panel is a container that takes focus so the trap has somewhere to
+	   land; the controls inside are what a keyboard user is actually moving
+	   between, and they have their own ring below. So focusing the panel must
+	   not change the edge — that is the whole point of drawing it ourselves. */
+	.ask:focus,
+	.ask:focus-visible {
+		outline: 1px solid var(--edge);
+		outline-offset: 1px;
 	}
 
 	/* A fieldset is not a flex container until it is told to be one, and a
