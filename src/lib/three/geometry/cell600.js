@@ -35,8 +35,12 @@ export const PHI = (1 + Math.sqrt(5)) / 2;
 // project draws: cyclic permutations of (±φ, ±1, 0) rather than (±1, ±φ, 0).
 // Swapping two slots swaps the parity and maps one onto the other, so taking
 // the odd half is a free change of handedness that lands the twelve neighbours
-// of the pole exactly on geometry/icosahedron.js's VERTICES, scaled by 1/(2φ),
-// index for index. Nothing downstream has to rotate anything into place.
+// of the pole exactly on geometry/icosahedron.js's VERTICES scaled by 1/(2φ).
+// Nothing downstream has to rotate anything into place.
+//
+// AS A SET, and only as a set — the two lists are the same twelve directions in
+// a different order. Nothing here pairs them by index and nothing should: a
+// per-index correspondence between this and VERTICES does not exist.
 export const VERTICES4 = (() => {
 	const P = PHI / 2; // cos 36°
 	const H = 1 / 2; // cos 60°

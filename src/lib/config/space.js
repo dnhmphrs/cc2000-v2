@@ -144,8 +144,13 @@ export const TUNNEL = {
 	// actually in front of the lens — it has to be, there is no way to see a
 	// thing that is behind you — so every unit it spends further back is window
 	// spent on an invisible approach, and the window is what pays for the pass
-	// itself. Three units is enough to have its whole length clear of the near
-	// plane at the start and nothing more.
+	// itself.
+	//
+	// Three is the least that still starts it wholly behind the lens. The model
+	// is 4.07 units long and hangs about its OWN CENTRE (measured off
+	// static/sperm.glb through the same loader tunnel.js uses: bbox z ±2.0334,
+	// centre 0.000000), so the number that has to clear the lens plane is the
+	// half-length, 2.03, not the length.
 	spermFrom: { x: 0, y: 0, z: 3.0 },
 
 	// The ovum turns too, slowly, about its own pole. rad/s.

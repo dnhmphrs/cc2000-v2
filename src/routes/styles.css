@@ -38,7 +38,9 @@
 	     --ink-soft    0.70    ~8.4:1   the FLOOR. AA with real slack.
 
 	   Anything under --ink-soft on this ground is decoration. --ink-faint is
-	   2.7:1 and can never carry text here; it is for rules and marks. */
+	   under 3:1 on this panel — 2.5:1 against the ink the raster actually
+	   leaves, 2.9:1 against the ink as written — so it can never carry text
+	   here whichever way you measure it; it is for rules and marks. */
 	--ink-strong: rgba(var(--ink-rgb), 0.92);
 	--ink-body: rgba(var(--ink-rgb), 0.82);
 	--ink-soft: rgba(var(--ink-rgb), 0.7);

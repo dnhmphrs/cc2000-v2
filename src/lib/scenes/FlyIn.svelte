@@ -245,9 +245,10 @@
 		// every time.
 		//
 		// It can be lit across zero without being lit behind you, because `ahead`
-		// is the position of its NOSE and the body runs backwards from there —
-		// at ahead = 0 the head is at the lens and most of the body is already
-		// through. So the ramp straddles the crossing: it starts well behind the
+		// is the position of the body's CENTRE and the body is 4.07 units long
+		// about it — so its nose is 2.03 ahead of whatever `ahead` says, and by
+		// the time the ramp opens at -1.4 the nose is already 0.63 units past
+		// the lens. So the ramp straddles the crossing: it starts well behind the
 		// lens, where the body is outside the frustum and the opacity is spent on
 		// nothing, and is still rising as the near plane admits it.
 		//
