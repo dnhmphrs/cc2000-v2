@@ -120,11 +120,6 @@ export const SCENES = scale({
 		// the swimmer instead of being there waiting for it.
 		motesIn: [0.03, 0.42],
 
-		// The clocks. Up with the swimmer and gone before the ovum is the subject:
-		// they belong to the JOURNEY, and a clock tumbling past the thing you have
-		// come all this way to see is a clock in the way of it.
-		clocksIn: [0.06, 0.2],
-		clocksOut: [0.5, 0.66],
 		motesOut: [0.8, 0.94],
 
 		// ── THE PASS ─────────────────────────────────────────────────────────
@@ -271,15 +266,21 @@ export const SCENES = scale({
 		ring: [0.0, 0.56],
 		ringPeak: 0.3,
 		// ── The solid, out of the division that is still happening ───────────
-		// TIGHTER, AND AS ONE DRAW. Head on down a five-fold axis the six spokes
-		// and the thirty edges overlap almost exactly in projection, so drawing
-		// them as two staggered animations reads as one thing being drawn twice
-		// rather than as a solid assembling. They now open two hundredths apart
-		// and close together, which is a single event, and the whole frame takes a
-		// third of the scene rather than half of it.
-		corners: [0.4, 0.5],
-		spokes: [0.46, 0.66],
-		edges: [0.48, 0.7],
+		// ONE WINDOW FOR ALL THREE. Not staggered by a hundredth, not overlapping
+		// — the same window, on the same ease, so the twelve corners, the six
+		// diagonals and the thirty edges start and stop together.
+		//
+		// Staggering them is a beat you can only read from an angle. Head on down
+		// a five-fold axis the six diagonals lie almost exactly along six of the
+		// thirty edges in projection, so a second window starting under the first
+		// is not a second object arriving: it is thirty lines the viewer has
+		// already got getting heavier for no reason they can see. In a scene that
+		// is otherwise built out of things that are what they look like, it read
+		// as an accident.
+		//
+		// So the frame is one beat, and the projection is the next one. Which is
+		// the shape the scene wanted anyway: assemble, hold, flare.
+		frame: [0.4, 0.62],
 		// THE UNION. The last edge closes and the whole figure answers at once.
 		// It has to come back to zero by p=1: the computation's enter() restates
 		// setLineOpacity(1), so a flare still up at the cut is a visible step.
@@ -299,23 +300,32 @@ export const SCENES = scale({
 	computation: {
 		duration: 11.5,
 
-		// The camera pulls BACK as the panes come out. The conception was close on
-		// the solid; six rooms will not fit in that frame, so the opening move of
-		// this scene is to make room for them — and that pull-back is most of why
-		// the panes read as coming out rather than merely appearing.
-		pullBack: [0.0, 0.25],
+		// The camera pulls BACK as the panes come out, and it GOES FIRST. The
+		// conception was close on the solid; six rooms will not fit in that frame,
+		// so the opening move of this scene is to make room for them — and that
+		// pull-back is most of why the panes read as coming out rather than merely
+		// appearing.
+		//
+		// It used to start on the same frame as the panes, and the camera looked
+		// as though it were chasing them: the arms were already on their way out
+		// before the frame had begun to give them anywhere to go. It now has a
+		// twentieth of the scene to itself — a quarter of a second, which is
+		// nothing to watch and everything to feel — and the ease is the same
+		// symmetric one, so the fastest part of the retreat is still under the
+		// fastest part of the projection.
+		pullBack: [0.0, 0.28],
 
 		// The panes come out of the frame, as DRAFTING first: the golden rectangle,
 		// its dimension lines, its ratio bar, its spiral. The rooms only fade in
 		// through that once it is out, which is what stops the two reading as one
 		// undifferentiated bloom, and what makes the machine look as though it is
 		// working the answer out rather than displaying it.
-		open: [0.0, 0.16],
-		schematic: [0.015, 0.2],
-		rooms: [0.16, 0.34],
+		open: [0.05, 0.21],
+		schematic: [0.065, 0.25],
+		rooms: [0.21, 0.37],
 		// And the drafting steps back once the rooms are up, or it is clutter over
 		// the only thing in the scene with any colour in it.
-		draftOut: [0.27, 0.44],
+		draftOut: [0.3, 0.46],
 
 		// The sphere stays — it is the thing the frame is held inside — and thins,
 		// so the artwork is not seen through a wash.

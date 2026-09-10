@@ -958,7 +958,7 @@
 		gap: 4px;
 		padding: 12px clamp(18px, 2.8vw, 32px);
 		background: var(--machine-light);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		border-radius: 14px;
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		white-space: nowrap;
@@ -1032,7 +1032,7 @@
 		height: clamp(30px, 3vw, 48px);
 		border-radius: 50%;
 		background: var(--machine-light);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		display: grid;
 		place-items: center;
@@ -1064,7 +1064,7 @@
 		height: 38px;
 		border-radius: 8px;
 		background: var(--machine-dark);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		display: flex;
 		align-items: flex-end;
@@ -1109,7 +1109,7 @@
 		gap: clamp(16px, 2.6vw, 34px);
 		padding: 14px clamp(16px, 2.2vw, 26px) 16px;
 		background: var(--machine-dark);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		border-radius: 16px;
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 	}
@@ -1141,7 +1141,7 @@
 		padding: 7px 9px;
 		color: var(--machine-ink);
 		background: var(--machine-light);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		border-radius: 9px;
 		box-shadow: 0 3px 0 var(--machine-ink);
 		cursor: pointer;
@@ -1171,7 +1171,7 @@
 		width: clamp(70px, 9vw, 120px);
 		height: 38px;
 		border-radius: 10px;
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		background: repeating-linear-gradient(
 			to bottom,
@@ -1197,7 +1197,7 @@
 		height: 44px;
 		border-radius: 12px;
 		background: radial-gradient(circle, var(--machine-ink) 2px, transparent 2.2px) 0 0 / 9px 9px;
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 	}
 
@@ -1256,7 +1256,7 @@
 		height: 18px;
 		border-radius: 50%;
 		background: var(--machine-light);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 	}
 	.screw::after {
 		content: '';

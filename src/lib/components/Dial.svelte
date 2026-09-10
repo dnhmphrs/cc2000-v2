@@ -152,7 +152,7 @@
 		height: var(--dial);
 		border-radius: 50%;
 		background: var(--machine-light);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		display: grid;
 		place-items: center;
@@ -168,7 +168,7 @@
 		transition: none;
 	}
 	.dial:focus-visible {
-		outline: var(--ink) solid var(--machine-red);
+		outline: var(--pen) solid var(--machine-red);
 		outline-offset: 4px;
 	}
 

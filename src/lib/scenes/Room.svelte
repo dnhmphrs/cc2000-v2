@@ -6,34 +6,44 @@
 	import { again } from './director';
 
 	// ── Scene 5: the room ────────────────────────────────────────────────────
-	// The answer, drawn INSIDE the room's monitor — the computation projects
-	// that decade's screen glass to CSS pixels and publishes it as monitorRect,
-	// and this fills it.
+	// The answer, in two places, and it took a while to work out that it wanted
+	// to be in two places.
 	//
-	// FILLS it, which is the whole trick. The four rooms hold four different
-	// monitors: a 1.72 widescreen in the 2010s and three squarish sets before
-	// it, down to a 90s CRT that is square to within two parts in a thousand.
-	// A panel sized off width alone is a widescreen band, so in the three older
-	// rooms it used to sit as a letterbox stripe across an otherwise empty
-	// screen. Instead the panel takes a reference box from the shape of the
-	// glass and stretches down it, and the player eats whatever is left over —
-	// so a square CRT gets a square screenful, artwork and all.
+	//   THE MONITOR holds the READOUT — the date, the title, the artist, the
+	//   accuracy, and the one control. It is the machine's own screen and what
+	//   is on it is the machine's own result: type on a black glass, which is
+	//   what a machine that has just finished a computation shows you.
 	//
-	// The numbers live in config/layout.js: SCREEN_GLASS for where each glass
-	// is, RESULT_PANEL for what to do once you are in it.
+	//   THE CORNER holds the PLAYER. Spotify's embed is not type, it is a piece
+	//   of another company's furniture with a fixed minimum at which it is
+	//   usable at all — its own compact card is 152px tall and it draws nothing
+	//   smaller. Four of these rooms have monitors that are barely bigger than
+	//   that, so putting the embed inside one meant either the readout or the
+	//   player was always being crushed to fit around the other.
+	//
+	// It used to be one place, and the crush was the reason it kept looking
+	// wrong: the 90s CRT is square to within two parts in a thousand and about
+	// 230px on the diagonal at landing, so a 152px player left seventy pixels
+	// for four lines of type. Now the glass has only type in it and can set that
+	// type properly, and the player is at the size it was drawn to be.
+	//
+	// The rect the readout fills is measured, not guessed: the computation
+	// projects that decade's screen glass to CSS pixels and publishes it as
+	// monitorRect. Sizes come from config/layout.js — SCREEN_GLASS for where the
+	// glass is, RESULT_PANEL for what to do once you are in it.
 	//
 	// One fallback, a centred card, for a run whose room art failed to measure.
-	// Out-of-range dates never get here at all — the calculator reports those on
-	// its own screen and stays put.
+	// Out-of-range dates never get here at all — they are refused in the popup
+	// that asked for them, mid-flight, and the run never dives.
 	//
-	// "calculate again" hands back to the director. The camera then flies into
-	// this monitor while the calculator grows out of it — see the Stage.
+	// The control hands back to the director, and the camera then flies into
+	// this monitor and back into the flight — see Computation.stepReturn().
 
 	$: uri = $track?.spotify_uri?.substring(14) ?? '';
 	$: src = uri ? `https://open.spotify.com/embed/track/${uri}?utm_source=generator` : '';
 	$: accuracy = $track ? accuracyFor(`${$conceived}|${$track.spotify_uri}`) : '';
 
-	// Everything in the glass is sized in these units, so type, player and
+	// Everything in the glass is sized in these units, so type, control and
 	// padding all scale together with the monitor.
 	$: fit = $monitorRect ? panelFit($decade, $monitorRect.width, $monitorRect.height) : null;
 	$: s = fit ? fit.scale : 1;
@@ -42,60 +52,100 @@
 	const IN = { duration: SCENES.room.resultIn * 1000 };
 </script>
 
+{#if src}
+	<!-- ── The player, out of the monitor and into the corner ─────────────── -->
+	<div class="deck" in:fade={{ duration: IN.duration, delay: 450 }}>
+		<iframe
+			{src}
+			frameBorder="0"
+			allowfullscreen
+			allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+			loading="lazy"
+			title="Conception song"
+		/>
+	</div>
+{/if}
+
 {#if src && $monitorRect}
-	<!-- In the monitor. -->
+	<!-- ── The readout, in the monitor ────────────────────────────────────── -->
 	<div
 		class="glass"
 		in:fade={{ duration: IN.duration, delay: 250 }}
-		style="left:{$monitorRect.left}px; top:{$monitorRect.top}px; width:{$monitorRect.width}px; height:{$monitorRect.height}px; --s:{s}; --title-lines:{shape.titleLines}; --artist-lines:{shape.artistLines}; --player-min:{RESULT_PANEL.playerMin}px; --player-max:{RESULT_PANEL.playerMax}px"
+		style="left:{$monitorRect.left}px; top:{$monitorRect.top}px; width:{$monitorRect.width}px; height:{$monitorRect.height}px; --s:{s}; --title-lines:{shape.titleLines}; --artist-lines:{shape.artistLines}"
 	>
 		<div class="inner">
 			<p class="when">{$conceived ? `roughly ${formatDay($conceived)}` : ''}</p>
 			<h2>{$track?.title ?? ''}</h2>
 			<p class="artist">{$track?.artist ?? ''}</p>
-			<div class="player">
-				<iframe
-					{src}
-					frameBorder="0"
-					allowfullscreen
-					allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-					loading="lazy"
-					title="Conception song"
-				/>
-			</div>
 			<p class="acc">{accuracy}% accuracy</p>
+			<button class="again" on:click={again}>another conception</button>
 		</div>
 	</div>
-	<button class="again" on:click={again} in:fade={{ duration: IN.duration, delay: 600 }}>
-		calculate again
-	</button>
 {:else if src}
 	<div class="stage" in:fade={IN}>
 		<div class="col card">
 			<p class="when">{$conceived ? `roughly ${formatDay($conceived)}` : ''}</p>
 			<h2>{$track?.title ?? ''}</h2>
 			<p class="artist">{$track?.artist ?? ''}</p>
-			<div class="player">
-				<iframe
-					{src}
-					frameBorder="0"
-					allowfullscreen
-					allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-					loading="lazy"
-					title="Conception song"
-				/>
-			</div>
 			<p class="acc">{accuracy}% accuracy</p>
-			<button class="go" on:click={again}>calculate again</button>
+			<button class="again go" on:click={again}>another conception</button>
 		</div>
 	</div>
 {/if}
 
 <style>
-	/* The monitor's glass. Sits exactly where the scene says the screen is.
-	   pointer-events has to be opted back in all the way down, because `main`
-	   turns them off so the 3D can be seen through the UI layer — and the
-	   Spotify player is the one thing in the site that must take a click. */
+	/* ── The player ───────────────────────────────────────────────────────────
+	   Top left, at the size Spotify drew it, in a hairline of the site's own so
+	   it reads as bolted to this page rather than dropped on it. `main` turns
+	   pointer-events off so the 3D can be seen through the UI layer, and this is
+	   the one thing in the site that MUST take a click, so it opts back in all
+	   the way down. */
+	.deck {
+		position: fixed;
+		top: max(2.2vh, 16px);
+		left: max(2.2vw, 16px);
+		z-index: 10;
+		width: min(380px, calc(100vw - 32px));
+		/* Spotify's compact card. Below this the embed draws its own scrollbar;
+		   above it there is nothing more to draw. */
+		height: 152px;
+		border: 1px solid rgba(255, 212, 38, 0.24);
+		border-radius: 13px;
+		overflow: hidden;
+		background: #0b0b0d;
+		box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+		pointer-events: auto;
+	}
+
+	/* ── And on a phone it goes to the BOTTOM ─────────────────────────────────
+	   Same panel, other end. Upright, the top of the frame is where the room's
+	   wall is — the posters, the clock, the thing the decade is legible from —
+	   and a card parked over it covers the half of the picture that says which
+	   decade you are in. The bottom is the desk and the bed, and it is where
+	   the thumb already is. Full width less the gutter, because at 414px a
+	   380px card floating off one corner reads as debris. */
+	@media (orientation: portrait) {
+		.deck {
+			top: auto;
+			bottom: max(2.2vh, 16px);
+			left: max(2.2vw, 16px);
+			right: max(2.2vw, 16px);
+			width: auto;
+			box-shadow: 0 -14px 44px rgba(0, 0, 0, 0.4);
+		}
+	}
+
+	/* The embed is an iframe, and an iframe with no size is 300x150 whatever box
+	   you put it in. */
+	.deck iframe {
+		display: block;
+		width: 100%;
+		height: 100%;
+		border: 0;
+		pointer-events: auto;
+	}
+
+	/* The monitor's glass. Sits exactly where the scene says the screen is. */
 	.glass {
 		position: fixed;
 		z-index: 10;
@@ -105,9 +155,7 @@
 		pointer-events: auto;
 	}
 
-	/* Fills the glass rather than sitting in a band across the middle of it.
-	   Centred, so once the player has taken all it can use, what is left is
-	   shared top and bottom instead of pooling under the panel. */
+	/* Fills the glass rather than sitting in a band across the middle of it. */
 	.inner {
 		flex: 1;
 		min-width: 0;
@@ -119,14 +167,6 @@
 		pointer-events: auto;
 	}
 
-	/* Type never gives up height to the player — it is the player that flexes. */
-	.when,
-	h2,
-	.artist,
-	.acc {
-		flex: 0 0 auto;
-	}
-
 	.when {
 		font-size: calc(10px * var(--s));
 		color: var(--ink-dim);
@@ -134,12 +174,12 @@
 	}
 
 	h2 {
-		font-size: calc(19px * var(--s));
+		font-size: calc(21px * var(--s));
 		font-weight: 700;
 		line-height: 1.05;
 		color: var(--yellow);
-		margin: 0 0 calc(3px * var(--s));
-		/* Long titles must not push the player out of the glass. A narrow screen
+		margin: 0 0 calc(4px * var(--s));
+		/* Long titles must not push the control out of the glass. A narrow screen
 		   is allowed more lines — that is what buys it bigger type. */
 		display: -webkit-box;
 		line-clamp: var(--title-lines);
@@ -149,9 +189,9 @@
 	}
 
 	.artist {
-		font-size: calc(12px * var(--s));
+		font-size: calc(13px * var(--s));
 		color: var(--ink);
-		margin: 0 0 calc(8px * var(--s));
+		margin: 0;
 		display: -webkit-box;
 		line-clamp: var(--artist-lines);
 		-webkit-line-clamp: var(--artist-lines);
@@ -162,41 +202,44 @@
 	.acc {
 		font-size: calc(10px * var(--s));
 		color: var(--yellow);
-		margin: calc(7px * var(--s)) 0 0;
+		margin: calc(9px * var(--s)) 0 0;
 	}
 
-	/* The slack in the glass, and the reason a square monitor now reads as one.
-	   Capped at the player's own card height: past that the embed draws nothing
-	   more and would only be stretched. The floor is capped against the glass as
-	   well as the scale, because on a very small screen a fixed floor is what
-	   pushes the accuracy line off the bottom — measured at 320x568, where the
-	   90s glass is 98px tall and the line was clipped by a pixel. */
-	.player {
-		flex: 1 1 auto;
-		display: flex;
-		min-height: min(calc(var(--player-min) * var(--s)), 30%);
-		max-height: var(--player-max);
-	}
-
-	iframe {
-		width: 100%;
-		height: 100%;
-		border: none;
-		display: block;
-		pointer-events: auto;
-	}
-
-	/* Sits under the monitor, on the desk, out of the room's way. */
+	/* ── The one control, ON the screen ──────────────────────────────────────
+	   A line of the readout rather than a button parked under the desk: this is
+	   a machine's screen and the last line of a machine's screen is what it
+	   wants you to do next. Sized in panel units with the rest of the type, but
+	   its HIT AREA is not — a 90s CRT lands about 230px across and 0.8 of 11px
+	   is a nine-pixel tap target, so the row keeps a real minimum height however
+	   far the type scales down — capped against the glass as well, because on a
+	   phone that glass can be under a hundred pixels tall and a fixed floor there
+	   is a fifth of the screen spent on one row. */
 	.again {
-		position: fixed;
-		left: 50%;
-		transform: translateX(-50%);
-		bottom: max(4vh, 22px);
-		z-index: 10;
+		align-self: flex-start;
+		display: flex;
+		align-items: center;
+		min-height: min(30px, 20%);
+		margin: calc(6px * var(--s)) 0 0;
+		padding: 0;
+		font: inherit;
+		font-size: calc(11px * var(--s));
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--yellow);
+		background: transparent;
+		border: 0;
+		border-bottom: 1px solid rgba(255, 212, 38, 0.42);
+		border-radius: 0;
+		cursor: pointer;
 		pointer-events: auto;
-		background: var(--yellow);
-		border-color: var(--yellow);
-		color: var(--bg);
+		transition: border-color 0.18s, opacity 0.18s;
+	}
+	.again::before {
+		content: '> ';
+		opacity: 0.6;
+	}
+	.again:hover {
+		border-bottom-color: var(--yellow);
 	}
 
 	/* Fallback card, when the room art could not be measured. */
@@ -210,18 +253,14 @@
 	}
 	.card .artist {
 		font-size: 17px;
-		margin-bottom: 18px;
 		-webkit-line-clamp: 1;
 		line-clamp: 1;
 	}
-	.card .player {
-		display: block;
-		height: 80px;
-		max-height: none;
-		margin-bottom: 4px;
-	}
 	.card .acc {
 		font-size: 13px;
-		margin-bottom: 20px;
+		margin-bottom: 16px;
+	}
+	.card .again {
+		font-size: 11px;
 	}
 </style>

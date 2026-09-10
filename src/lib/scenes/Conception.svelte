@@ -122,9 +122,9 @@
 			phase: t
 		});
 		// FULL WEIGHT, and it stays there. What it stops doing is OCCLUDING, the
-		// moment the corners are struck — which is before a single edge is drawn,
+		// moment the frame starts — which is before a single line has any weight,
 		// so nothing is hidden and then revealed.
-		world.egg.setCore(lit * T.handoverCore, p < T.corners[0]);
+		world.egg.setCore(lit * T.handoverCore, p < T.frame[0]);
 
 		// The blueprint field rules itself on under the wave. It is at zero on the
 		// frame this scene opens on, which is what lets the fly-in's `deep` and
@@ -132,14 +132,19 @@
 		fieldFade.set(smoothstep(0.05, 0.3, p));
 
 		// ── The solid, out of the division that is still happening ────────────
-		// The twelve, struck on the caps at the top of their travel — not after
-		// them. The six axes the sum was taken over, drawn as the six long
-		// diagonals, because they are the same six vectors. Then the thirty edges,
-		// closing between corners that are already there while the skin under
-		// them is still moving.
-		world.setCorners(span(p, T.corners) * (1 + union * 1.4));
-		world.setSpokes(smootherstep(span(p, T.spokes)));
-		world.setGrow(span(p, T.edges));
+		// The twelve struck on the caps, the six axes the sum was taken over drawn
+		// as the six long diagonals, and the thirty edges between them — ALL ON
+		// ONE CLOCK, and on one ease.
+		//
+		// They used to run on three, a couple of hundredths apart, and from the
+		// five-fold axis this scene is locked to that is not three things arriving
+		// but one thing arriving and then thickening: the diagonals project almost
+		// exactly onto six of the edges, so the second window has nothing of its
+		// own to show. One window, one ease, one event — see SCENES.conception.frame.
+		const frame = smootherstep(span(p, T.frame));
+		world.setCorners(frame * (1 + union * 1.4));
+		world.setSpokes(frame);
+		world.setGrow(frame);
 		world.setLineOpacity(1 + union * 1.1);
 		// The rim never leaves. It arrived with the fly-in and it is the circle
 		// the whole figure is inscribed in; the union only burns it.

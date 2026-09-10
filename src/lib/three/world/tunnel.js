@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createEgg } from './egg';
-import { holoMaterial, lineMaterial, segmentAttributes, ADD } from './materials';
+import { holoMaterial, ADD } from './materials';
 import { TUNNEL, AIR, HOLO } from '$lib/config';
 
 // ── The tunnel ───────────────────────────────────────────────────────────────
@@ -152,79 +152,6 @@ function createMotes() {
 	return { lines, mat, geo };
 }
 
-// ── The clocks ───────────────────────────────────────────────────────────────
-// Cartoon clocks tumbling past the lens while the swimmer comes up the axis, in
-// the register the whole gag is in: this is a machine that claims to know what
-// was in the charts at your conception, and what it is doing right now is going
-// back for it. Clocks flying past is what going back looks like.
-//
-// Drawn, not rendered — a ring, a tick at twelve, and two hands — because
-// everything in this site is drawn. They are the one WARM thing in the fly-in's
-// air, which is otherwise cold blue motes, so they read as an intrusion from the
-// machine's own palette rather than as more weather.
-//
-// Eight of them, animated on the CPU. The motes are one draw call because there
-// are hundreds; eight objects moving on their own axes are cheaper to write than
-// to fold into a shader, and the tumble is the point.
-function createClock(mat) {
-	const pos = [];
-	const R = 1;
-
-	// The face.
-	const N = 40;
-	for (let i = 0; i < N; i++) {
-		const a = (i / N) * Math.PI * 2;
-		const b = ((i + 1) / N) * Math.PI * 2;
-		pos.push(Math.cos(a) * R, Math.sin(a) * R, 0, Math.cos(b) * R, Math.sin(b) * R, 0);
-	}
-	// Twelve, so the tumble has something to read against.
-	pos.push(0, R * 0.82, 0, 0, R, 0);
-	// And the hands, at ten past ten, which is where every drawn clock is set.
-	pos.push(0, 0, 0, R * 0.44 * Math.cos(2.094), R * 0.44 * Math.sin(2.094), 0);
-	pos.push(0, 0, 0, R * 0.66 * Math.cos(1.047), R * 0.66 * Math.sin(1.047), 0);
-
-	const geo = new THREE.BufferGeometry();
-	geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-	segmentAttributes(geo, pos.length / 6, () => 0);
-	const line = new THREE.LineSegments(geo, mat);
-	return { line, geo };
-}
-
-function createClocks() {
-	const group = new THREE.Group();
-	const mat = lineMaterial(HOLO.clock, 0);
-	mat.uniforms.uGrow.value = mat.uniforms.uSpan.value;
-	const items = [];
-	const geos = [];
-
-	for (let i = 0; i < TUNNEL.clocks; i++) {
-		const { line, geo } = createClock(mat);
-		// Off the axis, and never on it: the swimmer is coming up the middle and a
-		// clock in front of it is a clock in the way.
-		const a = (i / TUNNEL.clocks) * Math.PI * 2 + Math.random();
-		const r = TUNNEL.clockRadius * (0.55 + Math.random() * 0.45);
-		const holder = new THREE.Group();
-		holder.position.set(Math.cos(a) * r, Math.sin(a) * r, 0);
-		holder.scale.setScalar(TUNNEL.clockSize * (0.7 + Math.random() * 0.6));
-		holder.add(line);
-		group.add(holder);
-		items.push({
-			holder,
-			phase: Math.random() * TUNNEL.clockSpan,
-			// Its own tumble, about its own axis, at its own rate.
-			axis: new THREE.Vector3(
-				Math.random() - 0.5,
-				Math.random() - 0.5,
-				Math.random() - 0.5
-			).normalize(),
-			spin: 0.6 + Math.random() * 1.6
-		});
-		geos.push(geo);
-	}
-
-	return { group, mat, items, geos };
-}
-
 export function createTunnel() {
 	const scene = new THREE.Scene();
 	scene.fog = new THREE.FogExp2(AIR, TUNNEL.fogDensity);
@@ -288,9 +215,6 @@ export function createTunnel() {
 
 	const motes = createMotes();
 	scene.add(motes.lines);
-
-	const clocks = createClocks();
-	scene.add(clocks.group);
 
 	// ── The sperm ────────────────────────────────────────────────────────────
 	// ONE, riding a couple of units in front of the lens, pointing AWAY, and
@@ -408,30 +332,15 @@ export function createTunnel() {
 			return air;
 		},
 
-		// The band crawling along the swimmer's body, and the clocks tumbling.
+		// The band crawling along the swimmer's body.
 		tick(dt) {
 			spermMaterial.uniforms.uTime.value += dt;
-			clocks.items.forEach((c) => c.holder.rotateOnAxis(c.axis, c.spin * dt));
 		},
 
 		// Where the camera is, so the mote field can fold itself around it.
 		setCamZ(z) {
 			motes.mat.uniforms.uCamZ.value = z;
 		},
-		// 0..1 — the clocks, and where the camera is, so they can wrap around it
-		// exactly as the motes do.
-		setClocks(o, camZ) {
-			clocks.mat.uniforms.uOpacity.value = o;
-			clocks.group.visible = o > 0.004;
-			if (o <= 0.004) return;
-			clocks.items.forEach((c) => {
-				// Fold into the slab ahead of the lens and keep it there, so the
-				// supply never runs out however far the flight goes.
-				const d = (((c.phase - camZ) % TUNNEL.clockSpan) + TUNNEL.clockSpan) % TUNNEL.clockSpan;
-				c.holder.position.z = camZ + 6 - d;
-			});
-		},
-
 		setMotes(o, reveal = 1) {
 			motes.mat.uniforms.uReveal.value = reveal;
 			motes.mat.uniforms.uOpacity.value = o;
@@ -474,7 +383,6 @@ export function createTunnel() {
 			camera.rotation.set(0, 0, 0);
 			this.setCamZ(TUNNEL.camStart);
 			this.setMotes(0);
-			this.setClocks(0, TUNNEL.camStart);
 			this.setHalo(0);
 			sperm.position.set(
 				TUNNEL.spermFrom.x,
@@ -501,8 +409,6 @@ export function createTunnel() {
 			halo.geometry.dispose();
 			motes.geo.dispose();
 			motes.mat.dispose();
-			clocks.geos.forEach((g) => g.dispose());
-			clocks.mat.dispose();
 			sperm.traverse((o) => o.geometry?.dispose());
 		}
 	};

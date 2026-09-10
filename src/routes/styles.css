@@ -45,11 +45,19 @@
 	   any other black reads as a hole in the machine. */
 	--machine-crt: #14120e;
 
-	/* The machine is DRAWN, not rendered: one heavy ink weight and one hard,
+	/* The machine is DRAWN, not rendered: one heavy pen weight and one hard,
 	   unblurred drop, used on everything bolted to the chassis. Keeping both as
 	   single variables is what stops it becoming a pile of unrelated ornament —
-	   every part is outlined by the same pen and lit from the same direction. */
-	--ink: 3px;
+	   every part is outlined by the same pen and lit from the same direction.
+	
+	   It was called --ink, and --ink is the INK COLOUR twenty lines up. Being
+	   declared second it won, so every `color: var(--ink)` in the site — nine of
+	   them, including the artist line on the result screen — was resolving to
+	   `3px`, which is not a colour, which makes the declaration invalid at
+	   computed-value time, which silently falls back to `inherit`. Most of them
+	   inherited something close enough to be got away with. The artist line
+	   inherited near-black onto a black screen and was simply not there. */
+	--pen: 3px;
 	--drop: 5px;
 
 	/* The two halves of the glass, each defined ONCE and used wherever glass is
@@ -64,16 +72,17 @@
 		rgba(255, 255, 255, 0.07) 30% 35%,
 		transparent 35%
 	);
-	/* Dark lines rather than light ones, and a strong line plus a weak one over a
-	   5px pitch: that pairing is what reads as tape rather than as a faint
-	   texture. It has been walked in from both sides — 4px with one dark pixel
-	   was closer to a screen-door than a raster, 6px with two at a third opacity
-	   was a set of blinds. This is between them. */
+	/* Dark lines rather than light ones, and a strong line plus a weak one — that
+	   pairing is what reads as tape rather than as a faint texture. Both the
+	   pitch and the ink have been walked out since: one dark pixel in six rather
+	   than in five, at 0.15 rather than 0.26, which is a finer raster and a bit
+	   over half the ink. It is a screen the thing is being watched on, and a
+	   screen you notice is one you are looking at instead of through. */
 	--scanlines: repeating-linear-gradient(
 		to bottom,
-		rgba(0, 0, 0, 0.26) 0 1px,
-		rgba(0, 0, 0, 0.1) 1px 2px,
-		transparent 2px 5px
+		rgba(0, 0, 0, 0.15) 0 1px,
+		rgba(0, 0, 0, 0.05) 1px 2px,
+		transparent 2px 6px
 	);
 
 	/* Copy sits on the deep blue for the first half of a run and on white for

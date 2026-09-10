@@ -119,7 +119,7 @@
 		cursor: grabbing;
 	}
 	.track:focus-visible {
-		outline: var(--ink) solid var(--machine-red);
+		outline: var(--pen) solid var(--machine-red);
 		outline-offset: 4px;
 		border-radius: 14px;
 	}
@@ -130,7 +130,7 @@
 		inset: 0;
 		border-radius: 999px;
 		background: var(--machine-dark);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		box-shadow: inset 0 0 0 3px var(--machine);
 	}
 
@@ -141,7 +141,7 @@
 		height: calc(var(--dial) * 0.5);
 		border-radius: 10px;
 		background: var(--machine-red);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		display: grid;
 		place-items: center;
