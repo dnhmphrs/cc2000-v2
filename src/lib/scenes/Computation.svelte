@@ -276,6 +276,7 @@
 		frustum = lerp(from, rest, pullAmount(PULL.before));
 		world.applyFrustum(frustum);
 		world.setPanesVisible(true);
+		panes.forEach((pane) => pane && pane.setOutline(0));
 		world.setLineOpacity(1);
 		world.setGrow(1);
 		world.setSpokes(1);
@@ -347,11 +348,14 @@
 
 		// ── The panes come out ───────────────────────────────────────────────
 		// Working first, artwork second, working away third.
+		// Drawn first, inside the solid, then travelling.
+		const drawn = smootherstep(span(p, T.rects));
 		const open = easeInOutCubic(span(p, T.open));
 		const draft = span(p, T.schematic) * (1 - smoothstep(T.draftOut[0], T.draftOut[1], p) * 0.78);
 		const reveal = easeInOutCubic(span(p, T.rooms));
 		panes.forEach((pane) => {
 			if (!pane) return;
+			pane.setOutline(drawn);
 			pane.updateProjection(open);
 			pane.setDraft(draft);
 			pane.setReveal(reveal);

@@ -102,7 +102,10 @@ export const SCENES = scale({
 		// against 6.7 — and the whole of the cut comes out of the run-in after it,
 		// which was 7.8 seconds of holding one speed toward a thing that was not
 		// getting much bigger. Three hundred units still, covered a third faster.
-		duration: 11.0,
+		// 11.0 -> 13.5. Every window below is a fraction, so the beats keep their
+		// places and each one gets a fifth more time — which the approach is what
+		// spends. See TUNNEL.camStart for the other half of it.
+		duration: 13.5,
 
 		// The calculator is still on screen, warping into the lens. Documentation
 		// only — the machine runs its own `launch` in seconds — but the two have
@@ -125,6 +128,24 @@ export const SCENES = scale({
 		// three beats, and the third one is the event. Ending this at 0.42 put
 		// the field still arriving underneath the pass, so two things were
 		// happening at once and neither was the subject.
+		// ── AND THE AIR COMES UP ─────────────────────────────────────────────
+		// The `deep` shader turns the air colour into a CHANNEL, and its core is
+		// 1.5x the air at the vanishing point — so at progress zero, before
+		// anything has happened, there is already a warm pool in the middle of
+		// the frame. Measured: rgb(30,27,21) at the centre against rgb(4,4,3) in
+		// the corners, and 30 = 1.5 x 20 exactly.
+		//
+		// Which was invisible while the title card painted its own ground over
+		// the top, and became the first thing you see the moment the card went
+		// transparent. It is also what you land in on the loop home, with no
+		// card at all: the glow does not come up, it is simply on.
+		//
+		// So the air now walks UP from the void as well as down to it. The
+		// flight is supposed to bring the warmth out of the dark; this is the
+		// first half of that, and it costs nothing at the far end because the
+		// settle already owns it.
+		airIn: [0.0, 0.2],
+
 		motesIn: [0.03, 0.26],
 
 		// LATER THAN THE DIVE. These used to start on the same frame the swimmer
@@ -312,7 +333,14 @@ export const SCENES = scale({
 		// THE UNION. The last edge closes and the whole figure answers at once.
 		// It has to come back to zero by p=1: the computation's enter() restates
 		// setLineOpacity(1), so a flare still up at the cut is a visible step.
-		union: [0.72, 1.0],
+		// AND THE FLARE IS THE FRAME CLOSING, not a separate event after it. It
+		// used to open at 0.72 — a tenth of the scene after the last edge landed
+		// — so the build and the answer to the build were two beats where the
+		// viewer was counting three: lines, flash, rectangles. Now it rises
+		// under the last of the build and peaks just past the moment the figure
+		// completes, which is one beat with a shape to it. Still zero at both
+		// ends, so the hand-over is still the bare invariant.
+		union: [0.46, 0.82],
 		unionPeak: 1.3,
 
 		// ── WHAT IT HANDS OVER ───────────────────────────────────────────────
@@ -339,12 +367,22 @@ export const SCENES = scale({
 		// through that once it is out, which is what stops the two reading as one
 		// undifferentiated bloom, and what makes the machine look as though it is
 		// working the answer out rather than displaying it.
-		open: [0.05, 0.21],
-		schematic: [0.065, 0.25],
-		rooms: [0.21, 0.37],
+		// FIRST THE RECTANGLES ARE DRAWN, THEN THEY TRAVEL. At projection zero
+		// each one lies exactly on four of the solid's own vertices, so what
+		// used to happen at the cut was three golden rectangles switching on
+		// inside the icosahedron in a single frame and then extending. The
+		// extending was always an animation; the arrival was not.
+		//
+		// They are drawn now, on the same progressive stroke as the frame's own
+		// edges (see GoldenRectangle.setOutline), inside the solid, before any
+		// of them moves. Then they go out.
+		rects: [0.0, 0.11],
+		open: [0.11, 0.34],
+		schematic: [0.14, 0.38],
+		rooms: [0.34, 0.48],
 		// And the drafting steps back once the rooms are up, or it is clutter over
 		// the only thing in the scene with any colour in it.
-		draftOut: [0.3, 0.46],
+		draftOut: [0.42, 0.56],
 
 		// The sphere stays — it is the thing the frame is held inside — and thins,
 		// so the artwork is not seen through a wash.

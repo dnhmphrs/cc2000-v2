@@ -86,13 +86,15 @@ export const RESULT_PANEL = {
 	//
 	// Which is why the reference heights came down again and the widths came in.
 	// They describe four lines and a control, not a screenful.
+	// Down again by the height of the control, which is no longer part of the
+	// readout: it is a softkey across the foot of the glass in real pixels.
 	shapes: [
-		{ name: 'wide', from: 1.45, ref: { w: 340, h: 141 }, titleLines: 2, artistLines: 1 },
-		{ name: 'square', from: 0.85, ref: { w: 300, h: 141 }, titleLines: 2, artistLines: 1 },
+		{ name: 'wide', from: 1.45, ref: { w: 340, h: 105 }, titleLines: 2, artistLines: 1 },
+		{ name: 'square', from: 0.85, ref: { w: 300, h: 105 }, titleLines: 2, artistLines: 1 },
 		// Nothing is this shape today. It is here so that a monitor taller than it
 		// is wide cannot land on the widescreen layout by default, which is the
 		// exact failure this config exists to fix.
-		{ name: 'tall', from: 0, ref: { w: 275, h: 163 }, titleLines: 3, artistLines: 1 }
+		{ name: 'tall', from: 0, ref: { w: 275, h: 105 }, titleLines: 2, artistLines: 1 }
 	]
 };
 
@@ -128,9 +130,16 @@ export const RESULT_PANEL = {
 export const PLAYER = {
 	height: 152,
 	logical: 300,
-	share: 0.5,
+	// Of the glass LESS the control bar. 0.5 of it left the 90s CRT's card under
+	// the usable-scale floor and threw the player back out of the monitor.
+	share: 0.62,
 	minScale: 0.75,
-	readout: 88
+	readout: 72,
+	// The softkey at the foot of the glass, in REAL pixels — 30 of minimum plus
+	// its own padding. It is the one thing in the monitor that does not scale
+	// with the monitor, because a tap target that does is a nine-pixel target
+	// on a 90s CRT.
+	cta: 42
 };
 
 // How to draw the panel in this decade's monitor at this size on screen.

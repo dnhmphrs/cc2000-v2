@@ -9,6 +9,7 @@
 		accelerate,
 		easeInOutCubic,
 		smoothstep,
+		smootherstep,
 		TUNNEL,
 		CAM_END,
 		ICOSA,
@@ -185,8 +186,15 @@
 		// hand against this colour. It walks down to the VOID as the scene lands,
 		// and the backdrop's own figure goes with it — so the last frame of this
 		// scene and the first frame of the next are the same flat black.
+		// Up from the void first, then back down to it — see SCENES.flyIn.airIn.
+		// The channel's core is 1.5x whatever this is, so an air that starts at
+		// its full warmth puts a pool in the middle of the frame before the
+		// flight has begun.
 		const settle = easeInOutCubic(span(p, T.settle));
-		air.copy(air0).lerp(voidCol, settle);
+		air
+			.copy(voidCol)
+			.lerp(air0, smootherstep(span(p, T.airIn)))
+			.lerp(voidCol, settle);
 		world.setAir(air.getHex());
 		fieldFade.set(1 - settle);
 

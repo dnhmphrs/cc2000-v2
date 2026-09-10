@@ -95,12 +95,119 @@
 	   pitch and the ink have been walked out since: one dark pixel in six rather
 	   than in five, at 0.15 rather than 0.26, which is a finer raster and a bit
 	   over half the ink. It is a screen the thing is being watched on, and a
-	   screen you notice is one you are looking at instead of through. */
+	   screen you notice is one you are looking at instead of through.
+
+	   THE TWO INKS ARE NOT NEUTRAL any more, and that is where the colour in
+	   this treatment comes from. A real tube's dark line is not the absence of
+	   light, it is the gap between two lit lines, and what bleeds into it is
+	   the blue phosphor — the one that spreads furthest and decays slowest. So
+	   the strong line is a COOL black and the weak one a WARM black.
+
+	   It is worth being exact about why the tint is in the ink rather than in a
+	   separate layer: this gradient is composited src-over, so on the void
+	   (about rgb 12,12,12 with the field grid on it) the strong line lands at
+	   (10.2, 10.2, 14.1) and the weak one at (13.8, 11.7, 11.4) — a swing of
+	   about six levels in R−B across the six-pixel cell — and none of it costs
+	   a layer, a blend pass or a repaint. Measured on the running site at
+	   conception 0.3: R−B varies by 0.25 of a level across the cell before
+	   this and by 5.5 after it.
+
+	   The two inks are BLUE AND ORANGE rather than any two warm/cool colours,
+	   and the reason is luma. A tint in the ink lifts the line it darkens by
+	   alpha times the ink's own luma, so a tint costs raster depth — and Rec.
+	   709 weights blue at 0.0722, which is to say a blue ink is very nearly
+	   free. At (0,0,26) the strong line gives up 0.28 of a level; the first
+	   pass at this used (2,6,22), whose green cost 0.95 of a level and took a
+	   fifth off the depth of the raster, measured. The weak line can afford an
+	   ink with red in it because it is only a twentieth of one. */
 	--scanlines: repeating-linear-gradient(
 		to bottom,
-		rgba(0, 0, 0, 0.15) 0 1px,
-		rgba(0, 0, 0, 0.05) 1px 2px,
+		rgba(0, 0, 26, 0.15) 0 1px,
+		rgba(48, 6, 0, 0.05) 1px 2px,
 		transparent 2px 6px
+	);
+
+	/* ── The tube ─────────────────────────────────────────────────────────────
+	   The raster says "a screen"; this says "a screen with a CURVE on it". It
+	   is the cheapest thing in the treatment — one more layer in the same
+	   element's background, so it is flattened into the same texture at raster
+	   time and costs nothing per frame.
+
+	   Radii of 78% put the edge midpoints at 0.64 of the gradient and the
+	   corners at 0.91, which is the whole reason the size is written as two
+	   percentages rather than left to farthest-corner: the falloff has to keep
+	   its shape when the viewport goes from a laptop to a phone, and a
+	   corner-relative gradient does not. */
+	--tube: radial-gradient(
+		ellipse 78% 78% at 50% 50%,
+		rgba(0, 0, 0, 0) 0 52%,
+		rgba(0, 0, 0, 0.09) 72%,
+		rgba(0, 0, 0, 0.26) 88%,
+		rgba(0, 0, 0, 0.42) 100%
+	);
+
+	/* ── The grille ───────────────────────────────────────────────────────────
+	   Three phosphor stripes on a three-pixel pitch, and they are ADDITIVE —
+	   the element that carries them is mix-blend-mode: screen, which is the
+	   only blend that cannot muddy what is underneath it. Screen never darkens,
+	   so a 1px additive gold line keeps every level it had and gains at most
+	   four; and because screen saturates as the backdrop brightens, the grille
+	   lives almost entirely in the blacks, which is where a real mask is
+	   visible too.
+
+	   The alphas are balanced for LUMA, not for level. Rec. 709 weights green
+	   at 0.7152 and blue at 0.0722, so equal channel lifts would put a green
+	   stripe two and a half times brighter than the red one and ten times
+	   brighter than the blue, and the grille would read as green pinstripes.
+	   Peak lifts on the void are about 3.4 / 1.5 / 5.8 levels, which is 0.72 /
+	   1.07 / 0.42 of a level of LUMA — near flat — while R−B swings about nine
+	   levels across the triad. Chroma without contrast: that is the entire
+	   trick, and it is what "multi-chromatic but not stripey" means here.
+
+	   The stops are RAMPS rather than hard 1px bands on purpose. A hard stripe
+	   on a 3px pitch beats against the device pixel grid at any fractional
+	   devicePixelRatio (1.25, 1.5) and throws a slow moiré across the screen;
+	   a triangular profile has nothing sharp in it to beat with. */
+	--grille-r: repeating-linear-gradient(
+		to right,
+		rgba(255, 48, 32, 0.014) 0px,
+		rgba(255, 48, 32, 0) 1.2px,
+		rgba(255, 48, 32, 0) 1.8px,
+		rgba(255, 48, 32, 0.014) 3px
+	);
+	--grille-g: repeating-linear-gradient(
+		to right,
+		rgba(52, 255, 96, 0) 0px,
+		rgba(52, 255, 96, 0.006) 1px,
+		rgba(52, 255, 96, 0) 2px,
+		rgba(52, 255, 96, 0) 3px
+	);
+	--grille-b: repeating-linear-gradient(
+		to right,
+		rgba(56, 84, 255, 0) 0px,
+		rgba(56, 84, 255, 0) 1px,
+		rgba(56, 84, 255, 0.024) 2px,
+		rgba(56, 84, 255, 0) 3px
+	);
+
+	/* ── The head-switching band ──────────────────────────────────────────────
+	   The one moving part. A helical-scan deck switches heads a few lines from
+	   the bottom of the field and the join shows as a bright edge with a soft
+	   lift ahead of it; on a mistracked tape it drifts up the picture. It is
+	   drawn once, into its own layer, and MOVED with a transform — the position
+	   is never a paint.
+
+	   Screened, like the grille, so it can only add: on the void the hot edge
+	   is +13 levels and on the gold it is under one, which is why the band
+	   reads as light in the blacks rather than as a wash over the drawing. */
+	--band: linear-gradient(
+		to bottom,
+		rgba(190, 214, 255, 0) 0%,
+		rgba(190, 214, 255, 0.012) 38%,
+		rgba(226, 236, 255, 0.026) 72%,
+		rgba(255, 250, 236, 0.055) 78%,
+		rgba(255, 236, 198, 0.02) 80%,
+		rgba(255, 236, 198, 0) 100%
 	);
 
 	/* Copy sits on the deep blue for the first half of a run and on white for
