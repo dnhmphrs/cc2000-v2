@@ -1,7 +1,7 @@
 <script>
 	import { fade } from 'svelte/transition';
 	import { track, conceived, decade, monitorRect } from '$lib/store/store';
-	import { SCENES, RESULT_PANEL, panelFit } from '$lib/config';
+	import { SCENES, RESULT_PANEL, PLAYER, panelFit } from '$lib/config';
 	import { formatDay, accuracyFor } from '$lib/functions/utils';
 	import { again } from './director';
 
@@ -43,18 +43,36 @@
 	$: src = uri ? `https://open.spotify.com/embed/track/${uri}?utm_source=generator` : '';
 	$: accuracy = $track ? accuracyFor(`${$conceived}|${$track.spotify_uri}`) : '';
 
-	// Everything in the glass is sized in these units, so type, control and
-	// padding all scale together with the monitor.
-	$: fit = $monitorRect ? panelFit($decade, $monitorRect.width, $monitorRect.height) : null;
+	// ── Where the player goes ────────────────────────────────────────────────
+	// In the glass if the glass can hold it, at the edge of the screen if not.
+	// The embed will not shrink below Spotify's 152px compact card — it clips
+	// instead — so fitting it in a 240px monitor means giving the iframe its
+	// natural size and scaling the whole card down with a transform. Under about
+	// k = 0.7 the play control drops below a usable target, so there is a floor,
+	// and under the floor it goes back outside. See PLAYER in config/layout.js.
+	$: glass = $monitorRect;
+	$: logicalW = Math.max(glass?.width ?? PLAYER.logical, PLAYER.logical);
+	// Whichever runs out first: the width of the monitor, or half its height.
+	$: k = glass
+		? Math.min(glass.width / logicalW, (glass.height * PLAYER.share) / PLAYER.height)
+		: 1;
+	$: inGlass =
+		!!glass && k >= PLAYER.minScale && glass.height - PLAYER.height * k >= PLAYER.readout;
+	$: deckH = inGlass ? PLAYER.height * k : 0;
+
+	// Everything in the readout is sized in these units, so type, control and
+	// padding all scale together with the monitor — and it is measured against
+	// what the player LEAVES, not against the whole glass.
+	$: fit = glass ? panelFit($decade, glass.width, glass.height - deckH) : null;
 	$: s = fit ? fit.scale : 1;
 	$: shape = fit ? fit.shape : RESULT_PANEL.shapes[0];
 
 	const IN = { duration: SCENES.room.resultIn * 1000 };
 </script>
 
-{#if src}
-	<!-- ── The player, out of the monitor and into the corner ─────────────── -->
-	<div class="deck" in:fade={{ duration: IN.duration, delay: 450 }}>
+{#if src && !inGlass}
+	<!-- ── Too small a monitor: the player goes to the edge of the screen ─── -->
+	<div class="deck loose" in:fade={{ duration: IN.duration, delay: 450 }}>
 		<iframe
 			{src}
 			frameBorder="0"
@@ -66,20 +84,43 @@
 	</div>
 {/if}
 
-{#if src && $monitorRect}
-	<!-- ── The readout, in the monitor ────────────────────────────────────── -->
+{#if src && glass}
+	<!-- ── The readout, in the monitor, with the player under it ──────────── -->
 	<div
 		class="glass"
 		in:fade={{ duration: IN.duration, delay: 250 }}
-		style="left:{$monitorRect.left}px; top:{$monitorRect.top}px; width:{$monitorRect.width}px; height:{$monitorRect.height}px; --s:{s}; --title-lines:{shape.titleLines}; --artist-lines:{shape.artistLines}"
+		style="left:{glass.left}px; top:{glass.top}px; width:{glass.width}px; height:{glass.height}px; --s:{s}; --title-lines:{shape.titleLines}; --artist-lines:{shape.artistLines}"
 	>
 		<div class="inner">
 			<p class="when">{$conceived ? `roughly ${formatDay($conceived)}` : ''}</p>
 			<h2>{$track?.title ?? ''}</h2>
-			<p class="artist">{$track?.artist ?? ''}</p>
+			<!-- Only when the card is NOT under it. The compact embed prints the
+			     artist itself, in bigger type than this could manage, and a 240px
+			     CRT does not have the height to say it twice. -->
+			{#if !inGlass}
+				<p class="artist">{$track?.artist ?? ''}</p>
+			{/if}
 			<p class="acc">{accuracy}% accuracy</p>
 			<button class="again" on:click={again}>another conception</button>
 		</div>
+		{#if inGlass}
+			<!-- The card at its own size, shrunk by a transform. A transform does
+			     not change layout size, so the holder carries the RENDERED height
+			     and the iframe carries the LOGICAL one. -->
+			<div class="deck fitted" style="height:{deckH}px">
+				<div class="crt" style="width:{(logicalW * k).toFixed(1)}px; height:{deckH}px">
+					<iframe
+						{src}
+						frameBorder="0"
+						allowfullscreen
+						allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+						loading="lazy"
+						title="Conception song"
+						style="width:{logicalW}px; height:{PLAYER.height}px; transform:scale({k.toFixed(4)})"
+					/>
+				</div>
+			</div>
+		{/if}
 	</div>
 {:else if src}
 	<div class="stage" in:fade={IN}>
@@ -94,20 +135,58 @@
 {/if}
 
 <style>
-	/* ── The player ───────────────────────────────────────────────────────────
-	   Top left, at the size Spotify drew it, in a hairline of the site's own so
-	   it reads as bolted to this page rather than dropped on it. `main` turns
-	   pointer-events off so the 3D can be seen through the UI layer, and this is
-	   the one thing in the site that MUST take a click, so it opts back in all
-	   the way down. */
-	.deck {
+	/* ── The player, IN THE GLASS ─────────────────────────────────────────────
+	   Spotify's card at its own size, shrunk by a transform to the width of the
+	   monitor. It has to be done this way round: the embed is a cross-origin
+	   iframe whose internal layout is computed against its own pixel box, so a
+	   240px-wide iframe is not a small card, it is a clipped one with a
+	   scrollbar. Give it 300x152 and scale the result.
+
+	   A transform does not change layout size, so the holder carries the
+	   RENDERED height (set inline) and the iframe carries the LOGICAL one.
+	   `main` turns pointer-events off so the 3D shows through the UI layer, and
+	   this is the one thing in the site that MUST take a click. */
+	.deck.fitted {
+		flex: 0 0 auto;
+		overflow: hidden;
+		pointer-events: auto;
+		/* Centred, because capping the card at half the glass height can leave it
+		   narrower than the monitor it is in. */
+		display: flex;
+		justify-content: center;
+	}
+	/* The holder that carries the RENDERED size. A transform does not change
+	   layout size, so without this the flex row still sees a 300px-wide item in
+	   a 240px box and cannot centre it — the card sat hard against the left
+	   edge of every monitor. */
+	.crt {
+		position: relative;
+		overflow: hidden;
+		flex: 0 0 auto;
+	}
+	.deck.fitted iframe {
+		position: absolute;
+		top: 0;
+		left: 0;
+		display: block;
+		border: 0;
+		transform-origin: top left;
+		pointer-events: auto;
+	}
+
+	/* ── And when the monitor is too small to hold one ────────────────────────
+	   Under PLAYER.minGlass the scale would put the play control below a usable
+	   target, so the card leaves the monitor and goes to the edge of the screen
+	   at full size instead. Landscape, top left. Upright, the BOTTOM: the top of
+	   a portrait frame is the room's wall — the posters, the clock, the half of
+	   the picture that says which decade you are in — and the bottom is the desk
+	   and the bed, and where the thumb already is. */
+	.deck.loose {
 		position: fixed;
 		top: max(2.2vh, 16px);
 		left: max(2.2vw, 16px);
 		z-index: 10;
 		width: min(380px, calc(100vw - 32px));
-		/* Spotify's compact card. Below this the embed draws its own scrollbar;
-		   above it there is nothing more to draw. */
 		height: 152px;
 		border: 1px solid rgba(255, 212, 38, 0.24);
 		border-radius: 13px;
@@ -116,16 +195,15 @@
 		box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
 		pointer-events: auto;
 	}
-
-	/* ── And on a phone it goes to the BOTTOM ─────────────────────────────────
-	   Same panel, other end. Upright, the top of the frame is where the room's
-	   wall is — the posters, the clock, the thing the decade is legible from —
-	   and a card parked over it covers the half of the picture that says which
-	   decade you are in. The bottom is the desk and the bed, and it is where
-	   the thumb already is. Full width less the gutter, because at 414px a
-	   380px card floating off one corner reads as debris. */
+	.deck.loose iframe {
+		display: block;
+		width: 100%;
+		height: 100%;
+		border: 0;
+		pointer-events: auto;
+	}
 	@media (orientation: portrait) {
-		.deck {
+		.deck.loose {
 			top: auto;
 			bottom: max(2.2vh, 16px);
 			left: max(2.2vw, 16px);
@@ -135,29 +213,22 @@
 		}
 	}
 
-	/* The embed is an iframe, and an iframe with no size is 300x150 whatever box
-	   you put it in. */
-	.deck iframe {
-		display: block;
-		width: 100%;
-		height: 100%;
-		border: 0;
-		pointer-events: auto;
-	}
-
-	/* The monitor's glass. Sits exactly where the scene says the screen is. */
+	/* The monitor's glass. Sits exactly where the scene says the screen is, and
+	   stacks the readout over the player. */
 	.glass {
 		position: fixed;
 		z-index: 10;
 		background: #0b0b0d;
 		overflow: hidden;
 		display: flex;
+		flex-direction: column;
 		pointer-events: auto;
 	}
 
 	/* Fills the glass rather than sitting in a band across the middle of it. */
 	.inner {
-		flex: 1;
+		flex: 1 1 auto;
+		min-height: 0;
 		min-width: 0;
 		display: flex;
 		flex-direction: column;

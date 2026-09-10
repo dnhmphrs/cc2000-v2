@@ -7,7 +7,6 @@
 		clamp01,
 		glide,
 		accelerate,
-		easeOutQuint,
 		easeInOutCubic,
 		smoothstep,
 		TUNNEL,
@@ -219,7 +218,7 @@
 		const inside = TUNNEL.eggZ + TUNNEL.shellR * coreRatio() * 0.35;
 		const ahead =
 			dive <= 0
-				? lerp(-TUNNEL.spermFrom.z, lead, easeOutQuint(arrive))
+				? lerp(-TUNNEL.spermFrom.z, lead, glide(arrive, 0.8))
 				: lerp(lead, camZ - inside, accelerate(dive, T.divePower));
 
 		// It rides in front of the LENS, so it goes where the lens goes: leaving
@@ -239,14 +238,31 @@
 		// rather than a thing sliding into place.
 		world.sperm.position.set(world.camera.position.x, world.camera.position.y, camZ - ahead);
 
-		// On the moment it is past the lens. It used to wait until three and a half
-		// units clear, which on the axis means it fades up ALREADY IN FRONT of you
-		// — the one thing this shot must not do, because the whole point is that it
-		// arrives from behind. It comes through the near plane at full size and
-		// partly cut by it, which is what passing something at arm's length looks
-		// like. Driven by where it ACTUALLY is rather than by the clock, so it can
-		// never be lit while still behind the camera.
-		const shown = smoothstep(0.3, 1.0, ahead);
+		// ── LIT ACROSS THE LENS PLANE, not after it ──────────────────────────
+		// This ramp was [0.3, 1.0], and before that [3.5, …]. Both hide the
+		// swimmer until it is already IN FRONT, which is the one thing the shot
+		// must not do: the crossing is the beat, and it was happening off-camera
+		// every time.
+		//
+		// It can be lit across zero without being lit behind you, because `ahead`
+		// is the position of the body's CENTRE and the body is 4.07 units long
+		// about it — so its nose is 2.03 ahead of whatever `ahead` says, and by
+		// the time the ramp opens at -1.4 the nose is already 0.63 units past
+		// the lens. So the ramp straddles the crossing: it starts well behind the
+		// lens, where the body is outside the frustum and the opacity is spent on
+		// nothing, and is still rising as the near plane admits it.
+		//
+		// That overlap is the whole trick, and moving the ramp entirely behind
+		// the lens — fully lit before anything can be seen — was tried and is
+		// worse. Near the lens a tenth of a unit of travel is most of the frame,
+		// so a body admitted at full weight arrives in one frame: geometrically
+		// exact, and it reads as a pop. Fading up ACROSS the entry is what makes
+		// it a thing coming past rather than a thing appearing.
+		//
+		// Driven by where it ACTUALLY is rather than by the clock, so it can
+		// never be lit into an empty frame by a clock that has run on while the
+		// gate held the scene.
+		const shown = smoothstep(-1.4, 0.6, ahead);
 		const o = shown * (1 - span(p, T.spermGone));
 		world.spermMaterial.uniforms.uOpacity.value = o;
 		world.sperm.visible = o > 0.004;
@@ -292,7 +308,7 @@
 		// dark void the conception opens on. Driven from `t` rather than the
 		// swimmer's `elapsed`, so the core stays a pure function of progress and
 		// a ?at= seek draws what the run draws.
-		world.egg.setWave({ grain: eggIn * (1 - smoothstep(0.72, 0.95, p)), phase: t });
+		world.egg.setWave({ grain: eggIn * (1 - smoothstep(0.85, 0.985, p)), phase: t });
 		// The rim answers the entry. A nudge, not a flash — the wave that breaks
 		// across this surface at the top of the next scene is the payoff — and it
 		// is the CRISP rim that lifts, not the body's, or the whole disc washes.

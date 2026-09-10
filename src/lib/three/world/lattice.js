@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { createEgg } from './egg';
 import { lineMaterial, dotMaterial, grower, segmentAttributes } from './materials';
 import { VERTICES, EDGES, PENTAGONS, PENTAGON_PAIRS, edgePositions } from '../geometry/icosahedron';
+import { VERTICES4, EDGES4, qmul, qconj, qexp } from '../geometry/cell600';
 import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, VOID } from '$lib/config';
 
 // ── The lattice ──────────────────────────────────────────────────────────────
@@ -40,63 +41,50 @@ import { ICOSA, ICOSA_SPHERE_R, ICOSA_INK, VOID } from '$lib/config';
 const TILT = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.tilt));
 
 // ── The cage ─────────────────────────────────────────────────────────────────
-// A 24-cell — the regular 4-polytope whose 24 vertices are every permutation of
-// (±1, ±1, 0, 0) — projected from four dimensions into three and hung around
-// the scene. 96 edges and 24 nodes, two draw calls.
+// A 600-CELL, projected from four dimensions into three and hung around the
+// scene. It was a 24-cell, and the 24-cell was the wrong polytope: it is a
+// handsome object with nothing to do with an icosahedron, so what it gave the
+// scene was a lattice that happened to be there rather than one the solid
+// belongs to.
 //
-// It is here because the search needs somewhere to happen. An icosahedron
-// turning on a black ground is turning in NOTHING; the same icosahedron inside a
-// lattice that is itself turning, in the same coordinates, is turning in a
-// space.
+// The 600-cell is the one. Its VERTEX FIGURE IS AN ICOSAHEDRON — the twelve
+// vertices joined to any one of its 120 are an icosahedron — and its 120
+// vertices ARE the binary icosahedral group, the unit quaternions that
+// double-cover the icosahedron's own rotations. The solid in the middle of the
+// frame and the lattice around it are the same group written twice. See
+// geometry/cell600.js.
 //
-// Three things make it read as one figure rather than as a haze, and all three
-// are V2's:
+// Three things make it read as one figure rather than as a haze:
 //
-//   IT TURNS WITH THE SOLID. Not beside it — the same quaternion, so the whole
-//   frame swings as one object.
+//   IT TURNS WITH THE SOLID, and now exactly. A 4D rotation is p -> L p R̄ for
+//   two unit quaternions; the case L = R = q is precisely a 3D rotation of the
+//   imaginary part, and leaves w — and therefore the perspective divide —
+//   untouched. So the group's quaternion IS the coupled half of the polytope's
+//   own 4D motion, not a 3D object being turned alongside it. On top of that
+//   sit two INDEPENDENT twists s and r, and because they multiply a group by
+//   its own members, every time they reach a multiple of 36° and 60° the map
+//   merely permutes the 120 vertices and the whole figure snaps back into exact
+//   register with the solid. It drifts out of alignment and comes home, on a
+//   nine-second cycle, without anything being keyframed.
 //
-//   IT IS LOCKED TO THE SCREEN. setScreen() is handed the live frustum height
-//   every frame and scales the whole thing to it, so the lattice is the same
-//   size on screen at every zoom. A fixed world size would balloon during the
-//   fall into the room.
+//   IT IS KILLED BY w, NOT BY RADIUS. A 4-polytope projected into 3-space puts
+//   its far half INSIDE its near half — both poles land on the origin, dragging
+//   two dozen edges into a bright knot directly behind the solid. That is the
+//   mess. A radial fade cannot touch it, because nearly every edge lives in the
+//   same band of 3D radius; a ramp on w removes it and leaves, brightest of
+//   everything and at every instant of the twist, the shell at w = φ/2 — which
+//   is the vertex figure, which is an icosahedron. See W_RAMP in materials.js.
 //
-//   IT IS BEHIND EVERYTHING. Its own scene, drawn first, depth cleared after —
-//   see render() below. Left in the main scene it would either be occluded to
-//   ribbons by the room artwork or laid over the top of it.
+//   IT IS LOCKED TO THE SCREEN. setScreen() takes the live frustum height every
+//   frame and scales the figure to it, so the lattice is the same size on
+//   screen at every zoom.
 //
-// The 4D rotation is the only clock in this file. It has to be: a projection
-// from 4D is not a rotation of anything in 3D, so it cannot be a function of a
-// scene's progress without the scene owning a fourth angle. It is atmosphere,
-// it never resets, and nothing depends on where it is.
+// AND IT IS BEHIND EVERYTHING. Its own scene, drawn first, depth cleared after
+// — see render(). Left in the main scene it would either be occluded to ribbons
+// by the room artwork or laid over the top of it.
 function createCage() {
-	const verts = [];
-	for (const [a, b] of [
-		[0, 1],
-		[0, 2],
-		[0, 3],
-		[1, 2],
-		[1, 3],
-		[2, 3]
-	]) {
-		for (const sa of [-1, 1]) {
-			for (const sb of [-1, 1]) {
-				const v = [0, 0, 0, 0];
-				v[a] = sa;
-				v[b] = sb;
-				verts.push(v);
-			}
-		}
-	}
-	// Two vertices are joined exactly when they are the minimum distance apart,
-	// which for this vertex set is squared-distance 2. 96 edges.
-	const pairs = [];
-	for (let i = 0; i < verts.length; i++) {
-		for (let j = i + 1; j < verts.length; j++) {
-			let d = 0;
-			for (let k = 0; k < 4; k++) d += (verts[i][k] - verts[j][k]) ** 2;
-			if (Math.abs(d - 2) < 1e-6) pairs.push([i, j]);
-		}
-	}
+	const verts = VERTICES4;
+	const pairs = EDGES4;
 
 	const scene = new THREE.Scene();
 	const spin = new THREE.Group();
@@ -105,8 +93,12 @@ function createCage() {
 	const edgeGeo = new THREE.BufferGeometry();
 	const edgePos = new Float32Array(pairs.length * 6);
 	edgeGeo.setAttribute('position', new THREE.BufferAttribute(edgePos, 3));
+	// The fourth coordinate of each ENDPOINT, so a line fades along its length
+	// rather than popping when its midpoint crosses a threshold.
+	const edgeW = new Float32Array(pairs.length * 2);
+	edgeGeo.setAttribute('aW', new THREE.BufferAttribute(edgeW, 1));
 	const edgeSpread = segmentAttributes(edgeGeo, pairs.length, () => 0);
-	const edgeMat = lineMaterial(ICOSA_INK.grid, 0);
+	const edgeMat = lineMaterial(ICOSA_INK.grid, 0, { wRamp: true });
 	// Flat: this is a backdrop, and depth-shading it fights the solid in front,
 	// which is the one thing in the frame that is supposed to have depth.
 	edgeMat.uniforms.uBack.value = 1;
@@ -118,49 +110,69 @@ function createCage() {
 	const nodeGeo = new THREE.BufferGeometry();
 	const nodePos = new Float32Array(verts.length * 3);
 	nodeGeo.setAttribute('position', new THREE.BufferAttribute(nodePos, 3));
-	const nodeMat = dotMaterial(ICOSA_INK.grid, ICOSA.cageNode);
+	const nodeW = new Float32Array(verts.length);
+	nodeGeo.setAttribute('aW', new THREE.BufferAttribute(nodeW, 1));
+	const nodeMat = dotMaterial(ICOSA_INK.grid, ICOSA.cageNode, { wRamp: true });
 	const nodes = new THREE.Points(nodeGeo, nodeMat);
 	nodes.frustumCulled = false;
 	spin.add(nodes);
 
-	const angle = [0.2, 0.6, 0.4];
-	const projected = verts.map(() => new THREE.Vector3());
+	// ── The twist ────────────────────────────────────────────────────────────
+	// One clock, and unlike the old three Euler-ish plane angles it is a clock
+	// that RESETS — see reset() below — so a ?at= contact sheet draws the same
+	// cage twice. The two axes are a five-fold and a three-fold of the solid,
+	// whose quanta are 36° and 60°; running one full quantum of each per cycle
+	// is what makes the register land exactly at the top of every cycle.
+	const U5 = new THREE.Vector3(...VERTICES[0]).normalize();
+	const U3 = new THREE.Vector3(1, 1, 1).normalize();
+	let clock = 0;
 
-	// The w-divide magnifies a vertex by at most W/(W - sqrt2), and a 24-cell
-	// vertex is sqrt2 from the origin, so this is the largest the projection can
-	// ever get. Dividing it out means the cage is a fixed fraction of the frame
-	// rather than something that breathes out past the edges on its own.
-	const W = 3.2;
-	const REACH = Math.SQRT2 * (W / (W - Math.SQRT2));
+	const W = ICOSA.cageW;
+	// The EXACT bound, which the old one was not: a vertex cannot be at full
+	// imaginary radius and at full w at once. Maximising sqrt(R²-w²)·W/(W-w)
+	// over the sphere gives w = R²/W and this value. With R = 1 it is
+	// W/sqrt(W²-1). The old expression over-estimated by 1.61x, which is the
+	// whole reason the cage came out smaller than cageFill asked for.
+	const REACH = W / Math.sqrt(W * W - 1);
 	let scale = 1;
 
-	function rot4(p, a, b, ang) {
-		const c = Math.cos(ang);
-		const s = Math.sin(ang);
-		const q = p.slice();
-		q[a] = p[a] * c - p[b] * s;
-		q[b] = p[a] * s + p[b] * c;
-		return q;
-	}
+	const s4 = [0, 0, 0, 1];
+	const r4 = [0, 0, 0, 1];
+	const tmp = [0, 0, 0, 0];
+	const rot = [0, 0, 0, 0];
+	const rc = [0, 0, 0, 0];
+	const projected = verts.map(() => new THREE.Vector3());
+	const wOf = new Float32Array(verts.length);
 
 	function project() {
+		const tau = clock / ICOSA.cageCycle;
+		qexp(U5, ICOSA.cageTwistA * Math.PI * 0.2 * tau, s4);
+		qexp(U3, ICOSA.cageTwistB * Math.PI * (1 / 3) * tau, r4);
+		qconj(r4, rc);
 		for (let i = 0; i < verts.length; i++) {
-			let p = rot4(verts[i], 0, 3, angle[0]);
-			p = rot4(p, 1, 3, angle[1]);
-			p = rot4(p, 2, 3, angle[2]);
-			// Perspective divide along w, which is what makes a 4D rotation read
-			// as the lattice breathing rather than merely spinning.
-			const k = W / (W - p[3]);
-			projected[i].set(p[0] * k, p[1] * k, p[2] * k).multiplyScalar(scale);
-			nodePos.set([projected[i].x, projected[i].y, projected[i].z], i * 3);
+			// p' = s · p · r̄ — the 4D half. The 3D half is the group's own
+			// quaternion, copied onto `spin` every frame by render().
+			qmul(s4, verts[i], tmp);
+			qmul(tmp, rc, rot);
+			const k = W / (W - rot[3]);
+			projected[i].set(rot[0] * k, rot[1] * k, rot[2] * k).multiplyScalar(scale);
+			nodePos[i * 3] = projected[i].x;
+			nodePos[i * 3 + 1] = projected[i].y;
+			nodePos[i * 3 + 2] = projected[i].z;
+			wOf[i] = rot[3];
+			nodeW[i] = rot[3];
 		}
 		for (let e = 0; e < pairs.length; e++) {
 			const a = projected[pairs[e][0]];
 			const b = projected[pairs[e][1]];
 			edgePos.set([a.x, a.y, a.z, b.x, b.y, b.z], e * 6);
+			edgeW[e * 2] = wOf[pairs[e][0]];
+			edgeW[e * 2 + 1] = wOf[pairs[e][1]];
 		}
 		edgeGeo.attributes.position.needsUpdate = true;
+		edgeGeo.attributes.aW.needsUpdate = true;
 		nodeGeo.attributes.position.needsUpdate = true;
+		nodeGeo.attributes.aW.needsUpdate = true;
 	}
 
 	project();
@@ -170,13 +182,14 @@ function createCage() {
 		spin,
 		visible: () => edgeMat.uniforms.uOpacity.value > 0.004,
 		advance(dt) {
-			angle[0] += dt * ICOSA.cageSpin[0];
-			angle[1] += dt * ICOSA.cageSpin[1];
-			angle[2] += dt * ICOSA.cageSpin[2];
+			clock = (clock + dt) % ICOSA.cageCycle;
 			project();
 		},
 		// Lock it to the frame: the widest the figure ever gets is ICOSA.cageFill
-		// of the frustum height, whatever the camera is doing.
+		// of the frustum height, whatever the camera is doing. (And it really is
+		// the widest — over a full twist the actual maximum stays within 0.4% of
+		// REACH, so the figure does not breathe in overall size, only inside
+		// itself, which is the difference between a lattice and noise.)
 		setScreen(frustumHeight) {
 			const want = (frustumHeight * ICOSA.cageFill) / 2 / REACH;
 			if (Math.abs(want - scale) < 1e-4) return;
@@ -188,6 +201,10 @@ function createCage() {
 			nodeMat.uniforms.uOpacity.value = o * ICOSA.cageNodeGain;
 			lines.visible = o > 0.004;
 			nodes.visible = o > 0.004;
+		},
+		reset() {
+			clock = 0;
+			project();
 		},
 		dispose() {
 			edgeGeo.dispose();
@@ -492,12 +509,33 @@ export function createLattice() {
 			this.applyFrustum(frustum);
 		},
 
+		// ── Move the focus plane WITHOUT moving the camera ───────────────────
+		// applyFrustum parks the camera at `focus + d`, so setFocus() on its own
+		// slides the camera by exactly the change in focus — and everything that
+		// is not on the new plane changes size in a single tick. At the top of the
+		// fall that is a 5% pop on the solid and on five of the six rooms, while
+		// the sixth (the one being focused, and the one you are looking at) holds
+		// still: a jump you can see and cannot name.
+		//
+		// This re-expresses a framing measured at the ORIGIN as the same framing
+		// measured at plane z. Same camera position, same lens, same picture —
+		// only the number changes, because the number is a height AT a plane and
+		// the plane moved. It returns that number, which is what a fall should
+		// lerp FROM rather than from the origin-measured one.
+		refocus(fr, z) {
+			const height = fr - 2 * z * Math.tan((fov * Math.PI) / 360);
+			focus = z;
+			this.applyFrustum(height);
+			return height;
+		},
+
 		getFrustum() {
 			return frustum;
 		},
 
 		reset() {
 			paneGroup.visible = false;
+			cage.reset();
 			frame.quaternion.copy(TILT);
 			fov = ICOSA.fov;
 			focus = 0;

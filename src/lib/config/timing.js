@@ -1,3 +1,5 @@
+import { clamp01, easeInOutCubic } from './ease';
+
 // ── Timing ───────────────────────────────────────────────────────────────────
 // Every animation in the experience is defined HERE, and nowhere else.
 //
@@ -118,26 +120,43 @@ export const SCENES = scale({
 		// before the machine cleared. There is no machine and no cut: the flight
 		// is already running under the title card, so the air can develop around
 		// the swimmer instead of being there waiting for it.
-		motesIn: [0.03, 0.42],
+		// FULLY UP BEFORE THE SWIMMER IS. The order of the opening is: the card
+		// lifts, the field develops, and then something comes through the lens —
+		// three beats, and the third one is the event. Ending this at 0.42 put
+		// the field still arriving underneath the pass, so two things were
+		// happening at once and neither was the subject.
+		motesIn: [0.03, 0.26],
 
-		motesOut: [0.8, 0.94],
+		// LATER THAN THE DIVE. These used to start on the same frame the swimmer
+		// broke formation, so the picture drained while the thing you had watched
+		// for ten seconds was going in — the last beat of the scene played out
+		// against a screen that was already switching itself off.
+		motesOut: [0.86, 0.99],
 
 		// ── THE PASS ─────────────────────────────────────────────────────────
-		// The swimmer comes past FROM BEHIND — sixteen units back, straight up the
-		// axis, entering low in the frame and rising as it pulls ahead. The shot at
-		// the top of Star Wars.
+		// The swimmer comes past FROM BEHIND, straight up the axis, dead centre,
+		// and the whole point of the shot is the moment it goes THROUGH the lens.
 		//
-		// IT ARRIVES WHERE THE MACHINE ENDS. The window opens at zero, but the
-		// swimmer is behind the lens for the first tenth of it and the calculator
-		// is over the whole frame anyway — so what you SEE is: the machine warps
-		// away, and the swimmer is there, coming up from under you. Then nearly
-		// five seconds of it pulling slowly ahead, on easeOutQuint: it covers the
-		// sixteen units behind the lens in the first quarter of the window and
-		// spends the other three quarters crawling the last few. That is what
-		// overtaking and then matching speed looks like, and it is the first thing
-		// the run shows you, so there is nothing to hurry it toward. The ovum does
-		// not begin to surface until it is most of the way done.
-		spermIn: [0.0, 0.5],
+		// That moment was lasting about four tenths of a second. The travel ran on
+		// easeOutQuint from sixteen units back, which spends five of its slope at
+		// the very start: it covered the sixteen invisible units in the first
+		// quarter of the window, crossed the lens plane at six units a second, and
+		// spent the remaining three quarters crawling the last stretch. So the one
+		// beat worth watching was the one beat that was over instantly, and what
+		// you actually saw was a thing appearing already in front of you.
+		//
+		// It is now a GLIDE — constant speed, then a soft stop into station — over
+		// a window that starts once the flow lines are up, from three units back
+		// instead of sixteen. Constant speed is what a body swimming steadily past
+		// you looks like, and there is nothing clever in the middle of it to be
+		// clever at the wrong moment.
+		//
+		// The arithmetic, because it is the whole item: 8.5 units of travel over
+		// 0.52 of an 11-second scene is 1.49 units a second, the lens plane falls
+		// at 0.35 of the travel and therefore inside the constant stretch, and it
+		// takes two full seconds to go from crossing the lens to three units clear
+		// of it. Then it holds station from 0.66 until the dive at 0.78.
+		spermIn: [0.14, 0.66],
 
 		// ── WHERE THE FLIGHT STOPS TO ASK ────────────────────────────────────
 		// Two progress marks, not windows: the scene HOLDS at each until the popup
@@ -150,7 +169,11 @@ export const SCENES = scale({
 		//             you a form before it had shown you anything.
 		//   askSpicy  close on the ovum, just short of the dive, so the second
 		//             question is asked at the thing it is about.
-		askDob: 0.46,
+		// Moved back twice. The halo opens over [0.34, 0.68] and the cage resolves
+		// out of the fog behind it, so at 0.46 the ovum was a warmth with the
+		// beginnings of a shape in it and the question arrived on top of the
+		// reveal. It is asked once the thing is unmistakably there.
+		askDob: 0.57,
 		askSpicy: 0.76,
 
 		// It breaks formation and goes in. Its own curve, and a hard one: this is
@@ -174,7 +197,7 @@ export const SCENES = scale({
 		// EARLIER than the shell, which is the whole trick of the arrival: there
 		// is a warmth in the black before there is anything in the warmth.
 		haloIn: [0.34, 0.68],
-		haloOut: [0.8, 0.95],
+		haloOut: [0.87, 0.995],
 		haloPeak: 1.0,
 		// An ENABLE, not a fade: what actually brings the cage up is the fog
 		// thinning as the camera closes on it. See FlyIn.svelte.
@@ -191,7 +214,12 @@ export const SCENES = scale({
 		// (FlyIn.svelte derives the core's size from the void's framing every
 		// frame, so this holds on any screen. See TUNNEL.coreRatio.)
 		shellOut: [0.8, 0.955],
-		settle: [0.78, 0.96],
+		// AND THE AIR IS THE LAST THING TO GO, not the first. There is no cut here
+		// to cover any more — the fly-in ends on the frame the conception opens
+		// on — so nothing needs to be blacked out, and the only thing that has to
+		// change at all is the GROUND: the air walks down to the void, late, while
+		// everything on top of it is still there to watch.
+		settle: [0.84, 0.99],
 		// The rim answers the entry. A nudge, not a flash — the wave that breaks
 		// across the surface at the top of the next scene is the payoff, and this
 		// must not spend it.
@@ -300,20 +328,11 @@ export const SCENES = scale({
 	computation: {
 		duration: 11.5,
 
-		// The camera pulls BACK as the panes come out, and it GOES FIRST. The
-		// conception was close on the solid; six rooms will not fit in that frame,
-		// so the opening move of this scene is to make room for them — and that
-		// pull-back is most of why the panes read as coming out rather than merely
-		// appearing.
-		//
-		// It used to start on the same frame as the panes, and the camera looked
-		// as though it were chasing them: the arms were already on their way out
-		// before the frame had begun to give them anywhere to go. It now has a
-		// twentieth of the scene to itself — a quarter of a second, which is
-		// nothing to watch and everything to feel — and the ease is the same
-		// symmetric one, so the fastest part of the retreat is still under the
-		// fastest part of the projection.
-		pullBack: [0.0, 0.28],
+		// THE PULL-BACK IS NOT A WINDOW OF THIS SCENE. The conception is close on
+		// the solid and six rooms will not fit in that frame, so the opening move
+		// here is to make room for them — and it now starts before "here" does.
+		// One curve, shared with the tail of the conception, owned in seconds by
+		// PULL at the foot of this file. Nothing to set on this side.
 
 		// The panes come out of the frame, as DRAFTING first: the golden rectangle,
 		// its dimension lines, its ratio bar, its spiral. The rooms only fade in
@@ -346,7 +365,7 @@ export const SCENES = scale({
 		// stops being the room and starts competing with them. Two lattices of
 		// gold line-work at the same weight, one of them 4D and one of them the
 		// answer, is a tangle rather than a scene.
-		cagePeak: 0.2,
+		cagePeak: 0.3,
 
 		// ── THE SURVEY ───────────────────────────────────────────────────────
 		// The whole assembly, fully out, BEFORE the machine starts choosing. This
@@ -425,3 +444,38 @@ export const FLASH_FALL = 0.34;
 
 // Canvas fade at first paint, and again when the run resets.
 export const CANVAS_FADE = 1.2;
+
+// ── ONE PULL, ACROSS TWO SCENES ──────────────────────────────────────────────
+// The retreat from the solid does not belong to the computation. It belongs to
+// the CUT: it has to be under way before the panes come out, and the panes come
+// out at the top of the next scene, so the move has to START IN THIS ONE.
+//
+// Splitting a lerp across a scene boundary is where that normally goes wrong.
+// Two eases, one per scene, each starting and ending at rest, put a full stop
+// exactly on the frame the two scenes meet — the camera backs off, stops dead,
+// and starts again, which is more visible than not pulling back at all.
+//
+// So there is ONE curve on ONE clock, and the clock is in SECONDS rather than
+// in either scene's progress, because the two scenes are different lengths.
+// Each side asks it where it is:
+//
+//   conception   pullAmount(t - (duration - PULL.before))
+//   computation  pullAmount(PULL.before + t)
+//
+// Value AND velocity are continuous across the cut by construction, and
+// conception p=1 and computation p=0 evaluate the identical expression, so the
+// hand-over stays the single frame the pixel diff in CLAUDE.md checks for.
+export const PULL = {
+	// Seconds of the conception's TAIL spent pulling back. It starts after the
+	// union has peaked, so the flare is the last thing that happens close in and
+	// the retreat is what answers it.
+	before: 0.62,
+	// And seconds of the computation's HEAD. The panes start 0.05 of that scene
+	// in — see computation.open — so the frame has both this and that head start
+	// open before the first arm moves.
+	after: 3.22
+};
+
+export function pullAmount(seconds) {
+	return easeInOutCubic(clamp01(seconds / (PULL.before + PULL.after)));
+}

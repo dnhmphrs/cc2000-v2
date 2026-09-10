@@ -2,12 +2,16 @@
 	import * as THREE from 'three';
 	import {
 		SCENES,
+		PULL,
+		pullAmount,
 		span,
+		lerp,
 		clamp01,
 		smoothstep,
 		smootherstep,
 		ICOSA,
 		conceptionFrustum,
+		restFrustum,
 		VOID
 	} from '$lib/config';
 	import { fieldRotation, fieldFade } from '$lib/store/store';
@@ -83,10 +87,31 @@
 
 	let t = 0;
 
+	// ── THE RETREAT STARTS HERE ──────────────────────────────────────────────
+	// The camera's pull away from the solid belongs to the computation, and by
+	// the time the computation owns the frame it is already late: the panes come
+	// out at the top of that scene and a camera that only starts backing off
+	// then is chasing them. So the last six hundred milliseconds of THIS scene
+	// are the beginning of that move — the union flares, and the frame answers
+	// by opening.
+	//
+	// It is one curve on one clock in seconds, shared with the computation, so
+	// there is no second ease to match up and nothing stops on the cut. See PULL
+	// in config/timing.js.
+	function framing() {
+		const w = window.innerWidth;
+		const h = window.innerHeight;
+		return lerp(
+			conceptionFrustum(w, h),
+			restFrustum(w, h),
+			pullAmount(t - (T.duration - PULL.before))
+		);
+	}
+
 	export function enter() {
 		t = 0;
 		world.reset();
-		world.applyFrustum(conceptionFrustum(window.innerWidth, window.innerHeight));
+		world.applyFrustum(framing());
 		world.setLineOpacity(1);
 		update(0);
 	}
@@ -150,6 +175,11 @@
 		// the whole figure is inscribed in; the union only burns it.
 		world.egg.setShell(ICOSA.shellSolid * (1 + union * 1.6));
 
+		// And the frame opens, for the last stretch of the scene only — the same
+		// curve the computation goes on with. Applied every frame rather than in
+		// enter(), because for these last six hundred milliseconds it moves.
+		world.applyFrustum(framing());
+
 		// The ground turns with the figure, exactly as it does in the computation
 		// — three/shaders/grid.js rules the void in these same coordinates.
 		ROT4.makeRotationFromQuaternion(world.frame.quaternion);
@@ -168,7 +198,7 @@
 	}
 
 	export function resize() {
-		world.applyFrustum(conceptionFrustum(window.innerWidth, window.innerHeight));
+		world.applyFrustum(framing());
 	}
 
 	// Jump to a fraction of the scene's own duration, exactly. Everything here is

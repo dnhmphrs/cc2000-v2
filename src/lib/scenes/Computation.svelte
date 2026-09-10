@@ -14,6 +14,8 @@
 	} from '$lib/store/store';
 	import {
 		SCENES,
+		PULL,
+		pullAmount,
 		RETURN_FILL,
 		span,
 		lerp,
@@ -136,6 +138,8 @@
 	// the branch is stepped straight over.
 	let searchLatched = false;
 	let zoomLatched = false;
+	// The frustum the fall starts from — see refocus() at the latch below.
+	let zoomFrom = 0;
 
 	// Which decade the search is looking at, so anything tinted by era can
 	// follow it. Only republished when it changes.
@@ -262,11 +266,14 @@
 		searchLatched = false;
 		zoomLatched = false;
 		facing = null;
-		// Picks up exactly where the conception left off — close on the solid —
-		// and pulls back from there.
-		frustum = conceptionFrustum(window.innerWidth, window.innerHeight);
-		from = frustum;
+		// Picks up exactly where the conception left off and carries on pulling
+		// back. NOT at conceptionFrustum: the conception spends its last six
+		// hundred milliseconds already opening the frame, so the state to open on
+		// is that curve at PULL.before, not its start. Entering on the unpulled
+		// value would draw one frame of the camera snapping back in.
+		from = conceptionFrustum(window.innerWidth, window.innerHeight);
 		rest = restFrustum(window.innerWidth, window.innerHeight);
+		frustum = lerp(from, rest, pullAmount(PULL.before));
 		world.applyFrustum(frustum);
 		world.setPanesVisible(true);
 		world.setLineOpacity(1);
@@ -330,7 +337,13 @@
 		const zoom = span(p, T.zoom);
 		// The raster goes out with the fall — see components/Glass.svelte.
 		landing.set(easeInOutCubic(zoom));
-		const pulled = lerp(from, rest, easeInOutCubic(span(p, T.pullBack)));
+		// ONE CURVE, TWO SCENES. The retreat began in the conception's last
+		// six hundred milliseconds and this is the rest of it, asked for by the
+		// same function on the same clock — see PULL in config/timing.js. At
+		// t = 0 this evaluates to exactly what the conception evaluated at its
+		// final frame, which is what keeps the hand-over one frame rather than
+		// a camera that stops dead on the cut and starts again.
+		const pulled = lerp(from, rest, pullAmount(PULL.before + t));
 
 		// ── The panes come out ───────────────────────────────────────────────
 		// Working first, artwork second, working away third.
@@ -451,14 +464,23 @@
 			if (!zoomLatched) {
 				zoomLatched = true;
 				landFrustum = landingFrustum();
-				// The answer's pane is six units off the origin, and at the landing
-				// pose it is square to the camera — so that offset is pure depth.
-				// Frame the fall AT that plane or it lands at the wrong size.
-				world.setFocus(landingDepth());
+				// The answer's pane is several units off the origin, and at the
+				// landing pose it is square to the camera — so that offset is pure
+				// depth. Frame the fall AT that plane or it lands at the wrong size.
+				//
+				// REFOCUS, NOT SETFOCUS. Moving the focus plane moves the camera by
+				// the same amount (applyFrustum parks it at focus + d), so setting
+				// it here stepped the camera three and a half units back between one
+				// frame and the next: the target room held still, being what was
+				// newly focused, and the solid and the other five rooms all shrank
+				// about five percent at once. refocus() re-expresses the SAME
+				// framing against the new plane and hands back the number to fall
+				// from, so this frame is identical to the one before it.
+				zoomFrom = world.refocus(rest, landingDepth());
 			}
 			// ONE symmetric ease, on the whole scene, and nothing in it staggered.
 			const z = easeInOutCubic(zoom);
-			frustum = lerp(rest, landFrustum, z);
+			frustum = lerp(zoomFrom, landFrustum, z);
 			world.applyFrustum(frustum);
 
 			// Everything that is not the answer gets out of the way.
