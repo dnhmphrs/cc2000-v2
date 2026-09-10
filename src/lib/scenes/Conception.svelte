@@ -10,11 +10,13 @@
 		smoothstep,
 		smootherstep,
 		ICOSA,
+		TUNNEL,
 		conceptionFrustum,
 		restFrustum,
 		VOID
 	} from '$lib/config';
-	import { fieldRotation, fieldFade } from '$lib/store/store';
+	import { CIRCUMRADIUS } from '$lib/three/geometry/icosahedron';
+	import { fieldRotation, fieldRays, fieldFade } from '$lib/store/store';
 
 	// ── Scene 3: conception ──────────────────────────────────────────────────
 	// It opens on the fly-in's last frame, unchanged. Same dark sphere, same gold
@@ -87,6 +89,34 @@
 
 	let t = 0;
 
+	const half = (deg) => Math.tan((deg * Math.PI) / 360);
+
+	// ── Holding a SPHERE, not a plane, while the lens moves ──────────────────
+	// applyFrustum() frames a HEIGHT AT A PLANE, and a height at a plane is not
+	// what this scene is looking at. A sphere's outline on a lens is its tangent
+	// cone, which touches behind the equator and draws R/√(1−(R/d)²) rather than
+	// R — the same fact FlyIn.coreRatio() is written around, and for the same
+	// moment. At twelve degrees it is a third of a percent and nobody has ever
+	// had to care. At forty it is three, and three percent is the ovum changing
+	// size at the cut: measured, holding the height alone through the lens walk
+	// put the seam at 3.96/255, worse than the mismatch it was there to fix.
+	//
+	// So the height the scene asks for is re-expressed for the lens it is
+	// actually on — keep the DRAWN CIRCLE where it is and solve back for the
+	// height that does it. With h the half-height, d = h/t and t = tan(fov/2):
+	//
+	//     R / √(1 − (R·t/h)²) / h  held  ⟹  h² = h₀² + R²(t² − t₀²)
+	//
+	// Exactly the identity at t = t₀, for any framing — so once the lens has
+	// settled this is the number that came in, to the last bit, and the pull-back
+	// at the end of the scene is untouched.
+	function held(fr, deg) {
+		const h0 = fr / 2;
+		const t = half(deg);
+		const t0 = half(ICOSA.fov);
+		return 2 * Math.sqrt(h0 * h0 + CIRCUMRADIUS * CIRCUMRADIUS * (t * t - t0 * t0));
+	}
+
 	// ── THE RETREAT STARTS HERE ──────────────────────────────────────────────
 	// The camera's pull away from the solid belongs to the computation, and by
 	// the time the computation owns the frame it is already late: the panes come
@@ -130,26 +160,55 @@
 		const furrow =
 			smootherstep(span(p, T.furrow)) + Math.sin(span(p, T.pinch) * Math.PI) * T.pinchPeak;
 		const lobe = smootherstep(span(p, T.lobe));
+		// The FIELD's brightness, and only the field's. It is the one thing on
+		// this body the fly-in does not hand over — the flight ends with uGlow
+		// at zero — so it is the one thing allowed to ramp up from nothing.
 		const lit = smoothstep(0, 1, span(p, T.wake));
 		// The mode rings as it is excited and damps as it settles, which is what
 		// an excited normal mode does.
 		const ring = (1 - smootherstep(span(p, T.ring))) * T.ringPeak;
 		const union = Math.sin(span(p, T.union) * Math.PI) * T.unionPeak;
+		// The front, out from the point of impact. See SCENES.conception.front.
+		const front = lerp(T.frontFrom, T.frontTo, smootherstep(span(p, T.front)));
 		world.egg.setWave({
 			furrow,
 			lobe,
+			// The chaos the fly-in hands over, at full weight. What takes it away
+			// is not this number, it is the front passing over it.
+			grain: 1,
+			front,
+			// ── ONE CLOCK FOR THE MOTTLE ─────────────────────────────────────
+			// uPhase drives the grain, and the grain is now VISIBLE at the cut
+			// — it used to be faded to nothing by the end of the fly-in, which
+			// is why this never mattered before. A scene that restarts its
+			// phase at zero draws a different mottle from the one the fly-in
+			// handed over, and the hand-over stops being a single frame.
+			//
+			// So the phase carries on from where the flight left it. The fly-in
+			// runs its own t to exactly its duration, so this is continuous by
+			// construction rather than by a number kept in step by hand.
+			phase: SCENES.flyIn.duration + t,
 			// Every other mode — RISING first, then damped out as the icosahedral
 			// one wins. A decay alone makes the loudest frame of the scene its
 			// first, which is a bang where the shimmer should be.
 			chop: smootherstep(span(p, T.chopIn)) * (1 - smootherstep(span(p, T.chopOut))) * T.chopPeak,
 			glow: lit * T.handoverGlow * (1 + union * 0.6),
-			ring,
-			phase: t
+			ring
 		});
 		// FULL WEIGHT, and it stays there. What it stops doing is OCCLUDING, the
 		// moment the frame starts — which is before a single line has any weight,
 		// so nothing is hidden and then revealed.
-		world.egg.setCore(lit * T.handoverCore, p < T.frame[0]);
+		//
+		// AND IT IS FULL WEIGHT ON THE FIRST FRAME. This used to be scaled by
+		// `lit`, which ramped it up over T.wake, and that was right while the
+		// fly-in faded its own core out over its last beat: both sides of the cut
+		// were near nothing, so the ramp had nothing to step against. The flight
+		// hands over a lit body now — the chaos runs straight through the cut —
+		// so a ramp from zero here is a hole in the frame the fly-in just drew.
+		// Measured: the disc sat at background (11.8 against 10.6) on the
+		// conception's first frame while the fly-in's last read 23.6, peaking at
+		// 132, and the seam was 2.10/255 against a floor near 1.
+		world.egg.setCore(T.handoverCore, p < T.frame[0]);
 
 		// The blueprint field rules itself on under the wave. It is at zero on the
 		// frame this scene opens on, which is what lets the fly-in's `deep` and
@@ -175,15 +234,34 @@
 		// the whole figure is inscribed in; the union only burns it.
 		world.egg.setShell(ICOSA.shellSolid * (1 + union * 1.6));
 
+		// ── The lens walks in off the flight ─────────────────────────────────
+		// See SCENES.conception.lens. Eased in TAN(fov/2) rather than in degrees
+		// because that is what the picture is actually a function of: the
+		// camera's range is fr/2/tan(fov/2), so an even walk in the tangent is
+		// an even walk in 1/range, and the visible cap opens at a steady rate
+		// instead of racing at the wide end.
+		//
+		// setFov() is a no-op once the two agree, so this stops costing anything
+		// the moment the window closes — and it leaves the lens at exactly
+		// ICOSA.fov, which is what the computation goes on with.
+		const lensT = smootherstep(span(p, T.lens));
+		const lens = (360 / Math.PI) * Math.atan(lerp(half(TUNNEL.fovEnd), half(ICOSA.fov), lensT));
+		world.setFov(lens);
+
 		// And the frame opens, for the last stretch of the scene only — the same
 		// curve the computation goes on with. Applied every frame rather than in
 		// enter(), because for these last six hundred milliseconds it moves.
-		world.applyFrustum(framing());
+		world.applyFrustum(held(framing(), lens));
 
 		// The ground turns with the figure, exactly as it does in the computation
 		// — three/shaders/grid.js rules the void in these same coordinates.
 		ROT4.makeRotationFromQuaternion(world.frame.quaternion);
 		fieldRotation.set(ROT3.setFromMatrix4(ROT4).elements);
+		// The axes belong to the COMPUTATION — see three/shaders/grid.js. Held at
+		// nothing here so the cut into that scene is the bare invariant, and so
+		// a ?at= seek into this one cannot inherit a ray-set from a previous run.
+		fieldRays[0] = 0;
+		fieldRays[1] = 0;
 
 		return t >= T.duration;
 	}

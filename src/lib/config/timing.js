@@ -244,7 +244,23 @@ export const SCENES = scale({
 		// The rim answers the entry. A nudge, not a flash — the wave that breaks
 		// across the surface at the top of the next scene is the payoff, and this
 		// must not spend it.
-		strike: [0.93, 1.0]
+		strike: [0.93, 1.0],
+
+		// ── AND THE WAVE STARTS HERE, NOT IN THE NEXT SCENE ──────────────────
+		// The front is parked below zero for the whole flight — nothing has
+		// happened, and world/materials.js wild() returns 1 everywhere, so the
+		// body is chaos to its limb. It leaves that park on `strike`, which is
+		// the real moment: the nose reaches the core's front surface at p =
+		// 0.9285 and this window opens at 0.93.
+		//
+		// It used to leave it at the top of the CONCEPTION, which is 0.965
+		// seconds of the swimmer having gone in and nothing answering. The wave
+		// is the answer to the hit, so it starts on the hit.
+		//
+		// It walks to SCENES.conception.frontFrom and stops there — the same
+		// constant the next scene starts from, so the hand-over is exact by
+		// construction rather than by two numbers kept in step by hand.
+		frontParked: -0.9
 	},
 
 	// ── Conception ───────────────────────────────────────────────────────────
@@ -294,6 +310,58 @@ export const SCENES = scale({
 		// takes its time about it. At [0, 0.08] the body went from dark to full
 		// brightness in half a second, which is a switch rather than a shimmer.
 		wake: [0.0, 0.2],
+
+		// ── THE IMPACT ───────────────────────────────────────────────────────
+		// Something went in, at one point, and the surface answers from THERE.
+		//
+		// The chaotic mottle the ovum carries all the way up the tunnel used to
+		// fade out over the last of the fly-in, so this scene opened on a bare
+		// dark sphere and the rings were laid over nothing. It stays now, and
+		// what removes it is the wave: a front travelling out from the point of
+		// impact in the same hyperbolic radius the rings are spaced in, calming
+		// the skin as it passes. Chaos, then a wave through it, then the
+		// invariant in its wake — which is the moment, rather than a diagram of
+		// the moment.
+		//
+		// The two ends are the parked value the fly-in hands over — below zero,
+		// so nothing is calmed — and past the limb, where the hyperbolic radius
+		// tops out at about 3.57 and everything has been reached.
+		front: [0.0, 0.44],
+
+		// ── THE LENS, and it is the other half of the hand-over ──────────────
+		// The flight is shot at TUNNEL.fovEnd — a wide lens, because a wide lens
+		// is what makes three hundred units of travel read as travel. This scene
+		// is shot at ICOSA.fov, which is very nearly orthographic, because a
+		// diagram is not shot on a wide lens.
+		//
+		// Those two lenses put the SAME sphere at the same size on the screen
+		// and still draw two different pictures of it: at 40 degrees the camera
+		// sits 4.1 core-radii out and sees a 76-degree cap, at 12 it sits 13.9
+		// out and sees 86. Nothing showed while the ovum was a bare silhouette —
+		// a circle is a circle down any lens. The mottle carries through the cut
+		// now, and a mottle is a texture ON that cap, so the whole disc redrew
+		// itself in one frame: 2.70/255 across the seam against a floor near 1,
+		// and visible as the substance suddenly getting finer.
+		//
+		// So the scene OPENS ON THE FLIGHT'S LENS and walks to its own — the
+		// dolly zoom world/lattice.js setFov() already exists to do, framing
+		// held. It is invisible: for this whole window the frame holds nothing
+		// but the ovum, whose size does not change, and the backdrop, which is a
+		// full-screen shader and has no camera. All that moves is the ovum's own
+		// foreshortening relaxing, under the front that is calming it anyway.
+		//
+		// Done well before `frame` opens, so the wireframe is never drawn on a
+		// lens that is still moving.
+		lens: [0.0, 0.34],
+
+		// The two ends of the front's travel. `frontFrom` is where the FLIGHT
+		// left it — see SCENES.flyIn.frontParked: the wave starts on the strike,
+		// so this scene opens on a body whose very centre has already begun to
+		// settle and whose limb has not been touched. `frontTo` is past the
+		// limb, where the hyperbolic radius tops out at about 3.57 and
+		// everything has been reached.
+		frontFrom: 0.15,
+		frontTo: 4.6,
 
 		// ── THE SHIMMER ──────────────────────────────────────────────────────
 		// Up, then down. Two windows rather than one decay, because a decay alone
@@ -398,12 +466,20 @@ export const SCENES = scale({
 		// SPACE, so it never comes above a whisper: the moment it is as bright as
 		// the drafting it stops being the room and becomes furniture in it.
 		cageIn: [0.1, 0.28],
-		// A WHISPER, and quieter than it was. It is a SPACE — the room the search
+		// A WHISPER, and quieter again. It is a SPACE — the room the search
 		// happens inside — and the moment it is as bright as the projected arms it
 		// stops being the room and starts competing with them. Two lattices of
 		// gold line-work at the same weight, one of them 4D and one of them the
 		// answer, is a tangle rather than a scene.
-		cagePeak: 0.3,
+		//
+		// And it is not the only lattice any more. The paper behind it now
+		// carries the solid's own six axes (three/shaders/grid.js), which is the
+		// structure this scene was asking the cage to provide and never got: 720
+		// edges of a 4-polytope seen edge-on is a mesh, and a mesh reads as
+		// texture. So the cage goes back to being weather and the axes carry the
+		// space. Together with the tighter w-ramp in world/materials.js this
+		// leaves about a third of the ink it had.
+		cagePeak: 0.18,
 
 		// ── THE SURVEY ───────────────────────────────────────────────────────
 		// The whole assembly, fully out, BEFORE the machine starts choosing. This

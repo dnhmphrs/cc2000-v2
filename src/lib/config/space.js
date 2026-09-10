@@ -158,9 +158,6 @@ export const TUNNEL = {
 	// half-length, 2.03, not the length.
 	spermFrom: { x: 0, y: 0, z: 3.0 },
 
-	// The ovum turns too, slowly, about its own pole. rad/s.
-	eggSpin: 0.16,
-
 	// ── The motes ────────────────────────────────────────────────────────────
 	// The field of debris the camera flies through. Without it the flight is a
 	// zoom: there is nothing between the lens and the ovum for three hundred

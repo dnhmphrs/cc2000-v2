@@ -1,8 +1,7 @@
 <script>
 	import { tick } from 'svelte';
-	import { get } from 'svelte/store';
 	import * as THREE from 'three';
-	import { accentHex, ink } from '$lib/theme';
+	import { ink } from '$lib/theme';
 	import { ICOSA, ICOSA_INK } from '$lib/config';
 	import { lineMaterial, segmentAttributes, grower } from '$lib/three/world/materials';
 	import GoldenRectangleSchematic from './GoldenRectangleSchematic.svelte';
@@ -34,7 +33,6 @@
 
 	// Live accent recolour of the rectangle. The drafting keeps its own quiet ink
 	// whatever the accent does — it is a hierarchy, not one colour used twice.
-	$: if (outlineMaterial) outlineMaterial.uniforms.uInk.value.copy(ink($accentHex));
 
 	// Single group — everything lives here and rotates together
 	export let group;
@@ -265,7 +263,13 @@
 		// icosahedron's own edges: four sides, each drawn from the end nearer
 		// the middle of the figure, all four at once. The rectangle writes
 		// itself inside the solid, and then the solid unfolds.
-		outlineMaterial = lineMaterial(ink(get(accentHex)), 0);
+		// ICOSA_INK.line, the same gold as the icosahedron's own thirty edges —
+		// NOT the decade accent. It was on the accent, which is derived from the
+		// palette and swings orange for some decades; that was survivable while
+		// the outline blended normally and muted itself against the void, and
+		// stopped being survivable the moment it went additive for the draw.
+		// The wireframe is one object and it is one colour.
+		outlineMaterial = lineMaterial(ICOSA_INK.line, 0);
 		// Flat. This is line-work on the void, not a body with a near and far.
 		outlineMaterial.uniforms.uBack.value = 1;
 

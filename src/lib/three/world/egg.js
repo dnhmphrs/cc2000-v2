@@ -277,13 +277,27 @@ export function createEgg(radius, opts = {}) {
 		// settles. Nothing here displaces the surface any more — see the vertex
 		// shader in world/materials.js; the body stays a perfect sphere and the
 		// whole of the conception is drawn on it.
-		setWave({ furrow = 0, lobe = 0, chop = 0, grain = 0, glow = 0, ring = 0, phase = null } = {}) {
+		// `front` is how far the disturbance from the point of impact has
+		// travelled, in the hyperbolic radius the rings are spaced in. Below
+		// zero means it has not happened yet and the whole skin is still
+		// churning — which is the state the fly-in hands over.
+		setWave({
+			furrow = 0,
+			lobe = 0,
+			chop = 0,
+			grain = 0,
+			glow = 0,
+			ring = 0,
+			front = -0.9,
+			phase = null
+		} = {}) {
 			if (!coreMat) return;
 			const u = coreMat.uniforms;
 			u.uFurrow.value = furrow;
 			u.uLobe.value = lobe;
 			u.uChop.value = chop;
 			u.uGrain.value = grain;
+			u.uFront.value = front;
 			u.uGlow.value = glow;
 			u.uRing.value = ring;
 			if (phase !== null) u.uPhase.value = phase;

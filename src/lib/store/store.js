@@ -147,3 +147,13 @@ export const backdrop = writable({ shader: 'flat', color: AIR });
 // loop, so a writable would only mean a notification per frame for a value
 // nothing reacts to. Written in place — never reassign the array.
 export const fieldRotation = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+
+// The solid's axes on the paper behind it — see three/shaders/grid.js.
+//
+//   0  how much of the ray-work is drawn, 0..1
+//   1  how far it reaches out of the solid, 0..1
+//   2  the solid's own rim, in frame heights, so the rays start outside it
+//
+// Same reasoning as fieldRotation: written every frame, read in another loop,
+// reacted to by nothing. Written in place — never reassign the array.
+export const fieldRays = new Float32Array([0, 0, 0.15]);

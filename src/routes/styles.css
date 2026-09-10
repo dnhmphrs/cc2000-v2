@@ -78,6 +78,23 @@
 	--pen: 3px;
 	--drop: 5px;
 
+	/* ── The edge between the DOM and the illustration ───────────────────────
+	   Every HTML surface in this site floats over a 3D scene, and the one that
+	   read best was the one nobody drew: Chrome's own focus ring, on the first
+	   question panel. It landed there and not on the second — same component,
+	   same code path — because :focus-visible is a heuristic about how focus
+	   ARRIVED, and the panel takes focus on open, with no keystroke behind it,
+	   from the second question on.
+	   
+	   So it is drawn on purpose now, and the browser is no longer asked. White
+	   outside and the panel's own dark just inside it, which is exactly what
+	   the ring was: two tones, so it holds its edge over gold, over black and
+	   over a lit ovum without being tuned for any of them.
+	   
+	   NOT a focus indicator, and it does not replace one: every control in the
+	   site keeps its own --yellow :focus-visible ring. This is furniture. */
+	--edge: rgba(var(--ink-rgb), 0.9);
+
 	/* The two halves of the glass, each defined ONCE and used wherever glass is
 	   drawn — the CRT in the calculator and the full-screen sheet — because they
 	   are the same pane, seen from in front of it and then from inside it.
@@ -272,10 +289,17 @@ body {
 	pointer-events: auto;
 }
 
-/* Used only where something busy sits behind the text. */
+/* Used only where something busy sits behind the text — which is the whole of
+   what --edge is for, so the card carries it too. Same edge as the question
+   panels: one line between what is DOM and what is illustration, in every
+   scene that puts one over the other. The readout inside the monitor does NOT
+   get it — that one is not floating over the scene, it is inset into it, and
+   the bezel around it is already the line. */
 .card {
 	background: var(--panel);
 	padding: 28px 28px 26px;
+	outline: 1px solid var(--edge);
+	outline-offset: -1px;
 }
 
 .ask {
