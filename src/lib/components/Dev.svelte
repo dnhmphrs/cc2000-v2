@@ -67,7 +67,7 @@
 				? `${get(dobYear)}-${String(get(dobMonth)).padStart(2, '0')}-${String(get(dobDay)).padStart(
 						2,
 						'0'
-				  )}`
+					)}`
 				: roll();
 		if (!iso) return false;
 

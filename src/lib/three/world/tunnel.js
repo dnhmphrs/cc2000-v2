@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createEgg } from './egg';
 import { holoMaterial, ADD } from './materials';
 import { TUNNEL, AIR, HOLO } from '$lib/config';
