@@ -1,7 +1,8 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
-	import { DEV } from '$lib/config';
+	import { DEV, DEV_SEED } from '$lib/config';
+	import { rand } from '$lib/random';
 	import { ORDER, advance, again, clearResult } from '$lib/scenes/director';
 	import {
 		scene,
@@ -36,12 +37,14 @@
 	// refuse.
 	function roll() {
 		const lo = Date.parse(`${EARLIEST}T00:00:00Z`);
-		const hi = Date.now() - 864e5;
+		// Seeded, the range is pinned too: yesterday moves a day a day, and a
+		// fraction of a moving range is not a repeatable date.
+		const hi = DEV_SEED !== null ? Date.parse('2026-01-01T00:00:00Z') : Date.now() - 864e5;
 
 		for (let i = 0; i < 50; i++) {
-			const d = new Date(lo + Math.random() * (hi - lo));
+			const d = new Date(lo + rand() * (hi - lo));
 			const iso = d.toISOString().slice(0, 10);
-			const level = 1 + Math.floor(Math.random() * 10);
+			const level = 1 + Math.floor(rand() * 10);
 			if (resolve(iso, level).edge) continue;
 
 			// NUMBERS, not strings. The selects bind to numeric option values, so a
