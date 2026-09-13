@@ -356,6 +356,17 @@ export default async function make({ THREE, renderer, at, steps: stepsIn }) {
 		update() {
 			if (done < PREROLL + RUN) advance(PER_FRAME);
 		},
+		// Progress → steps. Forward is incremental; backward re-seeds and
+		// replays, so a seek is still a pure function of u and the seed.
+		seek(u) {
+			const target = PREROLL + Math.round(Math.max(0, Math.min(1, u)) * RUN);
+			if (target < done) {
+				renderer.compute(seed);
+				current = texA;
+				done = 0;
+			}
+			advance(target - done);
+		},
 		render() {
 			renderer.render(scene, camera);
 		},

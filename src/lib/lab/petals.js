@@ -249,6 +249,10 @@ export default async function make({ THREE, renderer, at }) {
 			tt = (tt + dt) % (DURATION + 2);
 			set(Math.min(tt / DURATION, 1));
 		},
+		seek(u) {
+			tt = u * DURATION;
+			set(Math.max(0, Math.min(1, u)));
+		},
 		render() {
 			if (post) post.render();
 			else renderer.render(scene, camera);
