@@ -12,7 +12,9 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
-		"verify": "node scripts/verify.mjs"
+		"verify": "node scripts/verify.mjs",
+		"shots": "node scripts/shots.mjs",
+		"browser": "node scripts/browser.mjs"
 	},
 	"dependencies": {
 		"@tweenjs/tween.js": "^25.0.0",

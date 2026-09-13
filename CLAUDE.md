@@ -28,6 +28,15 @@ and `scripts/shots.mjs` turns that into a contact sheet:
 
     PLAN='[["3",[0.06,0.3,1]],["4",[0]]]' BASE=... OUT=... node scripts/shots.mjs
 
+Both scripts take `LANE=webgl|webgpu` (`scripts/lane.mjs`). `webgl` is the
+Chromium the sandbox ships and the flags the baseline sheets were shot with;
+`webgpu` is Chrome-for-Testing 153 on SwiftShader Vulkan, fetched once by
+`scripts/browser.mjs` into `~/.cache/cc2000/browsers`, and it is the only lane
+on which a WebGPU device exists — under the old flags `WebGPURenderer` takes
+its WebGL 2 backend without saying so. Every frame is shot with `?seed=1`, so
+the panes and the motes fall the same way on every load; a sheet that differs
+from another sheet of the same beat is a change, not the shuffle.
+
 Scene keys are the dev harness's own: `2` flyIn, `3` conception, `4` computation,
 `5` room. `1` restarts the run from the title card. They are bound BY NAME in
 Dev.svelte rather than by position in `ORDER` — `ORDER` lost the calculator in
