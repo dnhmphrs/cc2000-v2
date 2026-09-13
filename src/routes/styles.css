@@ -325,7 +325,10 @@ button {
 	background: transparent;
 	color: var(--ink);
 	padding: 12px 20px;
-	transition: background 0.15s, border-color 0.15s, color 0.15s;
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		color 0.15s;
 }
 
 button:hover:not(:disabled) {

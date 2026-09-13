@@ -213,7 +213,7 @@
 		renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true, alpha: true });
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-		renderer.outputEncoding = THREE.sRGBEncoding;
+		renderer.outputColorSpace = THREE.SRGBColorSpace;
 		clock = new THREE.Clock();
 
 		tunnel = createTunnel();

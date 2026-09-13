@@ -77,7 +77,7 @@
 			layers.push(entry);
 
 			loader.load(elementUrl(decadeKey, cfg.key), (tex) => {
-				tex.encoding = THREE.sRGBEncoding;
+				tex.colorSpace = THREE.SRGBColorSpace;
 				// These are large non-power-of-two images: skip mipmaps (and the
 				// costly POT resize) and pre-upload now, during the idle intro, so
 				// nothing stalls the main thread when the rooms first render.
@@ -92,7 +92,7 @@
 				if (renderer) {
 					try {
 						renderer.initTexture(tex);
-					} catch (e) {
+					} catch {
 						/* ignore */
 					}
 				}

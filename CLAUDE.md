@@ -6,7 +6,7 @@ When a round of work is finished, **open a pull request to `main` without being
 asked**. Do not stop at "pushed to the branch" and wait for someone to say "PR" —
 that ask has been made once, standing, and it covers every round from here on.
 
-Work goes on `fullflow-v3`. If the PR for that branch has already been merged,
+Work goes on `fullflow-v4`. If the PR for that branch has already been merged,
 the follow-up is a NEW PR: restart the branch from the latest `main`, keeping any
 unmerged commits by rebasing them onto it rather than stacking on merged history.
 

@@ -304,7 +304,9 @@
 		background: rgba(10, 10, 12, 0.82);
 		border: 1px solid rgba(255, 212, 38, 0.45);
 		border-radius: 3px;
-		box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 24px 70px rgba(0, 0, 0, 0.55);
+		box-shadow:
+			0 0 0 1px rgba(0, 0, 0, 0.5),
+			0 24px 70px rgba(0, 0, 0, 0.55);
 		/* Both questions, always — see --edge in routes/styles.css. It sits one
 		   pixel out from the dark ring the box-shadow already draws, which is
 		   the white-then-dark the browser's own ring was. */
@@ -464,7 +466,10 @@
 		border-radius: 2px;
 		padding: 0.75em 2.2em;
 		cursor: pointer;
-		transition: background 0.18s, color 0.18s, border-color 0.18s;
+		transition:
+			background 0.18s,
+			color 0.18s,
+			border-color 0.18s;
 	}
 	.go:hover:not(:disabled) {
 		background: var(--yellow);
