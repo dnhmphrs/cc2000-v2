@@ -28,13 +28,17 @@
 		// Both imports are dynamic on purpose: three/webgpu must never be
 		// evaluated during SSR, and each sketch is its own module.
 		const THREE = await import('three/webgpu');
-		const { default: make } = await import(`$lib/lab/${name}.js`);
+		const mod = await import(`$lib/lab/${name}.js`);
+		const make = mod.default;
 
+		// A sketch may ask for more of the renderer than the default — the
+		// rooms need a stencil buffer — by exporting `options`.
 		const renderer = new THREE.WebGPURenderer({
 			canvas,
 			antialias: true,
 			alpha: false,
-			forceWebGL
+			forceWebGL,
+			...(mod.options ?? {})
 		});
 		await renderer.init();
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
