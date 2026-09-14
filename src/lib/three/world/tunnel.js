@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createEgg } from './egg';
 import { holoMaterial, ADD } from './materials';
 import { TUNNEL, AIR, HOLO } from '$lib/config';
+import { rand } from '$lib/random';
 
 // ── The tunnel ───────────────────────────────────────────────────────────────
 // The place the fly-in happens. BLACK air, an ovum three hundred units down it,
@@ -55,12 +56,12 @@ function createMotes() {
 	for (let i = 0; i < n; i++) {
 		// Uniform in the disc, so the field does not clump on the axis where it
 		// would sit on top of the sperm.
-		const a = Math.random() * Math.PI * 2;
-		const r = Math.sqrt(Math.random()) * TUNNEL.moteRadius;
+		const a = rand() * Math.PI * 2;
+		const r = Math.sqrt(rand()) * TUNNEL.moteRadius;
 		const x = Math.cos(a) * r;
 		const y = Math.sin(a) * r;
-		const z = Math.random() * TUNNEL.moteSpan;
-		const s = Math.random();
+		const z = rand() * TUNNEL.moteSpan;
+		const s = rand();
 
 		for (let k = 0; k < 2; k++) {
 			pos[i * 6 + k * 3] = x;

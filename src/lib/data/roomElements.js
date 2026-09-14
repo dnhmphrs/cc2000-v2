@@ -207,6 +207,7 @@ export const LAYERS = [
 // Moved to config/layout.js, where every other screen-space size lives.
 // Re-exported so nothing that already imports it from here has to change.
 export { SCREEN_GLASS, GLASS_SAFETY } from '$lib/config';
+import { rand } from '$lib/random';
 
 // The palettes the blueprint field takes while the search turns through the
 // decades. The first stop is never used — the scene's own ground overrides it —
@@ -233,7 +234,7 @@ export function elementUrl(decade, key) {
 export function shuffle(arr) {
 	const a = arr.slice();
 	for (let i = a.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
+		const j = Math.floor(rand() * (i + 1));
 		[a[i], a[j]] = [a[j], a[i]];
 	}
 	return a;
@@ -245,7 +246,7 @@ export function assignDecades(count = 6) {
 	const base = shuffle(DECADES);
 	const extra = [];
 	for (let i = DECADES.length; i < count; i++) {
-		extra.push(DECADES[Math.floor(Math.random() * DECADES.length)]);
+		extra.push(DECADES[Math.floor(rand() * DECADES.length)]);
 	}
 	return shuffle(base.concat(extra)).slice(0, count);
 }

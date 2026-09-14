@@ -46,6 +46,18 @@ export const DEV = {
 //
 // This is the tool for looking at one beat. Without it, checking a half-second
 // window in a seven-second scene is a matter of taking screenshots and hoping.
+// ── The seed ─────────────────────────────────────────────────────────────────
+// ?seed=anything makes every choice the run leaves to chance repeatable — which
+// decade lands on which pane, where the motes sit, the birthday the harness
+// rolls — see lib/random.js. Two loads of the same URL then draw the same frame,
+// which is what lets two contact sheets of one beat be diffed. Null on a normal
+// load, and the site rolls as it always has.
+export const DEV_SEED = (() => {
+	if (typeof window === 'undefined') return null;
+	const raw = new URLSearchParams(window.location.search).get('seed');
+	return raw === null || raw === '' ? null : raw;
+})();
+
 export const DEV_AT = (() => {
 	if (typeof window === 'undefined') return null;
 	// The raw value first. Number(null) is 0, not NaN, so testing the parse alone

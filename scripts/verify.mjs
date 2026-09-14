@@ -17,9 +17,9 @@
 //   npm run dev      in one terminal
 //   npm run verify   in another
 //
-// BASE and CHROMIUM are overridable from the environment. Exits non-zero if
-// anything failed.
-import { chromium } from 'playwright';
+// BASE, CHROMIUM and LANE (webgl | webgpu — see lane.mjs) are overridable from
+// the environment. Exits non-zero if anything failed.
+import { launch } from './lane.mjs';
 
 const BASE = process.env.BASE ?? 'http://127.0.0.1:5178';
 const fails = [];
@@ -28,10 +28,8 @@ const ok = (name, cond, detail) => {
 	if (!cond) fails.push(name);
 };
 
-const b = await chromium.launch({
-	executablePath: process.env.CHROMIUM ?? '/opt/pw-browsers/chromium',
-	args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox']
-});
+const { browser: b, lane } = await launch();
+console.log(`lane  ${lane}`);
 const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
 const errs = [];
 p.on('pageerror', (e) => errs.push(e.message));
@@ -56,7 +54,8 @@ const answerDob = async (month, day, year) => {
 	await p.waitForTimeout(200);
 };
 
-await p.goto(`${BASE}/?speed=6`, { waitUntil: 'networkidle' });
+// ?seed= pins every choice the run leaves to chance — config/dev.js.
+await p.goto(`${BASE}/?speed=6&seed=1`, { waitUntil: 'networkidle' });
 
 // ── The card lifts on its own ────────────────────────────────────────────────
 // Nothing is clicked. If this ever needs a click the run has grown a step.
