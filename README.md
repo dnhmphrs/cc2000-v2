@@ -4,7 +4,33 @@ Give it your birthday and how spicy you like it, and it tells you the song that
 was playing at your moment of conception — then flies you into the bedroom where
 it happened.
 
-SvelteKit + three.js. `npm run dev`, then <http://localhost:5173>.
+SvelteKit + three.js.
+
+```
+nvm use          # Node 22 — see .nvmrc
+yarn install     # yarn.lock is what's tracked, and what Vercel installs from
+npm run dev      # http://localhost:3000
+```
+
+**Node 22 or 24, not 23.** ESLint 10 and vite-plugin-svelte both declare
+`^20.19 || ^22.13 || >=24`, and Node 23 falls in that gap on purpose — it was
+an odd-numbered line and it is end of life. On 23, yarn stops with
+"Found incompatible module". 22 is the better of the two anyway: the Vercel
+runtime is pinned at `nodejs22.x` in `vite.config.js`, so it is what production
+builds on. (There is deliberately no `engines` field in `package.json`: Vercel
+reads that to choose its build image, and the pin above already decides it.)
+
+Three routes:
+
+|                |                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `/`            | the site                                                                                                            |
+| `/v4`          | the rebuild's four new beats, end to end — needs WebGPU (Chrome, Edge, Safari 26); `?gl=1` for the WebGL 2 fallback |
+| `/lab?sketch=` | one sketch on a bare canvas: `heat`, `e8`, `petals`, `rooms`, `materials`                                           |
+
+`?at=0.42` pins any of them at a fraction of its run, exactly — every scene is a
+pure function of its own progress. See `docs/v4-plan.md` for where the rebuild
+is going and `docs/v4-flow.md` for where it has got to.
 
 ---
 
