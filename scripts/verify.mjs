@@ -18,10 +18,13 @@
 //   npm run verify   in another
 //
 // BASE, CHROMIUM and LANE (webgl | webgpu — see lane.mjs) are overridable from
-// the environment. Exits non-zero if anything failed.
+// the environment, and ROUTE picks the run: / (the site) or /v2 (the WebGL run
+// it replaced — the same card, popups and room over different 3D). Exits
+// non-zero if anything failed.
 import { launch } from './lane.mjs';
 
 const BASE = process.env.BASE ?? 'http://127.0.0.1:5178';
+const ROUTE = process.env.ROUTE ?? '/';
 const fails = [];
 const ok = (name, cond, detail) => {
 	console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`);
@@ -55,7 +58,7 @@ const answerDob = async (month, day, year) => {
 };
 
 // ?seed= pins every choice the run leaves to chance — config/dev.js.
-await p.goto(`${BASE}/?speed=6&seed=1`, { waitUntil: 'networkidle' });
+await p.goto(`${BASE}${ROUTE}?speed=6&seed=1`, { waitUntil: 'networkidle' });
 
 // ── The card lifts on its own ────────────────────────────────────────────────
 // Nothing is clicked. If this ever needs a click the run has grown a step.

@@ -75,10 +75,12 @@ swimmer ahead of the lens from behind, the archive adrift, the portal dead
 ahead) and the **descent** (`descent.js` — rooms through rooms, down to the
 answer's room and the splosh on its screen). Both walk the same **nest**
 (`nest.js`), which is where the rooms, the stencil chain, the camera pose and
-the glass rect live. `scenes/FlyIn|Conception|Computation|Calculator.svelte`,
-`three/world/{tunnel,egg,lattice}.js`, `three/shaders/` and
-`components/Background.svelte` are the WebGL run they replaced: in the tree for
-reference, imported by nothing.
+the glass rect live. `scenes/FlyIn|Conception|Computation.svelte`, `three/world/{tunnel,egg,lattice}.js`,
+`three/shaders/` and `components/Background.svelte` are the WebGL run they
+replaced, still playable at `/v2` on its own Stage (`three/StageV2.svelte`,
+`routes/v2/`): the same card, popups, room and director, switched to that run's
+scene names by `director.setRun('v2')`. `ROUTE=/v2 node scripts/verify.mjs`
+smoke-tests it. `Calculator.svelte` is imported by nothing.
 
 The run opens on a title card (`scenes/Prelude.svelte`) over an approach that
 is ALREADY MOUNTED and held at progress zero — black over black — and the two

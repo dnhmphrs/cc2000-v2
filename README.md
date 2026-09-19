@@ -20,11 +20,12 @@ runtime is pinned at `nodejs22.x` in `vite.config.js`, so it is what production
 builds on. (There is deliberately no `engines` field in `package.json`: Vercel
 reads that to choose its build image, and the pin above already decides it.)
 
-Three routes:
+Four routes:
 
 |                |                                                                                                                                                          |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/`            | the run: approach → descent → room, on WebGPU (WebGL 2 behind it where there is none; `?gl=1` forces it)                                                 |
+| `/v2`          | the WebGL run this replaced, as it was: the tunnel, the ovum, the conception, the computation                                                            |
 | `/v4`          | the rebuild's four new beats, end to end — needs WebGPU (Chrome, Edge, Safari 26); `?gl=1` for the WebGL 2 fallback                                      |
 | `/lab?sketch=` | one sketch on a bare canvas: `approach`, `rooms`, `impact`, `lattice`, `cube` (the cut), `e8` (kept, on the side), `materials`; `heat`, `petals` retired |
 

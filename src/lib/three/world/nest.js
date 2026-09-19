@@ -1,4 +1,4 @@
-import { vec4, uniform, Fn, uv, length, atan, sin, smoothstep, exp, max } from 'three/tsl';
+import { vec4, uniform, Fn, uv, length, atan, sin, smoothstep, exp, max, texture } from 'three/tsl';
 import { LAYERS, placement, elementUrl, DECADES, shuffle } from '$lib/data/roomElements';
 import { SCREEN_GLASS, GLASS_SAFETY, NEST } from '$lib/config';
 import { PHI } from '$lib/three/geometry/icosahedron';
@@ -156,6 +156,13 @@ export async function createNest({ THREE, renderer }) {
 		return vec4(a, a, a, a);
 	})();
 
+	// ── The dimmer ───────────────────────────────────────────────────────
+	// One uniform on every drawing in the nest, on the ALPHA only, so the whole
+	// thing can come up out of the black with the sky rather than sit there
+	// under the title card as one small lit screen. 1 for the whole descent.
+	const uDim = uniform(1);
+	const dimmed = (node) => vec4(node.rgb, node.a.mul(uDim));
+
 	// ── The nest itself ──────────────────────────────────────────────────
 	const root = new THREE.Group();
 	root.name = 'nest';
@@ -259,7 +266,7 @@ export async function createNest({ THREE, renderer }) {
 		const bezelMat = mk(
 			new THREE.MeshBasicNodeMaterial({ transparent: true, depthTest: false, depthWrite: false })
 		);
-		bezelMat.colorNode = glassCut(portalDecade, textures[portalDecade].screen)();
+		bezelMat.colorNode = dimmed(glassCut(portalDecade, textures[portalDecade].screen)());
 		stencilOf(bezelMat, 0, THREE.EqualStencilFunc, THREE.KeepStencilOp);
 		const bezel = new THREE.Mesh(plane, bezelMat);
 		bezel.scale.set(pw, ph, 1);
@@ -323,15 +330,17 @@ export async function createNest({ THREE, renderer }) {
 				return m;
 			};
 			const stencil = (mat, func, op) => stencilOf(mat, k + 1, func, op);
-			const flat = (key) =>
-				mk(
+			const flat = (key) => {
+				const m = mk(
 					new THREE.MeshBasicNodeMaterial({
-						map: textures[decade][key],
 						transparent: true,
 						depthTest: false,
 						depthWrite: false
 					})
 				);
+				m.colorNode = dimmed(texture(textures[decade][key]));
+				return m;
+			};
 			BACK.forEach((key, i) => {
 				const m = sprite(
 					key,
@@ -528,6 +537,9 @@ export async function createNest({ THREE, renderer }) {
 		setSplosh(t, fade = 1) {
 			su.uT.value = t;
 			su.uFade.value = fade;
+		},
+		setDim(v) {
+			uDim.value = v;
 		},
 		dispose() {
 			clear();
