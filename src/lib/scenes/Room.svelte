@@ -1,6 +1,6 @@
 <script>
 	import { fade } from 'svelte/transition';
-	import { track, conceived, decade, monitorRect } from '$lib/store/store';
+	import { track, conceived, decade, monitorRect, goingBack } from '$lib/store/store';
 	import { SCENES, RESULT_PANEL, PLAYER, panelFit } from '$lib/config';
 	import { formatDay, accuracyFor } from '$lib/functions/utils';
 	import { again } from './director';
@@ -37,7 +37,9 @@
 	// that asked for them, mid-flight, and the run never dives.
 	//
 	// The control hands back to the director, and the camera then flies into
-	// this monitor and back into the flight — see Computation.stepReturn().
+	// this monitor and back into the flight — see world/descent.js
+	// stepReturn(). The readout goes out the moment that starts: nothing of
+	// the room rides the camera into the glass.
 
 	$: uri = $track?.spotify_uri?.substring(14) ?? '';
 	$: src = uri ? `https://open.spotify.com/embed/track/${uri}?utm_source=generator` : '';
@@ -70,11 +72,12 @@
 	$: shape = fit ? fit.shape : RESULT_PANEL.shapes[0];
 
 	const IN = { duration: SCENES.room.resultIn * 1000 };
+	const OUT = { duration: SCENES.room.resultOut * 1000 };
 </script>
 
-{#if src && !inGlass}
+{#if src && !inGlass && !$goingBack}
 	<!-- ── Too small a monitor: the player goes to the edge of the screen ─── -->
-	<div class="deck loose" in:fade={{ duration: IN.duration, delay: 450 }}>
+	<div class="deck loose" in:fade={{ duration: IN.duration, delay: 450 }} out:fade={OUT}>
 		<iframe
 			{src}
 			frameBorder="0"
@@ -82,15 +85,16 @@
 			allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 			loading="lazy"
 			title="Conception song"
-		/>
+		></iframe>
 	</div>
 {/if}
 
-{#if src && glass}
+{#if src && glass && !$goingBack}
 	<!-- ── The readout, in the monitor, with the player under it ──────────── -->
 	<div
 		class="glass"
 		in:fade={{ duration: IN.duration, delay: 250 }}
+		out:fade={OUT}
 		style="left:{glass.left}px; top:{glass.top}px; width:{glass.width}px; height:{glass.height}px; --s:{s}; --title-lines:{shape.titleLines}; --artist-lines:{shape.artistLines}"
 	>
 		<div class="inner">
@@ -118,14 +122,14 @@
 						loading="lazy"
 						title="Conception song"
 						style="width:{logicalW}px; height:{PLAYER.height}px; transform:scale({k.toFixed(4)})"
-					/>
+					></iframe>
 				</div>
 			</div>
 		{/if}
 		<button class="again" on:click={again}>go again</button>
 	</div>
-{:else if src}
-	<div class="stage" in:fade={IN}>
+{:else if src && !$goingBack}
+	<div class="stage" in:fade={IN} out:fade={OUT}>
 		<div class="col card">
 			<p class="when">{$conceived ? `roughly ${formatDay($conceived)}` : ''}</p>
 			<h2>{$track?.title ?? ''}</h2>

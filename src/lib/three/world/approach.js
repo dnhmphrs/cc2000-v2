@@ -45,13 +45,14 @@ import { roomsFor } from './nest';
 // lens from behind: every version of that reads as a body being stretched by
 // a wide lens.
 //
-// ── The archive, in time ─────────────────────────────────────────────────────
-// Each piece adrift is given a MOMENT of the flight to pass the lens at, and
-// is put where the lens will be at that moment; so it comes by at one steady
-// rate whatever the camera's speed is doing, and nothing sits round the portal
-// while the lens slows into it. And it comes out of the dark — unseen beyond
-// APPROACH.seen[1] units ahead, fully there inside seen[0] — so the field is
-// what is passing, not a cluster seen from the far end of the flight.
+// ── The archive, along the flight ────────────────────────────────────────────
+// Everything adrift is spread evenly down the flight, from where the swimmer
+// is in to the portal, and comes out of the dark — unseen beyond
+// APPROACH.seen[1] units ahead, fully there inside seen[0] — so what is on
+// screen is what is passing, never the whole field seen from the far end. It
+// runs right up to the glass: the last pieces flank the portal as it takes
+// the frame and leave by the edges before the seam, which a tube round the
+// axis does on its own.
 //
 // ── The flight takes the answers ─────────────────────────────────────────────
 // There is no machine, so the run asks its two questions on the way in, and
@@ -128,8 +129,7 @@ export async function createApproach({ THREE, renderer, nest }) {
 
 	// ── The archive adrift ───────────────────────────────────────────────
 	// The drawings are the nest's. Everything adrift is a shade down and on one
-	// dimmer, so the white sets don't blaze and the lot can be thinned out
-	// before the seam.
+	// dimmer, so the white sets don't blaze and the lot comes up with the sky.
 	const tex = nest.textures;
 	const { uniform } = await import('three/tsl');
 	const uOn = uniform(0);
@@ -204,8 +204,8 @@ export async function createApproach({ THREE, renderer, nest }) {
 		m.scale.set(width, width / (t.image.width / t.image.height), 1);
 		return m;
 	}
-	// A tube of them, off the axis, each with its own moment to pass the lens
-	// at. Where that puts it along the flight depends on the flight's profile,
+	// A tube of them, off the axis, each at its own fraction of the way down
+	// the flight. Where that is in the world depends on the flight's profile,
 	// which is settled per run — see placeNest(), which lays them out.
 	const place = (obj, r0, r1) => {
 		const a = rand() * Math.PI * 2;
@@ -219,7 +219,7 @@ export async function createApproach({ THREE, renderer, nest }) {
 			mesh: obj,
 			rot0,
 			rate: (rand() - 0.5) * 0.4,
-			at: A.passing[0] + rand() * (A.passing[1] - A.passing[0])
+			u: rand()
 		});
 	};
 	for (let i = 0; i < A.screens; i++) {
@@ -254,6 +254,7 @@ export async function createApproach({ THREE, renderer, nest }) {
 	let askedSpicy = false;
 	let finalised = false;
 	let zEnd = 0;
+	let zFirst = 0;
 	let seamD = 0;
 
 	// The nest sits with the portal's glass dead ahead on the axis, `travel`
@@ -280,8 +281,11 @@ export async function createApproach({ THREE, renderer, nest }) {
 		const c = (1 - T.cruise) / 2;
 		rho = Math.max(0.05, Math.min(1, (q * (1 - c)) / (1 - q * c)));
 		ga = 1 / (1 - (1 - rho) * c);
-		// And the archive, where the lens will be when each piece's moment comes.
-		for (const it of items) it.mesh.position.z = zEnd * flown(it.at);
+		// And the archive: evenly from where its first piece comes into view —
+		// seen[1] ahead of the lens at archiveFrom — down to where the lens
+		// stops. Beyond that is the portal's glass, which nothing may sit in.
+		zFirst = zEnd * flown(T.archiveFrom) - A.seen[1];
+		for (const it of items) it.mesh.position.z = lerp(zFirst, zEnd, it.u);
 	}
 	function flown(tau) {
 		const t1 = T.cruise;
@@ -328,6 +332,8 @@ export async function createApproach({ THREE, renderer, nest }) {
 		rig.add(sw.group);
 		sw.group.quaternion.identity();
 		sw.material.uniforms.uOpacity.value = 0;
+		// The way home took the last room to black; this nest is lit.
+		nest.setDark(1);
 		set(0);
 	}
 
@@ -374,8 +380,10 @@ export async function createApproach({ THREE, renderer, nest }) {
 		camera.updateMatrixWorld(true);
 
 		// ── The sky, the debris and the archive ──────────────────────────
+		// Up with the card lifting; out under the portal as it takes the frame,
+		// so the seam frame is the nest and nothing else (SCENES.approach.skyOut).
 		const up = smootherstep(span(p, T.fadeIn));
-		const on = up * (1 - easeInOutCubic(span(p, T.thin)));
+		const on = up * (1 - easeInOutCubic(span(p, T.skyOut)));
 		for (const s of starMats) s.mat.uniforms.uOpacity.value = s.opacity * on;
 		motes.set(z, on, span(p, T.fadeIn));
 		uOn.value = on;
@@ -411,6 +419,11 @@ export async function createApproach({ THREE, renderer, nest }) {
 		enter,
 		update,
 		set,
+		// The flight's profile, for the harness: where the lens stops and how
+		// far the glass is then, the brake, and where the archive starts.
+		get profile() {
+			return { zEnd, seamD, rho, ga, zFirst };
+		},
 		render() {
 			renderer.render(scene, camera);
 		},

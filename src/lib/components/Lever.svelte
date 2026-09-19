@@ -91,7 +91,7 @@
 		on:wheel={wheel}
 		on:keydown={key}
 	>
-		<i class="slot" />
+		<i class="slot"></i>
 		<i class="handle"><b>{value}</b></i>
 	</div>
 	<span class="cap">{low}</span>

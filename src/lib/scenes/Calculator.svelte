@@ -334,7 +334,7 @@
 
 {#if booting}
 	<!-- The monitor, on. See fillGlass(). -->
-	<div class="bleed" bind:this={bleed} />
+	<div class="bleed" bind:this={bleed}></div>
 {/if}
 
 <!-- ── THE TITLE CARD ──────────────────────────────────────────────────────
@@ -350,7 +350,7 @@
      but nothing waits on one. -->
 {#if !typed}
 	<div class="prelude" out:fade={{ duration: 420 }} on:pointerdown={skip}>
-		<div class="scan" />
+		<div class="scan"></div>
 		<div class="spiel">
 			{#each LINES as line, i}
 				<!-- Each line is sized by the WHOLE line, hidden, with the part that
@@ -362,7 +362,7 @@
 					<span class="live"
 						>{line.slice(0, shown[i])}{#if shown[i] > 0 && shown[i] < line.length}<span
 								class="caret"
-							/>{/if}</span
+							></span>{/if}</span
 					>
 				</p>
 			{/each}
@@ -385,10 +385,10 @@
 	     size would still flood the whole frame with yellow. This way the window
 	     stays truly transparent AND the machine can be a small object sitting
 	     inside the room's screen. -->
-		<div class="body top" />
-		<div class="body bottom" />
-		<div class="body left" />
-		<div class="body right" />
+		<div class="body top"></div>
+		<div class="body bottom"></div>
+		<div class="body left"></div>
+		<div class="body right"></div>
 
 		<div class="window">
 			<div class="screen">
@@ -397,8 +397,8 @@
 			     own CRT was the one screen in the site with no lines on it. Under
 			     the gleam, because the gleam is a reflection off the FRONT of the
 			     glass and the raster is behind it. -->
-				<div class="scan" />
-				<div class="gleam" />
+				<div class="scan"></div>
+				<div class="gleam"></div>
 				{#if $edge}
 					<!-- Out of range. The machine says so and stays where it is. -->
 					<div class="verdict">
@@ -471,7 +471,7 @@
 
 		<div class="lamps">
 			{#each [0, 1, 2, 3, 4, 5, 6] as n}
-				<i class:on={n <= power} />
+				<i class:on={n <= power}></i>
 			{/each}
 		</div>
 
@@ -480,12 +480,12 @@
 		     the edges of the machine where decoration belongs. -->
 			<div class="trim left">
 				{#each [22, -48, 71, -14] as deg, i}
-					<span class="knob" style="--deg:{deg}deg; --d:{i * 0.7}s"><i /></span>
+					<span class="knob" style="--deg:{deg}deg; --d:{i * 0.7}s"><i></i></span>
 				{/each}
 			</div>
 			<div class="trim right">
 				{#each [1, 0, 1, 1, 0] as up}
-					<span class="flip" class:up><i /></span>
+					<span class="flip" class:up><i></i></span>
 				{/each}
 			</div>
 		{/if}
@@ -572,9 +572,9 @@
 			</div>
 		{/if}
 
-		<div class="vent left" />
-		<div class="vent right" />
-		<div class="grille" />
+		<div class="vent left"></div>
+		<div class="vent right"></div>
+		<div class="grille"></div>
 
 		<button
 			class="go"
@@ -585,10 +585,10 @@
 			calculate
 		</button>
 
-		<span class="screw tl" />
-		<span class="screw tr" />
-		<span class="screw bl" />
-		<span class="screw br" />
+		<span class="screw tl"></span>
+		<span class="screw tr"></span>
+		<span class="screw bl"></span>
+		<span class="screw br"></span>
 	</div>
 {/if}
 

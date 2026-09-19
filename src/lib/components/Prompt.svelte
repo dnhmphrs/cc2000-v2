@@ -181,11 +181,13 @@
 	     technology was told nothing had appeared and the run simply stopped
 	     responding. Named by the question itself, focused on open, and Tab is
 	     corralled inside it — the flight is held until this is answered, so
-	     there is nowhere else for focus to usefully be. -->
-	<form
+	     there is nowhere else for focus to usefully be.
+
+	     The dialog is the box and the FORM is inside it: a form has a role of
+	     its own, and cannot also be the dialog. -->
+	<div
 		class="ask"
 		bind:this={panel}
-		on:submit|preventDefault={submit}
 		on:keydown={corral}
 		role="dialog"
 		aria-modal="true"
@@ -193,89 +195,91 @@
 		tabindex="-1"
 		in:scale={{ duration: reduced ? 0 : 320, start: reduced ? 1 : 0.94, easing: cubicOut }}
 	>
-		{#if which === 'dob'}
-			<!-- fieldset/legend, so the three selects are a GROUP with a name. As
+		<form on:submit|preventDefault={submit}>
+			{#if which === 'dob'}
+				<!-- fieldset/legend, so the three selects are a GROUP with a name. As
 			     three loose selects, a screen reader on the middle one said only
 			     "month" and never what the date was for. -->
-			<fieldset>
-				<legend id="ask-q" class="q">when were you born?</legend>
-				<div class="row">
-					<label class="sr-only" for="ask-day">day</label>
-					<select
-						id="ask-day"
-						bind:value={$dobDay}
-						autocomplete="bday-day"
-						aria-describedby="ask-status"
-						aria-invalid={refused ? 'true' : 'false'}
-					>
-						{#each days as d}<option value={d}>{String(d).padStart(2, '0')}</option>{/each}
-					</select>
-					<label class="sr-only" for="ask-month">month</label>
-					<select
-						id="ask-month"
-						bind:value={$dobMonth}
-						autocomplete="bday-month"
-						aria-describedby="ask-status"
-						aria-invalid={refused ? 'true' : 'false'}
-					>
-						{#each MONTHS as m, i}<option value={i + 1}>{m.toUpperCase()}</option>{/each}
-					</select>
-					<label class="sr-only" for="ask-year">year</label>
-					<select
-						id="ask-year"
-						bind:this={yearSel}
-						bind:value={$dobYear}
-						autocomplete="bday-year"
-						aria-describedby="ask-status"
-						aria-invalid={refused ? 'true' : 'false'}
-					>
-						{#each YEARS as y}<option value={y}>{y}</option>{/each}
-					</select>
-				</div>
-			</fieldset>
-			{#if refused}
-				<!-- The machine's own voice, on screen. Hidden from AT because the
+				<fieldset>
+					<legend id="ask-q" class="q">when were you born?</legend>
+					<div class="row">
+						<label class="sr-only" for="ask-day">day</label>
+						<select
+							id="ask-day"
+							bind:value={$dobDay}
+							autocomplete="bday-day"
+							aria-describedby="ask-status"
+							aria-invalid={refused ? 'true' : 'false'}
+						>
+							{#each days as d}<option value={d}>{String(d).padStart(2, '0')}</option>{/each}
+						</select>
+						<label class="sr-only" for="ask-month">month</label>
+						<select
+							id="ask-month"
+							bind:value={$dobMonth}
+							autocomplete="bday-month"
+							aria-describedby="ask-status"
+							aria-invalid={refused ? 'true' : 'false'}
+						>
+							{#each MONTHS as m, i}<option value={i + 1}>{m.toUpperCase()}</option>{/each}
+						</select>
+						<label class="sr-only" for="ask-year">year</label>
+						<select
+							id="ask-year"
+							bind:this={yearSel}
+							bind:value={$dobYear}
+							autocomplete="bday-year"
+							aria-describedby="ask-status"
+							aria-invalid={refused ? 'true' : 'false'}
+						>
+							{#each YEARS as y}<option value={y}>{y}</option>{/each}
+						</select>
+					</div>
+				</fieldset>
+				{#if refused}
+					<!-- The machine's own voice, on screen. Hidden from AT because the
 				     live region below has already said it, in fewer words. -->
-				<p class="no" aria-hidden="true">
-					<span class="head">error — out of range</span>
-					{EDGE[refused]}
-					{#if refused === 'past'}
-						<span class="hint">the archive starts at {earliestBirthday()}.</span>
-					{/if}
-				</p>
+					<p class="no" aria-hidden="true">
+						<span class="head">error — out of range</span>
+						{EDGE[refused]}
+						{#if refused === 'past'}
+							<span class="hint">the archive starts at {earliestBirthday()}.</span>
+						{/if}
+					</p>
+				{/if}
+			{:else}
+				<label id="ask-q" class="q" for="ask-spicy">how spicy are your parents?</label>
+				<div class="row">
+					<select id="ask-spicy" bind:value={$spicy} aria-describedby="ask-status">
+						{#each Array.from({ length: 10 }, (_, i) => i + 1) as n}
+							<option value={n}>{String(n).padStart(2, '0')}</option>
+						{/each}
+					</select>
+					<span class="of">/ 10</span>
+				</div>
 			{/if}
-		{:else}
-			<label id="ask-q" class="q" for="ask-spicy">how spicy are your parents?</label>
-			<div class="row">
-				<select id="ask-spicy" bind:value={$spicy} aria-describedby="ask-status">
-					{#each Array.from({ length: 10 }, (_, i) => i + 1) as n}
-						<option value={n}>{String(n).padStart(2, '0')}</option>
-					{/each}
-				</select>
-				<span class="of">/ 10</span>
-			</div>
-		{/if}
 
-		<!-- ALWAYS IN THE DOM, never display:none, only its text changes. A
+			<!-- ALWAYS IN THE DOM, never display:none, only its text changes. A
 		     role="alert" node that is itself inserted is not reliably spoken. -->
-		<p id="ask-status" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true">
-			{status}
-		</p>
+			<p id="ask-status" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true">
+				{status}
+			</p>
 
-		<!-- aria-disabled, NOT disabled. `disabled` takes the button out of the
+			<!-- aria-disabled, NOT disabled. `disabled` takes the button out of the
 		     tab order and out of most reading orders, so the one thing saying
 		     "this is not finished" became the one thing a keyboard user could
 		     not find — in a dialog with no way out. It stays reachable and says
 		     why when pressed. -->
-		<button
-			class="go"
-			type="submit"
-			aria-disabled={which === 'dob' && !complete}
-			aria-describedby={hint ? 'ask-status' : undefined}
-		>
-			{which === 'dob' ? 'confirm' : 'calculate'}
-		</button>
-	</form>
+			<button
+				class="go"
+				type="submit"
+				aria-disabled={which === 'dob' && !complete}
+				aria-describedby={hint ? 'ask-status' : undefined}
+			>
+				{which === 'dob' ? 'confirm' : 'calculate'}
+			</button>
+		</form>
+	</div>
 </div>
 
 <style>
@@ -312,11 +316,14 @@
 		   the white-then-dark the browser's own ring was. */
 		outline: 1px solid var(--edge);
 		outline-offset: 1px;
+		text-align: center;
+	}
+	/* The column is the form's; the box round it is the dialog. */
+	.ask form {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: clamp(10px, 1.5vh, 16px);
-		text-align: center;
 	}
 
 	/* The panel is a container that takes focus so the trap has somewhere to

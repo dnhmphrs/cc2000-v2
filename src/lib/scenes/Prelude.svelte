@@ -14,9 +14,9 @@
 	// lifts the flight is already running rather than starting — there is no cut
 	// to cover and nothing to synchronise.
 	//
-	// It types, holds a beat, and lifts. Not a click-through: a pointerdown skips
-	// the rest of the typing for anyone who has read it before, but nothing waits
-	// on one.
+	// It types, holds a beat, and lifts. Not a click-through: a press anywhere —
+	// or Enter or Escape — skips the rest of the typing for anyone who has read
+	// it before, but nothing waits on one.
 	//
 	// ON THE CLOCK, not on a chain of timers. It used to set one timeout per
 	// character, and a timeout fires when the main thread gets round to it — on
@@ -59,9 +59,13 @@
 		gate.set(null);
 	}
 
-	// A SKIP, not the way through.
+	// A SKIP, not the way through. Enter and Escape, not Space: the dev keys are
+	// on the window too, and Space is one of them.
 	function skip() {
 		lift();
+	}
+	function onKey(e) {
+		if (e.key === 'Enter' || e.key === 'Escape') skip();
 	}
 
 	onMount(() => {
@@ -82,7 +86,12 @@
 	});
 </script>
 
-<div class="prelude" out:fade={{ duration: 420 }} on:pointerdown={skip}>
+<!-- The skip is on the WINDOW, not on the card: the card is the whole viewport,
+     so "anywhere" is the truth of it, and a div with a pointer handler is a
+     control a keyboard cannot reach. -->
+<svelte:window on:pointerdown={skip} on:keydown={onKey} />
+
+<div class="prelude" out:fade={{ duration: 420 }}>
 	<div class="spiel">
 		{#each LINES as line, i}
 			<!-- Each line is sized by the WHOLE line, hidden, with the part that has
@@ -92,9 +101,8 @@
 			<p>
 				<span class="ghost">{line}</span>
 				<span class="live"
-					>{line.slice(0, shown[i])}{#if shown[i] > 0 && shown[i] < line.length}<span
-							class="caret"
-						/>{/if}</span
+					>{line.slice(0, shown[i])}{#if shown[i] > 0 && shown[i] < line.length}<span class="caret"
+						></span>{/if}</span
 				>
 			</p>
 		{/each}

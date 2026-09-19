@@ -393,17 +393,17 @@ export const APPROACH = {
 	// World units from the first frame to the portal's glass.
 	travel: 150,
 	// How much of the archive is adrift, and the tube it drifts in — a radius
-	// range, clear of the axis the swimmer and the portal are on. It is placed
-	// along the flight IN TIME, not in distance: each piece passes the lens at
-	// its own moment in `passing`, so it comes by at one steady rate however
-	// the camera's speed changes, and none of it sits round the portal while
-	// the lens slows into it. And it comes out of the dark: a piece is unseen
-	// beyond `seen[1]` units ahead and fully there inside `seen[0]`.
-	screens: 22,
-	furniture: 30,
+	// range, clear of the axis the swimmer and the portal are on. It is spread
+	// EVENLY ALONG THE FLIGHT, from where the swimmer is in
+	// (SCENES.approach.archiveFrom) all the way to the portal, and it comes out
+	// of the dark: a piece is unseen beyond `seen[1]` units ahead and fully
+	// there inside `seen[0]`. Nothing else — no thinning before the seam. The
+	// last of it flanks the portal as the glass takes the frame and leaves by
+	// the edges, which is what a tube round the axis does on its own.
+	screens: 12,
+	furniture: 16,
 	tube: [3.0, 11.0],
-	passing: [0.22, 0.88],
-	seen: [24, 44],
+	seen: [22, 40],
 	// The sky, and the debris close in that makes the speed read.
 	stars: 1100,
 	brightStars: 90,
@@ -424,9 +424,10 @@ export const NEST = {
 	seamFov: 24,
 	fov: 34,
 	// Degrees of turn per level, and the lateral truck about the axis per level,
-	// in frame heights.
+	// in frame heights. Both come in from rest at the seam and the turn goes
+	// out before the last room, which lands level — see nest.js rollOf().
 	screw: 15,
-	sway: 0.08,
+	sway: 0.06,
 	// ICOSA.roomDepth: how far behind its frame a room's back wall sits.
 	depth: 3.0,
 	// The wall covers the FRAME, which only covers the frustum from infinitely

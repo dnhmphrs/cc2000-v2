@@ -27,6 +27,11 @@ import { ADD } from '$lib/three/tsl/materials';
 // — c(f) = p' + R(fθ)·N^−f·(c0 − p') with p' = (I − R(θ)/N)⁻¹·g — so the frame
 // at ζ = k+1 IS the picture the child starts on, and the crossing has no seam.
 //
+// The fall runs at one pace ON SCREEN — equal time per unit of log(N), since
+// the crossings are zooms of different sizes (zetaOf) — and the roll and the
+// sway come in from rest at the seam and go out before the last room, which
+// lands level (rollOf, pose).
+//
 // Each level is clipped to its parent's glass by a stencil chain: the portal's
 // glass increments the stencil 0→1, room 0 draws where it is 1, its glass
 // increments to 2, and so on; every level's desk and bed are drawn afterwards,
@@ -160,12 +165,17 @@ export async function createNest({ THREE, renderer }) {
 		return vec4(a, a, a, a);
 	})();
 
-	// ── The dimmer ───────────────────────────────────────────────────────
-	// One uniform on every drawing in the nest, on the ALPHA only, so the whole
-	// thing can come up out of the black with the sky rather than sit there
-	// under the title card as one small lit screen. 1 for the whole descent.
+	// ── The dimmer, and the dark ─────────────────────────────────────────
+	// Two uniforms on every drawing in the nest. `uDim` is on the ALPHA only,
+	// so the whole thing can come up out of the black with the sky rather than
+	// sit there under the title card as one small lit screen. `uDark` is on
+	// the COLOUR: the way home takes the last room to black with it, and it
+	// has to be the colour — on the alpha, the wall showed through the
+	// monitor's painted glass as it went, which was the room coming back
+	// after the glass had taken the frame. Both are 1 for the whole descent.
 	const uDim = uniform(1);
-	const dimmed = (node) => vec4(node.rgb, node.a.mul(uDim));
+	const uDark = uniform(1);
+	const dimmed = (node) => vec4(node.rgb.mul(uDark), node.a.mul(uDim));
 
 	// ── The nest itself ──────────────────────────────────────────────────
 	const root = new THREE.Group();
@@ -178,6 +188,7 @@ export async function createNest({ THREE, renderer }) {
 	let disposables = [];
 	let built = { portal: null, rooms: [], portrait: false };
 	let lastBase = 0;
+	let logs = []; // each level's ln(N): the length of its crossing on screen
 
 	// RoomProjection.layout(), in the frame's own coordinates: x right, y up,
 	// z toward the viewer, the frame plane at z = 0.
@@ -400,6 +411,7 @@ export async function createNest({ THREE, renderer }) {
 			const ga = gl.w / gl.h;
 			const Kw = ga < W / H ? H * ga : W;
 			lv.childN = k + 1 < levels.length ? levels[k + 1].N : Kw / gl.w;
+			lv.lnN = Math.log(lv.childN);
 			const last = k === levels.length - 1;
 			const th = last ? 0 : SCREW;
 			const a = 1 - Math.cos(th) / lv.childN;
@@ -411,25 +423,42 @@ export async function createNest({ THREE, renderer }) {
 				(lv.childN * gl.z) / (lv.childN - 1)
 			);
 		});
+		logs = levels.map((lv) => lv.lnN);
 		refreshClips();
 	}
 
 	// ── The fall, as a function of the descent's progress ────────────────
-	// ζ runs at ONE PACE from the seam — the picture is self-similar, so a
-	// constant rate down the levels is a constant pace on screen — and eases
-	// to rest over the last `ease` of the scene, at `land` of the way into
-	// the last room. Here rather than in the descent because the approach
-	// needs the pace it opens at, to arrive at it.
+	// ζ runs at ONE PACE from the seam and eases to rest over the last `ease`
+	// of the scene, at `land` of the way into the last room. One pace ON
+	// SCREEN: a crossing is a zoom by its level's N, and the portal's is a
+	// smaller zoom than a room's monitor is, so equal time per level would
+	// lurch at the first glass. Equal time per unit of log(N) does not — the
+	// fall is measured in log-scale and turned back into a level at the end.
+	// Here rather than in the descent because the approach needs the pace it
+	// opens at, to arrive at it.
 	function zetaEnd() {
 		return levels.length - 1 + SCENES.descent.land;
+	}
+	function logEnd() {
+		let sum = 0;
+		for (let k = 0; k < levels.length - 1; k++) sum += logs[k];
+		return sum + SCENES.descent.land * logs[levels.length - 1];
+	}
+	function zetaOfLog(lambda) {
+		let rest = lambda;
+		for (let k = 0; k < levels.length - 1; k++) {
+			if (rest < logs[k]) return k + rest / logs[k];
+			rest -= logs[k];
+		}
+		return Math.min(levels.length - 1 + rest / logs[levels.length - 1], zetaEnd());
 	}
 	function zetaOf(u) {
 		const e = SCENES.descent.ease;
 		const n = 1 - e / 2;
 		const x = Math.max(0, Math.min(1, u));
-		if (x <= 1 - e) return (zetaEnd() * x) / n;
 		const y = x - (1 - e);
-		return (zetaEnd() * (1 - e + y - (y * y) / (2 * e))) / n;
+		const h = x <= 1 - e ? x / n : (1 - e + y - (y * y) / (2 * e)) / n;
+		return zetaOfLog(logEnd() * h);
 	}
 	// World units per second the camera is moving at as the fall opens.
 	const probe = new THREE.PerspectiveCamera();
@@ -457,6 +486,24 @@ export async function createNest({ THREE, renderer }) {
 	function fovAt(zeta) {
 		return NEST.seamFov + (NEST.fov - NEST.seamFov) * smooth(0, 1.6, zeta);
 	}
+	// The roll through crossing k: SCREW by its end, so the child's turned
+	// frame is met exactly, and linear in between — except at the two ends of
+	// the fall. It starts FROM REST at the seam, where the approach arrives
+	// level and straight, and comes to rest before the last room, which lands
+	// level, so the fall rolls in and out rather than snapping. A cubic each
+	// way: the first crossing ends at the rate the second runs at in TIME (a
+	// crossing's time is its log-scale — see zetaOf), and the crossing before
+	// the last ends at nil.
+	function rollOf(k, f) {
+		const n = levels.length;
+		if (n < 3) return SCREW * f * f * (3 - 2 * f);
+		if (k === 0) {
+			const s = logs[0] / logs[1];
+			return SCREW * ((3 - s) * f * f + (s - 2) * f * f * f);
+		}
+		if (k === n - 2) return SCREW * (f + f * f - f * f * f);
+		return SCREW * f;
+	}
 	function pose(zetaIn, camera, aspect) {
 		// Past the last room's f = 1 is the way home: the glass has filled the
 		// frame and the camera keeps going into it.
@@ -470,13 +517,14 @@ export async function createNest({ THREE, renderer }) {
 		const fov = fovAt(zeta);
 		const d0 = H / 2 / Math.tan(rad(fov) / 2);
 		const p = lv.fixed;
-		// The last room lands level: no roll, and the sway dies out by the
-		// landing, so the glass is square in the frame.
+		// The sway comes in from nothing over the first crossing, and the last
+		// room lands level: no roll, and the sway dies out by the landing, so
+		// the glass is square in the frame.
 		const settle = last ? smooth(SCENES.descent.settle, SCENES.descent.land, f) : 0;
-		const sway = NEST.sway * (1 - settle);
+		const sway = NEST.sway * smooth(0, 1, zeta) * (1 - settle);
 		const ex = sway * H * Math.sin(2 * Math.PI * f);
 		const ey = sway * H * 0.5 * (Math.cos(2 * Math.PI * f) - 1);
-		const roll = last ? 0 : f * SCREW;
+		const roll = last ? 0 : rollOf(k, f);
 		off
 			.set(-p.x + ex, -p.y + ey, 0)
 			.multiplyScalar(s)
@@ -587,6 +635,9 @@ export async function createNest({ THREE, renderer }) {
 		},
 		setDim(v) {
 			uDim.value = v;
+		},
+		setDark(v) {
+			uDark.value = v;
 		},
 		dispose() {
 			clear();

@@ -9,14 +9,16 @@ have drawn at that moment rather than a timed guess at it.
 **1 — the run, as it now is.** What `/` does on `main`: a title card over an
 approach held at zero, black; the card lifts, the sky comes up, the swimmer
 fades in where it rides, ahead of the lens and seen from behind; then the
-archive comes out of the dark and passes, each piece at its own moment of the
-flight so it comes by at one steady rate, the two questions are asked on the
-way and the flight held while they are; the portal dead ahead,
-whose glass holds the first room; the descent through the decades, one room
-inside the next, at one pace from the seam, down to the answer's room, which
-lands level; the swimmer going into its screen and the screen going white; the
-readout in that glass; and "go again" flying home through the glass into black,
-which is the black the next flight opens on. One WebGPU renderer, and one shot
+archive comes out of the dark and passes — spread evenly down the flight from
+there to the glass, so the last of it flanks the portal as it takes the frame —
+the two questions are asked on the way and the flight held while they are; the
+portal dead ahead, whose glass holds the first room; the descent through the
+decades, one room inside the next, at one pace on screen from the seam, the
+turn coming in from rest and going out before the answer's room, which lands
+level; the swimmer going into its screen and the screen going white; the
+readout in that glass; and "go again" — the readout gone, the camera from rest
+into the glass in a second and a half, black — which is the black the next
+flight opens on. One WebGPU renderer, and one shot
 from the flight into the fall — the approach ends on the frame the descent
 opens on, at the speed the descent opens at. Frames on the WebGL lane at
 `?seed=1`, so the decades and the archive fall the same way on every load.

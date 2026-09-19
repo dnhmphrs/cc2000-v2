@@ -113,13 +113,13 @@
 					class="tick"
 					class:major={y % major === 0}
 					style="left:{((y - min) / (max - min)) * 100}%"
-				/>
+				></i>
 			{/each}
 			{#each years.filter((y) => y % major === 0) as y}
 				<span class="mark" style="left:{((y - min) / (max - min)) * 100}%">{y}</span>
 			{/each}
 		</div>
-		<i class="needle" />
+		<i class="needle"></i>
 	</div>
 	<span class="cap">year <b>{set ? value : '--'}</b></span>
 </div>

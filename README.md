@@ -569,6 +569,18 @@ at half resolution scaled up is a smear.
 
 ## The loop home
 
+On the site's run there is nothing to fly home into. "Go again" takes the
+readout off the glass (`SCENES.room.resultOut`) and flies the camera from the
+landing into the monitor — from rest, accelerating, in `SCENES.descent.home`
+seconds — with the room going to black under the glass and the raster coming
+back over the second half of it (`SCENES.descent.homeDim`), so the frame it ends
+on is the black the next flight opens on. `world/descent.js stepReturn()` owns
+all of it; the Stage drives it because by then the scene is held rather than
+running; and `director.settled()` hands over. No title card the second time.
+
+What follows is the **WebGL run's** loop, still playable at `/v2`, where there
+IS a machine to fly home into.
+
 "Calculate again" is the one piece of choreography that spans DOM and 3D.
 
 It is **one move seen from two sides**, and both sides share one duration
