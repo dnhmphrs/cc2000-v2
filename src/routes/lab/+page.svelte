@@ -5,7 +5,7 @@
 	// Sketches for the rebuild. Not the site: a bare canvas, one WebGPURenderer
 	// of its own, and whichever sketch the URL names.
 	//
-	//   ?sketch=heat     which sketch (src/lib/lab/<sketch>.js)
+	//   ?sketch=rooms    which sketch (src/lib/lab/<sketch>.js)
 	//   ?at=0.42         pin the sketch at a progress, exactly as the site's
 	//                    dev harness does — for looking at one frame together
 	//   ?gl=1            force the WebGL 2 backend (the fallback lane)
@@ -19,7 +19,7 @@
 
 	onMount(async () => {
 		const q = new URLSearchParams(location.search);
-		const name = q.get('sketch') ?? 'heat';
+		const name = q.get('sketch') ?? 'rooms';
 		const atRaw = q.get('at');
 		const at = atRaw === null || atRaw === '' ? null : Math.max(0, Math.min(1, Number(atRaw)));
 		const forceWebGL = q.get('gl') === '1';

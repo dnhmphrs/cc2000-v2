@@ -22,11 +22,11 @@ reads that to choose its build image, and the pin above already decides it.)
 
 Three routes:
 
-|                |                                                                                                                     |
-| -------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `/`            | the site                                                                                                            |
-| `/v4`          | the rebuild's four new beats, end to end — needs WebGPU (Chrome, Edge, Safari 26); `?gl=1` for the WebGL 2 fallback |
-| `/lab?sketch=` | one sketch on a bare canvas: `heat`, `e8`, `petals`, `rooms`, `materials`                                           |
+|                |                                                                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `/`            | the site                                                                                                                             |
+| `/v4`          | the rebuild's four new beats, end to end — needs WebGPU (Chrome, Edge, Safari 26); `?gl=1` for the WebGL 2 fallback                  |
+| `/lab?sketch=` | one sketch on a bare canvas: `approach`, `rooms`, `impact`, `lattice`, `cube` (the cut), `materials`; `heat`, `e8`, `petals` retired |
 
 `?at=0.42` pins any of them at a fraction of its run, exactly — every scene is a
 pure function of its own progress. See `docs/v4-plan.md` for where the rebuild
