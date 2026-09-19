@@ -2,6 +2,7 @@ import { get } from 'svelte/store';
 import {
 	SCENES,
 	NEST,
+	TUNNEL,
 	span,
 	lerp,
 	clamp01,
@@ -13,6 +14,7 @@ import {
 } from '$lib/config';
 import { decade, landing, monitorRect, blaze, aspect } from '$lib/store/store';
 import { DECADES, shuffle } from '$lib/data/roomElements';
+import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
 import { settled } from '$lib/scenes/director';
 import { roomsFor } from './nest';
 
@@ -33,9 +35,13 @@ import { roomsFor } from './nest';
 // landing to the glass filling the frame, and through it, and what is behind
 // the glass is black — the space the next run opens on. See stepReturn().
 //
+// It falls at ONE PACE — the pace the approach arrived at — and eases to rest
+// only at the end; the last room lands LEVEL, so the glass is square in the
+// frame and the readout sits in it. See nest.zetaOf() and nest.pose().
+//
 // Every value here is a pure function of scene progress, so ?at= is exact. The
-// one exception is the swimmer's roll, which carries on from wherever the
-// approach left it rather than restarting on the cut.
+// one exception is the swimmer's roll and wobble, which run on its own clock
+// so they never stop — not for a popup, and not at the seam.
 
 const rad = (d) => (d * Math.PI) / 180;
 
@@ -44,7 +50,14 @@ export function createDescent({ THREE, renderer, nest }) {
 	const RETURN_DUR = SCENES.calculator.arrive;
 
 	const scene = new THREE.Scene();
-	scene.background = new THREE.Color(0x000000);
+	// The same ground the approach paints, with the same numbers: at the seam
+	// the portal's drawing has holes in it — between the monitor and the tower,
+	// under the keyboard — and what shows through them has to be the same on
+	// both sides of the cut.
+	const bu = backdropUniforms();
+	bu.color1.value.set(0x090b14);
+	bu.uFade.value = 1;
+	scene.backgroundNode = deep(bu);
 	const camera = new THREE.PerspectiveCamera(NEST.seamFov, 1, 0.05, 100);
 	let aspectR = 1;
 	const sw = nest.swimmer;
@@ -53,10 +66,9 @@ export function createDescent({ THREE, renderer, nest }) {
 		typeof window === 'undefined' ||
 		new URLSearchParams(window.location.search).get('sperm') !== '0';
 
+	const SPIN = -TUNNEL.spermSpin;
 	let t = 0;
 	let held = 0; // seconds since landing, while the room is up
-	let rollBase = 0;
-	let timeBase = 0;
 	let zetaEnd = 0;
 	const fwd = new THREE.Vector3();
 	const at = new THREE.Vector3();
@@ -88,9 +100,7 @@ export function createDescent({ THREE, renderer, nest }) {
 		ensureNest();
 		if (nest.root.parent !== scene) scene.add(nest.root);
 		scene.add(sw.group);
-		rollBase = sw.spinner.rotation.z;
-		timeBase = sw.material.uniforms.uTime.value;
-		zetaEnd = nest.levels.length - 1 + T.land;
+		zetaEnd = nest.zetaEnd();
 		landing.set(0);
 		blaze.set(0);
 		monitorRect.set(null);
@@ -100,7 +110,7 @@ export function createDescent({ THREE, renderer, nest }) {
 	}
 
 	function set(p) {
-		const zeta = zetaEnd * smootherstep(p);
+		const zeta = nest.zetaOf(p);
 		const { D, fov } = nest.pose(zeta, camera, aspectR);
 
 		// ── The swimmer ──────────────────────────────────────────────────
@@ -115,8 +125,8 @@ export function createDescent({ THREE, renderer, nest }) {
 		sw.group.position.copy(at);
 		sw.group.quaternion.copy(camera.quaternion);
 		sw.group.scale.setScalar(bodyH);
-		sw.spinner.rotation.z = rollBase - zeta * 2.5 * Math.PI * 2;
-		sw.material.uniforms.uTime.value = timeBase + zeta * 3.0;
+		sw.spinner.rotation.z = sw.clock * SPIN;
+		sw.material.uniforms.uTime.value = sw.clock;
 		sw.material.uniforms.uOpacity.value = SPERM ? 1 - smoothstep(T.gone - 0.006, T.gone, p) : 0;
 
 		// ── The splosh, the flash, the raster ────────────────────────────
@@ -128,6 +138,7 @@ export function createDescent({ THREE, renderer, nest }) {
 
 	function update(dt) {
 		t += dt;
+		sw.clock += dt;
 		set(clamp01(t / T.duration));
 		if (t >= T.duration) {
 			publish();
@@ -153,9 +164,11 @@ export function createDescent({ THREE, renderer, nest }) {
 		rt = 0;
 		handedOver = false;
 		from = zetaEnd;
-		// To the end of the last room's crossing: the glass fills the frame,
-		// and the camera goes through it into the black.
-		to = nest.levels.length - 0.001;
+		// Past the end of the last room's crossing: the glass fills the frame
+		// and the camera keeps going into it, and the room goes to black under
+		// it, so the frame the next flight opens on — black — is the frame
+		// this ends on.
+		to = nest.levels.length - 1 + T.through;
 	}
 	function stepReturn(dt) {
 		rt = Math.min(rt + dt, RETURN_DUR);
@@ -163,6 +176,7 @@ export function createDescent({ THREE, renderer, nest }) {
 		nest.pose(lerp(from, to, k), camera, aspectR);
 		sw.material.uniforms.uOpacity.value = 0;
 		nest.setSplosh(1, 0);
+		nest.setDim(1 - smoothstep(0.6, 1, k));
 		publish();
 		if (!handedOver && rt >= RETURN_DUR) {
 			handedOver = true;
@@ -186,6 +200,8 @@ export function createDescent({ THREE, renderer, nest }) {
 			aspectR = w / h;
 			camera.aspect = aspectR;
 			camera.updateProjectionMatrix();
+			bu.aspectRatio.value = aspectR;
+			bu.uPx.value = 1 / renderer.domElement.height;
 		},
 		remeasureMonitor() {
 			if (get(monitorRect)) publish();
