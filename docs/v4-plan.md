@@ -1,5 +1,22 @@
 # Conception Calculator 2000 — v4 build plan (WebGPU rebuild)
 
+> **Revision, 2026-09-19 — the cut was re-made on the lab.** Of the four
+> sketches only the descent stays (`lab/rooms.js`, now cycling through the
+> decades with the swimmer down the axis). The conception is now the **impact**
+> (`lab/impact.js`): a beam strikes a sphere — the pole — and the zeros of ζ
+> ring out from the strike as the log p rings. The expansion is dropped. The
+> bloom is now the **cube** (`lab/cube.js`): a cube that opens on an isometric
+> bedroom in 3D. Two new beats bracket them: the **approach** (`lab/approach.js`
+> — space, the swimmer, the archive adrift in it) before the descent, and the
+> **lattice** (`lab/lattice.js` — every integer a point at (a log 2, b log 3,
+> c log 5), closing on the one cell whose box is the cube) between the impact
+> and the room. `/v4` runs approach → descent → conception → lattice → bloom,
+> 55 s, no joins yet. The sections below still describe the earlier cut: §3.4
+> (the zeros) carries over to the impact as it stands; §3.5 (the petals) is
+> retired with `lab/{heat,petals}.js`, which stay in the tree for reference
+> only. The expansion (`lab/e8.js`) is kept and refined — it is not in the
+> cut, but it is not lost either.
+
 Written 2026-09-13 against `lab` = bf6a512 (four sketches on top of `fullflow-v4` = 3a4fa48, the toolchain commit, PR #67, not yet on `main` = ff2358a). Synthesised from seven research dimensions, each adversarially verified; every world-fact carries the date it was read and every number that a verifier corrected is used in its corrected form.
 
 Ground truth today (read from the tree 2026-09-13): three 0.186.0 · svelte 5.57.0 · @sveltejs/kit 2.70.3 · vite 8.3.0 · playwright 1.63.0 (browsers.json expects Chromium 153.0.8010.12, rev 1243; /opt/pw-browsers holds 141, rev 1194) · WebGLRenderer + ShaderMaterials in `src/lib/three/Stage.svelte` · durations flyIn 13.5 s / conception 5.7 s / computation 11.5 s = 30.7 s, the reveal being the 1.5 s `zoom` window and a DOM readout · `ColorManagement.enabled = false` (theme.js) · `src/lib/lab/{heat,e8,petals,rooms}.js` under `/lab?sketch=…&at=…&gl=1`.

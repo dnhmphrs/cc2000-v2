@@ -2,34 +2,36 @@
 	import { onMount } from 'svelte';
 
 	// ── v4, the rough cut ────────────────────────────────────────────────────
-	// The new shape of the run after the strike, as one continuous piece: the
-	// four lab sketches in the plan's order and at the plan's lengths —
+	// The new shape of the whole run, as one continuous piece: the five lab
+	// sketches in the brief's order, each at its own length —
 	//
-	//   conception  9.0 s   the ovum burns and settles onto the invariant
-	//   expansion   8.0 s   the icosahedron expands out to E8 and the wheel
-	//   descent     7.0 s   rooms through rooms
-	//   bloom      11.5 s   the flower opens on the ending
+	//   approach     9 s   space; the swimmer, and the archive adrift in it
+	//   descent     14 s   rooms through rooms, decade after decade
+	//   conception  12 s   the beam strikes the sphere; the zeros ring out
+	//   lattice      9 s   every number a point; the lens closes on one cell
+	//   bloom       11 s   the cell is a cube, and the cube opens on a room
 	//
-	// Hard cuts between beats. The one-shot seams — fly-in into conception,
-	// the push into the first room, the bud in the deepest glass — are the
-	// scene PRs' work; this exists to look at the shape and the weight.
+	// Hard cuts between beats. The joins — the swimmer speeding up into the
+	// beam, the box that is the cell — are not made yet; this exists to look
+	// at the shape and the weight.
 	//
 	//   ?at=0.42   pin the whole run at a fraction (every beat is a pure
 	//              function of progress, so this is exact)
-	//   ?gl=1      the WebGL 2 backend; the conception needs WebGPU and is
-	//              skipped there
+	//   ?gl=1      the WebGL 2 backend
 	const BEATS = [
-		{ key: 'heat', name: 'conception', seconds: 9.0 },
-		{ key: 'e8', name: 'expansion', seconds: 8.0 },
-		{ key: 'rooms', name: 'descent', seconds: 7.0 },
-		{ key: 'petals', name: 'bloom', seconds: 11.5 }
+		{ key: 'approach', name: 'approach', seconds: 9 },
+		{ key: 'rooms', name: 'descent', seconds: 14 },
+		{ key: 'impact', name: 'conception', seconds: 12 },
+		{ key: 'lattice', name: 'lattice', seconds: 9 },
+		{ key: 'cube', name: 'bloom', seconds: 11 }
 	];
 	const HOLD = 1.5; // seconds on the last frame before the loop
 	const LOADERS = {
-		heat: () => import('$lib/lab/heat.js'),
-		e8: () => import('$lib/lab/e8.js'),
+		approach: () => import('$lib/lab/approach.js'),
 		rooms: () => import('$lib/lab/rooms.js'),
-		petals: () => import('$lib/lab/petals.js')
+		impact: () => import('$lib/lab/impact.js'),
+		lattice: () => import('$lib/lab/lattice.js'),
+		cube: () => import('$lib/lab/cube.js')
 	};
 
 	let canvas;
@@ -58,7 +60,6 @@
 		// Every beat is built up front, pinned at its start.
 		const beats = [];
 		for (const b of BEATS) {
-			if (b.key === 'heat' && lane !== 'webgpu') continue;
 			const { default: make } = await LOADERS[b.key]();
 			const sketch = await make({ THREE, renderer, at: 0 });
 			beats.push({ ...b, sketch });

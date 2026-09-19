@@ -12,25 +12,34 @@ and the room. Shot on the WebGL lane at `?seed=1`, so the decade-to-pane
 assignment and the motes fall the same way on every load. This is the picture
 the rebuild has to beat rather than break.
 
-**2 — the rebuild, roughed in.** The four new beats end to end at `/v4`, 35.5
-seconds on one WebGPU renderer, at the lengths the plan gives them:
+**2 — the rebuild, roughed in.** The five new beats end to end at `/v4`, 55
+seconds on one WebGPU renderer, each at its own sketch's length:
 
-| beat       | seconds |                                                 |
-| ---------- | ------- | ----------------------------------------------- |
-| conception | 9.0     | the ovum burns and settles onto the invariant   |
-| expansion  | 8.0     | the icosahedron expands out to E8 and the wheel |
-| descent    | 7.0     | rooms through rooms                             |
-| bloom      | 11.5    | the flower opens on the ending                  |
+| beat       | seconds | sketch            |                                                                                       |
+| ---------- | ------- | ----------------- | ------------------------------------------------------------------------------------- |
+| approach   | 9       | `lab/approach.js` | space; the swimmer, and the archive adrift around it                                  |
+| descent    | 14      | `lab/rooms.js`    | rooms through rooms, decade after decade, the swimmer down the axis                   |
+| conception | 12      | `lab/impact.js`   | a beam strikes the sphere — the pole — and the zeros of ζ ring out as the log p rings |
+| lattice    | 9       | `lab/lattice.js`  | every integer a point at (a log 2, b log 3, c log 5); the lens closes on one cell     |
+| bloom      | 11      | `lab/cube.js`     | the cell is a cube, and the cube opens on an isometric bedroom                        |
 
-The cuts between those four are hard. The one-shot seams — the fly-in into the
-conception, the push into the first room, the bud in the deepest glass — are
-the scene PRs' work; this exists to look at the shape and the weight. The
-fly-in is not in it: the brief keeps it as it is, and it stays on the old
-renderer until the Stage swap.
+Of the four sketches the last cut was made from, only the descent stayed in
+the cut (the E8 expansion is kept on the side, refined, at `/lab?sketch=e8`),
+and it was remade: it cycles through the decades now, with exact crossings at every
+glass, and the swimmer swims down the middle of it. The conception and the
+bloom are new sketches under the same names; the approach and the lattice are
+the two beats the brief asked to workshop — the one before the descent, which
+has to feature the swimmer, and the wildcard. The cuts between the five are
+hard: the swimmer speeding up into the beam, and the lattice's cell being the
+cube, are joins for later. The fly-in is not in it: it stays on the old
+renderer until the Stage swap, and the approach is what would replace it.
 
-Weight, which is what the brief asked to move: the reveal is 18.5 s of 49 s in
-the plan's full run, against 1.5 s of 30.7 s today. The fly-in goes from 44%
-of the run to 28%.
+**3 — on the side.** The E8 expansion, kept and refined at
+`/lab?sketch=e8` though not in the cut: the 600-cell grows out of the
+icosahedron shell by shell, every vertex born inside its place and swelling out
+to it; the second shell is born on the first, φ larger; and a rotation of
+4-space lands the pair on the H4 Coxeter plane, the wheel — eight rings of
+thirty, drawn as dots now as well as edges, hot at the hub and ember at the rim.
 
 ## Reproducing the page
 
@@ -40,6 +49,7 @@ of the run to 28%.
       node scripts/shots.mjs
 
 for the top half, and the same `?at=` pins against `/v4` on the WebGPU lane
-(`LANE=webgpu`, `scripts/lane.mjs`) for the bottom. The page itself was
+(`LANE=webgpu`, `scripts/lane.mjs`) for the bottom — `?at=` there is a fraction
+of the whole 55 s, so 0.44 is 1.2 s into the conception. The page itself was
 composed in the scratchpad — it is a picture of the work, not part of the
 build.
