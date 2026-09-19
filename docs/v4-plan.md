@@ -16,6 +16,14 @@
 > retired with `lab/{heat,petals}.js`, which stay in the tree for reference
 > only. The expansion (`lab/e8.js`) is kept and refined — it is not in the
 > cut, but it is not lost either.
+>
+> **And later the same day: the site itself.** Of the five, the two that were
+> bought — the approach and the descent — are now the run at `/`, on one
+> WebGPU renderer, with the title card, the two mid-flight popups and the room
+> readout carried over from the WebGL run: `three/world/{nest,approach,descent}.js`
+> and a rewritten `three/Stage.svelte`. The descent goes all the way down to
+> the answer's room and ends with a white splosh on its screen. See
+> `docs/v4-flow.md`. The lab stays the workshop.
 
 Written 2026-09-13 against `lab` = bf6a512 (four sketches on top of `fullflow-v4` = 3a4fa48, the toolchain commit, PR #67, not yet on `main` = ff2358a). Synthesised from seven research dimensions, each adversarially verified; every world-fact carries the date it was read and every number that a verifier corrected is used in its corrected form.
 

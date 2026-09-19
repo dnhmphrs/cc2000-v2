@@ -4,8 +4,8 @@ import { dotMaterial, dots } from '$lib/three/tsl/materials';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
 import { elementUrl, DECADES } from '$lib/data/roomElements';
 import { SCREEN_GLASS } from '$lib/config/layout';
-import { loadSwimmer } from './swimmer';
-import { glassCut } from './glass';
+import { loadSwimmer } from '$lib/three/tsl/swimmer';
+import { glassCut } from '$lib/three/tsl/glass';
 
 // ── Sketch: the approach ─────────────────────────────────────────────────────
 // The very start, before the descent. Space, black, a sky of stars — and the

@@ -2,8 +2,8 @@ import { vec4 } from 'three/tsl';
 import { LAYERS, placement, elementUrl } from '$lib/data/roomElements';
 import { SCREEN_GLASS } from '$lib/config/layout';
 import { PHI } from '$lib/three/geometry/icosahedron';
-import { loadSwimmer } from './swimmer';
-import { glassOnly } from './glass';
+import { loadSwimmer } from '$lib/three/tsl/swimmer';
+import { glassOnly } from '$lib/three/tsl/glass';
 
 // ── Sketch four: rooms through rooms, through the decades ────────────────────
 // The site's room is six flat drawings at six depths behind a golden-rectangle

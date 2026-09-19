@@ -371,3 +371,62 @@ export function aspectKind(w = 1, h = 1) {
 	if (r > ASPECT.landscapeAbove) return 'landscape';
 	return 'square';
 }
+
+// ── The approach (the rebuild's first scene) ─────────────────────────────────
+// Space, black, a sky of stars; the swimmer riding ahead of the lens, seen from
+// behind as it was in the fly-in; and the archive adrift — monitors and the
+// furniture of four decades' bedrooms, passing on either side. Dead ahead is
+// the PORTAL: one monitor whose glass holds the first room of the descent.
+// See three/world/approach.js.
+export const APPROACH = {
+	// The flight's lens. It walks to NEST.seamFov over SCENES.approach.lens, so
+	// the frame this scene ends on is the frame the descent opens on.
+	fov: 40,
+	// The swimmer: how far ahead of the lens it rides, and how much of the
+	// frame's half-height its cross-section covers (TUNNEL.spermLead/spermSpan,
+	// a shade bigger — there is no ovum to share the frame with).
+	lead: 5.5,
+	span: 0.28,
+	// World units from the first frame to the portal's glass.
+	travel: 150,
+	// How much of the archive is adrift, and the tube it drifts in — a radius
+	// range, clear of the axis the swimmer and the portal are on.
+	screens: 40,
+	furniture: 64,
+	tube: [2.6, 9.6],
+	// The sky, and the debris close in that makes the speed read.
+	stars: 1100,
+	brightStars: 90,
+	starDist: 150,
+	motes: 500,
+	moteSpan: 70,
+	moteRadius: 7,
+	moteLength: 1.4
+};
+
+// ── The nest (the descent) ───────────────────────────────────────────────────
+// Rooms inside rooms: every decade's monitor has a glass painted one flat
+// colour, and the next room sits inside it, scaled onto the glass and turned by
+// the screw. See three/world/nest.js.
+export const NEST = {
+	// The lens the descent opens on — which is the lens the approach ends on —
+	// and the one it opens out to over the first levels.
+	seamFov: 24,
+	fov: 34,
+	// Degrees of turn per level, and the lateral truck about the axis per level,
+	// in frame heights.
+	screw: 15,
+	sway: 0.08,
+	// ICOSA.roomDepth: how far behind its frame a room's back wall sits.
+	depth: 3.0,
+	// The wall covers the FRAME, which only covers the frustum from infinitely
+	// far; the wall's own edge pixels are smeared outward this many times over.
+	wallCover: 2,
+	// The portal monitor's width, in world units, out in space.
+	portalWidth: 3.4,
+	// The swimmer down the axis: its cross-section, of the frame's half-height
+	// at the riding distance, and how far it rides toward the frame being
+	// fallen into.
+	spermSpan: 0.28,
+	spermRide: 0.5
+};

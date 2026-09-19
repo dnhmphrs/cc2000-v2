@@ -44,7 +44,8 @@ function scale(scenes) {
 			'launch',
 			'arrive',
 			'resultIn',
-			'again'
+			'again',
+			'drain'
 		]) {
 			if (typeof out[name][k] === 'number') out[name][k] /= SPEED;
 		}
@@ -528,6 +529,83 @@ export const SCENES = scale({
 
 		// How hard the blueprint field burns. It is the machine's own effort.
 		flare: [0.08, 0.9]
+	},
+
+	// ── Approach ─────────────────────────────────────────────────────────────
+	// The rebuild's fly-in. Space; the swimmer ahead of the lens, from behind;
+	// the archive adrift and passing; the portal dead ahead, growing. The two
+	// questions are asked on the way, and the scene HOLDS at each (the `gate`
+	// store) until it is answered. It ends with the portal's glass filling the
+	// frame's height on the seam lens — the exact frame the descent opens on.
+	//
+	//  0   .1                 .42            .78      .86       .985 1
+	//  |in |the long haul     |ask dob       |spicy   |thin out |seam
+	//                                                 |lens closes to the seam|
+	approach: {
+		duration: 12,
+
+		// The sky, the debris and the swimmer come up out of the black. The
+		// title card is over the first of this on the first run, and on every
+		// run after it the glass the loop came home through was black.
+		fadeIn: [0.0, 0.1],
+
+		// Where the flight stops to ask. Progress marks, not windows: the scene
+		// holds at each until the popup is answered.
+		askDob: 0.42,
+		askSpicy: 0.78,
+
+		// glide(): the fraction of the travel spent at constant speed before the
+		// stop begins.
+		hold: 0.8,
+
+		// The lens walks from APPROACH.fov to NEST.seamFov. Closing the lens on
+		// the way in is the other half of the dolly zoom: the portal looms.
+		lens: [0.74, 0.985],
+
+		// The bank and the drift, easing off to level for the seam.
+		level: [0.7, 0.92],
+		drift: 0.5,
+
+		// Everything that is not the portal goes out before the seam, so the
+		// frame this ends on is the nest and nothing else.
+		thin: [0.86, 0.985],
+
+		// The swimmer pulls in from its riding distance to the descent's, so it
+		// is where the next scene expects it.
+		dive: [0.82, 0.99]
+	},
+
+	// ── Descent ──────────────────────────────────────────────────────────────
+	// Rooms through rooms, decade after decade, down to the answer's room. The
+	// last thing the swimmer does is hit that room's screen, and the screen goes
+	// white — the splosh — and the readout comes up in it.
+	//
+	//  0                                        .82    .88   .962 .975 1
+	//  |the fall, on one ease, six rooms deep    |raster|dive |splosh  |land
+	descent: {
+		duration: 14,
+
+		// How many rooms deep, the last being the answer's, and how far into the
+		// last room's crossing the run comes to rest — past the point where the
+		// previous glass has left the frame, with the room still round the
+		// monitor. The return flight carries on from there to the glass.
+		rooms: 6,
+		land: 0.72,
+
+		// The swimmer leaves the axis for the glass, and goes in.
+		dive: [0.88, 0.972],
+		gone: 0.975,
+
+		// The white on the glass, the flash across the frame, and the raster
+		// coming off — the last thing the run does is stop being a screen and
+		// become a place.
+		splosh: [0.962, 1.0],
+		blaze: [0.966, 1.0],
+		landing: [0.82, 1.0],
+
+		// Seconds, once landed, for the white to drain out of the glass under
+		// the readout.
+		drain: 0.9
 	},
 
 	// ── Room ─────────────────────────────────────────────────────────────────
