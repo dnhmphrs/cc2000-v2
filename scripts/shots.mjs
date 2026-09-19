@@ -34,7 +34,7 @@ const W = Number(process.env.W ?? 1280);
 const H = Number(process.env.H ?? 800);
 const PLAN = JSON.parse(process.env.PLAN ?? '[["2",[0,0.25,0.5,0.75,1]]]');
 const SEED = process.env.SEED ?? '1';
-const NAME = { 2: 'approach', 3: 'descent', 5: 'room' };
+const NAME = { 2: 'approach', 3: 'descent', 4: 'kaleido', 5: 'room' };
 
 fs.mkdirSync(OUT, { recursive: true });
 

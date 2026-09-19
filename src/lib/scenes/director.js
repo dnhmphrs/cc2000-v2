@@ -13,18 +13,18 @@ import {
 } from '$lib/store/store';
 
 // ── The director ─────────────────────────────────────────────────────────────
-// The three scenes in order, and the things that can happen between them. This
+// The four scenes in order, and the things that can happen between them. This
 // is the whole control flow of the site; every transition goes through a
 // function here, so there is one place to read to know what follows what.
 //
-//   (title card) ──begin()──▶ approach ──▶ descent ──▶ room
-//                                ▲                      │
-//                                └──────── again() ─────┘
+//   (title card) ──begin()──▶ approach ──▶ kaleido ──▶ descent ──▶ room
+//                                ▲                                  │
+//                                └──────────── again() ─────────────┘
 //
 // An out-of-range birthday is refused in the popup that asked for it, mid-
 // flight, and the flight stays held until the date is changed.
 //
-// The stage advances the two 3D scenes itself as each one finishes (they know
+// The stage advances the 3D scenes itself as each one finishes (they know
 // their own durations); the two ends of the loop are driven from the DOM.
 
 // NO CALCULATOR. This build has no machine: the run opens on the title card,
@@ -39,8 +39,8 @@ import {
 // place so every importer sees the change.
 export const RUNS = {
 	site: {
-		order: ['approach', 'descent', 'room'],
-		keys: { 1: 'restart', 2: 'approach', 3: 'descent', 5: 'room' }
+		order: ['approach', 'kaleido', 'descent', 'room'],
+		keys: { 1: 'restart', 2: 'approach', 3: 'descent', 4: 'kaleido', 5: 'room' }
 	},
 	v2: {
 		order: ['flyIn', 'conception', 'computation', 'room'],

@@ -6,12 +6,14 @@ import { AIR, aspectKind } from '$lib/config';
 // yourself writing one from somewhere not listed, that is the bug.
 
 // ── Where we are ─────────────────────────────────────────────────────────────
-// The three scenes, in order. `scene` is the single source of truth for what
+// The four scenes, in order. `scene` is the single source of truth for what
 // the site is doing: the page picks which DOM screen to mount from it, and the
 // stage picks which 3D scene to run.
 //
 //   approach     space; the swimmer ahead of the lens, the archive adrift, the
-//                two questions asked on the way, the portal dead ahead
+//                two questions asked on the way, a screen dead ahead
+//   kaleido      through the glass: the archive looped, in rings down a
+//                tunnel, turning and cycling in colour, to the portal
 //   descent      rooms through rooms, decade after decade, down to the
 //                answer's room and the splosh on its screen
 //   room         the answer, in the room's monitor

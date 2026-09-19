@@ -4,6 +4,7 @@ import {
 	SCENES,
 	APPROACH,
 	NEST,
+	KALEIDO,
 	TUNNEL,
 	span,
 	lerp,
@@ -19,7 +20,7 @@ import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
 import { dotMaterial, dots } from '$lib/three/tsl/materials';
 import { createMotes } from '$lib/three/tsl/motes';
 import { glassCut } from '$lib/three/tsl/glass';
-import { DECADES, shuffle } from '$lib/data/roomElements';
+import { DECADES } from '$lib/data/roomElements';
 import { SCREEN_GLASS } from '$lib/config';
 import { rand } from '$lib/random';
 import { roomsFor } from './nest';
@@ -33,10 +34,11 @@ import { roomsFor } from './nest';
 // furniture of those rooms — desks, beds, posters, clocks — tumbling past on
 // either side. Close in, debris streaks by, which is what makes the speed read.
 //
-// One is dead ahead: the PORTAL, a monitor whose glass holds the first room of
-// the descent. It grows, and the run ends with its glass filling the frame's
-// height on the seam lens, which is the exact frame the descent opens on —
-// nest.pose(0), asked for by both scenes.
+// One is dead ahead: the SCREEN, a monitor whose glass holds the tunnel the
+// archive loops down on the other side (world/kaleidoscope.js). It grows, and
+// the run ends with its glass filling the frame's height on the seam lens,
+// which is the exact frame the kaleido opens on — kaleidoscope.pose(0), asked
+// for by both scenes.
 //
 // ── The opening ──────────────────────────────────────────────────────────────
 // The card lifts, the sky develops, and then the swimmer is there: it fades in
@@ -50,9 +52,9 @@ import { roomsFor } from './nest';
 // is in to the portal, and comes out of the dark — unseen beyond
 // APPROACH.seen[1] units ahead, fully there inside seen[0] — so what is on
 // screen is what is passing, never the whole field seen from the far end. It
-// runs right up to the glass: the last pieces flank the portal as it takes
+// runs right up to the glass: the last pieces flank the screen as it takes
 // the frame and leave by the edges before the seam, which a tube round the
-// axis does on its own.
+// axis does on its own — and inside the glass the archive goes on, looped.
 //
 // ── The flight takes the answers ─────────────────────────────────────────────
 // There is no machine, so the run asks its two questions on the way in, and
@@ -63,22 +65,21 @@ import { roomsFor } from './nest';
 // and the tail's wobble are on the swimmer's own clock, as in the tunnel — the
 // one thing in the run that never stops, not even at the seam.)
 //
-// ── One pace, through the seam ───────────────────────────────────────────────
-// The lens holds one speed for most of the flight and then eases — not to a
-// stop, to the speed the DESCENT opens at, which the nest works out from its
-// own geometry. So the camera arrives at the portal moving and the fall
-// carries on at the pace it arrived at.
+// ── One speed, through the seam ──────────────────────────────────────────────
+// The lens flies at ONE speed the whole way into the glass, no brake, and the
+// tunnel on the other side carries on at it; the fall's pace is met at the far
+// end of the tunnel, not here. So the swimmer never slows in space.
 //
-// The portal and room 0 are chosen when the run begins, because they are drawn
-// from the first frame; the deeper rooms are set the moment the answer is in,
-// while they are still too small to see. See finalise().
+// The screen, the portal and room 0 are chosen when the run begins, because
+// they are drawn from the first frame; the deeper rooms are set the moment the
+// answer is in, while they are still too small to see. See finalise().
 //
 // Every number here comes from config/timing.js (SCENES.approach) and
-// config/space.js (APPROACH, NEST).
+// config/space.js (APPROACH, KALEIDO, NEST).
 
 const rad = (d) => (d * Math.PI) / 180;
 
-export async function createApproach({ THREE, renderer, nest }) {
+export async function createApproach({ THREE, renderer, nest, kal }) {
 	const T = SCENES.approach;
 	const A = APPROACH;
 
@@ -255,43 +256,20 @@ export async function createApproach({ THREE, renderer, nest }) {
 	let finalised = false;
 	let zEnd = 0;
 	let zFirst = 0;
-	let seamD = 0;
 
-	// The nest sits with the portal's glass dead ahead on the axis, `travel`
-	// units down it; the lens stops exactly where nest.pose(0) puts it — room
-	// 0's frame filling the height on the seam lens, seen through the portal's
-	// glass. Asked of the nest rather than worked out here, so the two scenes
-	// cannot disagree about it.
-	const probe = new THREE.PerspectiveCamera();
-	// The flight's profile: constant speed for `cruise` of the scene, then a
-	// straight-line ease to `rho` of that speed at the seam — where rho is
-	// whatever makes the arrival speed the descent's opening speed. Distance
-	// travelled is S·g(τ) with g'(0) = a, g'(1) = a·rho.
-	let rho = 1;
-	let ga = 1;
-	function placeNest() {
-		const pg = nest.portal.glass;
-		nest.root.position.set(-pg.x, -pg.y, -A.travel);
-		nest.refreshClips();
-		const { D } = nest.pose(0, probe, 1);
-		zEnd = probe.position.z;
-		seamD = D;
-		const S = -zEnd;
-		const q = (nest.openingSpeed() * T.duration) / S; // arrival speed, in cruise units
-		const c = (1 - T.cruise) / 2;
-		rho = Math.max(0.05, Math.min(1, (q * (1 - c)) / (1 - q * c)));
-		ga = 1 / (1 - (1 - rho) * c);
-		// And the archive: evenly from where its first piece comes into view —
+	// The screen sits with its glass dead ahead on the axis, `travel` units
+	// down it, the tunnel inside it and the nest at the tunnel's end; the lens
+	// stops exactly where the kaleidoscope says the glass fills the frame's
+	// height on the seam lens. Asked of it rather than worked out here, so the
+	// two scenes cannot disagree about it. ONE SPEED, no brake — the tunnel
+	// carries on at it — so the flight is simply zEnd · p.
+	function placeArchive() {
+		zEnd = kal.z0;
+		// The archive: evenly from where its first piece comes into view —
 		// seen[1] ahead of the lens at archiveFrom — down to where the lens
-		// stops. Beyond that is the portal's glass, which nothing may sit in.
-		zFirst = zEnd * flown(T.archiveFrom) - A.seen[1];
+		// stops. Beyond that is the screen's glass, which nothing may sit in.
+		zFirst = zEnd * T.archiveFrom - A.seen[1];
 		for (const it of items) it.mesh.position.z = lerp(zFirst, zEnd, it.u);
-	}
-	function flown(tau) {
-		const t1 = T.cruise;
-		if (tau <= t1) return ga * tau;
-		const x = tau - t1;
-		return ga * (t1 + x - ((1 - rho) * x * x) / (2 * (1 - t1)));
 	}
 
 	function portrait() {
@@ -308,7 +286,7 @@ export async function createApproach({ THREE, renderer, nest }) {
 			rooms: roomsFor(first, get(decade), SCENES.descent.rooms),
 			portrait: portrait()
 		});
-		placeNest();
+		kal.placeNest();
 	}
 
 	function enter() {
@@ -317,17 +295,15 @@ export async function createApproach({ THREE, renderer, nest }) {
 		askedSpicy = false;
 		finalised = false;
 		landing.set(0);
-		// A fresh nest for this run: the portal's set and the first room are
-		// drawn from the first frame, so they are chosen now, at random; the
-		// rest is set by finalise() when the answer is known.
-		const picks = shuffle(DECADES);
-		nest.build({
-			portal: picks[0],
-			rooms: roomsFor(picks[1], get(decade), SCENES.descent.rooms),
-			portrait: portrait()
-		});
+		// A fresh run: the screen, the portal's set and the first room are
+		// drawn from the first frame, so they are chosen now, at random, and
+		// everything placed; the deeper rooms are set by finalise() when the
+		// answer is known.
+		kal.freshRun({ answer: get(decade), portrait: portrait() });
 		finalised = !!get(decade);
-		placeNest();
+		placeArchive();
+		kal.set(0);
+		if (kal.root.parent !== scene) scene.add(kal.root);
 		if (nest.root.parent !== scene) scene.add(nest.root);
 		rig.add(sw.group);
 		sw.group.quaternion.identity();
@@ -368,8 +344,8 @@ export async function createApproach({ THREE, renderer, nest }) {
 		camera.fov = fov;
 		camera.updateProjectionMatrix();
 
-		// ── The camera: one speed, then easing to the descent's ──────────
-		const z = zEnd * flown(p);
+		// ── The camera: one speed ────────────────────────────────────────
+		const z = zEnd * p;
 		const level = 1 - smoothstep(T.level[0], T.level[1], p);
 		rig.position.set(
 			Math.sin(p * 1.7 + 0.6) * T.drift * level,
@@ -387,18 +363,20 @@ export async function createApproach({ THREE, renderer, nest }) {
 		for (const s of starMats) s.mat.uniforms.uOpacity.value = s.opacity * on;
 		motes.set(z, on, span(p, T.fadeIn));
 		uOn.value = on;
-		// The portal comes up with the sky, not before it: under the title card
-		// the frame is black.
+		// The screen, the tunnel inside it and the portal at the tunnel's end
+		// come up with the sky, not before it: under the title card the frame
+		// is black.
 		nest.setDim(up);
+		kal.setDim(up);
 		for (const it of items) it.mesh.rotation.z = it.rot0 + p * it.rate;
 
 		// ── The swimmer ──────────────────────────────────────────────────
 		// It rides ahead of the LENS, dead centre, and at the end pulls in to
-		// where the descent expects it. Sized off the lens and the ride so it
+		// where the tunnel expects it. Sized off the lens and the ride so it
 		// holds its place in the frame however either changes. It arrives by
 		// fading in, where it rides.
 		const inK = smootherstep(span(p, T.swimmerIn));
-		const lead = lerp(A.lead, seamD * NEST.spermRide, smootherstep(span(p, T.dive)));
+		const lead = lerp(A.lead, KALEIDO.lead, smootherstep(span(p, T.dive)));
 		const bodyH = A.span * 2 * lead * Math.tan(rad(fov) / 2);
 		sw.group.position.set(0, 0, -lead);
 		sw.group.scale.setScalar(bodyH);
@@ -406,11 +384,11 @@ export async function createApproach({ THREE, renderer, nest }) {
 		sw.material.uniforms.uTime.value = sw.clock;
 		sw.material.uniforms.uOpacity.value = SPERM ? inK : 0;
 
-		// The stencil chain, for wherever the camera is. Always base 0 here —
-		// the lens stops short of the portal's glass — but the visibility has to
-		// be stated, and the clear value with it.
+		// The stencil chain, for wherever the camera is. Always 0 here — the
+		// lens stops short of the screen's glass — but the visibility has to be
+		// stated, and the clear value with it.
 		camera.getWorldPosition(camWorld);
-		nest.rebase(camWorld.z, camera.near);
+		kal.rebase(camWorld.z, camera.near);
 	}
 
 	return {
@@ -419,10 +397,10 @@ export async function createApproach({ THREE, renderer, nest }) {
 		enter,
 		update,
 		set,
-		// The flight's profile, for the harness: where the lens stops and how
-		// far the glass is then, the brake, and where the archive starts.
+		// The flight's profile, for the harness: where the lens stops, where
+		// the archive starts, and the speeds either side of the tunnel.
 		get profile() {
-			return { zEnd, seamD, rho, ga, zFirst };
+			return { zEnd, zFirst, ...kal.speeds };
 		},
 		render() {
 			renderer.render(scene, camera);

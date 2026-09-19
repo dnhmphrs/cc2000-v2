@@ -36,7 +36,8 @@ its WebGL 2 backend without saying so. Every frame is shot with `?seed=1`, so
 the panes and the motes fall the same way on every load; a sheet that differs
 from another sheet of the same beat is a change, not the shuffle.
 
-Scene keys are the dev harness's own: `2` approach, `3` descent, `5` room.
+Scene keys are the dev harness's own: `2` approach, `4` kaleido, `3` descent,
+`5` room.
 `1` restarts the run from the title card. They are bound BY NAME in Dev.svelte
 rather than by position in `ORDER`, so a scene coming or going cannot slide a
 key and silently repoint every PLAN in this file and in `verify.mjs`.
@@ -50,27 +51,34 @@ Two traps that have already cost a round each:
   anything a scene inherits from the one before it — rather than setting from its
   own progress — is absent in a seeked frame and present in a real run. If a
   screenshot is the evidence for a claim, check the claim survives BOTH.
-- **The two 3D scenes are one shot.** approach at 1 and descent at 0 must be
-  the same picture — both are `nest.pose(0)`. Diff them pixel-wise rather than
+- **The three 3D scenes are one shot.** approach at 1 and kaleido at 0 must be
+  the same picture — both are `kaleidoscope.pose(0)` — and so must kaleido at 1
+  and descent at 0 — both `nest.pose(0)`. Diff them pixel-wise rather than
   eyeballing, with `?sperm=0` on both (the swimmer's roll is on real time, so
   it is the one thing two loads never agree on) and reached by the SAME path
-  (key 2 then 3 for the descent, so the seeded rooms match); a mean delta under
-  0.02/255 is what it measures today, anything past 1 is a real seam.
+  (key 2 then 4 for the kaleido, 2, 4 then 3 for the descent, so the seeded
+  screen and rooms match); a mean delta under 0.02/255 is what it measures
+  today, anything past 1 is a real seam.
 
 Write scratch scripts and screenshots to the scratchpad, never into `scripts/`.
 A script living there cannot resolve the project's `node_modules`, so import by
 absolute path: `from '/home/user/cc2000-v2/node_modules/playwright/index.mjs'`.
 
-## This build has no machine, and two scenes
+## This build has no machine, and three scenes
 
 The run is `three/Stage.svelte` on ONE `WebGPURenderer` (WebGL 2 behind it
-where there is no WebGPU; `?gl=1` forces it), and two 3D scenes that are plain
-modules under `three/world/`: the **approach** (`approach.js` — space, the
-swimmer ahead of the lens from behind, the archive adrift, the portal dead
-ahead) and the **descent** (`descent.js` — rooms through rooms, down to the
-answer's room and the splosh on its screen). Both walk the same **nest**
-(`nest.js`), which is where the rooms, the stencil chain, the camera pose and
-the glass rect live. `scenes/FlyIn|Conception|Computation.svelte`, `three/world/{tunnel,egg,lattice}.js`,
+where there is no WebGPU; `?gl=1` forces it), and three 3D scenes that are
+plain modules under `three/world/`: the **approach** (`approach.js` — space,
+the swimmer ahead of the lens from behind, the archive adrift, a screen dead
+ahead), the **kaleido** (`kaleido.js` — through that screen's glass and down
+the tunnel inside it, the archive looped in rings, turning and cycling in
+colour, to the portal at the far end) and the **descent** (`descent.js` — rooms
+through rooms, down to the answer's room and the splosh on its screen). The
+first two walk the same **kaleidoscope** (`kaleidoscope.js` — the screen, the
+rings, the camera down the tunnel, and where the nest goes), the last two the
+same **nest** (`nest.js` — the rooms, the stencil chain, the camera pose and
+the glass rect), and the nest's stencil chain sits one level up from the
+screen's. `scenes/FlyIn|Conception|Computation.svelte`, `three/world/{tunnel,egg,lattice}.js`,
 `three/shaders/` and `components/Background.svelte` are the WebGL run they
 replaced, still playable at `/v2` on its own Stage (`three/StageV2.svelte`,
 `routes/v2/`): the same card, popups, room and director, switched to that run's
@@ -93,9 +101,10 @@ Three consequences worth remembering:
 - **The answer resolves mid-flight**, not before it. The date is proved
   answerable when the first popup closes and the archive is asked properly when
   the second does. An out-of-range date is refused IN the popup — there is no
-  machine to report it on and no room to fall into. The nest's portal and first
-  room are chosen when the run starts; the deeper rooms are set the moment the
-  answer is in, while they are too small to see (`approach.js finalise()`).
+  machine to report it on and no room to fall into. The screen, the nest's
+  portal and its first room are chosen when the run starts; the deeper rooms
+  are set the moment the answer is in, while they are too small to see
+  (`approach.js finalise()`).
 - **The loop home has no DOM half.** The camera flies through the room's monitor
   and `descent.js stepReturn()` hands the run to the approach when the glass has
   filled the frame. The glass is black and so is the space behind it, so there

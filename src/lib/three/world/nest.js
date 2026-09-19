@@ -32,12 +32,14 @@ import { ADD } from '$lib/three/tsl/materials';
 // sway come in from rest at the seam and go out before the last room, which
 // lands level (rollOf, pose).
 //
-// Each level is clipped to its parent's glass by a stencil chain: the portal's
-// glass increments the stencil 0→1, room 0 draws where it is 1, its glass
-// increments to 2, and so on; every level's desk and bed are drawn afterwards,
-// deepest first, where the stencil is ≥ theirs. Once the camera has passed a
-// glass plane that level is dropped and the stencil is CLEARED to the new
-// base, so no material ever changes. See rebase().
+// Each level is clipped to its parent's glass by a stencil chain, ONE LEVEL UP
+// from the screen the flight ends in (world/kaleidoscope.js, whose glass is
+// 0→1): the portal's bezel draws where the stencil is 1, its glass increments
+// it to 2, room 0 draws where it is 2, its glass increments to 3, and so on;
+// every level's desk and bed are drawn afterwards, deepest first, where the
+// stencil is ≥ theirs. Once the camera has passed a glass plane that level is
+// dropped and the stencil is CLEARED to the new base, so no material ever
+// changes. See rebase().
 //
 // The SPLOSH is a white blot on the last room's glass, and it lives here
 // because the glass does: the descent drives it with setSplosh().
@@ -263,9 +265,10 @@ export async function createNest({ THREE, renderer }) {
 			return mat;
 		};
 
-		// The portal: a monitor, bezel and glass, out in the dark. The bezel is
-		// drawn where the stencil is still 0 and its glass increments it, so
-		// room 0 shows through the hole and nowhere else.
+		// The portal: a monitor, bezel and glass, at the end of the tunnel. The
+		// bezel is drawn where the stencil is 1 — inside the screen's glass, or
+		// everywhere once the camera is through it — and its glass increments
+		// it, so room 0 shows through the hole and nowhere else.
 		const pw = NEST.portalWidth;
 		const ph = pw / art(portalDecade, 'screen');
 		const pgm = SCREEN_GLASS[portalDecade];
@@ -282,7 +285,7 @@ export async function createNest({ THREE, renderer }) {
 			new THREE.MeshBasicNodeMaterial({ transparent: true, depthTest: false, depthWrite: false })
 		);
 		bezelMat.colorNode = dimmed(glassCut(portalDecade, textures[portalDecade].screen)());
-		stencilOf(bezelMat, 0, THREE.EqualStencilFunc, THREE.KeepStencilOp);
+		stencilOf(bezelMat, 1, THREE.EqualStencilFunc, THREE.KeepStencilOp);
 		const bezel = new THREE.Mesh(plane, bezelMat);
 		bezel.scale.set(pw, ph, 1);
 		bezel.renderOrder = -1;
@@ -297,7 +300,7 @@ export async function createNest({ THREE, renderer }) {
 			})
 		);
 		holeMat.colorNode = glassOnly(portalDecade, textures[portalDecade].screen)();
-		stencilOf(holeMat, 0, THREE.EqualStencilFunc, THREE.IncrementStencilOp);
+		stencilOf(holeMat, 1, THREE.EqualStencilFunc, THREE.IncrementStencilOp);
 		const hole = new THREE.Mesh(plane, holeMat);
 		hole.scale.set(pw, ph, 1);
 		hole.renderOrder = -2;
@@ -344,7 +347,7 @@ export async function createNest({ THREE, renderer }) {
 				meshes.push(m);
 				return m;
 			};
-			const stencil = (mat, func, op) => stencilOf(mat, k + 1, func, op);
+			const stencil = (mat, func, op) => stencilOf(mat, k + 2, func, op);
 			const flat = (key) => {
 				const m = mk(
 					new THREE.MeshBasicNodeMaterial({
@@ -548,14 +551,17 @@ export async function createNest({ THREE, renderer }) {
 	// Every clip plane the camera has reached is a level dropped, and the
 	// stencil is cleared to the new base instead of any material changing.
 	// Per mesh, not per group: the groups nest, and a hidden parent would take
-	// every level inside it down too.
-	function rebase(camZ, near) {
-		let base = 0;
+	// every level inside it down too. `floor` is the base with nothing passed:
+	// 1, the level the screen before the nest gave, unless that screen is
+	// still ahead — which only the kaleidoscope knows (kaleidoscope.rebase()).
+	function rebase(camZ, near, floor = 1) {
+		let passed = 0;
 		for (let i = 0; i < clipZ.length; i++) {
-			if (camZ < clipZ[i] + 1.5 * near) base = i + 1;
+			if (camZ < clipZ[i] + 1.5 * near) passed = i + 1;
 		}
-		portal.meshes.forEach((m) => (m.visible = base === 0));
-		levels.forEach((l, i) => l.meshes.forEach((m) => (m.visible = i + 1 >= base)));
+		portal.meshes.forEach((m) => (m.visible = passed === 0));
+		levels.forEach((l, i) => l.meshes.forEach((m) => (m.visible = i + 1 >= passed)));
+		const base = floor + passed;
 		renderer.setClearStencil(base);
 		lastBase = base;
 		return base;
