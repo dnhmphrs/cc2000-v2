@@ -9,7 +9,6 @@ import {
 	smoothstep,
 	smootherstep,
 	easeInOutCubic,
-	easeInOutPower,
 	accelerate
 } from '$lib/config';
 import { decade, landing, monitorRect, blaze, aspect } from '$lib/store/store';
@@ -33,7 +32,10 @@ import { roomsFor } from './nest';
 //
 // "Go again" is the same crossing carried on: the camera flies from the
 // landing to the glass filling the frame, and through it, and what is behind
-// the glass is black — the space the next run opens on. See stepReturn().
+// the glass is black — the space the next run opens on. From rest,
+// accelerating, in SCENES.descent.home seconds; the readout is gone in the
+// first of them (scenes/Room.svelte) so nothing of the room rides the camera
+// into the glass. See stepReturn().
 //
 // It falls at ONE PACE — the pace the approach arrived at — and eases to rest
 // only at the end; the last room lands LEVEL, so the glass is square in the
@@ -47,7 +49,7 @@ const rad = (d) => (d * Math.PI) / 180;
 
 export function createDescent({ THREE, renderer, nest }) {
 	const T = SCENES.descent;
-	const RETURN_DUR = SCENES.calculator.arrive;
+	const RETURN_DUR = T.home;
 
 	const scene = new THREE.Scene();
 	// The same ground the approach paints, with the same numbers: at the seam
@@ -106,6 +108,7 @@ export function createDescent({ THREE, renderer, nest }) {
 		monitorRect.set(null);
 		nest.setSplosh(0, 1);
 		nest.setDim(1);
+		nest.setDark(1);
 		set(0);
 	}
 
@@ -172,12 +175,18 @@ export function createDescent({ THREE, renderer, nest }) {
 	}
 	function stepReturn(dt) {
 		rt = Math.min(rt + dt, RETURN_DUR);
-		const k = easeInOutPower(rt / RETURN_DUR, 1.9);
-		nest.pose(lerp(from, to, k), camera, aspectR);
+		const q = rt / RETURN_DUR;
+		nest.pose(lerp(from, to, accelerate(q, 1.5)), camera, aspectR);
 		sw.material.uniforms.uOpacity.value = 0;
 		nest.setSplosh(1, 0);
-		nest.setDim(1 - smoothstep(0.6, 1, k));
-		publish();
+		// The room goes to black under the glass as it takes the frame — in
+		// COLOUR, so the glass stays black over it — and the raster comes back
+		// with it: the run is a screen again. Then, black, it lets the ground
+		// through, which is the frame the next flight opens on.
+		const dark = smoothstep(T.homeDim[0], T.homeDim[1], q);
+		nest.setDark(1 - dark);
+		nest.setDim(1 - smoothstep(T.homeDim[1], 1, q));
+		landing.set(1 - dark);
 		if (!handedOver && rt >= RETURN_DUR) {
 			handedOver = true;
 			settled();

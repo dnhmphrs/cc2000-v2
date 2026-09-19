@@ -50,8 +50,8 @@
 	$: veil = (1 - $landing).toFixed(3);
 </script>
 
-<div class="raster" style="opacity:{veil}" />
-<div class="phosphor" style="opacity:{veil}" />
+<div class="raster" style="opacity:{veil}"></div>
+<div class="phosphor" style="opacity:{veil}"></div>
 
 <style>
 	.raster,

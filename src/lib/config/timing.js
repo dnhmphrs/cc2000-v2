@@ -44,8 +44,10 @@ function scale(scenes) {
 			'launch',
 			'arrive',
 			'resultIn',
+			'resultOut',
 			'again',
-			'drain'
+			'drain',
+			'home'
 		]) {
 			if (typeof out[name][k] === 'number') out[name][k] /= SPEED;
 		}
@@ -538,22 +540,28 @@ export const SCENES = scale({
 	// store) until it is answered. It ends with the portal's glass filling the
 	// frame's height on the seam lens — the exact frame the descent opens on.
 	//
-	//  0   .12    .2               .45            .8       .86       .985 1
-	//  |sky |swimmer in|the long haul|ask dob       |spicy   |thin out |seam
-	//                                                        |lens closes     |
+	//  0  .08 .12 .14                  .45             .8         .9     .985 1
+	//  |sky |swimmer|the archive, from here all the way to the glass ──────▶|seam
+	//                                  ask dob         spicy     |lens closes  |
+	//                                                             |sky out     |
 	approach: {
 		duration: 15,
 
 		// The sky and the debris come up out of the black. The title card is
 		// over the first of this on the first run, and on every run after it
 		// the glass the loop came home through had gone to black.
-		fadeIn: [0.0, 0.12],
+		fadeIn: [0.0, 0.08],
 
-		// THE SWIMMER FADES IN, at its riding distance, on the axis — before the
-		// archive arrives, so the card lifts, the sky develops, and then the
-		// swimmer is there. Not a pass from behind the lens: every version of
-		// that reads as a body being stretched by a wide lens.
-		swimmerIn: [0.02, 0.2],
+		// THE SWIMMER FADES IN, at its riding distance, on the axis — and only
+		// then does the archive arrive: the card lifts, the sky develops, the
+		// swimmer is there, and the first of the archive comes out of the dark
+		// ahead of it. Not a pass from behind the lens: every version of that
+		// reads as a body being stretched by a wide lens.
+		swimmerIn: [0.02, 0.12],
+		// Where the flight is when the first piece of the archive comes into
+		// view — APPROACH.seen[1] units ahead of the lens. From there the
+		// archive runs all the way to the portal's glass.
+		archiveFrom: 0.14,
 
 		// Where the flight stops to ask. Progress marks, not windows: the scene
 		// holds at each until the popup is answered.
@@ -575,13 +583,16 @@ export const SCENES = scale({
 		level: [0.7, 0.92],
 		drift: 0.5,
 
-		// Everything that is not the portal goes out before the seam, so the
-		// frame this ends on is the nest and nothing else.
-		thin: [0.86, 0.985],
-
 		// The swimmer pulls in from its riding distance to the descent's, so it
 		// is where the next scene expects it.
-		dive: [0.82, 0.99]
+		dive: [0.82, 0.99],
+
+		// The sky and the debris go out under the portal as it takes the frame:
+		// the fall has no sky, and the frame this ends on must be the nest and
+		// nothing else. The archive is already out of the frame by then — a tube
+		// round the axis leaves by the edges as the lens closes in — so this is
+		// the seam's safety, not the look of the flight.
+		skyOut: [0.9, 0.985]
 	},
 
 	// ── Descent ──────────────────────────────────────────────────────────────
@@ -620,6 +631,17 @@ export const SCENES = scale({
 		// glass before the black takes it.
 		through: 1.6,
 
+		// ── THE WAY HOME ─────────────────────────────────────────────────────
+		// Seconds for the flight from the landing into the glass: from rest,
+		// accelerating, and over `homeDim` of that time the room goes to black
+		// under the glass (to black in colour, so the glass stays black over
+		// it) and the raster comes back — so the frame it ends on is the black
+		// the next flight opens on. Tight on purpose: a press, and you are
+		// through. The readout is gone in the first of it (Room.svelte,
+		// room.resultOut).
+		home: 1.4,
+		homeDim: [0.5, 0.92],
+
 		// The swimmer leaves the axis for the glass, and goes in.
 		dive: [0.88, 0.972],
 		gone: 0.975,
@@ -641,7 +663,9 @@ export const SCENES = scale({
 	// halves of it — the camera flying into the monitor and the calculator
 	// growing out of it — are one move and must share one duration.
 	room: {
-		resultIn: 0.45
+		resultIn: 0.45,
+		// And out, the moment the way home starts.
+		resultOut: 0.25
 	}
 });
 

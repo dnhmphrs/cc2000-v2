@@ -131,7 +131,7 @@
 		on:wheel={wheel}
 		on:keydown={key}
 	>
-		<i class="pointer" />
+		<i class="pointer"></i>
 		<span class="face">{set ? format(value) : '--'}</span>
 	</div>
 	<span class="cap">{label}</span>

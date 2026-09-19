@@ -202,8 +202,8 @@
 	});
 </script>
 
-<canvas bind:this={canvasElement} />
-<div class="flash" bind:this={flashEl} />
+<canvas bind:this={canvasElement}></canvas>
+<div class="flash" bind:this={flashEl}></div>
 
 <style>
 	canvas {
