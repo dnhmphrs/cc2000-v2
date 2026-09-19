@@ -34,6 +34,13 @@ hard: the swimmer speeding up into the beam, and the lattice's cell being the
 cube, are joins for later. The fly-in is not in it: it stays on the old
 renderer until the Stage swap, and the approach is what would replace it.
 
+**3 — on the side.** The E8 expansion, kept and refined at
+`/lab?sketch=e8` though not in the cut: the 600-cell grows out of the
+icosahedron shell by shell, every vertex born inside its place and swelling out
+to it; the second shell is born on the first, φ larger; and a rotation of
+4-space lands the pair on the H4 Coxeter plane, the wheel — eight rings of
+thirty, drawn as dots now as well as edges, hot at the hub and ember at the rim.
+
 ## Reproducing the page
 
     npm run dev
