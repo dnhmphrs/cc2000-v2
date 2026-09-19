@@ -441,3 +441,34 @@ export const NEST = {
 	spermSpan: 0.28,
 	spermRide: 0.5
 };
+
+// ── The kaleidoscope ─────────────────────────────────────────────────────────
+// What is inside the screen the flight ends in: the archive looped, in rings
+// down a tunnel, turning and cycling in colour, to the portal at its far end.
+// See three/world/kaleidoscope.js.
+export const KALEIDO = {
+	// The screen the flight flies into — its width, in world units — and the
+	// lens the tunnel opens out to (from NEST.seamFov, and back to it for the
+	// portal).
+	screenWidth: 3.4,
+	fov: 40,
+	// The swimmer's ride ahead of the lens through the glass, in world units.
+	// The approach pulls in to this and the tunnel carries it to the fall's.
+	lead: 2.4,
+	// The rings: how many are built, how far apart, how many drawings to a
+	// ring, and the ellipse they sit on (x, y radii — the frame is wider than
+	// it is tall). `spiral` is the extra turn each ring takes on the last.
+	rings: 48,
+	pitch: 2.2,
+	ring: 8,
+	radius: [3.6, 2.7],
+	spiral: 0.13,
+	// Which drawings, in what order down the tunnel, and how wide each is.
+	keys: ['screen', 'desk', 'bed', 'poster', 'clock'],
+	size: { screen: 2.2, desk: 2.6, bed: 2.6, poster: 1.0, clock: 0.9 },
+	// A shade down, as the archive adrift is.
+	dim: 0.85,
+	// Out of the dark: unseen beyond seen[1] units ahead, fully there inside
+	// seen[0].
+	seen: [22, 40]
+};

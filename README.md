@@ -35,38 +35,45 @@ is going and `docs/v4-flow.md` for where it has got to.
 
 ---
 
-## The three scenes
+## The four scenes
 
-The whole site is a title card, two 3D scenes and a room, and one store that
+The whole site is a title card, three 3D scenes and a room, and one store that
 says which is up. There is no machine: the two answers are asked mid-flight, by
 popups that hold the flight while they are open.
 
 ```
-  title card      ┌──────────┐      ┌─────────┐   splosh   ┌──────┐
-  (lifts itself)  │ Approach │ ───▶ │ Descent │ ─────────▶ │ Room │
-                  └──────────┘      └─────────┘            └──────┘
-                     ▲  asks: birthday · spice                 │
-                     └──────────── go again ───────────────────┘
+  title card      ┌──────────┐      ┌─────────┐      ┌─────────┐   splosh   ┌──────┐
+  (lifts itself)  │ Approach │ ───▶ │ Kaleido │ ───▶ │ Descent │ ─────────▶ │ Room │
+                  └──────────┘      └─────────┘      └─────────┘            └──────┘
+                     ▲  asks: birthday · spice                                  │
+                     └──────────────────────── go again ────────────────────────┘
 ```
 
-| #   | Scene        | What it is                                                                                                          | Where                             |
-| --- | ------------ | ------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind; the archive adrift and passing; the portal dead ahead. 3D.       | `src/lib/three/world/approach.js` |
-| 2   | **Descent**  | Rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. | `src/lib/three/world/descent.js`  |
-| 3   | **Room**     | The answer, in that room's monitor. DOM.                                                                            | `src/lib/scenes/Room.svelte`      |
+| #   | Scene        | What it is                                                                                                               | Where                             |
+| --- | ------------ | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind; the archive adrift and passing; a screen dead ahead. 3D.              | `src/lib/three/world/approach.js` |
+| 2   | **Kaleido**  | Through that screen's glass and down the tunnel inside: the archive looped, in rings, turning and cycling in colour. 3D. | `src/lib/three/world/kaleido.js`  |
+| 3   | **Descent**  | Rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. 3D.  | `src/lib/three/world/descent.js`  |
+| 4   | **Room**     | The answer, in that room's monitor. DOM.                                                                                 | `src/lib/scenes/Room.svelte`      |
 
-Both 3D scenes walk the same **nest** — `src/lib/three/world/nest.js`: the
-portal monitor out in space, the rooms inside its glass one inside the next, the
-stencil chain that clips each to the glass above it, the camera pose for any
-level of the fall, and the glass rect the readout is drawn into.
+The first two 3D scenes walk the same **kaleidoscope** —
+`src/lib/three/world/kaleidoscope.js`: the screen the flight ends in, the
+rings of the archive down the tunnel behind its glass, the camera down that
+tunnel, and where the nest goes at the end of it. The last two walk the same
+**nest** — `src/lib/three/world/nest.js`: the portal monitor at the tunnel's
+end, the rooms inside its glass one inside the next, the stencil chain that
+clips each to the glass above it (one level up from the screen's), the camera
+pose for any level of the fall, and the glass rect the readout is drawn into.
 `src/lib/scenes/director.js` owns every transition — it is four functions long
 and it is the first file to read.
 
-**The two 3D scenes are one shot.** The approach ends on `nest.pose(0)` and the
-descent opens on it — the portal's glass filling the frame's height, room 0
-inside — so there is no cut between them. The one cut in the run is the loop
-home: the camera flies through the last room's monitor, and the glass is black
-and so is the space the next run opens on.
+**The three 3D scenes are one shot.** The approach ends on
+`kaleidoscope.pose(0)` and the kaleido opens on it — the screen's glass filling
+the frame's height, the tunnel inside — and the kaleido ends on `nest.pose(0)`
+and the descent opens on it — the portal's glass filling the frame's height,
+room 0 inside — so there is no cut between them. The one cut in the run is the
+loop home: the camera flies through the last room's monitor, and the glass is
+black and so is the space the next run opens on.
 
 ---
 

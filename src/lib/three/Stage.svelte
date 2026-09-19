@@ -24,15 +24,18 @@
 	// backends draw the same picture. The scenes paint their own grounds now;
 	// there is no shader canvas behind this one.
 	//
-	// TWO SCENES, ONE SHOT. The approach flies up to the portal, and the descent
-	// falls through it: the frame the first ends on and the frame the second
-	// opens on are the same call into the same nest (world/nest.js pose(0)), so
-	// there is no cut to cover and nothing to synchronise.
+	// THREE SCENES, ONE SHOT. The approach flies up to a screen, the kaleido
+	// flies through it and down the tunnel inside to the portal, and the
+	// descent falls through that: each frame one scene ends on is the frame
+	// the next opens on — the same call into the same world (kaleidoscope.js
+	// pose(0), nest.js pose(0)) — so there is no cut to cover and nothing to
+	// synchronise.
 
 	let canvasElement;
 	let renderer;
 	let scenes = {};
 	let nest;
+	let kal;
 	let last = 0;
 
 	let canvasFadeStart = null;
@@ -142,14 +145,24 @@
 		const lane = renderer.backend.isWebGPUBackend ? 'webgpu' : 'webgl';
 		sceneTone.set('dark');
 
-		const [{ createNest }, { createApproach }, { createDescent }] = await Promise.all([
+		const [
+			{ createNest },
+			{ createKaleidoscope },
+			{ createApproach },
+			{ createKaleido },
+			{ createDescent }
+		] = await Promise.all([
 			import('./world/nest.js'),
+			import('./world/kaleidoscope.js'),
 			import('./world/approach.js'),
+			import('./world/kaleido.js'),
 			import('./world/descent.js')
 		]);
 		nest = await createNest({ THREE, renderer });
+		kal = createKaleidoscope({ THREE, renderer, nest });
 		scenes = {
-			approach: await createApproach({ THREE, renderer, nest }),
+			approach: await createApproach({ THREE, renderer, nest, kal }),
+			kaleido: createKaleido({ THREE, renderer, nest, kal }),
 			descent: createDescent({ THREE, renderer, nest })
 		};
 		handleResize();
@@ -157,28 +170,43 @@
 		// Every program and every texture the run needs, brought up BEFORE the
 		// first frame — a few objects at a time, yielding to the page between,
 		// so the title card typing over this keeps its rhythm on a slow GPU and
-		// no frame of the run itself stalls for a compile. The descent's
-		// materials are the nest's, which the approach already holds. The
-		// canvas is still at opacity 0 while this happens.
+		// no frame of the run itself stalls for a compile. The kaleido's and
+		// the descent's materials are the kaleidoscope's and the nest's, which
+		// the approach already holds. One object per MATERIAL: it is programs
+		// that compile, and the tunnel is four hundred quads on twenty of them.
+		// The canvas is still at opacity 0 while this happens.
 		scenes.approach.enter();
 		entered = 'approach';
 		held = scenes.approach;
 		const warmStart = performance.now();
 		{
 			const { scene: s, camera: c } = scenes.approach;
-			const all = [];
+			const every = [];
 			s.traverse((o) => {
-				if (o.isMesh || o.isLine || o.isSprite || o.isPoints) all.push(o);
+				if (o.isMesh || o.isLine || o.isSprite || o.isPoints) every.push(o);
 			});
-			const vis = all.map((o) => o.visible);
-			all.forEach((o) => (o.visible = false));
+			const shown = (o) => {
+				for (let a = o; a; a = a.parent) if (!a.visible) return false;
+				return true;
+			};
+			const firsts = [];
+			const seen = [];
+			for (const o of every) {
+				if (!shown(o)) continue;
+				const m = o.material;
+				if (m && seen.includes(m)) continue;
+				if (m) seen.push(m);
+				firsts.push(o);
+			}
+			const vis = every.map((o) => o.visible);
+			every.forEach((o) => (o.visible = false));
 			const CHUNK = 6;
-			for (let i = 0; i < all.length; i += CHUNK) {
-				for (let j = i; j < Math.min(i + CHUNK, all.length); j++) all[j].visible = vis[j];
+			for (let i = 0; i < firsts.length; i += CHUNK) {
+				for (let j = i; j < Math.min(i + CHUNK, firsts.length); j++) firsts[j].visible = true;
 				renderer.render(s, c);
 				await new Promise((r) => setTimeout(r, 0));
 			}
-			all.forEach((o, i) => (o.visible = vis[i]));
+			every.forEach((o, i) => (o.visible = vis[i]));
 		}
 
 		canvasElement.style.opacity = '0';
@@ -186,7 +214,7 @@
 		window.addEventListener('resize', handleResize);
 		// For the contact sheets and the smoke test: which backend ran, how long
 		// the warm-up took, and a handle on the scenes.
-		window.__stage = { lane, warm: Math.round(performance.now() - warmStart), scenes, nest };
+		window.__stage = { lane, warm: Math.round(performance.now() - warmStart), scenes, nest, kal };
 
 		last = performance.now();
 		renderer.setAnimationLoop(frame);
@@ -197,6 +225,7 @@
 		renderer?.setAnimationLoop(null);
 		window.removeEventListener('resize', handleResize);
 		scenes.approach?.dispose?.();
+		kal?.dispose?.();
 		nest?.dispose?.();
 		renderer?.dispose?.();
 	});

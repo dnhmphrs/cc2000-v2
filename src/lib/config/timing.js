@@ -535,14 +535,16 @@ export const SCENES = scale({
 
 	// ── Approach ─────────────────────────────────────────────────────────────
 	// The rebuild's fly-in. Space; the swimmer ahead of the lens, from behind;
-	// the archive adrift and passing; the portal dead ahead, growing. The two
-	// questions are asked on the way, and the scene HOLDS at each (the `gate`
-	// store) until it is answered. It ends with the portal's glass filling the
-	// frame's height on the seam lens — the exact frame the descent opens on.
+	// the archive adrift and passing; a SCREEN dead ahead, growing, with the
+	// tunnel inside its glass. The two questions are asked on the way — the
+	// first while it is only the swimmer out there — and the scene HOLDS at
+	// each (the `gate` store) until it is answered. It ends with the screen's
+	// glass filling the frame's height on the seam lens — the exact frame the
+	// kaleido opens on.
 	//
-	//  0  .08 .12 .14                  .45             .8         .9     .985 1
+	//  0  .08 .12 .14                  .45                        .9     .985 1
 	//  |sky |swimmer|the archive, from here all the way to the glass ──────▶|seam
-	//                                  ask dob         spicy     |lens closes  |
+	//            ask dob              ask spicy                 |lens closes  |
 	//                                                             |sky out     |
 	approach: {
 		duration: 15,
@@ -564,35 +566,65 @@ export const SCENES = scale({
 		archiveFrom: 0.14,
 
 		// Where the flight stops to ask. Progress marks, not windows: the scene
-		// holds at each until the popup is answered.
-		askDob: 0.45,
-		askSpicy: 0.8,
+		// holds at each until the popup is answered. The birthday the moment
+		// the swimmer is in, before the first of the archive; the spice a third
+		// of the way down the flight.
+		askDob: 0.13,
+		askSpicy: 0.45,
 
-		// ── ONE PACE, THROUGH THE SEAM ───────────────────────────────────────
-		// The lens holds one speed for this fraction of the flight, then eases
-		// to the speed the descent OPENS at — worked out from the nest, not
-		// typed — so the camera never stops at the portal and the fall carries
-		// on at the pace it arrived at.
-		cruise: 0.6,
+		// ── ONE SPEED ────────────────────────────────────────────────────────
+		// The flight has no brake: it flies at one speed all the way into the
+		// glass, and the tunnel on the other side carries on at that speed —
+		// see world/kaleidoscope.js, which is where the fall's pace is met.
 
 		// The lens walks from APPROACH.fov to NEST.seamFov. Closing the lens on
-		// the way in is the other half of the dolly zoom: the portal looms.
+		// the way in is the other half of the dolly zoom: the screen looms.
 		lens: [0.74, 0.985],
 
 		// The bank and the drift, easing off to level for the seam.
 		level: [0.7, 0.92],
 		drift: 0.5,
 
-		// The swimmer pulls in from its riding distance to the descent's, so it
-		// is where the next scene expects it.
+		// The swimmer pulls in from its riding distance to the tunnel's
+		// (KALEIDO.lead), so it is where the next scene expects it.
 		dive: [0.82, 0.99],
 
-		// The sky and the debris go out under the portal as it takes the frame:
-		// the fall has no sky, and the frame this ends on must be the nest and
-		// nothing else. The archive is already out of the frame by then — a tube
-		// round the axis leaves by the edges as the lens closes in — so this is
-		// the seam's safety, not the look of the flight.
+		// The sky and the debris go out under the screen as it takes the frame:
+		// the tunnel has no sky, and the frame this ends on must be the screen,
+		// what is inside it, and nothing else. The archive is already out of the
+		// frame by then — a tube round the axis leaves by the edges as the lens
+		// closes in — so this is the seam's safety, not the look of the flight.
 		skyOut: [0.9, 0.985]
+	},
+
+	// ── Kaleido ──────────────────────────────────────────────────────────────
+	// Through the screen's glass and down the tunnel: the archive looped, in
+	// rings, turning and cycling in colour, to the portal at the far end. It
+	// opens on the frame the approach ended on and ends on the frame the
+	// descent opens on. See world/kaleidoscope.js.
+	kaleido: {
+		duration: 7,
+
+		// The tunnel runs at the speed the flight arrived at, and settles to
+		// the speed the descent opens at over this last fraction.
+		ease: 0.3,
+
+		// The lens opens out from the seam's to KALEIDO.fov through the glass,
+		// and closes again on the portal.
+		lensIn: [0.0, 0.12],
+		lensOut: [0.8, 0.97],
+
+		// Full turns of the hue, and of the tunnel about the axis, over the
+		// scene.
+		hueCycles: 1.5,
+		turns: 0.35,
+
+		// The rings go out under the portal as it takes the frame, so the frame
+		// this ends on is the nest and nothing else.
+		out: [0.86, 0.985],
+
+		// The swimmer pulls in from the tunnel's ride to the descent's.
+		dive: [0.8, 0.98]
 	},
 
 	// ── Descent ──────────────────────────────────────────────────────────────
