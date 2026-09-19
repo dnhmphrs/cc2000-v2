@@ -387,18 +387,26 @@ export const APPROACH = {
 	// a shade bigger — there is no ovum to share the frame with).
 	lead: 5.5,
 	span: 0.28,
+	// How it arrives: it does not fly past the lens at all — every version of
+	// that reads as a body stretched by a wide lens — it FADES IN at its riding
+	// distance, this far below the axis in half-heights of the frame, and rises
+	// onto it as it takes station.
+	from: { y: -0.35 },
 	// World units from the first frame to the portal's glass.
 	travel: 150,
 	// How much of the archive is adrift, and the tube it drifts in — a radius
-	// range, clear of the axis the swimmer and the portal are on.
-	screens: 40,
-	furniture: 64,
-	tube: [2.6, 9.6],
+	// range, clear of the axis the swimmer and the portal are on — and how far
+	// down the flight the first of it is: the swimmer comes in first, and only
+	// then does the stuff start passing.
+	screens: 22,
+	furniture: 30,
+	tube: [3.0, 11.0],
+	nearest: 60,
 	// The sky, and the debris close in that makes the speed read.
 	stars: 1100,
 	brightStars: 90,
 	starDist: 150,
-	motes: 500,
+	motes: 320,
 	moteSpan: 70,
 	moteRadius: 7,
 	moteLength: 1.4

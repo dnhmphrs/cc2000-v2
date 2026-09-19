@@ -1,6 +1,6 @@
 import { vec4, uniform, Fn, uv, length, atan, sin, smoothstep, exp, max, texture } from 'three/tsl';
 import { LAYERS, placement, elementUrl, DECADES, shuffle } from '$lib/data/roomElements';
-import { SCREEN_GLASS, GLASS_SAFETY, NEST } from '$lib/config';
+import { SCREEN_GLASS, GLASS_SAFETY, NEST, SCENES } from '$lib/config';
 import { PHI } from '$lib/three/geometry/icosahedron';
 import { glassOnly, glassCut } from '$lib/three/tsl/glass';
 import { loadSwimmer } from '$lib/three/tsl/swimmer';
@@ -124,6 +124,10 @@ export async function createNest({ THREE, renderer }) {
 	const swimmer = await loadSwimmer({ height: 1, gain: 1.15 });
 	swimmer.group.name = 'swimmer';
 	swimmer.material.depthTest = false;
+	// Its own clock, in seconds, advanced by whichever scene is running it: the
+	// roll and the tail's wobble are on this, so they never stop — not for a
+	// popup holding the flight, and not at the seam.
+	swimmer.clock = 0;
 	swimmer.group.traverse((o) => {
 		o.renderOrder = 100000;
 		o.frustumCulled = false;
@@ -388,15 +392,18 @@ export async function createNest({ THREE, renderer }) {
 
 		// Each level's fixed point, in its own coordinates: the point its
 		// child's spiral similarity x ↦ g + R(θ)·x/N leaves where it is. The
-		// last room has no child, so its crossing — the return flight — uses the
-		// N a child would have had.
+		// last room has no child, so its crossing — the landing and the way
+		// home — uses the N a child would have had and NO screw: it lands
+		// level, and the fixed point of a plain similarity is g·N/(N−1).
 		levels.forEach((lv, k) => {
 			const gl = lv.glass;
 			const ga = gl.w / gl.h;
 			const Kw = ga < W / H ? H * ga : W;
 			lv.childN = k + 1 < levels.length ? levels[k + 1].N : Kw / gl.w;
-			const a = 1 - Math.cos(SCREW) / lv.childN;
-			const b = Math.sin(SCREW) / lv.childN;
+			const last = k === levels.length - 1;
+			const th = last ? 0 : SCREW;
+			const a = 1 - Math.cos(th) / lv.childN;
+			const b = Math.sin(th) / lv.childN;
 			const det = a * a + b * b;
 			lv.fixed = new THREE.Vector3(
 				(a * gl.x - b * gl.y) / det,
@@ -405,6 +412,36 @@ export async function createNest({ THREE, renderer }) {
 			);
 		});
 		refreshClips();
+	}
+
+	// ── The fall, as a function of the descent's progress ────────────────
+	// ζ runs at ONE PACE from the seam — the picture is self-similar, so a
+	// constant rate down the levels is a constant pace on screen — and eases
+	// to rest over the last `ease` of the scene, at `land` of the way into
+	// the last room. Here rather than in the descent because the approach
+	// needs the pace it opens at, to arrive at it.
+	function zetaEnd() {
+		return levels.length - 1 + SCENES.descent.land;
+	}
+	function zetaOf(u) {
+		const e = SCENES.descent.ease;
+		const n = 1 - e / 2;
+		const x = Math.max(0, Math.min(1, u));
+		if (x <= 1 - e) return (zetaEnd() * x) / n;
+		const y = x - (1 - e);
+		return (zetaEnd() * (1 - e + y - (y * y) / (2 * e))) / n;
+	}
+	// World units per second the camera is moving at as the fall opens.
+	const probe = new THREE.PerspectiveCamera();
+	const pa = new THREE.Vector3();
+	function openingSpeed() {
+		const dz = 0.002;
+		pose(0, probe, 1);
+		pa.copy(probe.position);
+		pose(dz, probe, 1);
+		const perZeta = probe.position.distanceTo(pa) / dz;
+		const rate = (zetaOf(dz) - zetaOf(0)) / dz / SCENES.descent.duration;
+		return perZeta * rate;
 	}
 
 	// ── The camera at level ζ ────────────────────────────────────────────
@@ -421,18 +458,25 @@ export async function createNest({ THREE, renderer }) {
 		return NEST.seamFov + (NEST.fov - NEST.seamFov) * smooth(0, 1.6, zeta);
 	}
 	function pose(zetaIn, camera, aspect) {
-		const zeta = Math.max(0, Math.min(zetaIn, levels.length - 0.001));
+		// Past the last room's f = 1 is the way home: the glass has filled the
+		// frame and the camera keeps going into it.
+		const zeta = Math.max(0, Math.min(zetaIn, levels.length + 0.9));
 		const k = Math.min(Math.floor(zeta), levels.length - 1);
 		const f = zeta - k;
 		const lv = levels[k];
+		const last = k === levels.length - 1;
 		const N = lv.childN;
 		const s = Math.pow(N, -f);
 		const fov = fovAt(zeta);
 		const d0 = H / 2 / Math.tan(rad(fov) / 2);
 		const p = lv.fixed;
-		const ex = NEST.sway * H * Math.sin(2 * Math.PI * f);
-		const ey = NEST.sway * H * 0.5 * (Math.cos(2 * Math.PI * f) - 1);
-		const roll = f * SCREW;
+		// The last room lands level: no roll, and the sway dies out by the
+		// landing, so the glass is square in the frame.
+		const settle = last ? smooth(SCENES.descent.settle, SCENES.descent.land, f) : 0;
+		const sway = NEST.sway * (1 - settle);
+		const ex = sway * H * Math.sin(2 * Math.PI * f);
+		const ey = sway * H * 0.5 * (Math.cos(2 * Math.PI * f) - 1);
+		const roll = last ? 0 : f * SCREW;
 		off
 			.set(-p.x + ex, -p.y + ey, 0)
 			.multiplyScalar(s)
@@ -531,6 +575,9 @@ export async function createNest({ THREE, renderer }) {
 		refreshClips,
 		pose,
 		fovAt,
+		zetaEnd,
+		zetaOf,
+		openingSpeed,
 		rebase,
 		glassRect,
 		lastGlassWorld,

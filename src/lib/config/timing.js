@@ -538,25 +538,35 @@ export const SCENES = scale({
 	// store) until it is answered. It ends with the portal's glass filling the
 	// frame's height on the seam lens — the exact frame the descent opens on.
 	//
-	//  0   .1                 .42            .78      .86       .985 1
-	//  |in |the long haul     |ask dob       |spicy   |thin out |seam
-	//                                                 |lens closes to the seam|
+	//  0   .12    .2               .45            .8       .86       .985 1
+	//  |sky |swimmer in|the long haul|ask dob       |spicy   |thin out |seam
+	//                                                        |lens closes     |
 	approach: {
-		duration: 12,
+		duration: 15,
 
-		// The sky, the debris and the swimmer come up out of the black. The
-		// title card is over the first of this on the first run, and on every
-		// run after it the glass the loop came home through was black.
-		fadeIn: [0.0, 0.1],
+		// The sky and the debris come up out of the black. The title card is
+		// over the first of this on the first run, and on every run after it
+		// the glass the loop came home through had gone to black.
+		fadeIn: [0.0, 0.12],
+
+		// THE SWIMMER FADES IN, at its riding distance and a little below the
+		// axis, and rises onto it — before the archive arrives, so the card
+		// lifts, the sky develops, and then the swimmer is there. Not a pass
+		// from behind the lens: every version of that reads as a body being
+		// stretched by a wide lens.
+		swimmerIn: [0.02, 0.2],
 
 		// Where the flight stops to ask. Progress marks, not windows: the scene
 		// holds at each until the popup is answered.
-		askDob: 0.42,
-		askSpicy: 0.78,
+		askDob: 0.45,
+		askSpicy: 0.8,
 
-		// glide(): the fraction of the travel spent at constant speed before the
-		// stop begins.
-		hold: 0.8,
+		// ── ONE PACE, THROUGH THE SEAM ───────────────────────────────────────
+		// The lens holds one speed for this fraction of the flight, then eases
+		// to the speed the descent OPENS at — worked out from the nest, not
+		// typed — so the camera never stops at the portal and the fall carries
+		// on at the pace it arrived at.
+		cruise: 0.6,
 
 		// The lens walks from APPROACH.fov to NEST.seamFov. Closing the lens on
 		// the way in is the other half of the dolly zoom: the portal looms.
@@ -581,16 +591,33 @@ export const SCENES = scale({
 	// white — the splosh — and the readout comes up in it.
 	//
 	//  0                                        .82    .88   .962 .975 1
-	//  |the fall, on one ease, six rooms deep    |raster|dive |splosh  |land
+	//  |the fall, one pace, six rooms deep       |raster|dive |splosh  |land
+	//                                     |easing to rest ................|
 	descent: {
 		duration: 14,
 
 		// How many rooms deep, the last being the answer's, and how far into the
 		// last room's crossing the run comes to rest — past the point where the
 		// previous glass has left the frame, with the room still round the
-		// monitor. The return flight carries on from there to the glass.
+		// monitor. The return flight carries on from there, through the glass.
 		rooms: 6,
 		land: 0.72,
+
+		// ONE PACE. The fall runs at constant speed from the seam — the picture
+		// is self-similar, so a constant rate down the levels is a constant
+		// pace on screen — and only eases to rest over this last fraction of
+		// the scene.
+		ease: 0.3,
+
+		// The last room lands LEVEL: its roll is nil and the sway dies out from
+		// here to the landing, so the glass is square in the frame and the
+		// readout sits in it.
+		settle: 0.15,
+
+		// The way home flies to this far into the last room's crossing —
+		// past 1, where the glass has filled the frame, so the frame is all
+		// glass before the black takes it.
+		through: 1.6,
 
 		// The swimmer leaves the axis for the glass, and goes in.
 		dive: [0.88, 0.972],

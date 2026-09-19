@@ -6,20 +6,23 @@ Three sections, all shot headless and all pinned with `?at=` — every scene is 
 pure function of its own progress, so each frame is the frame the run would
 have drawn at that moment rather than a timed guess at it.
 
-**1 — the run, as it now is.** What `/` does on `dev`: a title card over an
-approach that is already flying; the swimmer ahead of the lens, from behind, the
-archive adrift and passing, the two questions asked on the way and the flight
-held while they are; the portal dead ahead, whose glass holds the first room;
-the descent through the decades, one room inside the next, down to the answer's
-room; the swimmer going into its screen and the screen going white; the readout
-in that glass; and "go again" flying home through it into the next flight. One
-WebGPU renderer, and one shot from the flight into the fall — the approach ends
-on the frame the descent opens on. Frames on the WebGL lane at `?seed=1`, so the
-decades and the archive fall the same way on every load.
+**1 — the run, as it now is.** What `/` does on `main`: a title card over an
+approach held at zero, black; the card lifts, the sky comes up, the swimmer
+fades in a little below the axis and rises onto it, ahead of the lens and seen
+from behind; then the archive starts arriving and passing, the two questions
+are asked on the way and the flight held while they are; the portal dead ahead,
+whose glass holds the first room; the descent through the decades, one room
+inside the next, at one pace from the seam, down to the answer's room, which
+lands level; the swimmer going into its screen and the screen going white; the
+readout in that glass; and "go again" flying home through the glass into black,
+which is the black the next flight opens on. One WebGPU renderer, and one shot
+from the flight into the fall — the approach ends on the frame the descent
+opens on, at the speed the descent opens at. Frames on the WebGL lane at
+`?seed=1`, so the decades and the archive fall the same way on every load.
 
 | scene    | seconds | where                                               |
 | -------- | ------- | --------------------------------------------------- |
-| approach | 12      | `three/world/approach.js`, held at the two asks     |
+| approach | 15      | `three/world/approach.js`, held at the two asks     |
 | descent  | 14      | `three/world/descent.js` over `three/world/nest.js` |
 | room     | —       | `scenes/Room.svelte`, until "go again"              |
 
@@ -35,7 +38,7 @@ though not in the cut.
 
     npm run dev
     BASE=http://localhost:3000 OUT=<dir> \
-      PLAN='[["2",[0.02,0.25,0.5,0.72,0.9,1]],["3",[0.12,0.3,0.5,0.7,0.9,1]]]' \
+      PLAN='[["2",[0.02,0.06,0.1,0.16,0.4,0.9,1]],["3",[0.12,0.3,0.5,0.7,0.9,1]]]' \
       node scripts/shots.mjs
 
 for the run (`2` approach, `3` descent — the shots tool waits for the stage's

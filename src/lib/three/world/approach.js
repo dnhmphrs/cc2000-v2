@@ -8,7 +8,6 @@ import {
 	span,
 	lerp,
 	clamp01,
-	glide,
 	smoothstep,
 	smootherstep,
 	easeInOutCubic,
@@ -39,14 +38,28 @@ import { roomsFor } from './nest';
 // height on the seam lens, which is the exact frame the descent opens on —
 // nest.pose(0), asked for by both scenes.
 //
+// ── The opening ──────────────────────────────────────────────────────────────
+// The card lifts, the sky develops, and then the swimmer is there: it fades in
+// at its riding distance, a little below the axis, and rises onto it — and
+// only then does the archive start arriving, because the nearest of it is
+// APPROACH.nearest units down the flight. Three beats, and the third is the
+// event. It does NOT fly past the lens from behind: every version of that
+// reads as a body being stretched by a wide lens.
+//
 // ── The flight takes the answers ─────────────────────────────────────────────
 // There is no machine, so the run asks its two questions on the way in, and
-// while either is open the scene HOLDS: `t` stops and `elapsed` does not, so
-// the swimmer goes on rolling and what is on screen is a flight waiting rather
+// while either is open the scene HOLDS: `t` stops and the swimmer's clock does
+// not, so it goes on rolling and what is on screen is a flight waiting rather
 // than a paused frame. Holding t rather than running a second clock is what
 // keeps every frame a pure function of progress, so ?at= is exact. (The roll
-// and the tail's wobble are on `elapsed`, as in the tunnel — the one thing in
-// the scene that never stops.)
+// and the tail's wobble are on the swimmer's own clock, as in the tunnel — the
+// one thing in the run that never stops, not even at the seam.)
+//
+// ── One pace, through the seam ───────────────────────────────────────────────
+// The lens holds one speed for most of the flight and then eases — not to a
+// stop, to the speed the DESCENT opens at, which the nest works out from its
+// own geometry. So the camera arrives at the portal moving and the fall
+// carries on at the pace it arrived at.
 //
 // The portal and room 0 are chosen when the run begins, because they are drawn
 // from the first frame; the deeper rooms are set the moment the answer is in,
@@ -180,11 +193,16 @@ export async function createApproach({ THREE, renderer, nest }) {
 		m.scale.set(width, width / (t.image.width / t.image.height), 1);
 		return m;
 	}
-	// A tube of them ahead, off the axis, at every distance up to the portal.
+	// A tube of them ahead, off the axis, at every distance from the nearest
+	// to a little past the portal.
 	const place = (obj, r0, r1) => {
 		const a = rand() * Math.PI * 2;
 		const r = r0 + rand() * (r1 - r0);
-		obj.position.set(Math.cos(a) * r, Math.sin(a) * r * 0.75, -8 - rand() * (A.travel + 30));
+		obj.position.set(
+			Math.cos(a) * r,
+			Math.sin(a) * r * 0.75,
+			-A.nearest - rand() * (A.travel - A.nearest + 30)
+		);
 		obj.rotation.y = (rand() - 0.5) * 0.6;
 		const rot0 = (rand() - 0.5) * 0.5;
 		obj.rotation.z = rot0;
@@ -219,9 +237,6 @@ export async function createApproach({ THREE, renderer, nest }) {
 		new URLSearchParams(window.location.search).get('sperm') !== '0';
 
 	let t = 0;
-	// Never resets while mounted: the corkscrew is the one thing that does not
-	// stop, so it must not restart when the scene does.
-	let elapsed = 0;
 	let askedDob = false;
 	let askedSpicy = false;
 	let finalised = false;
@@ -234,6 +249,12 @@ export async function createApproach({ THREE, renderer, nest }) {
 	// glass. Asked of the nest rather than worked out here, so the two scenes
 	// cannot disagree about it.
 	const probe = new THREE.PerspectiveCamera();
+	// The flight's profile: constant speed for `cruise` of the scene, then a
+	// straight-line ease to `rho` of that speed at the seam — where rho is
+	// whatever makes the arrival speed the descent's opening speed. Distance
+	// travelled is S·g(τ) with g'(0) = a, g'(1) = a·rho.
+	let rho = 1;
+	let ga = 1;
 	function placeNest() {
 		const pg = nest.portal.glass;
 		nest.root.position.set(-pg.x, -pg.y, -A.travel);
@@ -241,6 +262,17 @@ export async function createApproach({ THREE, renderer, nest }) {
 		const { D } = nest.pose(0, probe, 1);
 		zEnd = probe.position.z;
 		seamD = D;
+		const S = -zEnd;
+		const q = (nest.openingSpeed() * T.duration) / S; // arrival speed, in cruise units
+		const c = (1 - T.cruise) / 2;
+		rho = Math.max(0.05, Math.min(1, (q * (1 - c)) / (1 - q * c)));
+		ga = 1 / (1 - (1 - rho) * c);
+	}
+	function flown(tau) {
+		const t1 = T.cruise;
+		if (tau <= t1) return ga * tau;
+		const x = tau - t1;
+		return ga * (t1 + x - ((1 - rho) * x * x) / (2 * (1 - t1)));
 	}
 
 	function portrait() {
@@ -286,7 +318,7 @@ export async function createApproach({ THREE, renderer, nest }) {
 
 	function update(dt) {
 		const held = get(gate);
-		elapsed += dt;
+		sw.clock += dt;
 		if (!held) t += dt;
 		const p = clamp01(t / T.duration);
 
@@ -315,8 +347,8 @@ export async function createApproach({ THREE, renderer, nest }) {
 		camera.fov = fov;
 		camera.updateProjectionMatrix();
 
-		// ── The camera: flat out, and then a stop ────────────────────────
-		const z = lerp(0, zEnd, glide(p, T.hold));
+		// ── The camera: one speed, then easing to the descent's ──────────
+		const z = zEnd * flown(p);
 		const level = 1 - smoothstep(T.level[0], T.level[1], p);
 		rig.position.set(
 			Math.sin(p * 1.7 + 0.6) * T.drift * level,
@@ -338,16 +370,19 @@ export async function createApproach({ THREE, renderer, nest }) {
 		for (const it of items) it.mesh.rotation.z = it.rot0 + p * it.rate;
 
 		// ── The swimmer ──────────────────────────────────────────────────
-		// It rides ahead of the LENS, dead centre, and pulls in to where the
-		// descent expects it. Sized off the lens and the ride so it holds its
-		// place in the frame however either changes.
+		// It rides ahead of the LENS, dead centre, and at the end pulls in to
+		// where the descent expects it. Sized off the lens and the ride so it
+		// holds its place in the frame however either changes. It arrives by
+		// fading in, a little below the axis, and rising onto it.
+		const inK = smootherstep(span(p, T.swimmerIn));
 		const lead = lerp(A.lead, seamD * NEST.spermRide, smootherstep(span(p, T.dive)));
 		const bodyH = A.span * 2 * lead * Math.tan(rad(fov) / 2);
-		sw.group.position.set(0, 0, -lead);
+		const hh = lead * Math.tan(rad(fov) / 2);
+		sw.group.position.set(0, A.from.y * (1 - inK) * hh, -lead);
 		sw.group.scale.setScalar(bodyH);
-		sw.spinner.rotation.z = elapsed * SPIN;
-		sw.material.uniforms.uTime.value = elapsed;
-		sw.material.uniforms.uOpacity.value = SPERM ? smootherstep(span(p, T.fadeIn)) : 0;
+		sw.spinner.rotation.z = sw.clock * SPIN;
+		sw.material.uniforms.uTime.value = sw.clock;
+		sw.material.uniforms.uOpacity.value = SPERM ? inK : 0;
 
 		// The stencil chain, for wherever the camera is. Always base 0 here —
 		// the lens stops short of the portal's glass — but the visibility has to

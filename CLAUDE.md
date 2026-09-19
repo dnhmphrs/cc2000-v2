@@ -1,18 +1,13 @@
 # Working agreements
 
-## Everything goes to `dev`
+## Demos and PRs go to `main`
 
-There is one branch to look at: `dev`. Whatever a round is built on, **push the
-finished round to `dev` the moment it is made**, without being asked — that ask
-has been made once, standing, and it covers every round from here on. `dev` has
-everything: it was cut from `v4` after the lab cut landed there, with
-`fullflow-v2` merged in, and it only moves forward. Do not start branches for
-the sake of it. Work on `dev` itself unless a round genuinely needs isolating,
-and then merge it back to `dev` the same day.
-
-`main` stays as it is. Nothing goes to `main` unless it is asked for by name.
-When a PR is asked for, open it FROM `dev` into the branch named, so the branch
-and the PR are the same picture.
+`main` is the site. Work happens on `dev` — push there as it is made, it is
+the working branch and nobody else's — and **when a round is finished, open a
+PR from `dev` to `main` without being asked**: that ask has been made once,
+standing, and it covers every round from here on. Do not start branches for
+the sake of it; `dev` only moves forward. The demo to look at is `main`'s
+deployment once the PR is in, and `dev`'s preview before that.
 
 ## Do not push unverified work
 
