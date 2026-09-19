@@ -1,4 +1,4 @@
-import { vec4, texture } from 'three/tsl';
+import { vec4, texture, positionView, smoothstep as tslSmoothstep } from 'three/tsl';
 import { get } from 'svelte/store';
 import {
 	SCENES,
@@ -40,11 +40,18 @@ import { roomsFor } from './nest';
 //
 // ── The opening ──────────────────────────────────────────────────────────────
 // The card lifts, the sky develops, and then the swimmer is there: it fades in
-// at its riding distance, a little below the axis, and rises onto it — and
-// only then does the archive start arriving, because the nearest of it is
-// APPROACH.nearest units down the flight. Three beats, and the third is the
-// event. It does NOT fly past the lens from behind: every version of that
-// reads as a body being stretched by a wide lens.
+// at its riding distance, on the axis — and only then does the archive start
+// arriving. Three beats, and the third is the event. It does NOT fly past the
+// lens from behind: every version of that reads as a body being stretched by
+// a wide lens.
+//
+// ── The archive, in time ─────────────────────────────────────────────────────
+// Each piece adrift is given a MOMENT of the flight to pass the lens at, and
+// is put where the lens will be at that moment; so it comes by at one steady
+// rate whatever the camera's speed is doing, and nothing sits round the portal
+// while the lens slows into it. And it comes out of the dark — unseen beyond
+// APPROACH.seen[1] units ahead, fully there inside seen[0] — so the field is
+// what is passing, not a cluster seen from the far end of the flight.
 //
 // ── The flight takes the answers ─────────────────────────────────────────────
 // There is no machine, so the run asks its two questions on the way in, and
@@ -126,6 +133,10 @@ export async function createApproach({ THREE, renderer, nest }) {
 	const tex = nest.textures;
 	const { uniform } = await import('three/tsl');
 	const uOn = uniform(0);
+	// Out of the dark: by view depth, so a piece is there only once it is near.
+	const uSeen0 = uniform(A.seen[0]);
+	const uSeen1 = uniform(A.seen[1]);
+	const near = tslSmoothstep(uSeen0, uSeen1, positionView.z.negate()).oneMinus();
 	const driftMats = [];
 	const dimMat = {};
 	const bgMat = {};
@@ -133,19 +144,19 @@ export async function createApproach({ THREE, renderer, nest }) {
 	for (const d of DECADES) {
 		const m = new THREE.MeshBasicNodeMaterial({ transparent: true });
 		const c = glassCut(d, tex[d].screen)();
-		m.colorNode = vec4(c.rgb.mul(0.8).mul(uOn), c.a.mul(uOn));
+		m.colorNode = vec4(c.rgb.mul(0.8).mul(uOn), c.a.mul(uOn).mul(near));
 		dimMat[d] = m;
 		driftMats.push(m);
 		const b = new THREE.MeshBasicNodeMaterial({ transparent: true });
 		const tb = texture(tex[d].bg);
-		b.colorNode = vec4(tb.rgb.mul(uOn), uOn);
+		b.colorNode = vec4(tb.rgb.mul(uOn), uOn.mul(near));
 		bgMat[d] = b;
 		driftMats.push(b);
 		furnMat[d] = {};
 		for (const key of ['desk', 'bed', 'poster', 'clock']) {
 			const fm = new THREE.MeshBasicNodeMaterial({ transparent: true });
 			const tf = texture(tex[d][key]);
-			fm.colorNode = vec4(tf.rgb.mul(0.8).mul(uOn), tf.a.mul(uOn));
+			fm.colorNode = vec4(tf.rgb.mul(0.8).mul(uOn), tf.a.mul(uOn).mul(near));
 			furnMat[d][key] = fm;
 			driftMats.push(fm);
 		}
@@ -193,21 +204,23 @@ export async function createApproach({ THREE, renderer, nest }) {
 		m.scale.set(width, width / (t.image.width / t.image.height), 1);
 		return m;
 	}
-	// A tube of them ahead, off the axis, at every distance from the nearest
-	// to a little past the portal.
+	// A tube of them, off the axis, each with its own moment to pass the lens
+	// at. Where that puts it along the flight depends on the flight's profile,
+	// which is settled per run — see placeNest(), which lays them out.
 	const place = (obj, r0, r1) => {
 		const a = rand() * Math.PI * 2;
 		const r = r0 + rand() * (r1 - r0);
-		obj.position.set(
-			Math.cos(a) * r,
-			Math.sin(a) * r * 0.75,
-			-A.nearest - rand() * (A.travel - A.nearest + 30)
-		);
+		obj.position.set(Math.cos(a) * r, Math.sin(a) * r * 0.75, 0);
 		obj.rotation.y = (rand() - 0.5) * 0.6;
 		const rot0 = (rand() - 0.5) * 0.5;
 		obj.rotation.z = rot0;
 		drifters.add(obj);
-		items.push({ mesh: obj, rot0, rate: (rand() - 0.5) * 0.4 });
+		items.push({
+			mesh: obj,
+			rot0,
+			rate: (rand() - 0.5) * 0.4,
+			at: A.passing[0] + rand() * (A.passing[1] - A.passing[0])
+		});
 	};
 	for (let i = 0; i < A.screens; i++) {
 		place(monitor(DECADES[i % DECADES.length], 1.6 + rand() * 1.6), A.tube[0], A.tube[1]);
@@ -267,6 +280,8 @@ export async function createApproach({ THREE, renderer, nest }) {
 		const c = (1 - T.cruise) / 2;
 		rho = Math.max(0.05, Math.min(1, (q * (1 - c)) / (1 - q * c)));
 		ga = 1 / (1 - (1 - rho) * c);
+		// And the archive, where the lens will be when each piece's moment comes.
+		for (const it of items) it.mesh.position.z = zEnd * flown(it.at);
 	}
 	function flown(tau) {
 		const t1 = T.cruise;
@@ -373,12 +388,11 @@ export async function createApproach({ THREE, renderer, nest }) {
 		// It rides ahead of the LENS, dead centre, and at the end pulls in to
 		// where the descent expects it. Sized off the lens and the ride so it
 		// holds its place in the frame however either changes. It arrives by
-		// fading in, a little below the axis, and rising onto it.
+		// fading in, where it rides.
 		const inK = smootherstep(span(p, T.swimmerIn));
 		const lead = lerp(A.lead, seamD * NEST.spermRide, smootherstep(span(p, T.dive)));
 		const bodyH = A.span * 2 * lead * Math.tan(rad(fov) / 2);
-		const hh = lead * Math.tan(rad(fov) / 2);
-		sw.group.position.set(0, A.from.y * (1 - inK) * hh, -lead);
+		sw.group.position.set(0, 0, -lead);
 		sw.group.scale.setScalar(bodyH);
 		sw.spinner.rotation.z = sw.clock * SPIN;
 		sw.material.uniforms.uTime.value = sw.clock;

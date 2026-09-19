@@ -8,9 +8,10 @@ have drawn at that moment rather than a timed guess at it.
 
 **1 — the run, as it now is.** What `/` does on `main`: a title card over an
 approach held at zero, black; the card lifts, the sky comes up, the swimmer
-fades in a little below the axis and rises onto it, ahead of the lens and seen
-from behind; then the archive starts arriving and passing, the two questions
-are asked on the way and the flight held while they are; the portal dead ahead,
+fades in where it rides, ahead of the lens and seen from behind; then the
+archive comes out of the dark and passes, each piece at its own moment of the
+flight so it comes by at one steady rate, the two questions are asked on the
+way and the flight held while they are; the portal dead ahead,
 whose glass holds the first room; the descent through the decades, one room
 inside the next, at one pace from the seam, down to the answer's room, which
 lands level; the swimmer going into its screen and the screen going white; the
@@ -23,7 +24,7 @@ opens on, at the speed the descent opens at. Frames on the WebGL lane at
 | scene    | seconds | where                                               |
 | -------- | ------- | --------------------------------------------------- |
 | approach | 15      | `three/world/approach.js`, held at the two asks     |
-| descent  | 14      | `three/world/descent.js` over `three/world/nest.js` |
+| descent  | 9       | `three/world/descent.js` over `three/world/nest.js` |
 | room     | —       | `scenes/Room.svelte`, until "go again"              |
 
 **2 — the lab cut it was made from.** The five sketches chained at `/v4`,
@@ -38,7 +39,7 @@ though not in the cut.
 
     npm run dev
     BASE=http://localhost:3000 OUT=<dir> \
-      PLAN='[["2",[0.02,0.06,0.1,0.16,0.4,0.9,1]],["3",[0.12,0.3,0.5,0.7,0.9,1]]]' \
+      PLAN='[["2",[0.02,0.06,0.12,0.3,0.6,0.85,1]],["3",[0.12,0.3,0.5,0.7,0.9,1]]]' \
       node scripts/shots.mjs
 
 for the run (`2` approach, `3` descent — the shots tool waits for the stage's

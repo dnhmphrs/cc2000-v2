@@ -389,19 +389,21 @@ export const APPROACH = {
 	span: 0.28,
 	// How it arrives: it does not fly past the lens at all — every version of
 	// that reads as a body stretched by a wide lens — it FADES IN at its riding
-	// distance, this far below the axis in half-heights of the frame, and rises
-	// onto it as it takes station.
-	from: { y: -0.35 },
+	// distance, on the axis, where it rides.
 	// World units from the first frame to the portal's glass.
 	travel: 150,
 	// How much of the archive is adrift, and the tube it drifts in — a radius
-	// range, clear of the axis the swimmer and the portal are on — and how far
-	// down the flight the first of it is: the swimmer comes in first, and only
-	// then does the stuff start passing.
+	// range, clear of the axis the swimmer and the portal are on. It is placed
+	// along the flight IN TIME, not in distance: each piece passes the lens at
+	// its own moment in `passing`, so it comes by at one steady rate however
+	// the camera's speed changes, and none of it sits round the portal while
+	// the lens slows into it. And it comes out of the dark: a piece is unseen
+	// beyond `seen[1]` units ahead and fully there inside `seen[0]`.
 	screens: 22,
 	furniture: 30,
 	tube: [3.0, 11.0],
-	nearest: 60,
+	passing: [0.22, 0.88],
+	seen: [24, 44],
 	// The sky, and the debris close in that makes the speed read.
 	stars: 1100,
 	brightStars: 90,
