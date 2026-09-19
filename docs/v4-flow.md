@@ -23,8 +23,9 @@ seconds on one WebGPU renderer, each at its own sketch's length:
 | lattice    | 9       | `lab/lattice.js`  | every integer a point at (a log 2, b log 3, c log 5); the lens closes on one cell     |
 | bloom      | 11      | `lab/cube.js`     | the cell is a cube, and the cube opens on an isometric bedroom                        |
 
-Of the four sketches the last cut was made from, only the descent stayed, and
-it was remade: it cycles through the decades now, with exact crossings at every
+Of the four sketches the last cut was made from, only the descent stayed in
+the cut (the E8 expansion is kept on the side, refined, at `/lab?sketch=e8`),
+and it was remade: it cycles through the decades now, with exact crossings at every
 glass, and the swimmer swims down the middle of it. The conception and the
 bloom are new sketches under the same names; the approach and the lattice are
 the two beats the brief asked to workshop — the one before the descent, which
