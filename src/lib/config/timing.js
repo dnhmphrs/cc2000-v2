@@ -549,11 +549,10 @@ export const SCENES = scale({
 		// the glass the loop came home through had gone to black.
 		fadeIn: [0.0, 0.12],
 
-		// THE SWIMMER FADES IN, at its riding distance and a little below the
-		// axis, and rises onto it — before the archive arrives, so the card
-		// lifts, the sky develops, and then the swimmer is there. Not a pass
-		// from behind the lens: every version of that reads as a body being
-		// stretched by a wide lens.
+		// THE SWIMMER FADES IN, at its riding distance, on the axis — before the
+		// archive arrives, so the card lifts, the sky develops, and then the
+		// swimmer is there. Not a pass from behind the lens: every version of
+		// that reads as a body being stretched by a wide lens.
 		swimmerIn: [0.02, 0.2],
 
 		// Where the flight stops to ask. Progress marks, not windows: the scene
@@ -594,7 +593,9 @@ export const SCENES = scale({
 	//  |the fall, one pace, six rooms deep       |raster|dive |splosh  |land
 	//                                     |easing to rest ................|
 	descent: {
-		duration: 14,
+		// NINE. Fourteen was too slow through the monitors: at nine each crossing
+		// is a second and a half, which is the pace the lab sketch fell at.
+		duration: 9,
 
 		// How many rooms deep, the last being the answer's, and how far into the
 		// last room's crossing the run comes to rest — past the point where the
