@@ -36,12 +36,12 @@
 					opacity: 0,
 					dashSize: 0.08,
 					gapSize: 0.04
-			  })
+				})
 			: new THREE.LineBasicMaterial({
 					color: ink(ICOSA_INK.draft),
 					transparent: true,
 					opacity: 0
-			  });
+				});
 
 		materials.push({ mat, baseOpacity: lineOpacity });
 

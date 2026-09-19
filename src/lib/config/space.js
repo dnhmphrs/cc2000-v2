@@ -46,7 +46,12 @@ export const TUNNEL = {
 	// See SCENES.flyIn.duration, and glide() in config/ease.js: the camera holds
 	// ONE speed for three quarters of the run and then stops. No ease-in-out —
 	// that spends the middle at double speed and reads as a camera being moved.
-	camStart: 150,
+	// FURTHER BACK. The two mid-flight popups HOLD progress while they are open,
+	// so the flight already takes longer than its duration says and there is room
+	// in it for more approach. 150 -> 240 takes the travel from 426 world units
+	// to 516 and starts the ovum 19% further off, which is 16% smaller and a
+	// good deal deeper in the fog.
+	camStart: 240,
 	eggZ: -340,
 	// World radius of the outer shell. How big it READS is EGG_SCREEN; the fly-in
 	// turns the two into a stopping distance.
@@ -81,6 +86,7 @@ export const TUNNEL = {
 	// framing is angular, so the FORESHORTENING (how much bigger the near end of
 	// the body is than the far end) is fixed by the lens and by spermSpan, not by
 	// this. It only has to clear the near plane.
+
 	spermLead: 5.5,
 	// How much of the frame HEIGHT its CROSS-SECTION covers. V1's, measured off
 	// the file: 0.153 units across a frame 0.603 units high. The body points
@@ -139,10 +145,18 @@ export const TUNNEL = {
 	// front of the camera instead of emerging from behind it.
 	//
 	// z is how far behind the lens it starts, in world units.
-	spermFrom: { x: 0, y: 0, z: 16 },
-
-	// The ovum turns too, slowly, about its own pole. rad/s.
-	eggSpin: 0.16,
+	// SIXTEEN was fifteen units of nothing. The swimmer is hidden until it is
+	// actually in front of the lens — it has to be, there is no way to see a
+	// thing that is behind you — so every unit it spends further back is window
+	// spent on an invisible approach, and the window is what pays for the pass
+	// itself.
+	//
+	// Three is the least that still starts it wholly behind the lens. The model
+	// is 4.07 units long and hangs about its OWN CENTRE (measured off
+	// static/sperm.glb through the same loader tunnel.js uses: bbox z ±2.0334,
+	// centre 0.000000), so the number that has to clear the lens plane is the
+	// half-length, 2.03, not the length.
+	spermFrom: { x: 0, y: 0, z: 3.0 },
 
 	// ── The motes ────────────────────────────────────────────────────────────
 	// The field of debris the camera flies through. Without it the flight is a
@@ -170,7 +184,20 @@ export const ICOSA = {
 	// so it pulls back to make room for them. The pull-back is not a cut — the
 	// computation lerps from one to the other as the panes open, and that move
 	// is most of why the panes read as coming OUT.
-	conceptionFrustum: 4.9,
+	// A TOUCH WIDER than it was. At 4.9 the sphere's 3.80 world units of
+	// diameter took 78% of the frame height on a laptop, which is close enough
+	// that the figure has nothing round it; 5.5 puts it at 69% and gives the
+	// field somewhere to sit.
+	//
+	// It moves BOTH sides of the hand-over and that is by design: the fly-in
+	// does not carry its own number for how big the ovum ends up, it derives it
+	// from this one every frame (coreRatio() in FlyIn.svelte, against the void's
+	// own range), so the sphere the flight arrives at and the sphere the
+	// conception opens on are the same sphere however this is set.
+	//
+	// Landscape only, in practice. fit() takes the larger of this and what the
+	// aspect demands, and portrait already demands 8.7.
+	conceptionFrustum: 5.5,
 	frustum: 13.0,
 	camPos: [0, 0, 14],
 
@@ -254,23 +281,54 @@ export const ICOSA = {
 	// number exactly.
 	schematicReach: 1.55,
 
-	// The lattice cage — a 24-cell, projected from 4D, hung around the solid and
-	// turning with it. It is the same figure the blueprint field rules the ground
-	// with, in three dimensions instead of two, so the search happens inside the
-	// space it is searching. Radius as a multiple of the circumradius.
-	cageRadius: 3.4,
-	// 4D rotation rates, rad/s, for the three planes that involve w. Slow: the
-	// cage is atmosphere, and a fast one turns the scene into a screensaver.
-	cageSpin: [0.11, 0.083, 0.061],
+	// ── The lattice cage — a 600-cell ────────────────────────────────────────
+	// Projected from 4D, hung around the solid and turning with it. It is the
+	// polytope the icosahedron belongs to: its vertex figure IS an icosahedron
+	// and its 120 vertices ARE the icosahedron's own rotation group, so the
+	// search happens inside the space it is searching rather than beside it.
+	// See three/geometry/cell600.js and the note over createCage().
+	//
+	// `fill` is how much of the frustum HEIGHT the figure spans at its widest —
+	// well above 1, so it runs off the frame and reads as a space the scene is
+	// inside rather than an object in it. Re-scaled from the live frustum every
+	// frame, so it is locked to the screen at every zoom.
+	//
+	// 1.55 -> 1.4 is NOT smaller. The reach this is measured against was wrong:
+	// the old bound assumed a vertex could sit at full imaginary radius AND at
+	// full w at once, which it cannot, and over-estimated by 1.61x — so the cage
+	// was quietly drawn at 62% of whatever this number asked for. Against the
+	// exact bound, 1.4 is half again as big on screen as 1.55 was.
+	//
+	// And it was walked in from the other side too. At 2.0 and above the figure
+	// is so large that all you see is a few long chords crossing the frame with
+	// no structure in them, and the vertex-figure icosahedron — the whole point
+	// of using this polytope — sits off the frame entirely. At 1.4 the shell is
+	// on screen, concentric with the solid, and the boundary of the figure is
+	// still outside it, so it reads as a space rather than as an object.
+	cageFill: 1.4,
 
-	// The lattice cage. `fill` is how much of the frustum HEIGHT the figure spans
-	// at its widest — above 1, so it runs off the frame the way V2's did and
-	// reads as a space the scene is inside rather than an object in it. It is
-	// re-scaled from the live frustum every frame, so it is locked to the screen
-	// at every zoom.
-	cageFill: 1.55,
-	cageNode: 3.5,
-	cageNodeGain: 1.6
+	// The distance the 4D perspective divide is taken from. Smaller = more
+	// depth drama, because the magnification range is (W+1)/(W-1). The old 3.2
+	// was set for 24-cell vertices at radius sqrt2; against unit quaternions it
+	// flattens the breathing to almost nothing, which is the one thing a 4D
+	// projection is for.
+	cageW: 2.6,
+
+	// ── The twist ────────────────────────────────────────────────────────────
+	// Seconds per REGISTER. The two twists run on a five-fold and a three-fold
+	// axis of the solid, whose quanta are 36 and 60 degrees, and one whole
+	// quantum of each per cycle means that at the top of every cycle the map is
+	// multiplication of a group by two of its own members: it permutes the 120
+	// vertices and leaves the figure exactly where it was. So the cage drifts
+	// out of alignment with the solid and comes back into it, precisely, every
+	// nine seconds, and nothing about that is keyframed.
+	cageCycle: 9,
+	cageTwistA: 1,
+	cageTwistB: 1,
+
+	// 120 nodes instead of 24, so each one is smaller and pulls less weight.
+	cageNode: 2.8,
+	cageNodeGain: 1.0
 };
 
 // The frustum is a HEIGHT, so a tall viewport sees a much narrower slice of the

@@ -139,7 +139,7 @@
 		height: 52px;
 		border-radius: 12px;
 		background: var(--machine-light);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		cursor: grab;
 		touch-action: none;
@@ -149,7 +149,7 @@
 		cursor: grabbing;
 	}
 	.band:focus-visible {
-		outline: var(--ink) solid var(--machine-red);
+		outline: var(--pen) solid var(--machine-red);
 		outline-offset: 4px;
 	}
 

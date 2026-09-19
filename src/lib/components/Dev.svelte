@@ -1,7 +1,8 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
-	import { DEV } from '$lib/config';
+	import { DEV, DEV_SEED } from '$lib/config';
+	import { rand } from '$lib/random';
 	import { ORDER, advance, again, clearResult } from '$lib/scenes/director';
 	import {
 		scene,
@@ -16,7 +17,8 @@
 		decade,
 		edge,
 		monitorRect,
-		calcZoom
+		gate,
+		goingBack
 	} from '$lib/store/store';
 	import { resolve, earliestBirthday } from '$lib/functions/answer';
 
@@ -35,12 +37,14 @@
 	// refuse.
 	function roll() {
 		const lo = Date.parse(`${EARLIEST}T00:00:00Z`);
-		const hi = Date.now() - 864e5;
+		// Seeded, the range is pinned too: yesterday moves a day a day, and a
+		// fraction of a moving range is not a repeatable date.
+		const hi = DEV_SEED !== null ? Date.parse('2026-01-01T00:00:00Z') : Date.now() - 864e5;
 
 		for (let i = 0; i < 50; i++) {
-			const d = new Date(lo + Math.random() * (hi - lo));
+			const d = new Date(lo + rand() * (hi - lo));
 			const iso = d.toISOString().slice(0, 10);
-			const level = 1 + Math.floor(Math.random() * 10);
+			const level = 1 + Math.floor(rand() * 10);
 			if (resolve(iso, level).edge) continue;
 
 			// NUMBERS, not strings. The selects bind to numeric option values, so a
@@ -66,7 +70,7 @@
 				? `${get(dobYear)}-${String(get(dobMonth)).padStart(2, '0')}-${String(get(dobDay)).padStart(
 						2,
 						'0'
-				  )}`
+					)}`
 				: roll();
 		if (!iso) return false;
 
@@ -81,15 +85,30 @@
 		return true;
 	}
 
+	// ── The keys are bound by NAME, not by position in ORDER ─────────────────
+	// ORDER lost the calculator in this build, so indexing into it would slide
+	// every key down one — and scripts/shots.mjs and scripts/verify.mjs both
+	// address scenes by these numbers. They stay where they were, and 1, freed
+	// up by the machine going away, restarts the run from the title card.
+	const KEYS = { 1: 'restart', 2: 'flyIn', 3: 'conception', 4: 'computation', 5: 'room' };
+
 	function goto(name) {
-		if (!ORDER.includes(name)) return;
-		if (name === 'calculator') {
+		if (name === 'restart') {
 			clearResult();
 			monitorRect.set(null);
-			calcZoom.set(1);
-		} else if (!seed()) {
+			goingBack.set(false);
+			gate.set('prelude');
+			runId.update((n) => n + 1);
+			scene.set('flyIn');
 			return;
 		}
+		if (!ORDER.includes(name)) return;
+		// Every 3D scene needs an answer behind it now: the run takes one
+		// mid-flight, and a jump skips the asking. The gate goes with it — a
+		// jumped-to scene must not sit behind a popup nobody opened.
+		if (!seed()) return;
+		gate.set(null);
+		goingBack.set(false);
 		// Pinning follows the jump rather than fighting it, so 1-5 stays useful
 		// while a scene is held.
 		if (DEV.only) DEV.only = name;
@@ -110,15 +129,14 @@
 			// On the machine this only loads the dials. Pressing CALCULATE is
 			// still yours — the point is to flick through songs, not to be flown
 			// somewhere.
-			if (where === 'calculator') return void roll();
 			if (where === 'room') return again();
 			return advance(where);
 		}
 
 		const n = Number(e.key);
-		if (n >= 1 && n <= ORDER.length) {
+		if (KEYS[n]) {
 			e.preventDefault();
-			goto(ORDER[n - 1]);
+			goto(KEYS[n]);
 		}
 	}
 

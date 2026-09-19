@@ -1,6 +1,6 @@
 <script>
 	import * as THREE from 'three';
-	import { LAYERS, elementUrl } from '$lib/data/roomElements';
+	import { LAYERS, placement, elementUrl } from '$lib/data/roomElements';
 	import { SCREEN_GLASS, GLASS_SAFETY } from '$lib/config';
 
 	// Lives in the same worldGroup as everything else so it rotates together.
@@ -77,7 +77,7 @@
 			layers.push(entry);
 
 			loader.load(elementUrl(decadeKey, cfg.key), (tex) => {
-				tex.encoding = THREE.sRGBEncoding;
+				tex.colorSpace = THREE.SRGBColorSpace;
 				// These are large non-power-of-two images: skip mipmaps (and the
 				// costly POT resize) and pre-upload now, during the idle intro, so
 				// nothing stalls the main thread when the rooms first render.
@@ -92,7 +92,7 @@
 				if (renderer) {
 					try {
 						renderer.initTexture(tex);
-					} catch (e) {
+					} catch {
 						/* ignore */
 					}
 				}
@@ -104,8 +104,9 @@
 	function layout(entry) {
 		const { cfg, aspect } = entry;
 		const { right, up, n, W, H } = frame();
-		// Portrait re-places elements to fill the tall frame.
-		const pos = portrait && cfg.port ? cfg.port : cfg;
+		// Portrait re-places elements to fill the tall frame, and each decade may
+		// override the shared placement — see roomElements.placement().
+		const pos = placement(cfg, decadeKey, portrait);
 
 		let w, h;
 		if (cfg.cover) {

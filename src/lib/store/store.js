@@ -17,7 +17,7 @@ import { AIR, aspectKind } from '$lib/config';
 //   room         the answer, in the room's monitor
 //
 // Written by: scenes/director.js and three/Stage.svelte. Nobody else.
-export const scene = writable('calculator');
+export const scene = writable('flyIn');
 
 // Bumped once per run. Components that need to forget everything on a fresh
 // run can key off this rather than trying to reset themselves.
@@ -80,6 +80,43 @@ export const fieldFade = writable(1);
 // Written by: scenes/Calculator.svelte.
 export const calcZoom = writable(1);
 
+// ── The landing ──────────────────────────────────────────────────────────────
+// 0..1 through the computation's final fall into the room. The scanlines ride it
+// out: the raster is the screen the run is being WATCHED on, and the last thing
+// the run does is stop being a screen and become a place. Written by:
+// scenes/Computation.svelte, reset by scenes/FlyIn.svelte enter().
+export const landing = writable(0);
+
+// ── The way back ─────────────────────────────────────────────────────────────
+// True while the camera is flying THROUGH the room's monitor on the way to
+// another run. There is no machine to fly home into in this build, so nothing
+// changes the scene when "calculate again" is pressed — the room stays up and
+// this says the return flight is on. Computation.stepReturn() clears it, and
+// hands the run to the fly-in, when the glass has filled the frame.
+//
+// Written by: scenes/director.js again(), scenes/director.js settled().
+export const goingBack = writable(false);
+
+// ── The gate ─────────────────────────────────────────────────────────────────
+// V3 has no machine to take the answers on, so the flight takes them instead —
+// and a flight that is waiting for a date has to STOP. This is the one thing
+// standing between the fly-in and its own clock:
+//
+//   null       flying
+//   'prelude'  the title card is up. The scene is mounted and held at progress
+//              zero, which is black air with motes in it, so the card is black
+//              over black and the flight is ALREADY RUNNING when it lifts.
+//   'dob'      the first popup, over the swimmer
+//   'spicy'    the second, once the ovum is up
+//
+// Written by: scenes/FlyIn.svelte (opens them) and the popups (close them).
+//
+// While a gate is open FlyIn holds `t` and keeps advancing `elapsed`, so the
+// swimmer goes on rolling and the scene does not freeze — it waits. Holding t
+// rather than running a second clock is what keeps every frame a pure function
+// of progress, which is what ?at= depends on.
+export const gate = writable('prelude');
+
 // ── Device ───────────────────────────────────────────────────────────────────
 // 'portrait' | 'square' | 'landscape' — see aspectKind() in config/space.js.
 // Written by: routes/+layout.svelte.
@@ -110,3 +147,13 @@ export const backdrop = writable({ shader: 'flat', color: AIR });
 // loop, so a writable would only mean a notification per frame for a value
 // nothing reacts to. Written in place — never reassign the array.
 export const fieldRotation = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+
+// The solid's axes on the paper behind it — see three/shaders/grid.js.
+//
+//   0  how much of the ray-work is drawn, 0..1
+//   1  how far it reaches out of the solid, 0..1
+//   2  the solid's own rim, in frame heights, so the rays start outside it
+//
+// Same reasoning as fieldRotation: written every frame, read in another loop,
+// reacted to by nothing. Written in place — never reassign the array.
+export const fieldRays = new Float32Array([0, 0, 0.15]);

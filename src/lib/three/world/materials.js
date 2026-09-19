@@ -73,7 +73,36 @@ const fogUniforms = (color, density) => ({
 // fill, no hidden-line removal, every edge still there, but the near ones come
 // forward and the shape resolves. It is live, so a solid turning reads as
 // turning rather than as a flicker.
-export function lineMaterial(color, opacity = 1) {
+// ── The fourth-dimension ramp ────────────────────────────────────────────────
+// Opt-in, and only the cage asks for it. A 4-polytope projected into 3-space
+// puts its FAR half inside its near half — for the 600-cell the two poles both
+// land exactly on the origin, so two dozen edges converge on a single point
+// directly behind the solid and additively blend into a bright smudge. That is
+// what "messy in the centre" is, and it is a fact about depth in the fourth
+// dimension, not about radius in the third: a radial fade costs most of the ink
+// and removes almost none of the smudge, because nearly every edge lives in the
+// same band of 3D radius.
+//
+// So the kill is BY w. The first term takes out the far half; the second notches
+// the poles themselves, which are the two vertices that project to nothing and
+// drag their spokes into a knot. Carried per ENDPOINT and interpolated, so a
+// line fades ALONG its length and nothing pops as the twist carries an edge
+// across the threshold.
+//
+// What it leaves brightest, for free and at every instant of the twist, is the
+// shell at w = φ/2: the vertex figure. Which is an icosahedron.
+//
+// (The notch is written as 1 - smoothstep(lo, hi, …) rather than as a
+// smoothstep with its edges the other way round: GLSL leaves smoothstep
+// undefined when edge0 >= edge1, and an undefined term multiplied into every
+// line in the figure is not a thing to leave to the driver.)
+const W_RAMP = `
+	float wRamp(float w) {
+		return smoothstep(0.30, 0.72, w) * (1.0 - smoothstep(0.80, 0.90, abs(w)));
+	}
+`;
+
+export function lineMaterial(color, opacity = 1, { wRamp = false } = {}) {
 	return new THREE.ShaderMaterial({
 		transparent: true,
 		depthWrite: false,
@@ -91,6 +120,7 @@ export function lineMaterial(color, opacity = 1) {
 		vertexShader: `
 			attribute float aT;
 			attribute float aDelay;
+			${wRamp ? 'attribute float aW; varying float vW;' : ''}
 			uniform float uRadius;
 			varying float vT;
 			varying float vDelay;
@@ -98,6 +128,7 @@ export function lineMaterial(color, opacity = 1) {
 			void main() {
 				vT = aT;
 				vDelay = aDelay;
+				${wRamp ? 'vW = aW;' : ''}
 				vec4 mv = modelViewMatrix * vec4(position, 1.0);
 				// Depth measured from the object's OWN centre, not the camera's,
 				// so it does not change when the camera dollies or the frustum
@@ -116,10 +147,13 @@ export function lineMaterial(color, opacity = 1) {
 			varying float vT;
 			varying float vDelay;
 			varying float vFront;
+			${wRamp ? 'varying float vW;' : ''}
+			${wRamp ? W_RAMP : ''}
 			void main() {
 				float local = clamp((uGrow - vDelay) / max(uSpan, 0.0001), 0.0, 1.0);
 				if (vT > local) discard;
 				float a = uOpacity * mix(uBack, 1.0, vFront * 0.5 + 0.5);
+				${wRamp ? 'a *= wRamp(vW);' : ''}
 				gl_FragColor = vec4(uInk * a, a);
 			}
 		`
@@ -304,7 +338,7 @@ export function skinMaterial({ ink, accent, power = 3, base = 0, add = false }) 
 
 // ── 4. The point ─────────────────────────────────────────────────────────────
 // A hard little core in a soft halo. A drawn point, not a blur.
-export function dotMaterial(color, size) {
+export function dotMaterial(color, size, { wRamp = false } = {}) {
 	return new THREE.ShaderMaterial({
 		transparent: true,
 		depthWrite: false,
@@ -315,8 +349,10 @@ export function dotMaterial(color, size) {
 			uSize: { value: size }
 		},
 		vertexShader: `
+			${wRamp ? 'attribute float aW; varying float vW;' : ''}
 			uniform float uSize;
 			void main() {
+				${wRamp ? 'vW = aW;' : ''}
 				gl_PointSize = uSize;
 				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 			}
@@ -324,10 +360,13 @@ export function dotMaterial(color, size) {
 		fragmentShader: `
 			uniform vec3 uInk;
 			uniform float uOpacity;
+			${wRamp ? 'varying float vW;' : ''}
+			${wRamp ? W_RAMP : ''}
 			void main() {
 				vec2 d = gl_PointCoord - 0.5;
 				float r = length(d) * 2.0;
 				float a = (exp(-r * r * 4.0) * 0.5 + (1.0 - smoothstep(0.2, 0.32, r)) * 0.95) * uOpacity;
+				${wRamp ? 'a *= wRamp(vW);' : ''}
 				gl_FragColor = vec4(uInk * a, a);
 			}
 		`
@@ -388,6 +427,12 @@ export function dotMaterial(color, size) {
 // The field is evaluated twice — once per vertex to displace the surface, once
 // per fragment to draw on it — because a wave you can only see is a texture and
 // a wave that moves the skin is a wave.
+// Where the swimmer went in: the vertex facing the camera. ICOSA.tilt is exactly
+// five-fold now, so this direction is the one that maps to the view axis, and
+// the splash's rings are concentric on screen rather than merely on the sphere.
+// VERTICES[5] is (0, 1, PHI); its antipode sits directly behind it.
+const SPLASH_AXIS = new THREE.Vector3(...VERTICES[5]).normalize();
+
 const FIVE_FOLD = (() => {
 	const out = [];
 	VERTICES.forEach((v) => {
@@ -403,9 +448,11 @@ const WAVE_FIELD = `
 	uniform float uRing;
 	uniform float uPhase;
 	uniform float uChop;
+	uniform vec3 uSplashAxis;
 	uniform float uFurrow;
 	uniform float uLobe;
 	uniform float uGrain;
+	uniform float uFront;
 
 	float waveField(vec3 n) {
 		float h = 0.0;
@@ -422,36 +469,64 @@ const WAVE_FIELD = `
 		return h * (1.0 + uRing * sin(uPhase * 5.5));
 	}
 
-	// ── EVERYTHING ELSE ──────────────────────────────────────────────────────
-	// A struck sphere does not ring in one mode. It rings in all of them at once
-	// and the high ones damp fastest, and what is left at the end is the lowest
-	// symmetric mode there is. waveField() above is that end state. This is the
-	// mess it comes out of: three travelling wavefronts on incommensurate axes,
-	// going nowhere in particular, at frequencies that share no common period so
-	// the surface never repeats.
+	// ── THE SPLASH ───────────────────────────────────────────────────────────
+	// Something went into this body, at one point on it, and the surface answers
+	// the way a surface answers: rings, travelling out from where it was hit.
 	//
-	// Without it the body simply arrives at the twelve, which is an answer with
-	// no working. With it the skin churns first and the icosahedron RESOLVES out
-	// of the churn, which is the whole difference between a shape appearing and
-	// a body dividing.
-	float chop(vec3 n) {
-		float s = sin(dot(n, vec3(0.93, 0.29, 0.23)) * 4.3 + uPhase * 2.6);
-		s += sin(dot(n, vec3(-0.32, 0.86, 0.39)) * 3.7 - uPhase * 2.1);
-		s += sin(dot(n, vec3(0.21, -0.44, 0.87)) * 5.1 + uPhase * 3.3);
-		return s * 0.3333;
+	// They are spaced on the POINCARÉ RADIUS rather than on the angle. Take the
+	// disc the sphere makes seen head on, with the impact at its centre and the
+	// silhouette as its rim, and give it the hyperbolic metric — then rings a
+	// constant hyperbolic distance apart bunch without limit toward the rim. One
+	// free variable, no angular term at all, and the rings stay perfect circles
+	// however many of them there are.
+	//
+	//     r = sin(theta)                 the projected radius, 0 at the impact
+	//     d = atanh(r)                   the hyperbolic distance to it
+	//     splash = sin(w*d - phase)      rings at constant spacing in d
+	//
+	// atanh is not in GLSL ES 1.0, so it is written out. Which is also the point
+	// of using it: the spacing goes as log(1/(1-r)) toward the rim, so the front
+	// of the body carries a few wide rings and the limb carries a hundred fine
+	// ones, and the whole system is one oscillation seen at every scale at once.
+	//
+	// It damps into the icosahedral invariant. That hand-over is the scene: what
+	// the impact starts, the symmetry finishes.
+	// The hyperbolic distance from the point of impact. Everything about the
+	// moment of conception is measured in this: the rings are spaced in it, and
+	// so is how far the disturbance has got. It runs 0 at the impact to about
+	// 3.57 at the limb, where the clamp stops the log running away.
+	float hyp(vec3 n) {
+		float c = dot(n, uSplashAxis);
+		float r = sqrt(max(1.0 - c * c, 0.0));
+		return 0.5 * log((1.0 + r) / max(1.0 - r, 0.0016));
+	}
+
+	float splash(vec3 n) {
+		return sin(hyp(n) * 3.1 - uPhase * 2.2);
+	}
+
+	// ── WHAT THE FRONT HAS NOT REACHED YET ───────────────────────────────────
+	// 1 where the skin is still churning, 0 where the wave has been through and
+	// left the invariant behind. uFront is the hyperbolic radius the
+	// disturbance has travelled to, so this is a circle opening out from the
+	// point of impact — and because it is measured in the SAME distance the
+	// rings are spaced in, the calm arrives exactly with the rings that carry
+	// it, not on a clock of its own that has to be kept in step by hand.
+	//
+	// Parked BELOW zero it returns 1 everywhere, which is the state the fly-in
+	// hands over: nothing has happened yet, and the whole surface is chaos.
+	float wild(vec3 n) {
+		return smoothstep(uFront - 0.7, uFront + 0.15, hyp(n));
 	}
 
 	// ── SUBSTANCE ────────────────────────────────────────────────────────────
-	// The body is not a hole. Approached across three hundred units it was a
-	// flat black disc inside a warm halo, which reads as absence rather than as
-	// a thing — so it carries a fine mottle, held right down, turning over very
-	// slowly. Products of sines rather than a hash: it costs three multiplies an
-	// octave, it is continuous on the sphere, and what it gives is blobby and
-	// cellular rather than the even fizz a hash produces.
-	//
-	// It goes as the conception starts. The dark void the wave breaks across is
-	// the right opening for that scene and this would only be in the way of it —
-	// see FlyIn.svelte, which fades uGrain out over the arrival.
+	// The body is not a hole. Approached across three hundred units it was a flat
+	// black disc inside a warm halo, which reads as absence rather than as a
+	// thing — so it carries a fine mottle, ruled into contours rather than laid
+	// down as a fill, because every other mark on this body is line-work and a
+	// soft wash was the one thing in the frame that was not. Products of sines:
+	// three multiplies an octave, continuous on the sphere, and blobby rather
+	// than the even fizz a hash gives.
 	float grain(vec3 n) {
 		float g = sin(n.x * 21.0 + uPhase * 0.31) * sin(n.y * 19.0 - uPhase * 0.27) *
 			sin(n.z * 23.0 + uPhase * 0.23);
@@ -464,14 +539,14 @@ const WAVE_FIELD = `
 
 	// What the skin is actually doing, all in. The two halves of the invariant
 	// are on their own clocks — the furrow is cut before the caps come out — and
-	// the unresolved ringing is laid over both and damped away as they win.
+	// the splash is laid over both and damped away as they win.
 	//
 	// At uChop 0 with both halves in, this IS waveField(): the end state is
 	// untouched, and every frame before it is on the way there.
 	float relief(vec3 n) {
 		float f = waveField(n);
 		float d = f > 0.0 ? f * uLobe : f * uFurrow;
-		return d + uChop * chop(n);
+		return d + uChop * splash(n);
 	}
 `;
 
@@ -512,10 +587,12 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 			// The division. 0..1 each, and the furrow leads the lobe.
 			uFurrow: { value: 0 },
 			uLobe: { value: 0 },
-			// The unresolved ringing the division comes out of.
+			// The splash the division comes out of, and the point it came from.
 			uChop: { value: 0 },
+			uSplashAxis: { value: SPLASH_AXIS.clone() },
 			// The body's own substance, for the approach.
 			uGrain: { value: 0 },
+			uFront: { value: -0.9 },
 			uRing: { value: 0 },
 			uPhase: { value: 0 }
 		},
@@ -608,9 +685,13 @@ export function coreMaterial({ ink, wave, hot, rim, rimPower = 2.2 }) {
 				// which is why it read as fog on the lens rather than as substance
 				// in the body. Ruled at the same kind of interval the field is, so
 				// the two belong to one instrument.
+				// The mottle, and it is CALMED BY THE FRONT rather than faded out
+				// on a clock. What the wave passes over stops churning; what it
+				// has not reached yet goes on exactly as it was.
 				float g = grain(n);
-				col += uWave * rule(g * 5.0, 0.075) * 0.5 * uGrain;
-				col += uWave * (g * 0.5 + 0.5) * 0.025 * uGrain;
+				float chaos = uGrain * wild(n);
+				col += uWave * rule(g * 5.0, 0.075) * 0.5 * chaos;
+				col += uWave * (g * 0.5 + 0.5) * 0.025 * chaos;
 				col = mix(col, uWave, lit * 0.42 * uGlow);
 				col = mix(col, uHot, crest * 0.34 * uGlow);
 				col += uWave * dip * 0.07 * uGlow;

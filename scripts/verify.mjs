@@ -1,14 +1,25 @@
 // ── Smoke test ───────────────────────────────────────────────────────────────
 // Drives the real site in a real browser and checks the few things that are
-// invisible in a diff and have actually broken: the run completing, the answer
-// landing in the monitor glass, the loop home, and console errors.
+// invisible in a diff and have actually broken.
+//
+// THIS BUILD HAS NO MACHINE. The run opens on a title card over a fly-in that is
+// already mounted and held at progress zero; the two answers are taken mid-flight
+// by popups that HOLD the flight while they are open; and the loop home flies the
+// camera through the room's monitor straight back into the flight. So what this
+// checks is the gate, not a calculator:
+//
+//   the card lifts on its own      no click, and the flight is under it
+//   the flight stops to ask        twice, and holds until answered
+//   out of range is refused        in place, and the flight does not carry on
+//   the run completes              a room, with a track in it
+//   the loop goes round            through the glass and back into the flight
 //
 //   npm run dev      in one terminal
 //   npm run verify   in another
 //
-// BASE and CHROMIUM are overridable from the environment. Exits non-zero if
-// anything failed.
-import { chromium } from 'playwright';
+// BASE, CHROMIUM and LANE (webgl | webgpu — see lane.mjs) are overridable from
+// the environment. Exits non-zero if anything failed.
+import { launch } from './lane.mjs';
 
 const BASE = process.env.BASE ?? 'http://127.0.0.1:5178';
 const fails = [];
@@ -17,10 +28,8 @@ const ok = (name, cond, detail) => {
 	if (!cond) fails.push(name);
 };
 
-const b = await chromium.launch({
-	executablePath: process.env.CHROMIUM ?? '/opt/pw-browsers/chromium',
-	args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox']
-});
+const { browser: b, lane } = await launch();
+console.log(`lane  ${lane}`);
 const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
 const errs = [];
 p.on('pageerror', (e) => errs.push(e.message));
@@ -34,61 +43,64 @@ const until = async (fn, max = 120) => {
 	return false;
 };
 
-// The machine takes its date on three rotary dials in landscape and on selects
-// in portrait, so the checks below drive whichever is actually there. Both are
-// sliders/selects with the same aria-labels, which is the point of the labels.
-const dial = async (label, presses) => {
-	await p.focus(`[role=slider][aria-label=${label}]`);
-	await p.keyboard.press('Home');
-	for (let i = 0; i < presses; i++) await p.keyboard.press('ArrowUp');
-};
-const setDate = async (month, day, year) => {
-	if (await p.$('select[aria-label=month]')) {
-		await p.selectOption('select[aria-label=month]', String(month));
-		await p.selectOption('select[aria-label=day]', String(day));
-		await p.selectOption('select[aria-label=year]', String(year));
-	} else {
-		// Home puts each dial on its minimum: month 1, day 1, year MIN_YEAR.
-		const minYear = await p.evaluate(
-			() => +document.querySelector('[aria-label=year]').getAttribute('aria-valuemin')
-		);
-		await dial('month', month - 1);
-		await dial('day', day - 1);
-		await dial('year', year - minYear);
-	}
-	await p.waitForTimeout(300);
+// Whichever popup is open. Both use the same selects the machine used to —
+// addressed by id now rather than by aria-label, because the selects carry
+// real <label for> elements and an aria-label on top of one would override the
+// visible word.
+const answerDob = async (month, day, year) => {
+	await p.selectOption('#ask-year', String(year));
+	await p.selectOption('#ask-month', String(month));
+	await p.selectOption('#ask-day', String(day));
+	await p.waitForTimeout(200);
 };
 
-await p.goto(`${BASE}/?speed=6`, { waitUntil: 'networkidle' });
+// ?seed= pins every choice the run leaves to chance — config/dev.js.
+await p.goto(`${BASE}/?speed=6&seed=1`, { waitUntil: 'networkidle' });
 
-// The run opens on a TITLE CARD — a black field, the manifesto, and no machine
-// at all — which hands over to the machine on its own after a beat. Everything
-// below drives the machine, so wait for it to exist rather than racing it.
-// ?speed=6 scales the card's own timings too, so this is a short wait.
-await p.locator('.calculator').waitFor({ state: 'attached', timeout: 30000 });
-
-await setDate(7, 14, 1986);
-
-// An out-of-range date is reported in place and must not fly anywhere. The
-// earliest year the machine offers is always before the charts start.
-const earliest = await p.evaluate(() => {
-	const sel = document.querySelector('select[aria-label=year]');
-	// The select runs newest first, so its last option is the earliest year;
-	// the dial states its own minimum.
-	if (sel) return +sel.options[sel.options.length - 1].value;
-	return +document.querySelector('[aria-label=year]').getAttribute('aria-valuemin');
-});
-await setDate(1, 14, earliest);
-await p.click('.go');
+// ── The card lifts on its own ────────────────────────────────────────────────
+// Nothing is clicked. If this ever needs a click the run has grown a step.
+ok('title card is up on load', await p.evaluate(() => !!document.querySelector('.prelude')));
 ok(
-	'error stays on the calculator',
-	await until(() => !!document.querySelector('.verdict .err'), 20)
+	'the card lifts without being clicked',
+	await until(() => !document.querySelector('.prelude'), 40)
 );
-await setDate(7, 14, 1986);
-ok('error clears on a new date', await p.evaluate(() => !document.querySelector('.verdict')));
 
-// The run.
-await p.click('.go');
+// ── The flight stops to ask ──────────────────────────────────────────────────
+ok('the flight asks for a birthday', await until(() => !!document.querySelector('.ask'), 60));
+
+// An out-of-range date is refused IN PLACE — there is no machine to report it on
+// and no room to fall into, so the popup is the only thing that can say so, and
+// it must not let the flight carry the date any further.
+const earliest = await p.evaluate(() => {
+	const sel = document.querySelector('#ask-year');
+	return +sel.options[sel.options.length - 1].value;
+});
+await answerDob(1, 14, earliest);
+await p.click('button.go');
+ok(
+	'an impossible birthday is refused in place',
+	await until(() => !!document.querySelector('.ask .no'), 20)
+);
+ok('and the flight is still held', await p.evaluate(() => !!document.querySelector('.ask')));
+
+await answerDob(7, 14, 1986);
+ok('the refusal clears on a new date', await p.evaluate(() => !document.querySelector('.ask .no')));
+await p.click('button.go');
+
+// ── And asks again, closer in ────────────────────────────────────────────────
+// The two marks are three seconds apart in the flight, which at ?speed=6 is half
+// of one — far too short to catch the panel absent between them. So what is
+// checked is that the QUESTION CHANGED, which is the thing that actually matters
+// and does not depend on how fast the run is played.
+ok(
+	'the flight moves on and asks how spicy',
+	await until(() => /spicy/i.test(document.querySelector('.ask .q')?.textContent ?? ''), 80)
+);
+await p.selectOption('#ask-spicy', '4');
+await p.click('button.go');
+ok('the second answer lets it dive', await until(() => !document.querySelector('.ask'), 20));
+
+// ── The run ──────────────────────────────────────────────────────────────────
 ok(
 	'run completes',
 	await until(() => !!document.querySelector('.again') || !!document.querySelector('.card'))
@@ -101,18 +113,17 @@ ok(
 	})
 );
 
-// The loop home: one continuous move, so the calculator must arrive at identity.
+// ── The loop home ────────────────────────────────────────────────────────────
+// Through the glass and back into the flight — no title card the second time,
+// and the questions get asked again because asking them is the shape of the run.
 await p.click('.again');
+ok('the loop lands back in the flight', await until(() => !document.querySelector('.again'), 40));
 ok(
-	'calculator lands home square on the viewport',
-	await until(() => {
-		const c = document.querySelector('.calculator');
-		if (!c || !document.querySelector('.go')) return false;
-		const t = getComputedStyle(c).transform;
-		return t === 'none' || t === 'matrix(1, 0, 0, 1, 0, 0)';
-	})
+	'and does NOT replay the title card',
+	await p.evaluate(() => !document.querySelector('.prelude'))
 );
-ok('the machine is usable again', await p.evaluate(() => !!document.querySelector('.go')));
+ok('and asks again', await until(() => !!document.querySelector('.ask'), 80));
+
 ok('no console errors', errs.length === 0, errs[0] ?? '');
 
 await b.close();

@@ -8,11 +8,15 @@
 		flare,
 		fieldDecade,
 		monitorRect,
+		landing,
 		fieldRotation,
+		fieldRays,
 		fieldFade
 	} from '$lib/store/store';
 	import {
 		SCENES,
+		PULL,
+		pullAmount,
 		RETURN_FILL,
 		span,
 		lerp,
@@ -28,8 +32,9 @@
 		VOID
 	} from '$lib/config';
 	import { assignDecades, shuffle } from '$lib/data/roomElements';
+	import { settled } from './director';
 	import GoldenRectangle from '$lib/three/objects/GoldenRectangle.svelte';
-	import { RECTANGLES, VERTICES } from '$lib/three/geometry/icosahedron';
+	import { RECTANGLES, VERTICES, CIRCUMRADIUS } from '$lib/three/geometry/icosahedron';
 
 	// ── Scene 4: the computation ─────────────────────────────────────────────
 	// The panes come out of the sphere, the search turns through the decades,
@@ -134,6 +139,8 @@
 	// the branch is stepped straight over.
 	let searchLatched = false;
 	let zoomLatched = false;
+	// The frustum the fall starts from — see refocus() at the latch below.
+	let zoomFrom = 0;
 
 	// Which decade the search is looking at, so anything tinted by era can
 	// follow it. Only republished when it changes.
@@ -260,13 +267,17 @@
 		searchLatched = false;
 		zoomLatched = false;
 		facing = null;
-		// Picks up exactly where the conception left off — close on the solid —
-		// and pulls back from there.
-		frustum = conceptionFrustum(window.innerWidth, window.innerHeight);
-		from = frustum;
+		// Picks up exactly where the conception left off and carries on pulling
+		// back. NOT at conceptionFrustum: the conception spends its last six
+		// hundred milliseconds already opening the frame, so the state to open on
+		// is that curve at PULL.before, not its start. Entering on the unpulled
+		// value would draw one frame of the camera snapping back in.
+		from = conceptionFrustum(window.innerWidth, window.innerHeight);
 		rest = restFrustum(window.innerWidth, window.innerHeight);
+		frustum = lerp(from, rest, pullAmount(PULL.before));
 		world.applyFrustum(frustum);
 		world.setPanesVisible(true);
+		panes.forEach((pane) => pane && pane.setOutline(0));
 		world.setLineOpacity(1);
 		world.setGrow(1);
 		world.setSpokes(1);
@@ -293,7 +304,13 @@
 			chop: 0,
 			glow: SCENES.conception.handoverGlow,
 			amp: 0,
-			ring: 0
+			ring: 0,
+			// The same pair the conception ends on, not an equivalent picture
+			// reached another way: grain still at full, and the front past the
+			// limb so none of it is drawn. Restated rather than inherited, so a
+			// ?at= seek into this scene draws what a run through it draws.
+			grain: 1,
+			front: SCENES.conception.frontTo
 		});
 		// The camera's range belongs to applyFrustum now; only the truck is ours.
 		world.camera.position.x = ICOSA.camPos[0];
@@ -326,15 +343,26 @@
 		// little on each decade it stops at — see `push` below — so the frustum is
 		// worked out here and applied once the search has had its say.
 		const zoom = span(p, T.zoom);
-		const pulled = lerp(from, rest, easeInOutCubic(span(p, T.pullBack)));
+		// The raster goes out with the fall — see components/Glass.svelte.
+		landing.set(easeInOutCubic(zoom));
+		// ONE CURVE, TWO SCENES. The retreat began in the conception's last
+		// six hundred milliseconds and this is the rest of it, asked for by the
+		// same function on the same clock — see PULL in config/timing.js. At
+		// t = 0 this evaluates to exactly what the conception evaluated at its
+		// final frame, which is what keeps the hand-over one frame rather than
+		// a camera that stops dead on the cut and starts again.
+		const pulled = lerp(from, rest, pullAmount(PULL.before + t));
 
 		// ── The panes come out ───────────────────────────────────────────────
 		// Working first, artwork second, working away third.
+		// Drawn first, inside the solid, then travelling.
+		const drawn = smootherstep(span(p, T.rects));
 		const open = easeInOutCubic(span(p, T.open));
 		const draft = span(p, T.schematic) * (1 - smoothstep(T.draftOut[0], T.draftOut[1], p) * 0.78);
 		const reveal = easeInOutCubic(span(p, T.rooms));
 		panes.forEach((pane) => {
 			if (!pane) return;
+			pane.setOutline(drawn);
 			pane.updateProjection(open);
 			pane.setDraft(draft);
 			pane.setReveal(reveal);
@@ -442,19 +470,46 @@
 		ROT4.makeRotationFromQuaternion(world.frame.quaternion);
 		fieldRotation.set(ROT3.setFromMatrix4(ROT4).elements);
 
+		// ── And so do its axes ───────────────────────────────────────────────
+		// The six five-fold axes, continued off the solid and onto the paper —
+		// see three/shaders/grid.js. They are born on the SAME TWO BEATS the
+		// golden rectangles are, from the same two values: stroked on inside the
+		// solid with `drawn`, carried out past the frame with `open`. No new
+		// numbers, no second ease, and a ray and a rectangle cannot fall out of
+		// step because they are one thing arriving.
+		//
+		// Out with the fall, or twelve full-frame lines follow the camera into
+		// the monitor.
+		fieldRays[0] = drawn * (zoom > 0 ? 1 - smoothstep(0.1, 0.75, easeInOutCubic(zoom)) : 1);
+		fieldRays[1] = open;
+		// The solid's rim as a fraction of the frame height, so the rays clear
+		// it instead of piling into a sunburst on the thing they belong to.
+		// Written here rather than with the others because `frustum` is not
+		// settled for this frame until the branch above has run.
+		fieldRays[2] = (CIRCUMRADIUS * 1.14) / frustum;
+
 		// ── The fall into the room ───────────────────────────────────────────
 		if (zoom > 0) {
 			if (!zoomLatched) {
 				zoomLatched = true;
 				landFrustum = landingFrustum();
-				// The answer's pane is six units off the origin, and at the landing
-				// pose it is square to the camera — so that offset is pure depth.
-				// Frame the fall AT that plane or it lands at the wrong size.
-				world.setFocus(landingDepth());
+				// The answer's pane is several units off the origin, and at the
+				// landing pose it is square to the camera — so that offset is pure
+				// depth. Frame the fall AT that plane or it lands at the wrong size.
+				//
+				// REFOCUS, NOT SETFOCUS. Moving the focus plane moves the camera by
+				// the same amount (applyFrustum parks it at focus + d), so setting
+				// it here stepped the camera three and a half units back between one
+				// frame and the next: the target room held still, being what was
+				// newly focused, and the solid and the other five rooms all shrank
+				// about five percent at once. refocus() re-expresses the SAME
+				// framing against the new plane and hands back the number to fall
+				// from, so this frame is identical to the one before it.
+				zoomFrom = world.refocus(rest, landingDepth());
 			}
 			// ONE symmetric ease, on the whole scene, and nothing in it staggered.
 			const z = easeInOutCubic(zoom);
-			frustum = lerp(rest, landFrustum, z);
+			frustum = lerp(zoomFrom, landFrustum, z);
 			world.applyFrustum(frustum);
 
 			// Everything that is not the answer gets out of the way.
@@ -529,6 +584,7 @@
 	export function beginReturn() {
 		if (!get(monitorRect)) return;
 		rt = 0;
+		handedOver = false;
 		returnFrom = frustum;
 		focusFrom = landingDepth();
 		focusTo = focusFrom;
@@ -558,6 +614,10 @@
 			: Math.max(frustum * 0.3, 0.05);
 	}
 
+	// Latched, because the step below clamps at RETURN_DUR and would otherwise
+	// hand the run over on every frame after it.
+	let handedOver = false;
+
 	export function stepReturn(dt) {
 		if (!returnFrom) return;
 		rt = Math.min(rt + dt, RETURN_DUR);
@@ -571,6 +631,16 @@
 		world.setFocus(lerp(focusFrom, focusTo, k));
 		world.applyFrustum(frustum);
 		publishMonitor();
+
+		// THROUGH the glass. At RETURN_FILL 1.0 the monitor covers the viewport
+		// exactly, and what is on it is black — the CRT is off. The tunnel behind
+		// the next run is the same black, so the hand-over is not covered, it is
+		// simply invisible: the room's screen fills the frame and the frame is
+		// already the fly-in. See director.settled().
+		if (!handedOver && rt >= RETURN_DUR) {
+			handedOver = true;
+			settled();
+		}
 	}
 
 	// ── The room, being sat in front of ─────────────────────────────────────

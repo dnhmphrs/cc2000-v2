@@ -1,7 +1,14 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
-	import { flare, fieldDecade, backdrop, fieldRotation, fieldFade } from '$lib/store/store';
+	import {
+		flare,
+		fieldDecade,
+		backdrop,
+		fieldRotation,
+		fieldRays,
+		fieldFade
+	} from '$lib/store/store';
 	import { DECADE_FIELD } from '$lib/data/roomElements';
 	import { SHADERS, VERT, PRELUDE } from '$lib/three/shaders';
 
@@ -147,9 +154,12 @@
 			aspect: gl.getUniformLocation(program, 'aspectRatio'),
 			time: gl.getUniformLocation(program, 'uTime'),
 			rot: gl.getUniformLocation(program, 'uRot'),
-			fade: gl.getUniformLocation(program, 'uFade')
+			fade: gl.getUniformLocation(program, 'uFade'),
+			px: gl.getUniformLocation(program, 'uPx'),
+			rays: gl.getUniformLocation(program, 'uRays')
 		};
 		if (uni.aspect) gl.uniform1f(uni.aspect, window.innerWidth / window.innerHeight);
+		if (uni.px) gl.uniform1f(uni.px, 1 / canvas.height);
 	}
 
 	function resize() {
@@ -161,6 +171,10 @@
 		gl.viewport(0, 0, canvas.width, canvas.height);
 
 		if (uni.aspect) gl.uniform1f(uni.aspect, window.innerWidth / window.innerHeight);
+		// One canvas pixel, in frame heights — and it follows the THROTTLE, not
+		// just the window, because it exists to keep a turning line on the sample
+		// grid of the buffer actually being drawn. See three/shaders/index.js.
+		if (uni.px) gl.uniform1f(uni.px, 1 / canvas.height);
 	}
 
 	function handlePointer(e) {
@@ -226,6 +240,7 @@
 		if (uni.c3) gl.uniform3f(uni.c3, stops[2][0], stops[2][1], stops[2][2]);
 		// Written in place by the computation each frame; identity everywhere else.
 		if (uni.rot) gl.uniformMatrix3fv(uni.rot, false, fieldRotation);
+		if (uni.rays) gl.uniform3fv(uni.rays, fieldRays);
 		// Straight through, with no easing of its own: it is carrying a hand-over
 		// between two scenes that have to agree frame for frame, and an envelope
 		// here would put a lag in exactly the place that must not have one.

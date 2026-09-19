@@ -1,6 +1,6 @@
 <script>
 	import ErrorScreen from '$lib/components/error/ErrorScreen.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 </script>
 
-<ErrorScreen status={$page.status} message={$page.error?.message} />
+<ErrorScreen status={page.status} message={page.error?.message} />

@@ -27,6 +27,24 @@
 	--ink-dim: rgba(var(--ink-rgb), 0.66);
 	--ink-faint: rgba(var(--ink-rgb), 0.34);
 
+	/* ── The ink, by CONTRAST rather than by feel ────────────────────────────
+	   Three steps, chosen against the darkest ground in the site — the popup
+	   panel, rgba(10,10,12,0.82) over near-black 3D, which composites to about
+	   rgb(25,21,15) — and measured, not eyeballed. WCAG 2.1 wants 4.5:1 for
+	   normal text at AA, and on this ground that lands at alpha 0.476, so:
+
+	     --ink-strong  0.92   ~13.8:1   questions, headings
+	     --ink-body    0.82   ~11.1:1   copy
+	     --ink-soft    0.70    ~8.4:1   the FLOOR. AA with real slack.
+
+	   Anything under --ink-soft on this ground is decoration. --ink-faint is
+	   under 3:1 on this panel — 2.5:1 against the ink the raster actually
+	   leaves, 2.9:1 against the ink as written — so it can never carry text
+	   here whichever way you measure it; it is for rules and marks. */
+	--ink-strong: rgba(var(--ink-rgb), 0.92);
+	--ink-body: rgba(var(--ink-rgb), 0.82);
+	--ink-soft: rgba(var(--ink-rgb), 0.7);
+
 	--yellow: #ffd426;
 
 	/* The Conception Calculator's own chassis — the landing is the machine.
@@ -45,12 +63,37 @@
 	   any other black reads as a hole in the machine. */
 	--machine-crt: #14120e;
 
-	/* The machine is DRAWN, not rendered: one heavy ink weight and one hard,
+	/* The machine is DRAWN, not rendered: one heavy pen weight and one hard,
 	   unblurred drop, used on everything bolted to the chassis. Keeping both as
 	   single variables is what stops it becoming a pile of unrelated ornament —
-	   every part is outlined by the same pen and lit from the same direction. */
-	--ink: 3px;
+	   every part is outlined by the same pen and lit from the same direction.
+	
+	   It was called --ink, and --ink is the INK COLOUR twenty lines up. Being
+	   declared second it won, so every `color: var(--ink)` in the site — nine of
+	   them, including the artist line on the result screen — was resolving to
+	   `3px`, which is not a colour, which makes the declaration invalid at
+	   computed-value time, which silently falls back to `inherit`. Most of them
+	   inherited something close enough to be got away with. The artist line
+	   inherited near-black onto a black screen and was simply not there. */
+	--pen: 3px;
 	--drop: 5px;
+
+	/* ── The edge between the DOM and the illustration ───────────────────────
+	   Every HTML surface in this site floats over a 3D scene, and the one that
+	   read best was the one nobody drew: Chrome's own focus ring, on the first
+	   question panel. It landed there and not on the second — same component,
+	   same code path — because :focus-visible is a heuristic about how focus
+	   ARRIVED, and the panel takes focus on open, with no keystroke behind it,
+	   from the second question on.
+	   
+	   So it is drawn on purpose now, and the browser is no longer asked. White
+	   outside and the panel's own dark just inside it, which is exactly what
+	   the ring was: two tones, so it holds its edge over gold, over black and
+	   over a lit ovum without being tuned for any of them.
+	   
+	   NOT a focus indicator, and it does not replace one: every control in the
+	   site keeps its own --yellow :focus-visible ring. This is furniture. */
+	--edge: rgba(var(--ink-rgb), 0.9);
 
 	/* The two halves of the glass, each defined ONCE and used wherever glass is
 	   drawn — the CRT in the calculator and the full-screen sheet — because they
@@ -64,16 +107,124 @@
 		rgba(255, 255, 255, 0.07) 30% 35%,
 		transparent 35%
 	);
-	/* Dark lines rather than light ones, and a strong line plus a weak one over a
-	   6px pitch: that pairing is what reads as tape rather than as a faint
-	   texture. Heavier than a CRT would really be, on purpose — the warmth is the
-	   whole point of it, and at a 4px pitch with a single dark pixel it was
-	   closer to a screen-door than to a raster. */
+	/* Dark lines rather than light ones, and a strong line plus a weak one — that
+	   pairing is what reads as tape rather than as a faint texture. Both the
+	   pitch and the ink have been walked out since: one dark pixel in six rather
+	   than in five, at 0.15 rather than 0.26, which is a finer raster and a bit
+	   over half the ink. It is a screen the thing is being watched on, and a
+	   screen you notice is one you are looking at instead of through.
+
+	   THE TWO INKS ARE NOT NEUTRAL any more, and that is where the colour in
+	   this treatment comes from. A real tube's dark line is not the absence of
+	   light, it is the gap between two lit lines, and what bleeds into it is
+	   the blue phosphor — the one that spreads furthest and decays slowest. So
+	   the strong line is a COOL black and the weak one a WARM black.
+
+	   It is worth being exact about why the tint is in the ink rather than in a
+	   separate layer: this gradient is composited src-over, so on the void
+	   (about rgb 12,12,12 with the field grid on it) the strong line lands at
+	   (10.2, 10.2, 14.1) and the weak one at (13.8, 11.7, 11.4) — a swing of
+	   about six levels in R−B across the six-pixel cell — and none of it costs
+	   a layer, a blend pass or a repaint. Measured on the running site at
+	   conception 0.3: R−B varies by 0.25 of a level across the cell before
+	   this and by 5.5 after it.
+
+	   The two inks are BLUE AND ORANGE rather than any two warm/cool colours,
+	   and the reason is luma. A tint in the ink lifts the line it darkens by
+	   alpha times the ink's own luma, so a tint costs raster depth — and Rec.
+	   709 weights blue at 0.0722, which is to say a blue ink is very nearly
+	   free. At (0,0,26) the strong line gives up 0.28 of a level; the first
+	   pass at this used (2,6,22), whose green cost 0.95 of a level and took a
+	   fifth off the depth of the raster, measured. The weak line can afford an
+	   ink with red in it because it is only a twentieth of one. */
 	--scanlines: repeating-linear-gradient(
 		to bottom,
-		rgba(0, 0, 0, 0.34) 0 2px,
-		rgba(0, 0, 0, 0.13) 2px 3px,
-		transparent 3px 6px
+		rgba(0, 0, 26, 0.15) 0 1px,
+		rgba(48, 6, 0, 0.05) 1px 2px,
+		transparent 2px 6px
+	);
+
+	/* ── The tube ─────────────────────────────────────────────────────────────
+	   The raster says "a screen"; this says "a screen with a CURVE on it". It
+	   is the cheapest thing in the treatment — one more layer in the same
+	   element's background, so it is flattened into the same texture at raster
+	   time and costs nothing per frame.
+
+	   Radii of 78% put the edge midpoints at 0.64 of the gradient and the
+	   corners at 0.91, which is the whole reason the size is written as two
+	   percentages rather than left to farthest-corner: the falloff has to keep
+	   its shape when the viewport goes from a laptop to a phone, and a
+	   corner-relative gradient does not. */
+	--tube: radial-gradient(
+		ellipse 78% 78% at 50% 50%,
+		rgba(0, 0, 0, 0) 0 52%,
+		rgba(0, 0, 0, 0.09) 72%,
+		rgba(0, 0, 0, 0.26) 88%,
+		rgba(0, 0, 0, 0.42) 100%
+	);
+
+	/* ── The grille ───────────────────────────────────────────────────────────
+	   Three phosphor stripes on a three-pixel pitch, and they are ADDITIVE —
+	   the element that carries them is mix-blend-mode: screen, which is the
+	   only blend that cannot muddy what is underneath it. Screen never darkens,
+	   so a 1px additive gold line keeps every level it had and gains at most
+	   four; and because screen saturates as the backdrop brightens, the grille
+	   lives almost entirely in the blacks, which is where a real mask is
+	   visible too.
+
+	   The alphas are balanced for LUMA, not for level. Rec. 709 weights green
+	   at 0.7152 and blue at 0.0722, so equal channel lifts would put a green
+	   stripe two and a half times brighter than the red one and ten times
+	   brighter than the blue, and the grille would read as green pinstripes.
+	   Peak lifts on the void are about 3.4 / 1.5 / 5.8 levels, which is 0.72 /
+	   1.07 / 0.42 of a level of LUMA — near flat — while R−B swings about nine
+	   levels across the triad. Chroma without contrast: that is the entire
+	   trick, and it is what "multi-chromatic but not stripey" means here.
+
+	   The stops are RAMPS rather than hard 1px bands on purpose. A hard stripe
+	   on a 3px pitch beats against the device pixel grid at any fractional
+	   devicePixelRatio (1.25, 1.5) and throws a slow moiré across the screen;
+	   a triangular profile has nothing sharp in it to beat with. */
+	--grille-r: repeating-linear-gradient(
+		to right,
+		rgba(255, 48, 32, 0.014) 0px,
+		rgba(255, 48, 32, 0) 1.2px,
+		rgba(255, 48, 32, 0) 1.8px,
+		rgba(255, 48, 32, 0.014) 3px
+	);
+	--grille-g: repeating-linear-gradient(
+		to right,
+		rgba(52, 255, 96, 0) 0px,
+		rgba(52, 255, 96, 0.006) 1px,
+		rgba(52, 255, 96, 0) 2px,
+		rgba(52, 255, 96, 0) 3px
+	);
+	--grille-b: repeating-linear-gradient(
+		to right,
+		rgba(56, 84, 255, 0) 0px,
+		rgba(56, 84, 255, 0) 1px,
+		rgba(56, 84, 255, 0.024) 2px,
+		rgba(56, 84, 255, 0) 3px
+	);
+
+	/* ── The head-switching band ──────────────────────────────────────────────
+	   The one moving part. A helical-scan deck switches heads a few lines from
+	   the bottom of the field and the join shows as a bright edge with a soft
+	   lift ahead of it; on a mistracked tape it drifts up the picture. It is
+	   drawn once, into its own layer, and MOVED with a transform — the position
+	   is never a paint.
+
+	   Screened, like the grille, so it can only add: on the void the hot edge
+	   is +13 levels and on the gold it is under one, which is why the band
+	   reads as light in the blacks rather than as a wash over the drawing. */
+	--band: linear-gradient(
+		to bottom,
+		rgba(190, 214, 255, 0) 0%,
+		rgba(190, 214, 255, 0.012) 38%,
+		rgba(226, 236, 255, 0.026) 72%,
+		rgba(255, 250, 236, 0.055) 78%,
+		rgba(255, 236, 198, 0.02) 80%,
+		rgba(255, 236, 198, 0) 100%
 	);
 
 	/* Copy sits on the deep blue for the first half of a run and on white for
@@ -138,10 +289,17 @@ body {
 	pointer-events: auto;
 }
 
-/* Used only where something busy sits behind the text. */
+/* Used only where something busy sits behind the text — which is the whole of
+   what --edge is for, so the card carries it too. Same edge as the question
+   panels: one line between what is DOM and what is illustration, in every
+   scene that puts one over the other. The readout inside the monitor does NOT
+   get it — that one is not floating over the scene, it is inset into it, and
+   the bezel around it is already the line. */
 .card {
 	background: var(--panel);
 	padding: 28px 28px 26px;
+	outline: 1px solid var(--edge);
+	outline-offset: -1px;
 }
 
 .ask {
@@ -167,7 +325,10 @@ button {
 	background: transparent;
 	color: var(--ink);
 	padding: 12px 20px;
-	transition: background 0.15s, border-color 0.15s, color 0.15s;
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		color 0.15s;
 }
 
 button:hover:not(:disabled) {

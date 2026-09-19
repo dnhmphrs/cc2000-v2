@@ -7,9 +7,10 @@
 		clamp01,
 		glide,
 		accelerate,
-		easeOutQuint,
 		easeInOutCubic,
+		easeOutCubic,
 		smoothstep,
+		smootherstep,
 		TUNNEL,
 		CAM_END,
 		ICOSA,
@@ -18,7 +19,16 @@
 		VOID
 	} from '$lib/config';
 	import { CIRCUMRADIUS } from '$lib/three/geometry/icosahedron';
-	import { fieldFade } from '$lib/store/store';
+	import { DEV, DEV_AT } from '$lib/config';
+	import { get } from 'svelte/store';
+	import { fieldFade, gate, landing } from '$lib/store/store';
+
+	// The attitude the CONCEPTION holds this same body at — see the ovum's spin
+	// below. Built from the shared config rather than imported from the lattice
+	// because the fly-in never touches that world.
+	const LAND = new THREE.Quaternion().setFromEuler(new THREE.Euler(...ICOSA.tilt));
+	const TURN = new THREE.Euler();
+	const TURN_Q = new THREE.Quaternion();
 
 	// ── Scene 2: the fly in ──────────────────────────────────────────────────
 	// Black air, one swimmer riding the lens, and three hundred units of travel
@@ -112,17 +122,56 @@
 		return k / Math.sqrt(1 + (k * k) / (END_D * END_D)) / TUNNEL.shellR;
 	}
 
+	// The two questions this scene stops to ask, latched so each fires once per
+	// run — a `p > x` test is not a latch, because at any normal frame rate a
+	// short window advances past itself in a single frame.
+	let askedDob = false;
+	let askedSpicy = false;
+
 	export function enter() {
 		t = 0;
+		// A new run is a screen again.
+		landing.set(0);
+		askedDob = false;
+		askedSpicy = false;
 		world.reset();
 		world.egg.setCoreRatio(coreRatio());
 	}
 
 	export function update(dt) {
+		// ── THE FLIGHT TAKES THE ANSWERS ─────────────────────────────────────
+		// There is no machine in this build, so the run asks its two questions on
+		// the way in — and while either is open the scene HOLDS. `t` stops and
+		// `elapsed` does not: the swimmer goes on rolling and the mote field goes
+		// on drifting, so what is on screen is a flight waiting rather than a
+		// paused frame.
+		//
+		// Holding t, rather than running a second clock alongside it, is what
+		// keeps every frame a pure function of progress. The frame drawn at a held
+		// t IS the frame the run would draw at that p, so ?at= is still exact and
+		// every screenshot check in the project still means what it meant.
+		const held = get(gate);
 		elapsed += dt;
-		t += dt;
+		if (!held) t += dt;
 		world.tick(dt);
 		const p = clamp01(t / T.duration);
+
+		// The questions, in the order the shot makes room for them: the birthday
+		// while the swimmer is the only thing on screen, the spice once the ovum
+		// is up and there is something to swim at.
+		//
+		// NOT while the scene is pinned. ?at= is for looking at one frame of the
+		// flight, and a popup over it is the one thing that stops you seeing it —
+		// every contact sheet past askDob would come back with a dialog on it.
+		if (!held && !(DEV.on && DEV_AT != null)) {
+			if (!askedDob && p >= T.askDob) {
+				askedDob = true;
+				gate.set('dob');
+			} else if (!askedSpicy && p >= T.askSpicy) {
+				askedSpicy = true;
+				gate.set('spicy');
+			}
+		}
 
 		// ── The camera ───────────────────────────────────────────────────────
 		// Flat out, and then a stop. The lens has to be set BEFORE anything reads
@@ -145,8 +194,15 @@
 		// hand against this colour. It walks down to the VOID as the scene lands,
 		// and the backdrop's own figure goes with it — so the last frame of this
 		// scene and the first frame of the next are the same flat black.
+		// Up from the void first, then back down to it — see SCENES.flyIn.airIn.
+		// The channel's core is 1.5x whatever this is, so an air that starts at
+		// its full warmth puts a pool in the middle of the frame before the
+		// flight has begun.
 		const settle = easeInOutCubic(span(p, T.settle));
-		air.copy(air0).lerp(voidCol, settle);
+		air
+			.copy(voidCol)
+			.lerp(air0, smootherstep(span(p, T.airIn)))
+			.lerp(voidCol, settle);
 		world.setAir(air.getHex());
 		fieldFade.set(1 - settle);
 
@@ -154,7 +210,9 @@
 		// The ground truth of how fast this is going, so they are never the thing
 		// that is missing — and gone by the arrival, which is the ovum and
 		// nothing else.
-		world.setMotes(span(p, T.motesIn) * (1 - easeInOutCubic(span(p, T.motesOut))));
+		// Brightness and EXISTENCE are separate: the out-fade dims the field as a
+		// whole, the in-window switches motes on one at a time. See tunnel.js.
+		world.setMotes(1 - easeInOutCubic(span(p, T.motesOut)), span(p, T.motesIn));
 
 		// ── The swimmer ──────────────────────────────────────────────────────
 		// The roll, about the axis you are looking down. V1's exactly, and the one
@@ -176,7 +234,7 @@
 		const inside = TUNNEL.eggZ + TUNNEL.shellR * coreRatio() * 0.35;
 		const ahead =
 			dive <= 0
-				? lerp(-TUNNEL.spermFrom.z, lead, easeOutQuint(arrive))
+				? lerp(-TUNNEL.spermFrom.z, lead, glide(arrive, 0.8))
 				: lerp(lead, camZ - inside, accelerate(dive, T.divePower));
 
 		// It rides in front of the LENS, so it goes where the lens goes: leaving
@@ -196,14 +254,31 @@
 		// rather than a thing sliding into place.
 		world.sperm.position.set(world.camera.position.x, world.camera.position.y, camZ - ahead);
 
-		// On the moment it is past the lens. It used to wait until three and a half
-		// units clear, which on the axis means it fades up ALREADY IN FRONT of you
-		// — the one thing this shot must not do, because the whole point is that it
-		// arrives from behind. It comes through the near plane at full size and
-		// partly cut by it, which is what passing something at arm's length looks
-		// like. Driven by where it ACTUALLY is rather than by the clock, so it can
-		// never be lit while still behind the camera.
-		const shown = smoothstep(0.3, 1.0, ahead);
+		// ── LIT ACROSS THE LENS PLANE, not after it ──────────────────────────
+		// This ramp was [0.3, 1.0], and before that [3.5, …]. Both hide the
+		// swimmer until it is already IN FRONT, which is the one thing the shot
+		// must not do: the crossing is the beat, and it was happening off-camera
+		// every time.
+		//
+		// It can be lit across zero without being lit behind you, because `ahead`
+		// is the position of the body's CENTRE and the body is 4.07 units long
+		// about it — so its nose is 2.03 ahead of whatever `ahead` says, and by
+		// the time the ramp opens at -1.4 the nose is already 0.63 units past
+		// the lens. So the ramp straddles the crossing: it starts well behind the
+		// lens, where the body is outside the frustum and the opacity is spent on
+		// nothing, and is still rising as the near plane admits it.
+		//
+		// That overlap is the whole trick, and moving the ramp entirely behind
+		// the lens — fully lit before anything can be seen — was tried and is
+		// worse. Near the lens a tenth of a unit of travel is most of the frame,
+		// so a body admitted at full weight arrives in one frame: geometrically
+		// exact, and it reads as a pop. Fading up ACROSS the entry is what makes
+		// it a thing coming past rather than a thing appearing.
+		//
+		// Driven by where it ACTUALLY is rather than by the clock, so it can
+		// never be lit into an empty frame by a clock that has run on while the
+		// gate held the scene.
+		const shown = smoothstep(-1.4, 0.6, ahead);
 		const o = shown * (1 - span(p, T.spermGone));
 		world.spermMaterial.uniforms.uOpacity.value = o;
 		world.sperm.visible = o > 0.004;
@@ -249,16 +324,54 @@
 		// dark void the conception opens on. Driven from `t` rather than the
 		// swimmer's `elapsed`, so the core stays a pure function of progress and
 		// a ?at= seek draws what the run draws.
-		world.egg.setWave({ grain: eggIn * (1 - smoothstep(0.72, 0.95, p)), phase: t });
+		// AND IT DOES NOT FADE. It used to be taken out over the last of this
+		// scene so the conception could open on a bare sphere; the conception
+		// opens on the chaos now and removes it with the wave that the sperm
+		// starts. The front is parked below zero here — nothing has happened
+		// yet — which is exactly what the next scene opens on.
+		world.egg.setWave({
+			grain: eggIn,
+			// AND THE WAVE STARTS ON THE HIT. Parked below zero for the whole
+			// flight, then off the park on `strike` and walked to exactly the
+			// value the conception opens from — see SCENES.flyIn.frontParked.
+			// The last second of this scene is the front appearing at the point
+			// the nose went in and the very centre of the body beginning to
+			// settle; the next scene carries it out to the limb.
+			front: lerp(T.frontParked, SCENES.conception.frontFrom, smootherstep(span(p, T.strike))),
+			phase: t
+		});
 		// The rim answers the entry. A nudge, not a flash — the wave that breaks
 		// across this surface at the top of the next scene is the payoff — and it
 		// is the CRISP rim that lifts, not the body's, or the whole disc washes.
 		world.egg.setCoreRim(eggIn * clear * (1 + Math.sin(span(p, T.strike) * Math.PI) * 1.1));
 
-		// And it turns. A wire globe standing still is a diagram; a wire globe
-		// turning is an object being examined, which is what this scene is.
-		world.egg.group.rotation.y = elapsed * TUNNEL.eggSpin;
-		world.egg.group.rotation.x = Math.sin(elapsed * 0.17) * 0.22;
+		// ── And it turns, and it LANDS WHERE THE NEXT SCENE HOLDS IT ─────────
+		// A wire globe standing still is a diagram; a wire globe turning is an
+		// object being examined, which is what this scene is. But it has to
+		// arrive at identity, and it has to do it as a function of progress:
+		//
+		//   IDENTITY, because the conception draws the icosahedral field on this
+		//   same body with the twelve caps ON the twelve vertices. Any rotation
+		//   left on the egg at the hand-over would turn the field off its own
+		//   axes. So the spin is exactly ONE TURN, decelerating into place —
+		//   whole turns are the only ending that is also identity.
+		//
+		//   PROGRESS, because it was on `elapsed`, a real-time clock. That was
+		//   survivable while the mottle faded out before the cut and nothing
+		//   downstream could see the orientation. It is not survivable now that
+		//   the chaos carries into the next scene: two sides of the hand-over
+		//   were drawing the same mottle at different angles, which measured
+		//   2.10/255 across the seam against a floor of about 1.
+		//   AND IT LANDS ON THE CONCEPTION'S ATTITUDE, not on square. The next
+		//   scene keeps its egg inside a frame tilted by ICOSA.tilt
+		//   (world/lattice.js), and the mottle is drawn in OBJECT SPACE from the
+		//   surface normal — so two bodies at the same place, the same size and
+		//   the same brightness still draw two different mottles if they are
+		//   turned differently. Landing square left exactly that: the disc
+		//   matched to within half a level on the mean and the seam still read
+		//   2.68/255, all of it the substance being a different substance.
+		TURN.set(Math.sin(p * Math.PI) * 0.22, Math.PI * 2 * easeOutCubic(p), 0);
+		world.egg.group.quaternion.copy(LAND).multiply(TURN_Q.setFromEuler(TURN));
 
 		return t >= T.duration;
 	}

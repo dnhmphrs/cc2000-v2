@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createEgg } from './egg';
 import { holoMaterial, ADD } from './materials';
 import { TUNNEL, AIR, HOLO } from '$lib/config';
+import { rand } from '$lib/random';
 
 // ── The tunnel ───────────────────────────────────────────────────────────────
 // The place the fly-in happens. BLACK air, an ovum three hundred units down it,
@@ -55,12 +56,12 @@ function createMotes() {
 	for (let i = 0; i < n; i++) {
 		// Uniform in the disc, so the field does not clump on the axis where it
 		// would sit on top of the sperm.
-		const a = Math.random() * Math.PI * 2;
-		const r = Math.sqrt(Math.random()) * TUNNEL.moteRadius;
+		const a = rand() * Math.PI * 2;
+		const r = Math.sqrt(rand()) * TUNNEL.moteRadius;
 		const x = Math.cos(a) * r;
 		const y = Math.sin(a) * r;
-		const z = Math.random() * TUNNEL.moteSpan;
-		const s = Math.random();
+		const z = rand() * TUNNEL.moteSpan;
+		const s = rand();
 
 		for (let k = 0; k < 2; k++) {
 			pos[i * 6 + k * 3] = x;
@@ -87,6 +88,9 @@ function createMotes() {
 			uSpan: { value: TUNNEL.moteSpan },
 			uLen: { value: TUNNEL.moteLength },
 			uOpacity: { value: 0 },
+			// 0..1 — how much of the FIELD exists yet, as opposed to how brightly
+			// it is drawn. See the note by the switch-on in the vertex shader.
+			uReveal: { value: 0 },
 			uInk: { value: new THREE.Color(HOLO.mote) },
 			uFogDensity: { value: TUNNEL.fogDensity }
 		},
@@ -97,6 +101,7 @@ function createMotes() {
 			uniform float uCamZ;
 			uniform float uSpan;
 			uniform float uLen;
+			uniform float uReveal;
 			varying float vFade;
 			varying float vFog;
 			void main() {
@@ -116,6 +121,15 @@ function createMotes() {
 				// slips away at the lens rather than blinking out on it.
 				vFade = smoothstep(0.0, 12.0, d) * (1.0 - smoothstep(uSpan * 0.78, uSpan, d));
 				vFade *= 0.35 + aSeed * 0.65;
+				// ── THE FIELD ARRIVES PIECEMEAL ──────────────────────────────
+				// Each mote switches on at its OWN point in uReveal, keyed to the
+				// seed it already carries, so the air fills in mote by mote in a
+				// scattered order. Fading the whole field up together reads as a
+				// dissolve INTO the scene — which is what it was when the scene
+				// opened behind a calculator and had a cut to hide. There is no cut
+				// now: the flight is already running under the title card, so what
+				// this has to look like is weather developing around the swimmer.
+				vFade *= smoothstep(aSeed * 0.8, aSeed * 0.8 + 0.22, uReveal);
 				gl_Position = projectionMatrix * mv;
 			}
 		`,
@@ -319,7 +333,7 @@ export function createTunnel() {
 			return air;
 		},
 
-		// The one clock in the scene: the band crawling along the body.
+		// The band crawling along the swimmer's body.
 		tick(dt) {
 			spermMaterial.uniforms.uTime.value += dt;
 		},
@@ -328,7 +342,8 @@ export function createTunnel() {
 		setCamZ(z) {
 			motes.mat.uniforms.uCamZ.value = z;
 		},
-		setMotes(o) {
+		setMotes(o, reveal = 1) {
+			motes.mat.uniforms.uReveal.value = reveal;
 			motes.mat.uniforms.uOpacity.value = o;
 			motes.lines.visible = o > 0.004;
 		},

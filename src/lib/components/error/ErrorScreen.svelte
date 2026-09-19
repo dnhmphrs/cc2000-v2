@@ -4,10 +4,11 @@
 
 	import { scene } from '$lib/store/store';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	function goHome() {
 		scene.set('calculator');
-		goto('/', { replaceState: true });
+		goto(resolve('/'), { replaceState: true });
 	}
 </script>
 

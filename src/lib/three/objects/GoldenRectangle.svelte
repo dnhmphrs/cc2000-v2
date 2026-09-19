@@ -1,9 +1,9 @@
 <script>
 	import { tick } from 'svelte';
-	import { get } from 'svelte/store';
 	import * as THREE from 'three';
-	import { accentHex, ink } from '$lib/theme';
+	import { ink } from '$lib/theme';
 	import { ICOSA, ICOSA_INK } from '$lib/config';
+	import { lineMaterial, segmentAttributes, grower } from '$lib/three/world/materials';
 	import GoldenRectangleSchematic from './GoldenRectangleSchematic.svelte';
 	import RoomProjection from './RoomProjection.svelte';
 
@@ -33,7 +33,6 @@
 
 	// Live accent recolour of the rectangle. The drafting keeps its own quiet ink
 	// whatever the accent does — it is a hierarchy, not one colour used twice.
-	$: if (outlineMaterial) outlineMaterial.color.copy(ink($accentHex));
 
 	// Single group — everything lives here and rotates together
 	export let group;
@@ -68,6 +67,7 @@
 	let lastProjection = 0;
 
 	let outlineMaterial;
+	let growOutline = () => {};
 	let spiralMaterial;
 	let subdivisionMaterials = [];
 	let traceLineMaterials = [];
@@ -253,13 +253,27 @@
 		const rectGroup = new THREE.Group();
 		const corners = getRectCorners();
 
-		outlineMaterial = new THREE.LineBasicMaterial({
-			color: ink(get(accentHex)),
-			transparent: true,
-			opacity: 0
-		});
+		// ── THE RECTANGLE IS DRAWN, NOT SWITCHED ON ──────────────────────────
+		// It used to be a LineBasicMaterial set straight to full opacity the
+		// moment the pane group became visible, which is three golden rectangles
+		// appearing inside the solid in a single frame. What they do afterwards
+		// — travel outward — was always an animation; the arrival never was.
+		//
+		// So it uses the same material and the same progressive draw as the
+		// icosahedron's own edges: four sides, each drawn from the end nearer
+		// the middle of the figure, all four at once. The rectangle writes
+		// itself inside the solid, and then the solid unfolds.
+		// ICOSA_INK.line, the same gold as the icosahedron's own thirty edges —
+		// NOT the decade accent. It was on the accent, which is derived from the
+		// palette and swings orange for some decades; that was survivable while
+		// the outline blended normally and muted itself against the void, and
+		// stopped being survivable the moment it went additive for the draw.
+		// The wireframe is one object and it is one colour.
+		outlineMaterial = lineMaterial(ICOSA_INK.line, 0);
+		// Flat. This is line-work on the void, not a body with a near and far.
+		outlineMaterial.uniforms.uBack.value = 1;
 
-		const outline = new THREE.BufferGeometry().setFromPoints([
+		const outlinePts = [
 			corners[0],
 			corners[1],
 			corners[1],
@@ -268,7 +282,18 @@
 			corners[3],
 			corners[3],
 			corners[0]
-		]);
+		];
+		const outline = new THREE.BufferGeometry().setFromPoints(outlinePts);
+		growOutline = grower(
+			outlineMaterial,
+			segmentAttributes(
+				outline,
+				4,
+				() => 0,
+				(i) => outlinePts[i * 2 + 1].lengthSq() < outlinePts[i * 2].lengthSq()
+			)
+		);
+		growOutline(0);
 		rectGroup.add(new THREE.LineSegments(outline, outlineMaterial));
 
 		// The drafting, in its own group so it can be faded independently of the
@@ -344,7 +369,7 @@
 		// on screen when this scene starts and simply travels outward. Fading it
 		// in from zero put three bright rectangles out at the cut and brought them
 		// back from nothing, which is the one visible seam the run had left.
-		if (outlineMaterial) outlineMaterial.opacity = d;
+		if (outlineMaterial) outlineMaterial.uniforms.uOpacity.value = d;
 		if (spiralMaterial) spiralMaterial.opacity = g * 0.85;
 		subdivisionMaterials.forEach(({ mat }) => (mat.opacity = g * 0.45));
 		traceLineMaterials.forEach((mat) => (mat.opacity = arm * 0.6));
@@ -398,6 +423,12 @@
 
 	// 0..1 — how far up the drafting layer is. The computation runs this on its
 	// own window, so the working can be shown and then put away.
+	// How much of the rectangle has been drawn, 0..1. Separate from setDim and
+	// setLineDim, which are about how BRIGHT it is once it exists.
+	export function setOutline(v) {
+		growOutline(v);
+	}
+
 	export function setDraft(v) {
 		if (v === draft) return;
 		draft = v;

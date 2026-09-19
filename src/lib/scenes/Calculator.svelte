@@ -52,7 +52,8 @@
 		'in the earth year 2000, human technology advanced',
 		'allowing all of mankind to calculate the song playing',
 		'at their exact moment of conception',
-		'with the statistical accuracy only the internet can provide'
+		'with the statistical accuracy',
+		'only the internet can provide'
 	];
 
 	const MIN_YEAR = 1958;
@@ -641,7 +642,9 @@
 	   the 3D behind a machine that has not been drawn yet. */
 	.calculator {
 		border-radius: 0;
-		transition: background-color 0.5s ease 0.06s, border-radius 0.5s ease 0.06s;
+		transition:
+			background-color 0.5s ease 0.06s,
+			border-radius 0.5s ease 0.06s;
 	}
 	.calculator > :global(*) {
 		transition: opacity 0.5s ease 0.06s;
@@ -728,14 +731,17 @@
 		border-radius: 22px;
 		/* Outside in: ink, a fat band of light yellow, ink again. The glass is
 		   drawn ONTO the chassis rather than recessed into it. */
-		box-shadow: inset 0 0 0 4px var(--machine-ink), inset 0 0 0 15px var(--machine-light),
-			inset 0 0 0 19px var(--machine-ink), inset 0 16px 26px rgba(0, 0, 0, 0.45),
+		box-shadow:
+			inset 0 0 0 4px var(--machine-ink),
+			inset 0 0 0 15px var(--machine-light),
+			inset 0 0 0 19px var(--machine-ink),
+			inset 0 16px 26px rgba(0, 0, 0, 0.45),
 			/* And an outward spread that fills the four corners the four body
 			   bars leave open — they meet at a square corner, this window is
 			   rounded, and the difference is scene. An element's OWN outer
 			   shadow is not clipped by its own overflow, so this works from
 			   here. */
-				0 0 0 20px var(--machine);
+			0 0 0 20px var(--machine);
 		overflow: hidden;
 	}
 
@@ -957,7 +963,7 @@
 		gap: 4px;
 		padding: 12px clamp(18px, 2.8vw, 32px);
 		background: var(--machine-light);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		border-radius: 14px;
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		white-space: nowrap;
@@ -1031,7 +1037,7 @@
 		height: clamp(30px, 3vw, 48px);
 		border-radius: 50%;
 		background: var(--machine-light);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		display: grid;
 		place-items: center;
@@ -1063,7 +1069,7 @@
 		height: 38px;
 		border-radius: 8px;
 		background: var(--machine-dark);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		display: flex;
 		align-items: flex-end;
@@ -1108,7 +1114,7 @@
 		gap: clamp(16px, 2.6vw, 34px);
 		padding: 14px clamp(16px, 2.2vw, 26px) 16px;
 		background: var(--machine-dark);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		border-radius: 16px;
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 	}
@@ -1140,7 +1146,7 @@
 		padding: 7px 9px;
 		color: var(--machine-ink);
 		background: var(--machine-light);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		border-radius: 9px;
 		box-shadow: 0 3px 0 var(--machine-ink);
 		cursor: pointer;
@@ -1170,7 +1176,7 @@
 		width: clamp(70px, 9vw, 120px);
 		height: 38px;
 		border-radius: 10px;
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 		background: repeating-linear-gradient(
 			to bottom,
@@ -1196,7 +1202,7 @@
 		height: 44px;
 		border-radius: 12px;
 		background: radial-gradient(circle, var(--machine-ink) 2px, transparent 2.2px) 0 0 / 9px 9px;
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 		box-shadow: 0 var(--drop) 0 var(--machine-ink);
 	}
 
@@ -1255,7 +1261,7 @@
 		height: 18px;
 		border-radius: 50%;
 		background: var(--machine-light);
-		border: var(--ink) solid var(--machine-ink);
+		border: var(--pen) solid var(--machine-ink);
 	}
 	.screw::after {
 		content: '';
