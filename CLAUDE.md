@@ -1,16 +1,20 @@
 # Working agreements
 
-## Always open the PR
+## Everything goes to `dev`
 
-When a round of work is finished, **open a pull request to `main` without being
-asked**. Do not stop at "pushed to the branch" and wait for someone to say "PR" —
-that ask has been made once, standing, and it covers every round from here on.
+There is one branch to look at: `dev`. Whatever a round is built on, **push the
+finished round to `dev` the moment it is made**, without being asked — that ask
+has been made once, standing, and it covers every round from here on. `dev` has
+everything: it was cut from `v4` after the lab cut landed there, with
+`fullflow-v2` merged in, and it only moves forward. Do not start branches for
+the sake of it. Work on `dev` itself unless a round genuinely needs isolating,
+and then merge it back to `dev` the same day.
 
-Work goes on `fullflow-v4`. If the PR for that branch has already been merged,
-the follow-up is a NEW PR: restart the branch from the latest `main`, keeping any
-unmerged commits by rebasing them onto it rather than stacking on merged history.
+`main` stays as it is. Nothing goes to `main` unless it is asked for by name.
+When a PR is asked for, open it FROM `dev` into the branch named, so the branch
+and the PR are the same picture.
 
-## Do not open it on unverified work
+## Do not push unverified work
 
 The rule above is only safe because of this one. Before pushing:
 
