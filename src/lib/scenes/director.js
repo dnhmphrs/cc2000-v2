@@ -13,31 +13,30 @@ import {
 } from '$lib/store/store';
 
 // ── The director ─────────────────────────────────────────────────────────────
-// The five scenes in order, and the four things that can happen between them.
-// This is the whole control flow of the site; every transition goes through a
+// The three scenes in order, and the things that can happen between them. This
+// is the whole control flow of the site; every transition goes through a
 // function here, so there is one place to read to know what follows what.
 //
-//   calculator ──begin()──▶ flyIn ──▶ conception ──▶ computation ──▶ room
-//        ▲                                                            │
-//        └──────────────────────── again() ───────────────────────────┘
+//   (title card) ──begin()──▶ approach ──▶ descent ──▶ room
+//                                ▲                      │
+//                                └──────── again() ─────┘
 //
-// An out-of-range birthday never leaves the calculator at all: it sets `edge`
-// and stays put, so the operator can change the date and go again without the
-// site having flown them anywhere first.
+// An out-of-range birthday is refused in the popup that asked for it, mid-
+// flight, and the flight stays held until the date is changed.
 //
-// The stage advances the three 3D scenes itself as each one finishes (they know
+// The stage advances the two 3D scenes itself as each one finishes (they know
 // their own durations); the two ends of the loop are driven from the DOM.
 
 // NO CALCULATOR. This build has no machine: the run opens on the title card,
-// which is a DOM overlay held over a fly-in that is already mounted, and the two
-// answers are taken mid-flight by popups. See store.js `gate`.
-export const ORDER = ['flyIn', 'conception', 'computation', 'room'];
+// which is a DOM overlay held over an approach that is already mounted, and the
+// two answers are taken mid-flight by popups. See store.js `gate`.
+export const ORDER = ['approach', 'descent', 'room'];
 
 export function is(name) {
 	return get(scene) === name;
 }
 
-// Starting a run. There is nothing to press: the fly-in is mounted from the
+// Starting a run. There is nothing to press: the approach is mounted from the
 // first frame and the title card lifts off it, so this only marks the run.
 export function begin() {
 	runId.update((n) => n + 1);
@@ -61,9 +60,9 @@ export function advance(from) {
 export function again() {
 	if (!is('room')) return;
 	clearResult();
-	// The return flight owns the scene change: it runs in the computation, whose
-	// room is still on screen, and hands over when the glass has filled the frame.
-	// See Computation.stepReturn().
+	// The return flight owns the scene change: it runs in the descent, whose
+	// room is still on screen, and hands over when the glass has filled the
+	// frame. See world/descent.js stepReturn().
 	goingBack.set(true);
 }
 
@@ -82,6 +81,6 @@ export function clearResult() {
 export function settled() {
 	goingBack.set(false);
 	monitorRect.set(null);
-	scene.set('flyIn');
+	scene.set('approach');
 	runId.update((n) => n + 1);
 }

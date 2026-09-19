@@ -17,6 +17,14 @@
 	// It types, holds a beat, and lifts. Not a click-through: a pointerdown skips
 	// the rest of the typing for anyone who has read it before, but nothing waits
 	// on one.
+	//
+	// ON THE CLOCK, not on a chain of timers. It used to set one timeout per
+	// character, and a timeout fires when the main thread gets round to it — on
+	// a phone whose GPU is busy bringing the 3D up behind this card, or on a
+	// software renderer, that is once a frame, and a hundred and eighty
+	// characters at two frames a second is a card that never lifts. What is
+	// shown is worked out from how long the card has been up, so it types at its
+	// own pace whatever the frame rate, and lifts when it said it would.
 
 	const T = SCENES.calculator;
 
@@ -29,10 +37,23 @@
 	];
 
 	let shown = LINES.map(() => 0);
-	let timer;
+	let raf;
+	let lifted = false;
+
+	// When each line starts typing, in seconds from mount, and when the whole
+	// card is done.
+	const START = [];
+	let cursor = T.typeDelay;
+	for (const line of LINES) {
+		START.push(cursor);
+		cursor += line.length * T.charInterval + T.lineGap;
+	}
+	const END = cursor - T.lineGap + T.titleHold;
 
 	function lift() {
-		clearTimeout(timer);
+		if (lifted) return;
+		lifted = true;
+		cancelAnimationFrame(raf);
 		shown = LINES.map((l) => l.length);
 		begin();
 		gate.set(null);
@@ -44,25 +65,21 @@
 	}
 
 	onMount(() => {
-		let li = 0;
-		const step = () => {
-			if (li >= LINES.length) {
-				timer = setTimeout(lift, T.titleHold * 1000);
-				return;
-			}
-			if (shown[li] >= LINES[li].length) {
-				li += 1;
-				timer = setTimeout(step, T.lineGap * 1000);
-				return;
-			}
-			shown[li] += 1;
-			shown = shown;
-			timer = setTimeout(step, T.charInterval * 1000);
+		const t0 = performance.now();
+		const tick = () => {
+			const t = (performance.now() - t0) / 1000;
+			shown = LINES.map((line, i) =>
+				Math.max(0, Math.min(line.length, Math.floor((t - START[i]) / T.charInterval)))
+			);
+			if (t >= END) lift();
+			else raf = requestAnimationFrame(tick);
 		};
-		timer = setTimeout(step, T.typeDelay * 1000);
+		raf = requestAnimationFrame(tick);
 	});
 
-	onDestroy(() => clearTimeout(timer));
+	onDestroy(() => {
+		if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(raf);
+	});
 </script>
 
 <div class="prelude" out:fade={{ duration: 420 }} on:pointerdown={skip}>

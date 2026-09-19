@@ -41,11 +41,10 @@ its WebGL 2 backend without saying so. Every frame is shot with `?seed=1`, so
 the panes and the motes fall the same way on every load; a sheet that differs
 from another sheet of the same beat is a change, not the shuffle.
 
-Scene keys are the dev harness's own: `2` flyIn, `3` conception, `4` computation,
-`5` room. `1` restarts the run from the title card. They are bound BY NAME in
-Dev.svelte rather than by position in `ORDER` — `ORDER` lost the calculator in
-this build and indexing into it would slide every key down one, silently
-repointing every PLAN in this file and in `verify.mjs`.
+Scene keys are the dev harness's own: `2` approach, `3` descent, `5` room.
+`1` restarts the run from the title card. They are bound BY NAME in Dev.svelte
+rather than by position in `ORDER`, so a scene coming or going cannot slide a
+key and silently repoint every PLAN in this file and in `verify.mjs`.
 
 A `?at=` pin suppresses the two mid-flight popups, or every contact sheet past
 `askDob` comes back with a dialog across it.
@@ -56,35 +55,55 @@ Two traps that have already cost a round each:
   anything a scene inherits from the one before it — rather than setting from its
   own progress — is absent in a seeked frame and present in a real run. If a
   screenshot is the evidence for a claim, check the claim survives BOTH.
-- **The middle three scenes are one shot.** fly-in at 1 and conception at 0 must
-  be the same picture, and so must conception at 1 and computation at 0. Diff
-  them pixel-wise rather than eyeballing; a mean delta around 1/255 is the
-  anti-aliasing on thirty thin lines, anything more is a real seam.
+- **The two 3D scenes are one shot.** approach at 1 and descent at 0 must be
+  the same picture — both are `nest.pose(0)`. Diff them pixel-wise rather than
+  eyeballing, with `?sperm=0` on both (the swimmer's roll is on real time, so
+  it is the one thing two loads never agree on) and reached by the SAME path
+  (key 2 then 3 for the descent, so the seeded rooms match); a mean delta under
+  0.02/255 is what it measures today, anything past 1 is a real seam.
 
 Write scratch scripts and screenshots to the scratchpad, never into `scripts/`.
 A script living there cannot resolve the project's `node_modules`, so import by
 absolute path: `from '/home/user/cc2000-v2/node_modules/playwright/index.mjs'`.
 
-## This build has no machine
+## This build has no machine, and two scenes
 
-`src/lib/scenes/Calculator.svelte` is still in the tree and is imported by
-nothing. The run opens on a title card (`scenes/Prelude.svelte`) over a fly-in
-that is ALREADY MOUNTED and held at progress zero — black over black — and the
-two answers the machine used to take are taken mid-flight by popups
+The run is `three/Stage.svelte` on ONE `WebGPURenderer` (WebGL 2 behind it
+where there is no WebGPU; `?gl=1` forces it), and two 3D scenes that are plain
+modules under `three/world/`: the **approach** (`approach.js` — space, the
+swimmer ahead of the lens from behind, the archive adrift, the portal dead
+ahead) and the **descent** (`descent.js` — rooms through rooms, down to the
+answer's room and the splosh on its screen). Both walk the same **nest**
+(`nest.js`), which is where the rooms, the stencil chain, the camera pose and
+the glass rect live. `scenes/FlyIn|Conception|Computation|Calculator.svelte`,
+`three/world/{tunnel,egg,lattice}.js`, `three/shaders/` and
+`components/Background.svelte` are the WebGL run they replaced: in the tree for
+reference, imported by nothing.
+
+The run opens on a title card (`scenes/Prelude.svelte`) over an approach that
+is ALREADY MOUNTED and held at progress zero — black over black — and the two
+answers the machine used to take are taken mid-flight by popups
 (`components/Prompt.svelte`).
 
 The one thing holding all of that together is the `gate` store: while it is
-non-null the fly-in holds `t` and keeps advancing `elapsed`, so the swimmer goes
-on rolling and the scene waits rather than freezing. Holding `t` rather than
-running a second clock is what keeps every frame a pure function of progress.
+non-null the approach holds `t` and keeps advancing `elapsed`, so the swimmer
+goes on rolling and the scene waits rather than freezing. Holding `t` rather
+than running a second clock is what keeps every frame a pure function of
+progress.
 
-Two consequences worth remembering:
+Three consequences worth remembering:
 
 - **The answer resolves mid-flight**, not before it. The date is proved
   answerable when the first popup closes and the archive is asked properly when
   the second does. An out-of-range date is refused IN the popup — there is no
-  machine to report it on and no room to fall into.
+  machine to report it on and no room to fall into. The nest's portal and first
+  room are chosen when the run starts; the deeper rooms are set the moment the
+  answer is in, while they are too small to see (`approach.js finalise()`).
 - **The loop home has no DOM half.** The camera flies through the room's monitor
-  and `Computation.stepReturn()` hands the run to the fly-in when the glass has
-  filled the frame. The glass is black and so is the air behind it, so there is
-  nothing to cover the cut with because there is no cut to see.
+  and `descent.js stepReturn()` hands the run to the approach when the glass has
+  filled the frame. The glass is black and so is the space behind it, so there
+  is nothing to cover the cut with because there is no cut to see.
+- **The first frame is warmed up.** The Stage renders every object a few at a
+  time before the loop starts, yielding to the page between, so the title card
+  (which types on the clock, not on timers) keeps its rhythm on a slow GPU.
+  `window.__stage` appears when that is done — the shots tool waits for it.

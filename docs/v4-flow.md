@@ -2,54 +2,45 @@
 
 ![the flow](./v4-flow.jpg)
 
-Two halves, both shot headless and both pinned with `?at=` — every scene is a
+Three sections, all shot headless and all pinned with `?at=` — every scene is a
 pure function of its own progress, so each frame is the frame the run would
 have drawn at that moment rather than a timed guess at it.
 
-**1 — the run today.** Four scenes, thirty seconds, on `WebGLRenderer` and the
-shaders the site has always had: the fly-in, the conception, the computation
-and the room. Shot on the WebGL lane at `?seed=1`, so the decade-to-pane
-assignment and the motes fall the same way on every load. This is the picture
-the rebuild has to beat rather than break.
+**1 — the run, as it now is.** What `/` does on `dev`: a title card over an
+approach that is already flying; the swimmer ahead of the lens, from behind, the
+archive adrift and passing, the two questions asked on the way and the flight
+held while they are; the portal dead ahead, whose glass holds the first room;
+the descent through the decades, one room inside the next, down to the answer's
+room; the swimmer going into its screen and the screen going white; the readout
+in that glass; and "go again" flying home through it into the next flight. One
+WebGPU renderer, and one shot from the flight into the fall — the approach ends
+on the frame the descent opens on. Frames on the WebGL lane at `?seed=1`, so the
+decades and the archive fall the same way on every load.
 
-**2 — the rebuild, roughed in.** The five new beats end to end at `/v4`, 55
-seconds on one WebGPU renderer, each at its own sketch's length:
+| scene    | seconds | where                                               |
+| -------- | ------- | --------------------------------------------------- |
+| approach | 12      | `three/world/approach.js`, held at the two asks     |
+| descent  | 14      | `three/world/descent.js` over `three/world/nest.js` |
+| room     | —       | `scenes/Room.svelte`, until "go again"              |
 
-| beat       | seconds | sketch            |                                                                                       |
-| ---------- | ------- | ----------------- | ------------------------------------------------------------------------------------- |
-| approach   | 9       | `lab/approach.js` | space; the swimmer, and the archive adrift around it                                  |
-| descent    | 14      | `lab/rooms.js`    | rooms through rooms, decade after decade, the swimmer down the axis                   |
-| conception | 12      | `lab/impact.js`   | a beam strikes the sphere — the pole — and the zeros of ζ ring out as the log p rings |
-| lattice    | 9       | `lab/lattice.js`  | every integer a point at (a log 2, b log 3, c log 5); the lens closes on one cell     |
-| bloom      | 11      | `lab/cube.js`     | the cell is a cube, and the cube opens on an isometric bedroom                        |
+**2 — the lab cut it was made from.** The five sketches chained at `/v4`,
+55 s, from the round before: the approach and the descent were the two that were
+bought, and are what the run above is built from; the conception, the lattice
+and the bloom stay in the lab.
 
-Of the four sketches the last cut was made from, only the descent stayed in
-the cut (the E8 expansion is kept on the side, refined, at `/lab?sketch=e8`),
-and it was remade: it cycles through the decades now, with exact crossings at every
-glass, and the swimmer swims down the middle of it. The conception and the
-bloom are new sketches under the same names; the approach and the lattice are
-the two beats the brief asked to workshop — the one before the descent, which
-has to feature the swimmer, and the wildcard. The cuts between the five are
-hard: the swimmer speeding up into the beam, and the lattice's cell being the
-cube, are joins for later. The fly-in is not in it: it stays on the old
-renderer until the Stage swap, and the approach is what would replace it.
-
-**3 — on the side.** The E8 expansion, kept and refined at
-`/lab?sketch=e8` though not in the cut: the 600-cell grows out of the
-icosahedron shell by shell, every vertex born inside its place and swelling out
-to it; the second shell is born on the first, φ larger; and a rotation of
-4-space lands the pair on the H4 Coxeter plane, the wheel — eight rings of
-thirty, drawn as dots now as well as edges, hot at the hub and ember at the rim.
+**3 — on the side.** The E8 expansion, kept and refined at `/lab?sketch=e8`
+though not in the cut.
 
 ## Reproducing the page
 
     npm run dev
     BASE=http://localhost:3000 OUT=<dir> \
-      PLAN='[["2",[0,0.35,0.7,1]],["3",[0,0.3,0.6,1]],["4",[0,0.2,0.45,0.7,1]],["5",[0]]]' \
+      PLAN='[["2",[0.02,0.25,0.5,0.72,0.9,1]],["3",[0.12,0.3,0.5,0.7,0.9,1]]]' \
       node scripts/shots.mjs
 
-for the top half, and the same `?at=` pins against `/v4` on the WebGPU lane
-(`LANE=webgpu`, `scripts/lane.mjs`) for the bottom — `?at=` there is a fraction
-of the whole 55 s, so 0.44 is 1.2 s into the conception. The page itself was
-composed in the scratchpad — it is a picture of the work, not part of the
-build.
+for the run (`2` approach, `3` descent — the shots tool waits for the stage's
+warm-up and presses the key); the room and the way home are a real run driven
+the way `scripts/verify.mjs` drives it. The second section is the same `?at=`
+pins against `/v4` on the WebGPU lane (`LANE=webgpu`, `scripts/lane.mjs`), the
+third against `/lab?sketch=e8`. The page itself was composed in the scratchpad —
+it is a picture of the work, not part of the build.

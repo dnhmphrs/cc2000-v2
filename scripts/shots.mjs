@@ -11,12 +11,13 @@
 // checking a half-second beat inside a fifteen-second scene by taking timed
 // screenshots and hoping is not a method.
 //
-// It is also how the one hand-over in the run is checked. Shoot flyIn at 1 and
-// conception at 0 and the two files should be the same picture — same circle,
-// same radius, same brightness — because scenes 2, 3 and 4 are one shot.
+// It is also how the one hand-over in the run is checked. Shoot the approach
+// at 1 and the descent at 0 and the two files should be the same picture — the
+// portal's glass filling the frame's height, room 0 inside it — because both
+// are nest.pose(0).
 //
 //   PLAN   [[sceneKey, [progress, ...]], ...]  scene keys are the dev harness's
-//          own: "2" flyIn, "3" conception, "4" computation, "5" room.
+//          own: "2" approach, "3" descent, "5" room.
 //   OUT    where to write        W, H   viewport        BASE   dev server
 //   SEED   the ?seed= every frame is shot with (default 1), so the panes and
 //          the motes fall the same way on every load and a sheet can be diffed
@@ -33,7 +34,7 @@ const W = Number(process.env.W ?? 1280);
 const H = Number(process.env.H ?? 800);
 const PLAN = JSON.parse(process.env.PLAN ?? '[["2",[0,0.25,0.5,0.75,1]]]');
 const SEED = process.env.SEED ?? '1';
-const NAME = { 2: 'flyIn', 3: 'conception', 4: 'computation', 5: 'room' };
+const NAME = { 2: 'approach', 3: 'descent', 5: 'room' };
 
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -48,6 +49,9 @@ for (const [key, ats] of PLAN) {
 	for (const at of ats) {
 		// DEV_AT is read once at module load, so each frame is its own page load.
 		await p.goto(`${BASE}/?at=${at}&seed=${SEED}`, { waitUntil: 'networkidle' });
+		// The stage warms every program up before its first frame and says so;
+		// a key pressed before that lands on a canvas still at opacity 0.
+		await p.waitForFunction(() => window.__stage, null, { timeout: 180000 }).catch(() => {});
 		await p.waitForTimeout(1400);
 		// 1–5 jump straight to a scene, seeding a real answer on the way past the
 		// calculator so the computation has a decade to find — config/dev.js.

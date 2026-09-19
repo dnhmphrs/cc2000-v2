@@ -6,18 +6,18 @@ import { AIR, aspectKind } from '$lib/config';
 // yourself writing one from somewhere not listed, that is the bug.
 
 // ── Where we are ─────────────────────────────────────────────────────────────
-// The five scenes, in order. `scene` is the single source of truth for what the
-// site is doing: the page picks which DOM screen to mount from it, and the
+// The three scenes, in order. `scene` is the single source of truth for what
+// the site is doing: the page picks which DOM screen to mount from it, and the
 // stage picks which 3D scene to run.
 //
-//   calculator   the machine — takes both answers, and is where a run starts
-//   flyIn        through the screen, down to the egg
-//   conception   the icosahedron assembling itself, on white
-//   computation  the panes, the search, the fall into a room
+//   approach     space; the swimmer ahead of the lens, the archive adrift, the
+//                two questions asked on the way, the portal dead ahead
+//   descent      rooms through rooms, decade after decade, down to the
+//                answer's room and the splosh on its screen
 //   room         the answer, in the room's monitor
 //
 // Written by: scenes/director.js and three/Stage.svelte. Nobody else.
-export const scene = writable('flyIn');
+export const scene = writable('approach');
 
 // Bumped once per run. Components that need to forget everything on a fresh
 // run can key off this rather than trying to reset themselves.
@@ -50,7 +50,7 @@ export const edge = writable(null);
 // Screen-space rect of the settled room's monitor glass, in CSS pixels. The
 // result panel and the returning calculator are both drawn into this rather
 // than floating over the room. Null until a room has settled.
-// Written by: three/scenes/Computation.svelte.
+// Written by: three/world/descent.js.
 export const monitorRect = writable(null);
 
 // 'dark' | 'light' — what the active scene is clearing to. The ground swings
@@ -80,11 +80,17 @@ export const fieldFade = writable(1);
 // Written by: scenes/Calculator.svelte.
 export const calcZoom = writable(1);
 
+// ── The splosh ───────────────────────────────────────────────────────────────
+// 0..1 — the white flash across the whole frame when the swimmer hits the last
+// room's screen. The Stage paints it over the 3D. Written by:
+// three/world/descent.js.
+export const blaze = writable(0);
+
 // ── The landing ──────────────────────────────────────────────────────────────
 // 0..1 through the computation's final fall into the room. The scanlines ride it
 // out: the raster is the screen the run is being WATCHED on, and the last thing
 // the run does is stop being a screen and become a place. Written by:
-// scenes/Computation.svelte, reset by scenes/FlyIn.svelte enter().
+// three/world/descent.js, reset by three/world/approach.js enter().
 export const landing = writable(0);
 
 // ── The way back ─────────────────────────────────────────────────────────────
@@ -109,9 +115,9 @@ export const goingBack = writable(false);
 //   'dob'      the first popup, over the swimmer
 //   'spicy'    the second, once the ovum is up
 //
-// Written by: scenes/FlyIn.svelte (opens them) and the popups (close them).
+// Written by: three/world/approach.js (opens them) and the popups (close them).
 //
-// While a gate is open FlyIn holds `t` and keeps advancing `elapsed`, so the
+// While a gate is open the approach holds `t` and keeps advancing `elapsed`, so the
 // swimmer goes on rolling and the scene does not freeze — it waits. Holding t
 // rather than running a second clock is what keeps every frame a pure function
 // of progress, which is what ?at= depends on.

@@ -24,7 +24,7 @@ Three routes:
 
 |                |                                                                                                                                                          |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`            | the site                                                                                                                                                 |
+| `/`            | the run: approach → descent → room, on WebGPU (WebGL 2 behind it where there is none; `?gl=1` forces it)                                                 |
 | `/v4`          | the rebuild's four new beats, end to end — needs WebGPU (Chrome, Edge, Safari 26); `?gl=1` for the WebGL 2 fallback                                      |
 | `/lab?sketch=` | one sketch on a bare canvas: `approach`, `rooms`, `impact`, `lattice`, `cube` (the cut), `e8` (kept, on the side), `materials`; `heat`, `petals` retired |
 
@@ -34,84 +34,50 @@ is going and `docs/v4-flow.md` for where it has got to.
 
 ---
 
-## The five scenes
+## The three scenes
 
-The whole site is five scenes played in order, and one store that says which one
-is up.
+The whole site is a title card, two 3D scenes and a room, and one store that
+says which is up. There is no machine: the two answers are asked mid-flight, by
+popups that hold the flight while they are open.
 
 ```
-  ┌─────────────┐  calculate   ┌────────┐    ┌────────────┐    ┌─────────────┐    ┌──────┐
-  │ Calculator  │ ───────────▶ │ FlyIn  │ ─▶ │ Conception │ ─▶ │ Computation │ ─▶ │ Room │
-  └─────────────┘              └────────┘    └────────────┘    └─────────────┘    └──────┘
-         ▲                        DOM: a caption, one line at a time                  │
-         └──────────────────────────── calculate again ───────────────────────────────┘
+  title card      ┌──────────┐      ┌─────────┐   splosh   ┌──────┐
+  (lifts itself)  │ Approach │ ───▶ │ Descent │ ─────────▶ │ Room │
+                  └──────────┘      └─────────┘            └──────┘
+                     ▲  asks: birthday · spice                 │
+                     └──────────── go again ───────────────────┘
 ```
 
-| #   | Scene           | What it is                                            | Where                               |
-| --- | --------------- | ----------------------------------------------------- | ----------------------------------- |
-| 1   | **Calculator**  | The machine. Takes both answers. DOM.                 | `src/lib/scenes/Calculator.svelte`  |
-| 2   | **FlyIn**       | Black air, one swimmer, 300 units to the ovum. 3D.    | `src/lib/scenes/FlyIn.svelte`       |
-| 3   | **Conception**  | A wave settles into the solid, which is then derived. | `src/lib/scenes/Conception.svelte`  |
-| 4   | **Computation** | Panes out, survey, clock the decades, fall in. 3D.    | `src/lib/scenes/Computation.svelte` |
-| 5   | **Room**        | The answer, in that room's monitor. DOM.              | `src/lib/scenes/Room.svelte`        |
+| #   | Scene        | What it is                                                                                                          | Where                             |
+| --- | ------------ | ------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind; the archive adrift and passing; the portal dead ahead. 3D.       | `src/lib/three/world/approach.js` |
+| 2   | **Descent**  | Rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. | `src/lib/three/world/descent.js`  |
+| 3   | **Room**     | The answer, in that room's monitor. DOM.                                                                            | `src/lib/scenes/Room.svelte`      |
 
-Scenes 1 and 5 are DOM screens with no 3D of their own; 2–4 are 3D.
-`src/lib/scenes/director.js` owns every transition between them — it is four
-functions long and it is the first file to read.
+Both 3D scenes walk the same **nest** — `src/lib/three/world/nest.js`: the
+portal monitor out in space, the rooms inside its glass one inside the next, the
+stencil chain that clips each to the glass above it, the camera pose for any
+level of the fall, and the glass rect the readout is drawn into.
+`src/lib/scenes/director.js` owns every transition — it is four functions long
+and it is the first file to read.
 
-**Scenes 2, 3 and 4 are one shot.** There is no cut anywhere in the middle of the
-run: the fly-in ends on the exact frame the conception opens on, and the
-conception hands the computation a solid it has already assembled. See the
-colour walk below, and `SCENES.flyIn.shellOut` in `config/timing.js` for how the
-hand-over is arranged.
+**The two 3D scenes are one shot.** The approach ends on `nest.pose(0)` and the
+descent opens on it — the portal's glass filling the frame's height, room 0
+inside — so there is no cut between them. The one cut in the run is the loop
+home: the camera flies through the last room's monitor, and the glass is black
+and so is the space the next run opens on.
 
 ---
 
 ## The colour walk
 
-The machine is yellow on deep blue and the bedrooms are their own colour. Between
-them, **the middle three scenes are one world: black and gold.**
-
-```
-  yellow machine        ┌─────────────────────────────────────────────┐        the room's
-  on deep blue     →    │  black air · gold ovum · blue swimmer       │   →    own colour
-                        │  black void · gold line-work · blue is gone │
-                        └─────────────────────────────────────────────┘
-                          2 FlyIn        3 Conception     4 Computation
-```
-
-Blue survives as the one **cold** thing in it — the swimmer and the debris in the
-air — and there is none of it left after the conception. Everything else is gold
-on `VOID`, over the blueprint field in `three/shaders/grid.js`: a ruled
-screen-space grid, a centre crosshair, corner registration brackets, and `uRot`
-carrying the ruling in the same coordinates the icosahedron is turning in, so the
-ground swings with the solid instead of sitting behind it.
-
-### There used to be a white blow-out here
-
-The fly-in ended on a flash, because the world underneath it changed: deep-blue
-air on one side, the void on the other, and a cut like that needs covering.
-
-It does not change any more, so the flash was not smoothing a transition — it was
-**announcing** one. What it actually did was break the only three scenes that are
-supposed to run as one shot into two halves with a bang in the middle, and make
-the conception look as though the run had reset.
-
-What replaced it is that the two frames either side of the hand-over are the
-**same frame**:
-
-- the fly-in's cage goes as you pass through it, leaving the ovum's **core** — a
-  dark sphere with a gold rim;
-- its air walks down to `VOID`, and `fieldFade` (`store/store.js`) takes both
-  backdrop shaders down to their bare ground colour, so `deep` and `grid` are the
-  same flat black at the swap;
-- `FlyIn.coreRatio()` derives the core's size from the **next** scene's framing
-  every frame, solving the tangent cone at both ends so the two gold circles land
-  on the same pixels on any screen and any lens.
-
-Measured at 1280×800 and at 430×900: same radius, same peak brightness, both
-sides. The envelope (`FLASH_HOLD`, `FLASH_FALL`) is still in `Stage.svelte`
-because it costs nothing. Nothing throws it.
+Black space, and the one cold thing in it: the swimmer, blue, with the blue
+debris streaking past. The archive is lit in its own colours — every monitor's
+glass holds its decade's room — and once the fall begins the run is inside those
+rooms and nothing else. The only white in the run is the **splosh**: the last
+room's screen going white when the swimmer goes in, with one flash across the
+frame (`blaze` in `store/store.js`, painted by `Stage.svelte`), and the readout
+comes up in the glass as the white drains out of it.
 
 ---
 
@@ -132,20 +98,27 @@ src/lib/
   store/store.js    every store, with its writer named in the comment
 
   three/
-    Stage.svelte      the canvas, the clock, the running order of the 3D three
+    Stage.svelte      the canvas, one WebGPU renderer, the clock, the two 3D scenes
     world/
-      tunnel.js         scene 2's world — air, fog, motes, the sperm, the ovum
-      lattice.js        scenes 3–4's world — the icosahedron, the rim, the cage
-      construction.js   scene 3's derivation
-      egg.js            the wire globe — a cage and a skin in one world, a circle in the other
-      materials.js      every material in the site, and stroke()
+      nest.js           the portal and the rooms inside it, the stencil chain, pose(ζ)
+      approach.js       scene 1 — space, the swimmer, the archive adrift, the flight
+      descent.js        scene 2 — the fall, the splosh, the readout's rect, the way back
+    tsl/
+      materials.js      every material, as TSL — line, holo, skin, dot, core
+      backdrop.js       the grounds the scenes paint — deep, grid, flat, white
+      swimmer.js        the sperm, loaded and normalised, on the hologram
+      glass.js          the per-decade glass key — as a stencil, and as a cut-out
+      motes.js          the debris that makes the speed read
     geometry/
       icosahedron.js    vertices, edges, faces, pentagons, golden rectangles
-    objects/            the decade panes, their drafting, and their room artwork
-    shaders/            one full-screen field per scene — deep, grid, flat, theta, white
+      cell600.js        the 600-cell, as quaternions
 
-  components/
-    Background.svelte   compiles whichever field the running scene asked for
+  lab/                the workshop — one sketch per file, under /lab?sketch=
+
+  The WebGL run this replaced is still in the tree, imported by nothing:
+  scenes/{FlyIn,Conception,Computation,Calculator}.svelte, three/world/
+  {tunnel,lattice,egg,materials}.js, three/objects/, three/shaders/ and
+  components/Background.svelte.
 ```
 
 ---
@@ -159,20 +132,18 @@ fractions of that duration.** No scene file contains a number of seconds.
 
 ```js
 // config/timing.js
-flyIn: {
-  duration: 14.5,
-  spermIn:  [0.015, 0.13],  // it comes past the camera from behind
-  close:    [0.08, 0.66],   // its corkscrew tightening across the run
-  dive:     [0.78, 0.94],   // it breaks formation and goes in
-  shellOut: [0.8, 0.955]    // the cage shed, leaving the core to hand over
+descent: {
+  duration: 14,
+  dive:    [0.88, 0.972], // the swimmer leaves the axis for the glass
+  splosh:  [0.962, 1.0],  // the white on the glass
+  landing: [0.82, 1.0]    // the raster coming off
 }
 ```
 
 ```js
-// scenes/FlyIn.svelte
+// three/world/descent.js
 const p = clamp01(t / T.duration); // 0..1 through the scene
-const eggIn = span(p, T.eggIn); // 0..1 through that beat
-world.egg.setShell(eggIn);
+nest.setSplosh(smootherstep(span(p, T.splosh))); // 0..1 through that beat
 ```
 
 Change `duration` and the whole scene stretches in proportion. Move a window and
@@ -193,29 +164,40 @@ hoping.
 
 ### Pure functions of progress
 
-Scenes 3 and 4 recompute their whole state from `p` every frame rather than
-accumulating. The conception's pose and the computation's search step are both
-functions of the scene's progress alone. Nothing integrates `dt`.
+Both 3D scenes recompute their whole state from `p` every frame rather than
+accumulating: the approach's camera and the descent's level of the fall are
+functions of the scene's progress alone. Nothing integrates `dt` — except the
+swimmer's roll, which is on real time so it goes on turning while a popup holds
+the flight.
 
 That is why they can be reset, re-entered or scrubbed without drifting, and it
 is worth keeping if you add to them.
 
 ### The scene interface
 
-Every 3D scene answers exactly five calls, and `Stage.svelte` knows nothing else
+Every 3D scene answers the same calls, and `Stage.svelte` knows nothing else
 about them:
 
 ```js
 enter(); // you are the active scene — reset yourself
 update(dt); // one frame; return true when your duration is up
-render(r); // draw yourself
-backdrop(); // { color, alpha } for the renderer to clear to
-resize(); // the window changed
+render(); // draw yourself
+resize(w, h); // the window changed
+seek(v); // pin yourself at a fraction of your duration (?at=)
 ```
+
+The descent also answers `hold(dt)` while the room is up over its last frame,
+and `beginReturn()` / `stepReturn(dt)` for the flight home through the glass.
 
 ---
 
-## Two worlds
+## The WebGL run, kept for reference
+
+Everything from here down describes the run this one replaced — the tunnel, the
+ovum, the icosahedron, the panes — which is still in the tree and imported by
+nothing. It is kept because the thinking in it is still the thinking.
+
+### Two worlds
 
 Scenes are the _motion_. Worlds are the _look_ — every object, material and
 dimension. A scene never builds anything.

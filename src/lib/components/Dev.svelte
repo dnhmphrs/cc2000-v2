@@ -86,11 +86,9 @@
 	}
 
 	// ── The keys are bound by NAME, not by position in ORDER ─────────────────
-	// ORDER lost the calculator in this build, so indexing into it would slide
-	// every key down one — and scripts/shots.mjs and scripts/verify.mjs both
-	// address scenes by these numbers. They stay where they were, and 1, freed
-	// up by the machine going away, restarts the run from the title card.
-	const KEYS = { 1: 'restart', 2: 'flyIn', 3: 'conception', 4: 'computation', 5: 'room' };
+	// scripts/shots.mjs addresses scenes by these numbers. 2 and 3 are the two
+	// 3D scenes, 5 the room, and 1 restarts the run from the title card.
+	const KEYS = { 1: 'restart', 2: 'approach', 3: 'descent', 5: 'room' };
 
 	function goto(name) {
 		if (name === 'restart') {
@@ -99,11 +97,11 @@
 			goingBack.set(false);
 			gate.set('prelude');
 			runId.update((n) => n + 1);
-			scene.set('flyIn');
+			scene.set('approach');
 			return;
 		}
 		if (!ORDER.includes(name)) return;
-		// Every 3D scene needs an answer behind it now: the run takes one
+		// Every 3D scene needs an answer behind it: the run takes one
 		// mid-flight, and a jump skips the asking. The gate goes with it — a
 		// jumped-to scene must not sit behind a popup nobody opened.
 		if (!seed()) return;
