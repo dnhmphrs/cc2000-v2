@@ -3,7 +3,7 @@
 	import { get } from 'svelte/store';
 	import { DEV, DEV_SEED } from '$lib/config';
 	import { rand } from '$lib/random';
-	import { ORDER, advance, again, clearResult } from '$lib/scenes/director';
+	import { ORDER, KEYS, advance, again, clearResult } from '$lib/scenes/director';
 	import {
 		scene,
 		runId,
@@ -86,10 +86,9 @@
 	}
 
 	// ── The keys are bound by NAME, not by position in ORDER ─────────────────
-	// scripts/shots.mjs addresses scenes by these numbers. 2 and 3 are the two
-	// 3D scenes, 5 the room, and 1 restarts the run from the title card.
-	const KEYS = { 1: 'restart', 2: 'approach', 3: 'descent', 5: 'room' };
-
+	// scripts/shots.mjs addresses scenes by these numbers. They live in the
+	// director (KEYS), next to the run they belong to, and 1 restarts the run
+	// from the title card whichever run it is.
 	function goto(name) {
 		if (name === 'restart') {
 			clearResult();
@@ -97,7 +96,7 @@
 			goingBack.set(false);
 			gate.set('prelude');
 			runId.update((n) => n + 1);
-			scene.set('approach');
+			scene.set(ORDER[0]);
 			return;
 		}
 		if (!ORDER.includes(name)) return;

@@ -95,6 +95,7 @@ export function createDescent({ THREE, renderer, nest }) {
 		blaze.set(0);
 		monitorRect.set(null);
 		nest.setSplosh(0, 1);
+		nest.setDim(1);
 		set(0);
 	}
 

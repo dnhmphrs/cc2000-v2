@@ -30,7 +30,34 @@ import {
 // NO CALCULATOR. This build has no machine: the run opens on the title card,
 // which is a DOM overlay held over an approach that is already mounted, and the
 // two answers are taken mid-flight by popups. See store.js `gate`.
-export const ORDER = ['approach', 'descent', 'room'];
+//
+// ── Two runs ─────────────────────────────────────────────────────────────────
+// The site's run is the default. The WebGL run it replaced still plays at /v2
+// on its own Stage (three/StageV2.svelte), with the same title card, popups,
+// room and director — only the 3D scenes and their names differ. That page
+// calls setRun('v2') before its Stage mounts; ORDER and KEYS are mutated in
+// place so every importer sees the change.
+export const RUNS = {
+	site: {
+		order: ['approach', 'descent', 'room'],
+		keys: { 1: 'restart', 2: 'approach', 3: 'descent', 5: 'room' }
+	},
+	v2: {
+		order: ['flyIn', 'conception', 'computation', 'room'],
+		keys: { 1: 'restart', 2: 'flyIn', 3: 'conception', 4: 'computation', 5: 'room' }
+	}
+};
+export const ORDER = [...RUNS.site.order];
+// The dev keys, bound by NAME — see components/Dev.svelte.
+export const KEYS = { ...RUNS.site.keys };
+
+export function setRun(name) {
+	const run = RUNS[name] ?? RUNS.site;
+	ORDER.splice(0, ORDER.length, ...run.order);
+	for (const k of Object.keys(KEYS)) delete KEYS[k];
+	Object.assign(KEYS, run.keys);
+	scene.set(ORDER[0]);
+}
 
 export function is(name) {
 	return get(scene) === name;
@@ -81,6 +108,6 @@ export function clearResult() {
 export function settled() {
 	goingBack.set(false);
 	monitorRect.set(null);
-	scene.set('approach');
+	scene.set(ORDER[0]);
 	runId.update((n) => n + 1);
 }

@@ -327,10 +327,14 @@ export async function createApproach({ THREE, renderer, nest }) {
 		camera.updateMatrixWorld(true);
 
 		// ── The sky, the debris and the archive ──────────────────────────
-		const on = smootherstep(span(p, T.fadeIn)) * (1 - easeInOutCubic(span(p, T.thin)));
+		const up = smootherstep(span(p, T.fadeIn));
+		const on = up * (1 - easeInOutCubic(span(p, T.thin)));
 		for (const s of starMats) s.mat.uniforms.uOpacity.value = s.opacity * on;
 		motes.set(z, on, span(p, T.fadeIn));
 		uOn.value = on;
+		// The portal comes up with the sky, not before it: under the title card
+		// the frame is black.
+		nest.setDim(up);
 		for (const it of items) it.mesh.rotation.z = it.rot0 + p * it.rate;
 
 		// ── The swimmer ──────────────────────────────────────────────────
