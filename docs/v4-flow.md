@@ -16,12 +16,13 @@ coming out of the dark, dark — always the 60s television — until it switches
 on with a CRT hairline that opens onto the tunnel inside its glass; through the
 glass and down the tunnel, where the archive is looped — rings of eight of the
 same drawing, mirrored, turning, the hue cycling as the pattern repeats — with
-no exit in sight, until the search STOPS: the turn and the hue decelerate to
-rest, the hue on true colour, the speed to nil, and a room comes out of the
-dark at the far end — the whole room, not a set — and fills the frame, still;
-the fall drops from that rest through the decades, one room inside the next,
-at one pace on screen, the turn coming in from rest and going out before the
-answer's room, which lands level; the swimmer going into its screen and the
+no exit in sight, the tunnel easing from the flight's speed to the fall's the
+whole way down, until the search ENDS: the turn and the hue decelerate to
+rest, the hue on true colour, and a room comes out of the dark at the far end
+— the whole room, not a set — and fills the frame; the fall carries straight
+on through the decades, one room inside the next, at one pace on screen, the
+turn coming in from rest and going out before the answer's room, which lands
+level; the swimmer going into its screen and the
 screen going white; the readout in that glass; and "go again" — the readout
 gone, the camera from rest into the glass in a second and a half, black —
 which is the black the next flight opens on. A birthday the archive cannot
@@ -30,14 +31,16 @@ tunnel breaks down on it — overloads, collapses to a line, a dot, black, the
 swimmer alone in it — and the verdict comes up, its gif and its line (too old
 for the archive, or too young), and "calculate again" is the flight again with
 the answers kept. One WebGPU renderer, and one shot from the flight through the
-set into the fall: each scene ends on the frame the next opens on. Frames on
-the WebGL lane at `?seed=1`, so the decades fall the same way on every load.
+set into the fall: each scene ends on the frame the next opens on, and the
+camera is one camera throughout — one lens, one slow hand on it, no dolly, no
+stop, no restart. Frames on the WebGL lane at `?seed=1`, so the decades fall
+the same way on every load.
 
 | scene    | seconds | where                                                                          |
 | -------- | ------- | ------------------------------------------------------------------------------ |
-| approach | 15      | `three/world/approach.js`, held at the ask                                     |
+| approach | 7       | `three/world/approach.js`, held at the ask                                     |
 | kaleido  | 7       | `three/world/kaleido.js` over `three/world/kaleidoscope.js` — or the breakdown |
-| descent  | 10.4    | `three/world/descent.js` over `three/world/nest.js`, 9 s of it the fall        |
+| descent  | 9       | `three/world/descent.js` over `three/world/nest.js`                            |
 | room     | —       | `scenes/Room.svelte`, until "go again"                                         |
 | verdict  | —       | `components/error/ErrorScreen.svelte`, until "calculate again"                 |
 
@@ -53,7 +56,7 @@ though not in the cut.
 
     npm run dev
     BASE=http://localhost:3000 OUT=<dir> \
-      PLAN='[["2",[0.02,0.08,0.14,0.5,0.75,0.9,1]],["4",[0.3,0.6,0.85,1]],["3",[0.05,0.3,0.7,1]]]' \
+      PLAN='[["2",[0.03,0.12,0.25,0.5,0.75,0.9,1]],["4",[0.3,0.6,0.85,1]],["3",[0.05,0.3,0.7,1]]]' \
       node scripts/shots.mjs
     QUERY='edge=past' PLAN='[["4",[0.6,0.85,0.92]]]' BASE=... OUT=<dir2> node scripts/shots.mjs
 

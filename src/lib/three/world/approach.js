@@ -2,11 +2,11 @@ import { get } from 'svelte/store';
 import {
 	SCENES,
 	APPROACH,
-	NEST,
 	KALEIDO,
+	LENS,
 	TUNNEL,
+	runSeconds,
 	span,
-	lerp,
 	clamp01,
 	smoothstep,
 	smootherstep,
@@ -20,6 +20,7 @@ import { dotMaterial, dots } from '$lib/three/tsl/materials';
 import { createMotes } from '$lib/three/tsl/motes';
 import { rand } from '$lib/random';
 import { roomsFor } from './nest';
+import { wobbleEuler } from './wobble';
 
 // ── Scene 1: the approach ────────────────────────────────────────────────────
 // The fly-in. Space, black, a sky of stars, blue debris streaking by — and the
@@ -48,10 +49,12 @@ import { roomsFor } from './nest';
 // tail's wobble are on the swimmer's own clock — the one thing in the run that
 // never stops, not even at the seam.)
 //
-// ── One speed, through the seam ──────────────────────────────────────────────
-// The lens flies at ONE speed the whole way into the glass, no brake, and the
-// tunnel on the other side carries on at it. So the swimmer never slows in
-// space.
+// ── One speed, one lens, one hand, through the seam ──────────────────────────
+// The lens flies at ONE speed the whole way into the glass, no brake, on the
+// run's one lens (LENS — no dolly for the seam), with the run's one hand on
+// the camera (world/wobble.js, on the run's clock), and the tunnel on the
+// other side carries all three on. So nothing about the camera changes at
+// the seam, and the swimmer never slows in space.
 //
 // The set is always the 60s one. Room 0 at the tunnel's end is chosen when the
 // run begins; the deeper rooms are set the moment the answer is in, while they
@@ -69,7 +72,7 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 	const A = APPROACH;
 
 	const scene = new THREE.Scene();
-	const camera = new THREE.PerspectiveCamera(A.fov, 1, 0.1, 400);
+	const camera = new THREE.PerspectiveCamera(LENS, 1, 0.1, 400);
 	const rig = new THREE.Group(); // the lens, the sky and the swimmer travel together
 	rig.name = 'rig';
 	rig.add(camera);
@@ -170,7 +173,7 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		kal.set(0, false);
 		if (kal.root.parent !== scene) scene.add(kal.root);
 		if (nest.root.parent !== scene) scene.add(nest.root);
-		rig.add(sw.group);
+		camera.add(sw.group);
 		sw.group.quaternion.identity();
 		sw.material.uniforms.uOpacity.value = 0;
 		// The way home took the last room to black; this nest is lit.
@@ -199,21 +202,16 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 	}
 
 	const camWorld = new THREE.Vector3();
+	const euler = new THREE.Euler();
 	function set(p) {
-		// ── The lens ─────────────────────────────────────────────────────
-		const fov = lerp(A.fov, NEST.seamFov, smootherstep(span(p, T.lens)));
-		camera.fov = fov;
-		camera.updateProjectionMatrix();
-
-		// ── The camera: one speed ────────────────────────────────────────
+		// ── The camera: one speed, one lens, one hand ────────────────────
+		// Straight down the axis at one speed; the lens is the run's (LENS,
+		// set once); and the slow pan, tilt and roll on it is the hand the
+		// whole run is shot with, on the run's clock (world/wobble.js) — the
+		// tunnel picks it up at the seam at the same second.
 		const z = zEnd * p;
-		const level = 1 - smoothstep(T.level[0], T.level[1], p);
-		rig.position.set(
-			Math.sin(p * 1.7 + 0.6) * T.drift * level,
-			Math.sin(p * 2.6) * T.drift * 0.6 * level,
-			z
-		);
-		camera.rotation.z = (Math.sin(p * 2.1) * 0.06 + Math.sin(p * 5.3) * 0.018) * level;
+		rig.position.set(0, 0, z);
+		camera.quaternion.setFromEuler(wobbleEuler(euler, runSeconds('approach', p)));
 		camera.updateMatrixWorld(true);
 
 		// ── The sky and the debris ───────────────────────────────────────
@@ -242,13 +240,13 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		kal.setOpen(open, glow);
 
 		// ── The swimmer ──────────────────────────────────────────────────
-		// It rides ahead of the LENS, dead centre, and at the end pulls in to
-		// where the tunnel expects it. Sized off the lens and the ride so it
-		// holds its place in the frame however either changes. It arrives by
-		// fading in, where it rides.
+		// It rides ahead of the LENS, dead centre — a child of the camera, so
+		// the hand on the camera leans the world round it and not it. Sized
+		// off the lens and the ride so it holds its place in the frame. It
+		// arrives by fading in, where it rides.
 		const inK = smootherstep(span(p, T.swimmerIn));
-		const lead = lerp(A.lead, KALEIDO.lead, smootherstep(span(p, T.dive)));
-		const bodyH = A.span * 2 * lead * Math.tan(rad(fov) / 2);
+		const lead = A.lead;
+		const bodyH = A.span * 2 * lead * Math.tan(rad(LENS) / 2);
 		sw.group.position.set(0, 0, -lead);
 		sw.group.scale.setScalar(bodyH);
 		sw.spinner.rotation.z = sw.clock * SPIN;

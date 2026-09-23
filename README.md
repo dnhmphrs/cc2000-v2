@@ -72,8 +72,11 @@ and the way back, included — and it is the first file to read.
 **The three 3D scenes are one shot.** The approach ends on
 `kaleidoscope.pose(0)` and the kaleido opens on it — the set's glass filling
 the frame's height, the tunnel inside — and the kaleido ends on `nest.pose(0)`
-and the descent opens on it — the first room filling the frame's height, at
-rest — so there is no cut between them. The one cut in the run is the loop
+and the descent opens on it — the first room filling the frame's height,
+still falling — so there is no cut between them. They are also one camera:
+the run's one lens (`LENS`) and one slow hand on it (`three/world/wobble.js`,
+on the run's own clock), the tunnel easing from the flight's speed to the
+fall's, so nothing about the camera changes at a seam. The one cut in the run is the loop
 home: the camera flies through the last room's monitor, and the glass is black
 and so is the space the next run opens on.
 

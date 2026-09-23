@@ -2,7 +2,9 @@ import { get } from 'svelte/store';
 import {
 	SCENES,
 	NEST,
+	LENS,
 	TUNNEL,
+	runSeconds,
 	span,
 	lerp,
 	clamp01,
@@ -16,14 +18,15 @@ import { DECADES, shuffle } from '$lib/data/roomElements';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
 import { settled } from '$lib/scenes/director';
 import { roomsFor } from './nest';
+import { wobbleEuler } from './wobble';
 
 // ── Scene 3: the descent ─────────────────────────────────────────────────────
 // Rooms through rooms, decade after decade, with the swimmer riding down the
 // middle, ahead of the lens, into every screen in turn — all the way down to
 // the answer's room. It opens on nest.pose(0), the frame the kaleido ended
-// on, at REST on room 0, and falls to `land` of the way into the last room,
-// past the point where the glass it came through has left the frame and with
-// the room still round the monitor.
+// on, already falling at the pace the tunnel eased to, and falls to `land` of
+// the way into the last room, past the point where the glass it came through
+// has left the frame and with the room still round the monitor.
 //
 // The last thing the swimmer does is leave the axis for that monitor's glass
 // and go in, and the glass goes WHITE — the splosh — with a flash across the
@@ -37,10 +40,11 @@ import { roomsFor } from './nest';
 // first of them (scenes/Room.svelte) so nothing of the room rides the camera
 // into the glass. See stepReturn().
 //
-// It drops from rest into ONE PACE over its head (SCENES.descent.head,
-// easeIn) and eases to rest only at the end; the last room lands LEVEL, so
-// the glass is square in the frame and the readout sits in it. See
-// nest.zetaOf() and nest.pose().
+// It falls at ONE PACE from its first frame — the pace the tunnel eased to —
+// on the run's one lens, with the run's one hand on the camera
+// (world/wobble.js), and eases to rest only at the end; the last room lands
+// LEVEL and the hand comes off it, so the glass is square in the frame and
+// the readout sits in it. See nest.zetaOf() and nest.pose().
 //
 // Every value here is a pure function of scene progress, so ?at= is exact. The
 // one exception is the swimmer's roll and wobble, which run on its own clock
@@ -60,7 +64,7 @@ export function createDescent({ THREE, renderer, nest }) {
 	bu.color1.value.set(0x090b14);
 	bu.uFade.value = 1;
 	scene.backgroundNode = deep(bu);
-	const camera = new THREE.PerspectiveCamera(NEST.seamFov, 1, 0.05, 100);
+	const camera = new THREE.PerspectiveCamera(LENS, 1, 0.05, 100);
 	let aspectR = 1;
 	const sw = nest.swimmer;
 	// ?sperm=0 — see world/approach.js.
@@ -74,6 +78,8 @@ export function createDescent({ THREE, renderer, nest }) {
 	let zetaEnd = 0;
 	const fwd = new THREE.Vector3();
 	const at = new THREE.Vector3();
+	const wq = new THREE.Quaternion();
+	const euler = new THREE.Euler();
 
 	// A run arrives here with the nest built by the approach and finalised once
 	// the answer was in. A jump straight in — the dev keys, ?at= — has neither,
@@ -113,7 +119,14 @@ export function createDescent({ THREE, renderer, nest }) {
 
 	function set(p) {
 		const zeta = nest.zetaOf(p);
-		const { D, fov } = nest.pose(zeta, camera, aspectR);
+		const { D, fov, settle } = nest.pose(zeta, camera, aspectR);
+		// The run's one hand on the camera (world/wobble.js), on top of the
+		// pose — and off it over the last room's settle, so the glass is
+		// square in the frame for the readout. The swimmer below follows.
+		camera.quaternion.multiply(
+			wq.setFromEuler(wobbleEuler(euler, runSeconds('descent', p), 1 - settle))
+		);
+		camera.updateMatrixWorld(true);
 
 		// ── The swimmer ──────────────────────────────────────────────────
 		// Down the axis, half way to the frame being fallen into, sized to hold

@@ -55,7 +55,7 @@ function scale(scenes) {
 	return out;
 }
 
-export const SCENES = scale({
+const RAW = {
 	// ── Calculator ───────────────────────────────────────────────────────────
 	// Not a timeline: it waits for the operator. These are the two moves it
 	// makes, and `launch` has to agree with flyIn.warp below, because they are
@@ -538,33 +538,37 @@ export const SCENES = scale({
 	// nothing else — the two questions are asked over it, one straight after
 	// the other, and the scene HOLDS (the `gate` store) until both are in.
 	// Then a SET dead ahead, out of the dark, and its glass switching on with
-	// the tunnel inside. It ends with that glass filling the frame's height on
-	// the seam lens — the exact frame the kaleido opens on.
+	// the tunnel inside. It ends with that glass filling the frame's height —
+	// the exact frame the kaleido opens on — at the speed it flew the whole
+	// way, on the run's one lens, with the same hand on the camera.
 	//
-	//  0  .08 .12 .13     .22                .68    .78     .88  .94 .985 1
-	//  |sky |swimmer|ask  |signal, the set out of the dark   |set |CRT on|seam
-	//               both                       |signal out|         |lens closes
-	//                                                                |sky out|
+	//  0  .1  .16 .25     .35             .55   .68     .86  .93 .985 1
+	//  |sky |swimmer|ask  |signal, the set out of the dark |set |CRT on|seam
+	//               both                    |signal out|             |sky out|
 	approach: {
-		duration: 15,
+		// SEVEN. It was fifteen, and thirteen of them came after the answers —
+		// a long empty run at a set that was not getting bigger fast enough.
+		// The speed is the one the flight opens at (APPROACH.travel over
+		// this), so what was cut is distance, not pace.
+		duration: 7,
 
 		// The sky and the debris come up out of the black. The title card is
 		// over the first of this on the first run, and on every run after it
 		// the glass the loop came home through had gone to black.
-		fadeIn: [0.0, 0.08],
+		fadeIn: [0.0, 0.1],
 
 		// THE SWIMMER FADES IN, at its riding distance, on the axis: the card
 		// lifts, the sky develops, the swimmer is there. Not a pass from behind
 		// the lens: every version of that reads as a body being stretched by a
 		// wide lens.
-		swimmerIn: [0.02, 0.12],
+		swimmerIn: [0.03, 0.16],
 
 		// Where the flight stops to ask. ONE progress mark, not a window: the
 		// scene holds here until both popups are answered — the birthday, and
 		// the spice the moment the birthday is in (Prompt.svelte asks the
 		// second itself, so there is no swimming between them). The moment the
 		// swimmer is in.
-		ask: 0.13,
+		ask: 0.25,
 
 		// ── After the answers ────────────────────────────────────────────────
 		// The set dead ahead is OFF until the answers are in: for both
@@ -574,27 +578,17 @@ export const SCENES = scale({
 		// that the tunnel shows through its glass (through a small far glass
 		// you only see down the axis), the glass switches on: a CRT hairline
 		// that opens onto the tunnel.
-		screenIn: [0.13, 0.22],
-		signal: [0.13, 0.19],
-		signalOut: [0.68, 0.78],
-		crtOn: [0.88, 0.94],
+		screenIn: [0.25, 0.35],
+		signal: [0.25, 0.32],
+		signalOut: [0.55, 0.68],
+		crtOn: [0.86, 0.93],
 
-		// ── ONE SPEED ────────────────────────────────────────────────────────
-		// The flight has no brake: it flies at one speed all the way into the
-		// glass, and the tunnel on the other side carries on at that speed —
-		// see world/kaleidoscope.js, which is where the fall's pace is met.
-
-		// The lens walks from APPROACH.fov to NEST.seamFov. Closing the lens on
-		// the way in is the other half of the dolly zoom: the screen looms.
-		lens: [0.74, 0.985],
-
-		// The bank and the drift, easing off to level for the seam.
-		level: [0.7, 0.92],
-		drift: 0.5,
-
-		// The swimmer pulls in from its riding distance to the tunnel's
-		// (KALEIDO.lead), so it is where the next scene expects it.
-		dive: [0.82, 0.99],
+		// ── ONE SPEED, ONE LENS, ONE HAND ────────────────────────────────────
+		// The flight has no brake, no dolly and no levelling-off for the seam:
+		// it flies at one speed all the way into the glass, on the run's one
+		// lens (LENS), the run's one hand on the camera (WOBBLE, on the run's
+		// clock), and the tunnel on the other side carries all three on — see
+		// world/kaleidoscope.js.
 
 		// The sky and the debris go out under the set as it takes the frame:
 		// the tunnel has no sky, and the frame this ends on must be the set,
@@ -606,33 +600,33 @@ export const SCENES = scale({
 	// Through the set's glass and down the tunnel: the archive looped, in
 	// rings, turning and cycling in colour, to the room at the far end — which
 	// is NOT to be seen from the glass: it comes out of the dark as the search
-	// stops (NEST.seen). It opens on the frame the approach ended on and ends
+	// ends (NEST.seen). It opens on the frame the approach ended on and ends
 	// on the frame the descent opens on. See world/kaleidoscope.js. Or, on a
 	// birthday the archive cannot answer for, it BREAKS DOWN — see below.
 	kaleido: {
 		duration: 7,
 
-		// The tunnel runs at the speed the flight arrived at, and brakes to
-		// rest over this last fraction (kaleidoscope.js: v1 = 0).
-		ease: 0.3,
-
-		// The lens opens out from the seam's to KALEIDO.fov through the glass,
-		// and closes again on the room.
-		lensIn: [0.0, 0.12],
-		lensOut: [0.8, 0.97],
+		// ── The pace ─────────────────────────────────────────────────────────
+		// The tunnel opens at the speed the flight arrived at and eases, over
+		// THIS fraction of it — all of it, one straight ramp — to the speed
+		// the fall opens at, which the nest works out from its own geometry
+		// (nest.openingSpeed). So there is no stop at the room and no restart
+		// after it: the fall simply carries on, and by the time the room is
+		// there to be seen the tunnel is already running at its pace.
+		ease: 1,
 
 		// Full turns of the hue, and of the tunnel about the axis, over the
-		// scene. With the stop, the hue's turns are counted to the lock so it
-		// lands on TRUE colour: 2.5 cycles of a rate that runs to 0.68 and
-		// falls to nil by 0.92 is two whole turns.
+		// scene. The hue's turns are counted to the lock so it lands on TRUE
+		// colour: 2.5 cycles of a rate that runs to 0.68 and falls to nil by
+		// 0.92 is two whole turns.
 		hueCycles: 2.5,
 		turns: 0.35,
 
-		// ── The stop ─────────────────────────────────────────────────────────
-		// The search ENDS. Over `lock` the turn and the hue cycle decelerate to
-		// rest, the tunnel's speed brakes to nil over `ease` (kaleidoscope.js:
-		// v1 = 0), and the frame this ends on is nest.pose(0) reached AT REST,
-		// for the fall to drop from.
+		// ── The search ends ──────────────────────────────────────────────────
+		// Over `lock` the turn and the hue cycle decelerate to rest — the
+		// pattern stops searching — while the camera glides on at the pace
+		// the fall takes over at. The room is out of the dark by the end of
+		// it.
 		lock: [0.68, 0.92],
 
 		// ── The breakdown ────────────────────────────────────────────────────
@@ -647,10 +641,7 @@ export const SCENES = scale({
 
 		// The rings go out under the room as it takes the frame, so the frame
 		// this ends on is the nest and nothing else.
-		out: [0.86, 0.985],
-
-		// The swimmer pulls in from the tunnel's ride to the descent's.
-		dive: [0.8, 0.98]
+		out: [0.86, 0.985]
 	},
 
 	// ── Descent ──────────────────────────────────────────────────────────────
@@ -662,17 +653,12 @@ export const SCENES = scale({
 	//  |the fall, one pace, six rooms deep       |raster|dive |splosh  |land
 	//                                     |easing to rest ................|
 	descent: {
-		// NINE for the fall itself. Fourteen was too slow through the monitors:
-		// at nine each crossing is a second and a half, which is the pace the
-		// lab sketch fell at. The stop's head is added on top.
-		duration: 10.4,
-
-		// ── The head ─────────────────────────────────────────────────────────
-		// The fall starts from REST on the found room: for `head` of the scene
-		// the camera is still on nest.pose(0), then it drops into its one pace
-		// over `easeIn` (the mirror of the ease to rest at the end).
-		head: 0.075,
-		easeIn: 0.14,
+		// NINE. Fourteen was too slow through the monitors: at nine each
+		// crossing is a second and a half, which is the pace the lab sketch
+		// fell at. There is no head: the tunnel has already eased to the pace
+		// the fall opens at (world/kaleidoscope.js), so the fall is falling on
+		// its first frame.
+		duration: 9,
 
 		// How many rooms deep, the last being the answer's, and how far into the
 		// last room's crossing the run comes to rest — past the point where the
@@ -733,7 +719,26 @@ export const SCENES = scale({
 		// And out, the moment the way home starts.
 		resultOut: 0.25
 	}
-});
+};
+
+export const SCENES = scale(RAW);
+
+// ── The run's clock ──────────────────────────────────────────────────────────
+// Nominal seconds into the run — the durations ABOVE, before ?speed= scales
+// them — at progress p of the named 3D scene. For the one thing that has to
+// be continuous across the three of them: the hand on the camera
+// (three/world/wobble.js), which the seams carry because approach 1 and
+// kaleido 0 are the same second. A pure function of the scene and its
+// progress, so ?at= is exact, and ?speed= changes the rate of it and nothing
+// else.
+export function runSeconds(name, p) {
+	let s = 0;
+	for (const n of ['approach', 'kaleido', 'descent']) {
+		if (n === name) return s + p * RAW[n].duration;
+		s += RAW[n].duration;
+	}
+	return s;
+}
 
 // THERE IS NO LONGER A BLOW-OUT. The fly-in used to end on a white flash,
 // because the world underneath it changed — deep blue air on one side, the void

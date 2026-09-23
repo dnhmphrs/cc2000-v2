@@ -1,12 +1,10 @@
 import { get } from 'svelte/store';
 import {
 	SCENES,
-	NEST,
 	APPROACH,
-	KALEIDO,
+	LENS,
 	TUNNEL,
 	span,
-	lerp,
 	clamp01,
 	smoothstep,
 	smootherstep
@@ -19,14 +17,15 @@ import { roomsFor } from './nest';
 // ── Scene 2: the kaleido ─────────────────────────────────────────────────────
 // Through the glass and down the tunnel. It opens on the frame the approach
 // ended on — the set's glass filling the frame's height, the tunnel inside it
-// (kaleidoscope.pose(0)) — flies through the glass, and runs the tunnel at the
-// speed the flight arrived at, the swimmer riding ahead of the lens as it did
-// in space, the rings turning and cycling round it. Then the search STOPS:
-// over the last of the tunnel the turn, the hue and the speed decelerate to
-// rest, the hue landing on true colour, and a room comes out of the dark at
-// the tunnel's end — the whole room, not a set — and takes the frame. The
-// frame it ends on is nest.pose(0), reached at rest: the frame the descent
-// opens on, and the fall drops from it.
+// (kaleidoscope.pose(0)) — flies through the glass, and runs the tunnel from
+// the speed the flight arrived at, easing all the way down to the pace the
+// fall opens at, the swimmer riding ahead of the lens as it did in space, the
+// rings turning and cycling round it, the same lens and the same hand on the
+// camera as in space. Then the search ENDS: over the last of the tunnel the
+// turn and the hue decelerate to rest, the hue landing on true colour, and a
+// room comes out of the dark at the tunnel's end — the whole room, not a set
+// — and takes the frame. The frame it ends on is nest.pose(0): the frame the
+// descent opens on, and the fall carries straight on from it.
 //
 // ── The breakdown ────────────────────────────────────────────────────────────
 // An out-of-range birthday is not refused: the run goes in anyway, and it is
@@ -50,7 +49,7 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 	bu.color1.value.set(0x090b14);
 	bu.uFade.value = 1;
 	scene.backgroundNode = deep(bu);
-	const camera = new THREE.PerspectiveCamera(NEST.seamFov, 1, 0.1, 400);
+	const camera = new THREE.PerspectiveCamera(LENS, 1, 0.1, 400);
 	// In the scene, so the CRT mask can ride on it for the breakdown.
 	scene.add(camera);
 	const crt = createCrtMask(THREE);
@@ -90,7 +89,7 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		ensure();
 		if (kal.root.parent !== scene) scene.add(kal.root);
 		if (nest.root.parent !== scene) scene.add(nest.root);
-		scene.add(sw.group);
+		camera.add(sw.group);
 		sw.group.quaternion.identity();
 		kal.setDim(1);
 		kal.setOpen(1, 0);
@@ -101,15 +100,17 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 	}
 
 	function set(p) {
-		const { fov, Dend } = kal.pose(p, camera, aspectR);
+		const { fov } = kal.pose(p, camera, aspectR);
 		kal.set(p, broken);
 
 		// ── The swimmer ──────────────────────────────────────────────────
-		// Ahead of the lens, dead centre, at the ride it arrived at — and over
-		// the last of the tunnel pulling in to the ride the descent expects.
-		const lead = lerp(KALEIDO.lead, Dend * NEST.spermRide, smootherstep(span(p, T.dive)));
+		// Ahead of the lens, dead centre, at the ride it arrived at — a child
+		// of the camera, as in the approach, so the hand on the camera leans
+		// the tunnel round it and not it. (The fall rides it nearer, sized to
+		// match: the same body on screen, so nothing moves at the seam.)
+		const lead = APPROACH.lead;
 		const bodyH = APPROACH.span * 2 * lead * Math.tan(rad(fov) / 2);
-		sw.group.position.set(0, 0, camera.position.z - lead);
+		sw.group.position.set(0, 0, -lead);
 		sw.group.scale.setScalar(bodyH);
 		sw.spinner.rotation.z = sw.clock * SPIN;
 		sw.material.uniforms.uTime.value = sw.clock;

@@ -13,7 +13,7 @@ import {
 	positionView
 } from 'three/tsl';
 import { LAYERS, placement, elementUrl, DECADES, shuffle } from '$lib/data/roomElements';
-import { SCREEN_GLASS, GLASS_SAFETY, NEST, SCENES } from '$lib/config';
+import { SCREEN_GLASS, GLASS_SAFETY, NEST, LENS, SCENES } from '$lib/config';
 import { PHI } from '$lib/three/geometry/icosahedron';
 import { glassOnly } from '$lib/three/tsl/glass';
 import { loadSwimmer } from '$lib/three/tsl/swimmer';
@@ -42,9 +42,11 @@ import { ADD } from '$lib/three/tsl/materials';
 // at ζ = k+1 IS the picture the child starts on, and the crossing has no seam.
 //
 // The fall runs at one pace ON SCREEN — equal time per unit of log(N), since
-// the crossings are zooms of different sizes (zetaOf) — and the roll and the
-// sway come in from rest at the seam and go out before the last room, which
-// lands level (rollOf, pose).
+// the crossings are zooms of different sizes (zetaOf) — from its first frame,
+// at the speed the tunnel eased to (openingSpeed); the roll comes in from
+// rest at the seam and goes out before the last room, which lands level
+// (rollOf, pose). The lens is the run's one lens all the way down, and the
+// hand on the camera is the run's (world/wobble.js, applied by the descent).
 //
 // Each level is clipped to its parent's glass by a stencil chain, ONE LEVEL UP
 // from the set the flight ends in (world/kaleidoscope.js, whose glass is 0→1):
@@ -430,41 +432,49 @@ export async function createNest({ THREE, renderer }) {
 		}
 		return Math.min(levels.length - 1 + rest / logs[levels.length - 1], zetaEnd());
 	}
-	// The rate down the fall: nil for `head` (the camera still on the found
-	// room), a straight ramp up over `easeIn`, one pace, and a straight ramp
-	// down over `ease` to rest at the landing. Integrated, normalised, and
-	// turned back into a level.
+	// The rate down the fall: one pace from the first frame — the tunnel has
+	// already eased to it — and a straight ramp down over `ease` to rest at
+	// the landing. Integrated, normalised, and turned back into a level.
 	function zetaOf(u) {
-		const T = SCENES.descent;
-		const r = T.head ?? 0;
-		const i = T.easeIn ?? 0;
-		const e = T.ease;
+		const e = SCENES.descent.ease;
 		const x = Math.max(0, Math.min(1, u));
-		const area = 1 - r - i / 2 - e / 2;
+		const area = 1 - e / 2;
 		let h;
-		if (x <= r) h = 0;
-		else if (x <= r + i) {
-			const s = x - r;
-			h = (s * s) / (2 * i);
-		} else if (x <= 1 - e) h = i / 2 + (x - r - i);
+		if (x <= 1 - e) h = x;
 		else {
 			const y = x - (1 - e);
-			h = i / 2 + (1 - e - r - i) + y - (y * y) / (2 * e);
+			h = 1 - e + y - (y * y) / (2 * e);
 		}
 		return zetaOfLog(logEnd() * (h / area));
 	}
+	// World units per second the camera is moving at as the fall opens — the
+	// speed the tunnel eases to, so the fall carries straight on from it
+	// (world/kaleidoscope.js). Measured rather than derived: pose(0) to
+	// pose(dz) in the world, over the time zetaOf gives that.
+	const probe = new THREE.PerspectiveCamera();
+	const pa = new THREE.Vector3();
+	function openingSpeed() {
+		const dz = 0.002;
+		pose(0, probe, 1);
+		pa.copy(probe.position);
+		pose(dz, probe, 1);
+		const perZeta = probe.position.distanceTo(pa) / dz;
+		const rate = (zetaOf(dz) - zetaOf(0)) / dz / SCENES.descent.duration;
+		return perZeta * rate;
+	}
 	// ── The camera at level ζ ────────────────────────────────────────────
 	// ζ = k + f: room k, f of the way through its crossing into room k+1. The
-	// frame at level ζ fills the height, whatever the lens — a dolly zoom while
-	// falling. The camera never turns except to roll with the screw. Also
-	// re-bases the stencil chain for wherever the camera now is.
+	// frame at level ζ fills the height. The camera never turns except to roll
+	// with the screw — the hand on it is the descent's to add. Also re-bases
+	// the stencil chain for wherever the camera now is.
 	const wq = new THREE.Quaternion();
 	const rq = new THREE.Quaternion();
 	const local = new THREE.Vector3();
 	const off = new THREE.Vector3();
 	const tmpV = new THREE.Vector3();
-	function fovAt(zeta) {
-		return NEST.seamFov + (NEST.fov - NEST.seamFov) * smooth(0, 1.6, zeta);
+	// The run's one lens, at every level: there is no dolly in the fall.
+	function fovAt() {
+		return LENS;
 	}
 	// The roll through crossing k: SCREW by its end, so the child's turned
 	// frame is met exactly, and linear in between — except at the two ends of
@@ -497,18 +507,13 @@ export async function createNest({ THREE, renderer }) {
 		const fov = fovAt(zeta);
 		const d0 = H / 2 / Math.tan(rad(fov) / 2);
 		const p = lv.fixed;
-		// The sway comes in from nothing over the first crossing, and the last
-		// room lands level: no roll, and the sway dies out by the landing, so
-		// the glass is square in the frame.
+		// The last room lands level: no roll, and the hand on the camera —
+		// world/wobble.js, the descent's to apply — dies out over `settle`,
+		// which is handed back for it, so the glass is square in the frame for
+		// the readout.
 		const settle = last ? smooth(SCENES.descent.settle, SCENES.descent.land, f) : 0;
-		const sway = NEST.sway * smooth(0, 1, zeta) * (1 - settle);
-		const ex = sway * H * Math.sin(2 * Math.PI * f);
-		const ey = sway * H * 0.5 * (Math.cos(2 * Math.PI * f) - 1);
 		const roll = last ? 0 : rollOf(k, f);
-		off
-			.set(-p.x + ex, -p.y + ey, 0)
-			.multiplyScalar(s)
-			.applyAxisAngle(zAxis, roll);
+		off.set(-p.x, -p.y, 0).multiplyScalar(s).applyAxisAngle(zAxis, roll);
 		local.set(p.x + off.x, p.y + off.y, p.z * (1 - s) + d0 * s);
 		lv.group.localToWorld(camera.position.copy(local));
 		lv.group.getWorldQuaternion(wq);
@@ -522,7 +527,7 @@ export async function createNest({ THREE, renderer }) {
 		camera.updateProjectionMatrix();
 		camera.updateMatrixWorld();
 		rebase(camera.position.z, camera.near);
-		return { D, fov, base: lastBase, zeta };
+		return { D, fov, base: lastBase, zeta, settle };
 	}
 
 	// Every clip plane the camera has reached is a level dropped, and the
@@ -604,6 +609,7 @@ export async function createNest({ THREE, renderer }) {
 		fovAt,
 		zetaEnd,
 		zetaOf,
+		openingSpeed,
 		rebase,
 		glassRect,
 		lastGlassWorld,
