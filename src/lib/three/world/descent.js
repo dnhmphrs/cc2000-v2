@@ -3,7 +3,6 @@ import {
 	SCENES,
 	NEST,
 	TUNNEL,
-	VARIANT,
 	span,
 	lerp,
 	clamp01,
@@ -12,21 +11,19 @@ import {
 	easeInOutCubic,
 	accelerate
 } from '$lib/config';
-import { decade, landing, monitorRect, blaze, aspect, conceived, caption } from '$lib/store/store';
-import { formatDay } from '$lib/functions/utils';
-import { createCrtMask } from './kaleidoscope';
+import { decade, landing, monitorRect, blaze, aspect } from '$lib/store/store';
 import { DECADES, shuffle } from '$lib/data/roomElements';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
 import { settled } from '$lib/scenes/director';
 import { roomsFor } from './nest';
 
-// ── Scene 2: the descent ─────────────────────────────────────────────────────
+// ── Scene 3: the descent ─────────────────────────────────────────────────────
 // Rooms through rooms, decade after decade, with the swimmer riding down the
 // middle, ahead of the lens, into every screen in turn — all the way down to
-// the answer's room. It opens on nest.pose(0), the frame the approach ended
-// on, and falls on one ease to `land` of the way into the last room, past the
-// point where the glass it came through has left the frame and with the room
-// still round the monitor.
+// the answer's room. It opens on nest.pose(0), the frame the kaleido ended
+// on, at REST on room 0, and falls to `land` of the way into the last room,
+// past the point where the glass it came through has left the frame and with
+// the room still round the monitor.
 //
 // The last thing the swimmer does is leave the axis for that monitor's glass
 // and go in, and the glass goes WHITE — the splosh — with a flash across the
@@ -40,9 +37,10 @@ import { roomsFor } from './nest';
 // first of them (scenes/Room.svelte) so nothing of the room rides the camera
 // into the glass. See stepReturn().
 //
-// It falls at ONE PACE — the pace the approach arrived at — and eases to rest
-// only at the end; the last room lands LEVEL, so the glass is square in the
-// frame and the readout sits in it. See nest.zetaOf() and nest.pose().
+// It drops from rest into ONE PACE over its head (SCENES.descent.head,
+// easeIn) and eases to rest only at the end; the last room lands LEVEL, so
+// the glass is square in the frame and the readout sits in it. See
+// nest.zetaOf() and nest.pose().
 //
 // Every value here is a pure function of scene progress, so ?at= is exact. The
 // one exception is the swimmer's roll and wobble, which run on its own clock
@@ -56,26 +54,14 @@ export function createDescent({ THREE, renderer, nest }) {
 
 	const scene = new THREE.Scene();
 	// The same ground the approach paints, with the same numbers: at the seam
-	// the portal's drawing has holes in it — between the monitor and the tower,
-	// under the keyboard — and what shows through them has to be the same on
-	// both sides of the cut.
+	// room 0's drawing has holes in it — round the furniture, under the desk
+	// — and what shows through them has to be the same on both sides.
 	const bu = backdropUniforms();
 	bu.color1.value.set(0x090b14);
 	bu.uFade.value = 1;
 	scene.backgroundNode = deep(bu);
 	const camera = new THREE.PerspectiveCamera(NEST.seamFov, 1, 0.05, 100);
-	// In the scene, so the CRT mask can ride on it (?beat=black).
-	scene.add(camera);
-	const crt = createCrtMask(THREE);
-	camera.add(crt.group);
 	let aspectR = 1;
-	let capText = '';
-	function lineFor() {
-		if (VARIANT.cap === 'located') return 'bedroom located.';
-		if (VARIANT.cap === 'date' && get(conceived))
-			return `conceived roughly ${formatDay(get(conceived))}.`;
-		return '';
-	}
 	const sw = nest.swimmer;
 	// ?sperm=0 — see world/approach.js.
 	const SPERM =
@@ -99,8 +85,7 @@ export function createDescent({ THREE, renderer, nest }) {
 		if (rooms.length && (!answer || last === answer)) return;
 		const picks = shuffle(DECADES);
 		nest.build({
-			portal: nest.built.portal ?? picks[0],
-			rooms: roomsFor(rooms[0] ?? picks[1], answer, T.rooms),
+			rooms: roomsFor(rooms[0] ?? picks[0], answer, T.rooms),
 			portrait: get(aspect) === 'portrait'
 		});
 		nest.refreshClips();
@@ -123,7 +108,6 @@ export function createDescent({ THREE, renderer, nest }) {
 		nest.setSplosh(0, 1);
 		nest.setDim(1);
 		nest.setDark(1);
-		capText = lineFor();
 		set(0);
 	}
 
@@ -146,30 +130,6 @@ export function createDescent({ THREE, renderer, nest }) {
 		sw.spinner.rotation.z = sw.clock * SPIN;
 		sw.material.uniforms.uTime.value = sw.clock;
 		sw.material.uniforms.uOpacity.value = SPERM ? 1 - smoothstep(T.gone - 0.006, T.gone, p) : 0;
-
-		// ── The head: the rest, and the set switching back on ────────────
-		// The machine's line stays through the rest and goes as the fall
-		// drops. In black the picture comes back first: a dot, a line, the
-		// covers parting on the found room, and then the line is typed.
-		const head = T.head ?? 0;
-		const dropping = smoothstep(head, head + (T.easeIn ?? 0) * 0.6, p);
-		if (VARIANT.beat === 'black') {
-			const q = span(p, T.powerOn);
-			const width = smoothstep(0, 0.4, q);
-			const open = smoothstep(0.4, 1, q);
-			const glow = q > 0 ? 1 - smoothstep(0.7, 1, q) : 0;
-			crt.set(camera, open, width, glow);
-			if (capText)
-				caption.set({
-					text: capText,
-					k: smoothstep(T.capIn[0], T.capIn[1], p),
-					on: 1 - dropping
-				});
-		} else {
-			crt.set(camera, 1, 1, 0);
-			if (VARIANT.beat === 'rest' && capText)
-				caption.set({ text: capText, k: 1, on: 1 - dropping });
-		}
 
 		// ── The splosh, the flash, the raster ────────────────────────────
 		nest.setSplosh(smootherstep(span(p, T.splosh)), 1);

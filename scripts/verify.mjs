@@ -4,13 +4,15 @@
 //
 // THIS BUILD HAS NO MACHINE. The run opens on a title card over a fly-in that is
 // already mounted and held at progress zero; the two answers are taken mid-flight
-// by popups that HOLD the flight while they are open; and the loop home flies the
-// camera through the room's monitor straight back into the flight. So what this
-// checks is the gate, not a calculator:
+// by one popup that asks the second question the moment the first is answered;
+// an out-of-range birthday is NOT refused — the run goes in and the tunnel breaks
+// down onto the verdict screen; and the loop home flies the camera through the
+// room's monitor straight back into the flight. So what this checks is the gate
+// and the two ways out, not a calculator:
 //
 //   the card lifts on its own      no click, and the flight is under it
-//   the flight stops to ask        twice, and holds until answered
-//   out of range is refused        in place, and the flight does not carry on
+//   the flight stops to ask        twice, back to back, and holds until answered
+//   out of range breaks down       into the verdict, and calculate again flies on
 //   the run completes              a room, with a track in it
 //   the loop goes round            through the glass and back into the flight
 //
@@ -19,14 +21,13 @@
 //
 // BASE, CHROMIUM and LANE (webgl | webgpu — see lane.mjs) are overridable from
 // the environment, and ROUTE picks the run: / (the site) or /v2 (the WebGL run
-// it replaced — the same card, popups and room over different 3D). Exits
-// non-zero if anything failed.
+// it replaced — the same card, popups and room over different 3D; its popup
+// refuses out of range in place, so the verdict checks are skipped there).
+// Exits non-zero if anything failed.
 import { launch } from './lane.mjs';
 
 const BASE = process.env.BASE ?? 'http://127.0.0.1:5178';
 const ROUTE = process.env.ROUTE ?? '/';
-// Extra query, for a variant of the run: QUERY='beat=black' (config/variants.js).
-const QUERY = process.env.QUERY ? `&${process.env.QUERY}` : '';
 const fails = [];
 const ok = (name, cond, detail) => {
 	console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`);
@@ -58,9 +59,10 @@ const answerDob = async (month, day, year) => {
 	await p.selectOption('#ask-day', String(day));
 	await p.waitForTimeout(200);
 };
+const asksSpicy = () => /spicy/i.test(document.querySelector('.ask .q')?.textContent ?? '');
 
 // ?seed= pins every choice the run leaves to chance — config/dev.js.
-await p.goto(`${BASE}${ROUTE}?speed=6&seed=1${QUERY}`, { waitUntil: 'networkidle' });
+await p.goto(`${BASE}${ROUTE}?speed=6&seed=1`, { waitUntil: 'networkidle' });
 
 // ── The card lifts on its own ────────────────────────────────────────────────
 // Nothing is clicked. If this ever needs a click the run has grown a step.
@@ -73,34 +75,51 @@ ok(
 // ── The flight stops to ask ──────────────────────────────────────────────────
 ok('the flight asks for a birthday', await until(() => !!document.querySelector('.ask'), 60));
 
-// An out-of-range date is refused IN PLACE — there is no machine to report it on
-// and no room to fall into, so the popup is the only thing that can say so, and
-// it must not let the flight carry the date any further.
-const earliest = await p.evaluate(() => {
-	const sel = document.querySelector('#ask-year');
-	return +sel.options[sel.options.length - 1].value;
-});
-await answerDob(1, 14, earliest);
-await p.click('button.go');
-ok(
-	'an impossible birthday is refused in place',
-	await until(() => !!document.querySelector('.ask .no'), 20)
-);
-ok('and the flight is still held', await p.evaluate(() => !!document.querySelector('.ask')));
+if (ROUTE === '/') {
+	// ── Out of range breaks down ───────────────────────────────────────────
+	// The earliest year the dial offers is before the archive. It is taken, the
+	// spice is asked at once in the same panel, and the run goes in; the tunnel
+	// breaks down and the verdict is given with its gif. Calculate again hands
+	// the run back to the flight, with no title card.
+	const earliest = await p.evaluate(() => {
+		const sel = document.querySelector('#ask-year');
+		return +sel.options[sel.options.length - 1].value;
+	});
+	await answerDob(1, 14, earliest);
+	await p.click('button.go');
+	await p.waitForTimeout(300);
+	ok(
+		'the spice is asked the moment the birthday is in, in the same panel',
+		(await p.evaluate(() => !!document.querySelector('.ask'))) && (await p.evaluate(asksSpicy))
+	);
+	await p.selectOption('#ask-spicy', '4');
+	await p.click('button.go');
+	ok('the second answer lets it fly', await until(() => !document.querySelector('.ask'), 20));
+	ok(
+		'an impossible birthday breaks down into the verdict',
+		await until(() => !!document.querySelector('.error-screen .verdict'), 80)
+	);
+	ok(
+		'with the right gif and the right line',
+		await p.evaluate(
+			() =>
+				/the-past\.gif/.test(document.querySelector('.error-screen img')?.src ?? '') &&
+				/dinosaurs/.test(document.querySelector('.error-screen .verdict')?.textContent ?? '')
+		)
+	);
+	await p.click('.error-screen .go');
+	ok('calculate again flies on', await until(() => !document.querySelector('.error-screen'), 20));
+	ok(
+		'and does NOT replay the title card',
+		await p.evaluate(() => !document.querySelector('.prelude'))
+	);
+	ok('and asks again', await until(() => !!document.querySelector('.ask'), 80));
+}
 
+// ── A real date ──────────────────────────────────────────────────────────────
 await answerDob(7, 14, 1986);
-ok('the refusal clears on a new date', await p.evaluate(() => !document.querySelector('.ask .no')));
 await p.click('button.go');
-
-// ── And asks again, closer in ────────────────────────────────────────────────
-// The two marks are three seconds apart in the flight, which at ?speed=6 is half
-// of one — far too short to catch the panel absent between them. So what is
-// checked is that the QUESTION CHANGED, which is the thing that actually matters
-// and does not depend on how fast the run is played.
-ok(
-	'the flight moves on and asks how spicy',
-	await until(() => /spicy/i.test(document.querySelector('.ask .q')?.textContent ?? ''), 80)
-);
+ok('the flight moves on and asks how spicy', await until(asksSpicy, 80));
 await p.selectOption('#ask-spicy', '4');
 await p.click('button.go');
 ok('the second answer lets it dive', await until(() => !document.querySelector('.ask'), 20));

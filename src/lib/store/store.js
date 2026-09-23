@@ -6,17 +6,19 @@ import { AIR, aspectKind } from '$lib/config';
 // yourself writing one from somewhere not listed, that is the bug.
 
 // ── Where we are ─────────────────────────────────────────────────────────────
-// The four scenes, in order. `scene` is the single source of truth for what
-// the site is doing: the page picks which DOM screen to mount from it, and the
+// The scenes, in order. `scene` is the single source of truth for what the
+// site is doing: the page picks which DOM screen to mount from it, and the
 // stage picks which 3D scene to run.
 //
-//   approach     space; the swimmer ahead of the lens, the archive adrift, the
-//                two questions asked on the way, a screen dead ahead
+//   approach     space; the swimmer ahead of the lens, the two questions
+//                asked over it, a set dead ahead switching on
 //   kaleido      through the glass: the archive looped, in rings down a
-//                tunnel, turning and cycling in colour, to the portal
+//                tunnel, turning and cycling in colour, to the first room
 //   descent      rooms through rooms, decade after decade, down to the
 //                answer's room and the splosh on its screen
 //   room         the answer, in the room's monitor
+//   error        the verdict, when the tunnel broke down instead: a birthday
+//                the archive cannot answer for (`edge`)
 //
 // Written by: scenes/director.js and three/Stage.svelte. Nobody else.
 export const scene = writable('approach');
@@ -40,12 +42,15 @@ export const dobDay = writable(1);
 export const dobYear = writable(2000);
 
 // ── The answer ───────────────────────────────────────────────────────────────
-// Written by: Calculator's calculate(), cleared by director.clearResult().
+// Written by: components/Prompt.svelte, cleared by director.clearResult().
 export const track = writable(null);
 export const decade = writable(null);
 export const conceived = writable(null);
 // 'past' | 'future' | null — the date fell outside the broadcast archive, so
-// there is no room to fall into and no track to find.
+// there is no room to fall into and no track to find. The run goes in
+// regardless: the tunnel breaks down on it (three/world/kaleido.js) and the
+// verdict is shown (components/error/ErrorScreen.svelte), whose way back is
+// director.recover().
 export const edge = writable(null);
 
 // ── What the 3D is telling the DOM ───────────────────────────────────────────
@@ -88,13 +93,6 @@ export const calcZoom = writable(1);
 // three/world/descent.js.
 export const blaze = writable(0);
 
-// ── The machine's line ───────────────────────────────────────────────────────
-// What the machine types as the search stops (scenes/Caption.svelte): the text,
-// how much of it is out (`k`, 0..1, by progress) and how present it is (`on`,
-// 0..1). Written by: three/world/kaleido.js and descent.js; cleared by
-// approach.js enter().
-export const caption = writable({ text: '', k: 0, on: 0 });
-
 // ── The landing ──────────────────────────────────────────────────────────────
 // 0..1 through the computation's final fall into the room. The scanlines ride it
 // out: the raster is the screen the run is being WATCHED on, and the last thing
@@ -122,9 +120,10 @@ export const goingBack = writable(false);
 //              zero, which is black air with motes in it, so the card is black
 //              over black and the flight is ALREADY RUNNING when it lifts.
 //   'dob'      the first popup, over the swimmer
-//   'spicy'    the second, once the ovum is up
+//   'spicy'    the second, the moment the first is answered
 //
-// Written by: three/world/approach.js (opens them) and the popups (close them).
+// Written by: three/world/approach.js (opens the first) and the popup
+// (components/Prompt.svelte: opens the second, closes both).
 //
 // While a gate is open the approach holds `t` and keeps advancing `elapsed`, so the
 // swimmer goes on rolling and the scene does not freeze — it waits. Holding t

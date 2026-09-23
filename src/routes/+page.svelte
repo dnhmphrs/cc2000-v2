@@ -1,19 +1,19 @@
 <script>
-	import { scene, gate } from '$lib/store/store';
+	import { scene, gate, edge } from '$lib/store/store';
 	import Stage from '$lib/three/Stage.svelte';
 	import Prelude from '$lib/scenes/Prelude.svelte';
 	import Prompt from '$lib/components/Prompt.svelte';
 	import Room from '$lib/scenes/Room.svelte';
 	import Glass from '$lib/components/Glass.svelte';
 	import Dev from '$lib/components/Dev.svelte';
-	import Caption from '$lib/scenes/Caption.svelte';
+	import ErrorScreen from '$lib/components/error/ErrorScreen.svelte';
 
 	// The whole site, in the order the layers stack:
 	//
-	//   1  Stage        the two 3D scenes, on one WebGPU renderer, which draw
+	//   1  Stage        the three 3D scenes, on one WebGPU renderer, which draw
 	//                   their own backdrops
 	//   4  (flash)      the splosh, thrown by the descent
-	//   10 the screens  the room
+	//   10 the screens  the room, or the verdict
 	//   20 the gate     the title card and the two questions, over the flight
 	//   30 Glass        scanlines, over everything, always
 	//
@@ -32,13 +32,13 @@
 <!-- Keys for jumping around the run. Inert unless config/dev.js says otherwise. -->
 <Dev />
 
-<!-- The room is the only DOM screen left. -->
+<!-- The room — or, when the tunnel broke down on a birthday the archive cannot
+     answer for, the verdict. The only DOM screens left. -->
 {#if $scene === 'room'}
 	<Room />
+{:else if $scene === 'error'}
+	<ErrorScreen verdict={$edge} />
 {/if}
-
-<!-- And the machine's one line, where the search stops. -->
-<Caption />
 
 <!-- And what the flight is waiting for, if anything. -->
 {#if $gate === 'prelude'}

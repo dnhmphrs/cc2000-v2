@@ -10,8 +10,9 @@ import { conceptionDate, previousDay, dateToDecade } from './utils';
 // or the room means seeding a real answer first, and it must be the SAME answer
 // the machine would have produced.
 //
-// Returns either { edge } — 'past' or 'future', which the machine reports on its
-// own screen and goes nowhere — or { track, conceived, decade }.
+// Returns either { edge } — 'past' or 'future': the flight goes in regardless,
+// the tunnel breaks down on it and the verdict screen says so — or { track,
+// conceived, decade }.
 
 // The chart archive starts here, and nobody has been conceived after today.
 export const ARCHIVE_START = '1958-06-01';

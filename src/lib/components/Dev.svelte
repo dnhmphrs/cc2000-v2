@@ -1,7 +1,7 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
-	import { DEV, DEV_SEED } from '$lib/config';
+	import { DEV, DEV_SEED, DEV_EDGE } from '$lib/config';
 	import { rand } from '$lib/random';
 	import { ORDER, KEYS, advance, again, clearResult } from '$lib/scenes/director';
 	import {
@@ -102,8 +102,13 @@
 		if (!ORDER.includes(name)) return;
 		// Every 3D scene needs an answer behind it: the run takes one
 		// mid-flight, and a jump skips the asking. The gate goes with it — a
-		// jumped-to scene must not sit behind a popup nobody opened.
-		if (!seed()) return;
+		// jumped-to scene must not sit behind a popup nobody opened. With
+		// ?edge= the answer is the one the archive cannot give, and the tunnel
+		// breaks down on it.
+		if (DEV_EDGE) {
+			clearResult();
+			edge.set(DEV_EDGE);
+		} else if (!seed()) return;
 		gate.set(null);
 		goingBack.set(false);
 		// Pinning follows the jump rather than fighting it, so 1-5 stays useful

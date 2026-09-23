@@ -18,11 +18,15 @@ import {
 // function here, so there is one place to read to know what follows what.
 //
 //   (title card) ──begin()──▶ approach ──▶ kaleido ──▶ descent ──▶ room
-//                                ▲                                  │
+//                                ▲            │ edge                │
+//                                │            ▼                     │
+//                                ├─recover()─ error                 │
 //                                └──────────── again() ─────────────┘
 //
-// An out-of-range birthday is refused in the popup that asked for it, mid-
-// flight, and the flight stays held until the date is changed.
+// A birthday the archive cannot answer for (the `edge` store) is not refused
+// in the popup: the flight goes in regardless, the tunnel breaks down on it
+// (three/world/kaleido.js), and advance() hands to the verdict rather than to
+// the fall. recover() is the verdict's way back to the flight.
 //
 // The stage advances the 3D scenes itself as each one finishes (they know
 // their own durations); the two ends of the loop are driven from the DOM.
@@ -73,6 +77,12 @@ export function begin() {
 export function advance(from) {
 	const i = ORDER.indexOf(from);
 	if (i < 0 || !is(from)) return;
+	// The breakdown: the tunnel ran out on a birthday with no room at the end
+	// of it, so what follows is the verdict rather than the fall.
+	if (from === 'kaleido' && get(edge)) {
+		scene.set('error');
+		return;
+	}
 	scene.set(ORDER[Math.min(i + 1, ORDER.length - 1)]);
 }
 
@@ -108,6 +118,18 @@ export function clearResult() {
 export function settled() {
 	goingBack.set(false);
 	monitorRect.set(null);
+	scene.set(ORDER[0]);
+	runId.update((n) => n + 1);
+}
+
+// The way back from the verdict: the flight again, from the top, the answers
+// kept as again() keeps them — both questions are asked again, and the one
+// that broke the run is there to be changed. Not the title card.
+export function recover() {
+	if (!is('error')) return;
+	clearResult();
+	monitorRect.set(null);
+	goingBack.set(false);
 	scene.set(ORDER[0]);
 	runId.update((n) => n + 1);
 }

@@ -1,5 +1,4 @@
 import { clamp01, easeInOutCubic } from './ease';
-import { VARIANT } from './variants';
 
 // ── Timing ───────────────────────────────────────────────────────────────────
 // Every animation in the experience is defined HERE, and nowhere else.
@@ -535,18 +534,17 @@ export const SCENES = scale({
 	},
 
 	// ── Approach ─────────────────────────────────────────────────────────────
-	// The rebuild's fly-in. Space; the swimmer ahead of the lens, from behind;
-	// the archive adrift and passing; a SCREEN dead ahead, growing, with the
-	// tunnel inside its glass. The two questions are asked on the way — the
-	// first while it is only the swimmer out there — and the scene HOLDS at
-	// each (the `gate` store) until it is answered. It ends with the screen's
-	// glass filling the frame's height on the seam lens — the exact frame the
-	// kaleido opens on.
+	// The fly-in. Space; the swimmer ahead of the lens, from behind, and
+	// nothing else — the two questions are asked over it, one straight after
+	// the other, and the scene HOLDS (the `gate` store) until both are in.
+	// Then a SET dead ahead, out of the dark, and its glass switching on with
+	// the tunnel inside. It ends with that glass filling the frame's height on
+	// the seam lens — the exact frame the kaleido opens on.
 	//
-	//  0  .08 .12 .14                  .45                        .9     .985 1
-	//  |sky |swimmer|the archive, from here all the way to the glass ──────▶|seam
-	//            ask dob              ask spicy                 |lens closes  |
-	//                                                             |sky out     |
+	//  0  .08 .12 .13     .22                .68    .78     .88  .94 .985 1
+	//  |sky |swimmer|ask  |signal, the set out of the dark   |set |CRT on|seam
+	//               both                       |signal out|         |lens closes
+	//                                                                |sky out|
 	approach: {
 		duration: 15,
 
@@ -555,40 +553,31 @@ export const SCENES = scale({
 		// the glass the loop came home through had gone to black.
 		fadeIn: [0.0, 0.08],
 
-		// THE SWIMMER FADES IN, at its riding distance, on the axis — and only
-		// then does the archive arrive: the card lifts, the sky develops, the
-		// swimmer is there, and the first of the archive comes out of the dark
-		// ahead of it. Not a pass from behind the lens: every version of that
-		// reads as a body being stretched by a wide lens.
+		// THE SWIMMER FADES IN, at its riding distance, on the axis: the card
+		// lifts, the sky develops, the swimmer is there. Not a pass from behind
+		// the lens: every version of that reads as a body being stretched by a
+		// wide lens.
 		swimmerIn: [0.02, 0.12],
-		// Where the flight is when the first piece of the archive comes into
-		// view — APPROACH.seen[1] units ahead of the lens. From there the
-		// archive runs all the way to the portal's glass.
-		archiveFrom: 0.14,
 
-		// Where the flight stops to ask. Progress marks, not windows: the scene
-		// holds at each until the popup is answered. The birthday the moment
-		// the swimmer is in, before the first of the archive; the spice a third
-		// of the way down the flight.
-		askDob: 0.13,
-		askSpicy: 0.45,
+		// Where the flight stops to ask. ONE progress mark, not a window: the
+		// scene holds here until both popups are answered — the birthday, and
+		// the spice the moment the birthday is in (Prompt.svelte asks the
+		// second itself, so there is no swimming between them). The moment the
+		// swimmer is in.
+		ask: 0.13,
 
-		// ── After the second answer ──────────────────────────────────────────
-		// The set dead ahead is OFF until the second answer is in: for both
+		// ── After the answers ────────────────────────────────────────────────
+		// The set dead ahead is OFF until the answers are in: for both
 		// questions there is nothing at the centre of the frame but the
 		// swimmer. Then a SIGNAL — a point of light where the set is — and the
 		// set comes out of the dark under it, dark; at crtOn, close enough
 		// that the tunnel shows through its glass (through a small far glass
 		// you only see down the axis), the glass switches on: a CRT hairline
-		// that opens onto the tunnel (?on=crt), or it simply lights (?on=fade).
-		screenIn: [0.45, 0.52],
-		signal: [0.45, 0.5],
+		// that opens onto the tunnel.
+		screenIn: [0.13, 0.22],
+		signal: [0.13, 0.19],
 		signalOut: [0.68, 0.78],
 		crtOn: [0.88, 0.94],
-		// ?flight=few: where the few dead sets pass — after the first answer,
-		// gone before the second.
-		fewFrom: 0.2,
-		fewTo: 0.42,
 
 		// ── ONE SPEED ────────────────────────────────────────────────────────
 		// The flight has no brake: it flies at one speed all the way into the
@@ -607,28 +596,28 @@ export const SCENES = scale({
 		// (KALEIDO.lead), so it is where the next scene expects it.
 		dive: [0.82, 0.99],
 
-		// The sky and the debris go out under the screen as it takes the frame:
-		// the tunnel has no sky, and the frame this ends on must be the screen,
-		// what is inside it, and nothing else. The archive is already out of the
-		// frame by then — a tube round the axis leaves by the edges as the lens
-		// closes in — so this is the seam's safety, not the look of the flight.
+		// The sky and the debris go out under the set as it takes the frame:
+		// the tunnel has no sky, and the frame this ends on must be the set,
+		// what is inside it, and nothing else.
 		skyOut: [0.9, 0.985]
 	},
 
 	// ── Kaleido ──────────────────────────────────────────────────────────────
-	// Through the screen's glass and down the tunnel: the archive looped, in
-	// rings, turning and cycling in colour, to the portal at the far end. It
-	// opens on the frame the approach ended on and ends on the frame the
-	// descent opens on. See world/kaleidoscope.js.
+	// Through the set's glass and down the tunnel: the archive looped, in
+	// rings, turning and cycling in colour, to the room at the far end — which
+	// is NOT to be seen from the glass: it comes out of the dark as the search
+	// stops (NEST.seen). It opens on the frame the approach ended on and ends
+	// on the frame the descent opens on. See world/kaleidoscope.js. Or, on a
+	// birthday the archive cannot answer for, it BREAKS DOWN — see below.
 	kaleido: {
 		duration: 7,
 
-		// The tunnel runs at the speed the flight arrived at, and settles to
-		// the speed the descent opens at over this last fraction.
+		// The tunnel runs at the speed the flight arrived at, and brakes to
+		// rest over this last fraction (kaleidoscope.js: v1 = 0).
 		ease: 0.3,
 
 		// The lens opens out from the seam's to KALEIDO.fov through the glass,
-		// and closes again on the portal.
+		// and closes again on the room.
 		lensIn: [0.0, 0.12],
 		lensOut: [0.8, 0.97],
 
@@ -636,24 +625,27 @@ export const SCENES = scale({
 		// scene. With the stop, the hue's turns are counted to the lock so it
 		// lands on TRUE colour: 2.5 cycles of a rate that runs to 0.68 and
 		// falls to nil by 0.92 is two whole turns.
-		hueCycles: VARIANT.beat === 'flow' ? 1.5 : 2.5,
+		hueCycles: 2.5,
 		turns: 0.35,
 
-		// ── The stop (?beat=rest, ?beat=black) ───────────────────────────────
+		// ── The stop ─────────────────────────────────────────────────────────
 		// The search ENDS. Over `lock` the turn and the hue cycle decelerate to
 		// rest, the tunnel's speed brakes to nil over `ease` (kaleidoscope.js:
 		// v1 = 0), and the frame this ends on is nest.pose(0) reached AT REST,
-		// for the fall to drop from. The machine types its line over `cap`.
+		// for the fall to drop from.
 		lock: [0.68, 0.92],
-		cap: [0.74, 0.94],
-		// ?beat=black: the picture overloads, collapses to a line, to a dot, to
-		// black — the set switching OFF — and the fall's head switches it back
-		// on (descent: blackHold, powerOn).
-		overload: [0.84, 0.92],
-		collapse: [0.92, 0.965],
-		pinch: [0.965, 0.99],
 
-		// The rings go out under the portal as it takes the frame, so the frame
+		// ── The breakdown ────────────────────────────────────────────────────
+		// A birthday the archive cannot answer for (the `edge` store): there is
+		// no room at the far end and the search never stops. The turn and the
+		// hue run away over `overload`, the picture collapses to a line
+		// (`collapse`), the line to a dot, to black (`pinch`) — the set
+		// switching OFF — and the run hands to the verdict (ErrorScreen).
+		overload: [0.5, 0.78],
+		collapse: [0.78, 0.88],
+		pinch: [0.88, 0.93],
+
+		// The rings go out under the room as it takes the frame, so the frame
 		// this ends on is the nest and nothing else.
 		out: [0.86, 0.985],
 
@@ -672,27 +664,15 @@ export const SCENES = scale({
 	descent: {
 		// NINE for the fall itself. Fourteen was too slow through the monitors:
 		// at nine each crossing is a second and a half, which is the pace the
-		// lab sketch fell at. The stop's head is added on top, so the fall's
-		// own pace does not change with the cut.
-		duration: { flow: 9, rest: 10.4, black: 11.4 }[VARIANT.beat],
+		// lab sketch fell at. The stop's head is added on top.
+		duration: 10.4,
 
-		// ── The head (?beat=rest, ?beat=black) ───────────────────────────────
+		// ── The head ─────────────────────────────────────────────────────────
 		// The fall starts from REST on the found room: for `head` of the scene
 		// the camera is still on nest.pose(0), then it drops into its one pace
-		// over `easeIn` (the mirror of the ease to rest at the end). In black
-		// the head is the set switching back ON — black with the swimmer
-		// (blackHold), the CRT line opening onto the room (powerOn), the
-		// machine's line typed (capIn) — and then the hold and the drop.
-		head:
-			VARIANT.beat === 'flow'
-				? 0
-				: VARIANT.beat === 'black'
-					? { short: 0.17, mid: 0.2, long: 0.26 }[VARIANT.rest]
-					: { short: 0.04, mid: 0.075, long: 0.13 }[VARIANT.rest],
-		easeIn: VARIANT.beat === 'flow' ? 0 : 0.14,
-		blackHold: [0, 0.09],
-		powerOn: [0.09, 0.14],
-		capIn: [0.14, 0.19],
+		// over `easeIn` (the mirror of the ease to rest at the end).
+		head: 0.075,
+		easeIn: 0.14,
 
 		// How many rooms deep, the last being the answer's, and how far into the
 		// last room's crossing the run comes to rest — past the point where the

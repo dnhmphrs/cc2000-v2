@@ -24,7 +24,7 @@ Four routes:
 
 |                |                                                                                                                                                          |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`            | the run: approach → descent → room, on WebGPU (WebGL 2 behind it where there is none; `?gl=1` forces it)                                                 |
+| `/`            | the run: approach → kaleido → descent → room, on WebGPU (WebGL 2 behind it where there is none; `?gl=1` forces it)                                       |
 | `/v2`          | the WebGL run this replaced, as it was: the tunnel, the ovum, the conception, the computation                                                            |
 | `/v4`          | the rebuild's four new beats, end to end — needs WebGPU (Chrome, Edge, Safari 26); `?gl=1` for the WebGL 2 fallback                                      |
 | `/lab?sketch=` | one sketch on a bare canvas: `approach`, `rooms`, `impact`, `lattice`, `cube` (the cut), `e8` (kept, on the side), `materials`; `heat`, `petals` retired |
@@ -49,48 +49,43 @@ popups that hold the flight while they are open.
                      └──────────────────────── go again ────────────────────────┘
 ```
 
-| #   | Scene        | What it is                                                                                                               | Where                             |
-| --- | ------------ | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
-| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind; the archive adrift and passing; a screen dead ahead. 3D.              | `src/lib/three/world/approach.js` |
-| 2   | **Kaleido**  | Through that screen's glass and down the tunnel inside: the archive looped, in rings, turning and cycling in colour. 3D. | `src/lib/three/world/kaleido.js`  |
-| 3   | **Descent**  | Rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. 3D.  | `src/lib/three/world/descent.js`  |
-| 4   | **Room**     | The answer, in that room's monitor. DOM.                                                                                 | `src/lib/scenes/Room.svelte`      |
+| #   | Scene        | What it is                                                                                                                                                  | Where                             |
+| --- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind, and the two questions over it; then the 60s set dead ahead, switching on. 3D.                            | `src/lib/three/world/approach.js` |
+| 2   | **Kaleido**  | Through that set's glass and down the tunnel inside: the archive looped, in rings, turning and cycling in colour, to the first room — or the breakdown. 3D. | `src/lib/three/world/kaleido.js`  |
+| 3   | **Descent**  | Rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. 3D.                                     | `src/lib/three/world/descent.js`  |
+| 4   | **Room**     | The answer, in that room's monitor. DOM.                                                                                                                    | `src/lib/scenes/Room.svelte`      |
 
 The first two 3D scenes walk the same **kaleidoscope** —
-`src/lib/three/world/kaleidoscope.js`: the screen the flight ends in, the
-rings of the archive down the tunnel behind its glass, the camera down that
-tunnel, and where the nest goes at the end of it. The last two walk the same
-**nest** — `src/lib/three/world/nest.js`: the portal monitor at the tunnel's
-end, the rooms inside its glass one inside the next, the stencil chain that
-clips each to the glass above it (one level up from the screen's), the camera
-pose for any level of the fall, and the glass rect the readout is drawn into.
-`src/lib/scenes/director.js` owns every transition — it is four functions long
-and it is the first file to read.
-
-**Cuts to compare, on one build.** A handful of URL switches (`config/variants.js`)
-pick between cuts of the run without a rebuild — nothing flying by in space or
-a few dead sets, the set switching on with a CRT hairline or simply lighting,
-the search stopping on the found room before the fall or handing over at one
-pace or switching off through black, how long the stop holds, and what the
-machine types as it stops. The defaults are the cut being proposed; every
-variant is still a pure function of progress, so `?at=` pins any of them.
+`src/lib/three/world/kaleidoscope.js`: the set the flight ends in, the rings
+of the archive down the tunnel behind its glass, the camera down that tunnel,
+and where the nest goes at the end of it. The last two walk the same **nest**
+— `src/lib/three/world/nest.js`: the first room at the tunnel's end, the rooms
+inside its glass one inside the next, the stencil chain that clips each to the
+glass above it (one level up from the set's), the depth fade that keeps the
+first room out of sight until the search stops, the camera pose for any level
+of the fall, and the glass rect the readout is drawn into.
+`src/lib/scenes/director.js` owns every transition — the way out to the verdict
+screen when the tunnel breaks down on a birthday the archive cannot answer for,
+and the way back, included — and it is the first file to read.
 
 **The three 3D scenes are one shot.** The approach ends on
-`kaleidoscope.pose(0)` and the kaleido opens on it — the screen's glass filling
+`kaleidoscope.pose(0)` and the kaleido opens on it — the set's glass filling
 the frame's height, the tunnel inside — and the kaleido ends on `nest.pose(0)`
-and the descent opens on it — the portal's glass filling the frame's height,
-room 0 inside — so there is no cut between them. The one cut in the run is the
-loop home: the camera flies through the last room's monitor, and the glass is
-black and so is the space the next run opens on.
+and the descent opens on it — the first room filling the frame's height, at
+rest — so there is no cut between them. The one cut in the run is the loop
+home: the camera flies through the last room's monitor, and the glass is black
+and so is the space the next run opens on.
 
 ---
 
 ## The colour walk
 
 Black space, and the one cold thing in it: the swimmer, blue, with the blue
-debris streaking past. The archive is lit in its own colours — every monitor's
-glass holds its decade's room — and once the fall begins the run is inside those
-rooms and nothing else. The only white in the run is the **splosh**: the last
+debris streaking past. The archive is lit in its own colours — looped down the
+tunnel with the hue cycling through it, and landing on true colour as the
+search stops — and once the fall begins the run is inside those rooms and
+nothing else. The only white in the run is the **splosh**: the last
 room's screen going white when the swimmer goes in, with one flash across the
 frame (`blaze` in `store/store.js`, painted by `Stage.svelte`), and the readout
 comes up in the glass as the white drains out of it.
@@ -114,11 +109,13 @@ src/lib/
   store/store.js    every store, with its writer named in the comment
 
   three/
-    Stage.svelte      the canvas, one WebGPU renderer, the clock, the two 3D scenes
+    Stage.svelte      the canvas, one WebGPU renderer, the clock, the three 3D scenes
     world/
-      nest.js           the portal and the rooms inside it, the stencil chain, pose(ζ)
-      approach.js       scene 1 — space, the swimmer, the archive adrift, the flight
-      descent.js        scene 2 — the fall, the splosh, the readout's rect, the way back
+      kaleidoscope.js   the set, the rings down the tunnel, the camera down it, the CRT mask
+      nest.js           the rooms one inside the next, the stencil chain, the depth fade, pose(ζ)
+      approach.js       scene 1 — space, the swimmer, the two questions, the set switching on
+      kaleido.js        scene 2 — down the tunnel to the first room, or the breakdown
+      descent.js        scene 3 — the fall, the splosh, the readout's rect, the way back
     tsl/
       materials.js      every material, as TSL — line, holo, skin, dot, core
       backdrop.js       the grounds the scenes paint — deep, grid, flat, white
@@ -180,9 +177,10 @@ hoping.
 
 ### Pure functions of progress
 
-Both 3D scenes recompute their whole state from `p` every frame rather than
-accumulating: the approach's camera and the descent's level of the fall are
-functions of the scene's progress alone. Nothing integrates `dt` — except the
+All three 3D scenes recompute their whole state from `p` every frame rather
+than accumulating: the approach's camera, the kaleido's place down the tunnel
+and the descent's level of the fall are functions of the scene's progress
+alone. Nothing integrates `dt` — except the
 swimmer's roll, which is on real time so it goes on turning while a popup holds
 the flight.
 

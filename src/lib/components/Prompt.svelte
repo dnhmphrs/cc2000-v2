@@ -15,13 +15,14 @@
 		conceived,
 		decade
 	} from '$lib/store/store';
-	import { resolve, earliestBirthday } from '$lib/functions/answer';
+	import { resolve } from '$lib/functions/answer';
 
 	// ── The two questions, asked mid-flight ──────────────────────────────────
-	// V3 has no machine, so the run takes its two answers on the way in: the
-	// birthday over the swimmer, and the spice once the ovum is up. The flight
-	// is HELD while either is open — see the `gate` store — so nothing arrives at
-	// the egg before it has been told what to look for.
+	// There is no machine, so the run takes its two answers on the way in, one
+	// straight after the other over the swimmer: the birthday, and the spice
+	// the moment the birthday is in — this component asks the second itself.
+	// The flight is HELD while either is open — see the `gate` store — so
+	// nothing is ahead of the lens before it has been told what to look for.
 	//
 	// The controls are the machine's own: the clean HTML selects that lived on
 	// the CRT, not the rotary dials. They write the same three stores, so
@@ -56,30 +57,11 @@
 	$: if ($dobDay && Number($dobDay) > maxDay) dobDay.set(maxDay);
 	$: complete = $dobMonth && $dobDay && $dobYear;
 
-	// ── Out of range is reported HERE ────────────────────────────────────────
-	// There is no calculator left to report it on, and there is no room to fall
-	// into, so this popup is the only thing that can say so — and it must refuse
-	// to close rather than letting the flight carry an unanswerable date into the
-	// conception. The message is the machine's own.
-	const EDGE = {
-		past: 'you were born in the time of dinosaurs. there was no music.',
-		future:
-			'you were born in the After Time. those lucky enough to be born were ' +
-			'conceived to "Baby" by Justin Bieber, as it is the only remaining ' +
-			'music allowed by The Council.'
-	};
-
-	let refused = null;
-	// Any change to the dials clears the last refusal — a new question is being
-	// asked and the old answer is not about it.
-	$: if ($dobMonth || $dobDay || $dobYear) refused = null;
-
 	// ── What a screen reader is told ─────────────────────────────────────────
 	// A LIVE REGION THAT IS ALWAYS THERE. role="alert" on a node that is itself
 	// inserted is not reliably spoken — several screen readers only announce
 	// changes to a region that already existed — so this element is permanent
-	// and only its text changes. The visible machine-voice block stays exactly
-	// as it was and is hidden from AT so the refusal is not read twice.
+	// and only its text changes.
 	let status = '';
 	// And a place to say why the button will not do anything yet, which is the
 	// thing `disabled` used to hide from the people who most needed it.
@@ -89,7 +71,6 @@
 	// one component instance for both, so nothing else would move focus from
 	// the birthday to the spice.
 	let panel;
-	let yearSel;
 	const focusPanel = async () => {
 		await tick();
 		panel?.focus();
@@ -124,7 +105,7 @@
 		typeof window !== 'undefined' &&
 		window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-	async function submit() {
+	function submit() {
 		if (which === 'dob') {
 			if (!complete) {
 				status = hint;
@@ -134,43 +115,37 @@
 				2,
 				'0'
 			)}`;
-			// The spice is not in yet, so this asks the archive the only question it
-			// can answer without it: is this date answerable AT ALL. resolve()'s two
-			// edge tests are on the date alone, so any level gives the same verdict.
+			// ── Out of range is NOT refused ──────────────────────────────────
+			// The spice is not in yet, so this asks the archive the only question
+			// it can answer without it: is this date answerable AT ALL. resolve()'s
+			// two edge tests are on the date alone, so any level gives the same
+			// verdict. A birthday it cannot answer for is let through with `edge`
+			// set: there is no machine to report it on and no room to fall into,
+			// so the flight goes in regardless and the tunnel breaks down on it
+			// (three/world/kaleido.js) — the verdict is the error screen's.
 			const probe = resolve(iso, 1);
-			if (probe.edge) {
-				refused = probe.edge;
-				edge.set(probe.edge);
-				// Spoken, and then the caret is put on the field that is at fault:
-				// for both edges it is the year.
-				status = `out of range. ${EDGE[probe.edge]}`;
-				await tick();
-				yearSel?.focus();
-				return;
-			}
+			edge.set(probe.edge ?? null);
 			status = '';
-			edge.set(null);
 			date.set(iso);
-		} else {
-			// ── THE ANSWER, WORKED OUT HERE ──────────────────────────────────
-			// This is the last thing that knows both halves, so it is where the
-			// archive is finally asked. The machine used to do it before the flight
-			// started; the flight now does it half way in, which is the only real
-			// consequence of moving the questions into the run — everything
-			// downstream reads the same three stores it always read.
-			//
-			// The date has already been proved answerable by the first popup, so
-			// this cannot come back an edge; if it somehow does, the run is stopped
-			// rather than flown into a conception with nothing at the end of it.
+			// And the spice, straight away: no swimming between the questions.
+			gate.set('spicy');
+			return;
+		}
+		// ── THE ANSWER, WORKED OUT HERE ──────────────────────────────────────
+		// This is the last thing that knows both halves, so it is where the
+		// archive is finally asked. The machine used to do it before the flight
+		// started; the flight now does it on the way in, which is the only real
+		// consequence of moving the questions into the run — everything
+		// downstream reads the same three stores it always read. On an edge
+		// there is nothing to find, and the tunnel already knows.
+		if (!get(edge)) {
 			const found = resolve(get(date), $spicy);
-			if (found.edge) {
-				edge.set(found.edge);
-				gate.set('dob');
-				return;
+			if (found.edge) edge.set(found.edge);
+			else {
+				track.set(found.track);
+				conceived.set(found.conceived);
+				decade.set(found.decade);
 			}
-			track.set(found.track);
-			conceived.set(found.conceived);
-			decade.set(found.decade);
 		}
 		gate.set(null);
 	}
@@ -209,7 +184,6 @@
 							bind:value={$dobDay}
 							autocomplete="bday-day"
 							aria-describedby="ask-status"
-							aria-invalid={refused ? 'true' : 'false'}
 						>
 							{#each days as d}<option value={d}>{String(d).padStart(2, '0')}</option>{/each}
 						</select>
@@ -219,34 +193,20 @@
 							bind:value={$dobMonth}
 							autocomplete="bday-month"
 							aria-describedby="ask-status"
-							aria-invalid={refused ? 'true' : 'false'}
 						>
 							{#each MONTHS as m, i}<option value={i + 1}>{m.toUpperCase()}</option>{/each}
 						</select>
 						<label class="sr-only" for="ask-year">year</label>
 						<select
 							id="ask-year"
-							bind:this={yearSel}
 							bind:value={$dobYear}
 							autocomplete="bday-year"
 							aria-describedby="ask-status"
-							aria-invalid={refused ? 'true' : 'false'}
 						>
 							{#each YEARS as y}<option value={y}>{y}</option>{/each}
 						</select>
 					</div>
 				</fieldset>
-				{#if refused}
-					<!-- The machine's own voice, on screen. Hidden from AT because the
-				     live region below has already said it, in fewer words. -->
-					<p class="no" aria-hidden="true">
-						<span class="head">error — out of range</span>
-						{EDGE[refused]}
-						{#if refused === 'past'}
-							<span class="hint">the archive starts at {earliestBirthday()}.</span>
-						{/if}
-					</p>
-				{/if}
 			{:else}
 				<label id="ask-q" class="q" for="ask-spicy">how spicy are your parents?</label>
 				<div class="row">
@@ -436,28 +396,6 @@
 		font-size: clamp(10px, 0.95vw, 13px);
 		letter-spacing: 0.08em;
 		/* 0.45 was 4.16:1 — under AA. */
-		color: var(--ink-soft);
-	}
-
-	.no {
-		margin: 0;
-		max-width: 30rem;
-		font-size: clamp(9px, 0.82vw, 11px);
-		line-height: 1.65;
-		color: var(--ink-body);
-	}
-	.no .head {
-		display: block;
-		font-size: clamp(8px, 0.76vw, 10px);
-		letter-spacing: 0.24em;
-		text-transform: uppercase;
-		color: var(--machine-lamp);
-		margin-bottom: 0.5em;
-	}
-	.no .hint {
-		display: block;
-		margin-top: 0.5em;
-		/* 0.40 was 3.55:1 — under AA. */
 		color: var(--ink-soft);
 	}
 
