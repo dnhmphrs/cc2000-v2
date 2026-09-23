@@ -5,27 +5,36 @@ import {
 	APPROACH,
 	KALEIDO,
 	TUNNEL,
-	VARIANT,
 	span,
 	lerp,
 	clamp01,
 	smoothstep,
 	smootherstep
 } from '$lib/config';
-import { decade, aspect, conceived, caption } from '$lib/store/store';
-import { formatDay } from '$lib/functions/utils';
+import { decade, edge, aspect } from '$lib/store/store';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
 import { createCrtMask } from './kaleidoscope';
 import { roomsFor } from './nest';
 
 // ── Scene 2: the kaleido ─────────────────────────────────────────────────────
 // Through the glass and down the tunnel. It opens on the frame the approach
-// ended on — the screen's glass filling the frame's height, the tunnel inside
-// it (kaleidoscope.pose(0)) — flies through the glass, and runs the tunnel at
-// the speed the flight arrived at, the swimmer riding ahead of the lens as it
-// did in space, the rings turning and cycling round it. Over the last of it
-// the rings go out under the portal, the lens closes on it, and the frame it
-// ends on is nest.pose(0): the frame the descent opens on.
+// ended on — the set's glass filling the frame's height, the tunnel inside it
+// (kaleidoscope.pose(0)) — flies through the glass, and runs the tunnel at the
+// speed the flight arrived at, the swimmer riding ahead of the lens as it did
+// in space, the rings turning and cycling round it. Then the search STOPS:
+// over the last of the tunnel the turn, the hue and the speed decelerate to
+// rest, the hue landing on true colour, and a room comes out of the dark at
+// the tunnel's end — the whole room, not a set — and takes the frame. The
+// frame it ends on is nest.pose(0), reached at rest: the frame the descent
+// opens on, and the fall drops from it.
+//
+// ── The breakdown ────────────────────────────────────────────────────────────
+// An out-of-range birthday is not refused: the run goes in anyway, and it is
+// HERE that it fails. With `edge` set there is no answer and no room at the
+// tunnel's end; instead the picture overloads — brighter, faster, the hue
+// whirling — and collapses like a set switching off: to a line, to a dot, to
+// black, the swimmer alone in it. The scene ends black and the director hands
+// to the verdict screen (components/error/ErrorScreen.svelte).
 //
 // Every value here is a pure function of scene progress, so ?at= is exact;
 // the swimmer's roll and wobble are on its own clock, as everywhere.
@@ -42,20 +51,11 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 	bu.uFade.value = 1;
 	scene.backgroundNode = deep(bu);
 	const camera = new THREE.PerspectiveCamera(NEST.seamFov, 1, 0.1, 400);
-	// In the scene, so the CRT mask can ride on it (?beat=black).
+	// In the scene, so the CRT mask can ride on it for the breakdown.
 	scene.add(camera);
 	const crt = createCrtMask(THREE);
 	camera.add(crt.group);
 	let aspectR = 1;
-	// The machine's line, as the search stops (?cap=). Fixed at enter, when
-	// the answer is in.
-	let capText = '';
-	function lineFor() {
-		if (VARIANT.cap === 'located') return 'bedroom located.';
-		if (VARIANT.cap === 'date' && get(conceived))
-			return `conceived roughly ${formatDay(get(conceived))}.`;
-		return '';
-	}
 	const sw = nest.swimmer;
 	// ?sperm=0 — see world/approach.js.
 	const SPERM =
@@ -63,6 +63,7 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		new URLSearchParams(window.location.search).get('sperm') !== '0';
 	const SPIN = -TUNNEL.spermSpin;
 	let t = 0;
+	let broken = false;
 
 	// A run arrives here with everything built and placed by the approach, and
 	// the rooms set for the answer. A jump straight in has nothing, so it is
@@ -78,17 +79,14 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		}
 		const rooms = nest.built.rooms;
 		if (answer && rooms[rooms.length - 1] !== answer) {
-			nest.build({
-				portal: nest.built.portal,
-				rooms: roomsFor(rooms[0], answer, SCENES.descent.rooms),
-				portrait
-			});
+			nest.build({ rooms: roomsFor(rooms[0], answer, SCENES.descent.rooms), portrait });
 			kal.placeNest();
 		}
 	}
 
 	function enter() {
 		t = 0;
+		broken = !!get(edge);
 		ensure();
 		if (kal.root.parent !== scene) scene.add(kal.root);
 		if (nest.root.parent !== scene) scene.add(nest.root);
@@ -96,15 +94,15 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		sw.group.quaternion.identity();
 		kal.setDim(1);
 		kal.setOpen(1, 0);
-		nest.setDim(1);
+		// No room at the end of a tunnel that is about to break down.
+		nest.setDim(broken ? 0 : 1);
 		nest.setDark(1);
-		capText = lineFor();
 		set(0);
 	}
 
 	function set(p) {
 		const { fov, Dend } = kal.pose(p, camera, aspectR);
-		kal.set(p);
+		kal.set(p, broken);
 
 		// ── The swimmer ──────────────────────────────────────────────────
 		// Ahead of the lens, dead centre, at the ride it arrived at — and over
@@ -117,21 +115,14 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		sw.material.uniforms.uTime.value = sw.clock;
 		sw.material.uniforms.uOpacity.value = SPERM ? 1 : 0;
 
-		// ── The stop, and the switch-off ─────────────────────────────────
-		if (VARIANT.beat === 'black') {
-			// The covers close to a line, the line to a dot, and black; the
-			// machine's line waits for the picture to come back (descent.js).
+		// ── The breakdown ────────────────────────────────────────────────
+		// The covers close to a line, the line to a dot, and black.
+		if (broken) {
 			const open = 1 - smootherstep(span(p, T.collapse));
 			const width = 1 - smootherstep(span(p, T.pinch));
 			const glow = p >= T.collapse[0] ? 1 - smoothstep(T.pinch[1], 1, p) : 0;
 			crt.set(camera, open, width, glow);
-			caption.set({ text: capText, k: 0, on: 0 });
-		} else {
-			crt.set(camera, 1, 1, 0);
-			if (VARIANT.beat === 'rest' && capText) {
-				caption.set({ text: capText, k: smoothstep(T.cap[0], T.cap[1], p), on: 1 });
-			}
-		}
+		} else crt.set(camera, 1, 1, 0);
 
 		kal.rebase(camera.position.z, camera.near);
 	}
@@ -165,6 +156,9 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		},
 		reset() {
 			t = 0;
+		},
+		dispose() {
+			crt.dispose();
 		}
 	};
 }

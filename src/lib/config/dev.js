@@ -12,12 +12,13 @@
 //           On the room it goes back to the calculator, so space alone walks
 //           the whole loop.
 //
-//   1 – 5   Jump straight to a scene, in the director's own order:
-//           1 calculator · 2 flyIn · 3 conception · 4 computation · 5 room
+//   1 – 5   Jump straight to a scene, bound by NAME (scenes/director.js KEYS):
+//           1 restart · 2 approach · 3 descent · 4 kaleido · 5 room
 //
-//           Jumping past the calculator seeds a real answer first, resolved
-//           through functions/answer.js exactly as the machine would, so the
-//           computation has a decade to find and the room has a track to show.
+//           Jumping into a scene seeds a real answer first, resolved through
+//           functions/answer.js exactly as the popups would, so the tunnel has
+//           a room to find and the room has a track to show — unless ?edge=
+//           says otherwise, below.
 //
 // `only` pins the site to ONE scene and loops it — the mode for tuning a single
 // beat, since you get the same beat over and over without the run around it.
@@ -56,6 +57,17 @@ export const DEV_SEED = (() => {
 	if (typeof window === 'undefined') return null;
 	const raw = new URLSearchParams(window.location.search).get('seed');
 	return raw === null || raw === '' ? null : raw;
+})();
+
+// ── The edge ─────────────────────────────────────────────────────────────────
+// ?edge=past|future seeds a birthday the archive cannot answer for in place of
+// a real answer, so a jump into the kaleido (key 4) pins the BREAKDOWN — the
+// set switching off, world/kaleido.js — rather than the search. Null on a
+// normal load.
+export const DEV_EDGE = (() => {
+	if (typeof window === 'undefined') return null;
+	const v = new URLSearchParams(window.location.search).get('edge');
+	return v === 'past' || v === 'future' ? v : null;
 })();
 
 export const DEV_AT = (() => {

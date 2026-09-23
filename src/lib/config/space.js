@@ -1,4 +1,3 @@
-import { VARIANT } from './variants';
 // ── Space ────────────────────────────────────────────────────────────────────
 // Every distance, size and camera setting in the 3D, in one place.
 
@@ -373,12 +372,11 @@ export function aspectKind(w = 1, h = 1) {
 	return 'square';
 }
 
-// ── The approach (the rebuild's first scene) ─────────────────────────────────
+// ── The approach (the first scene) ───────────────────────────────────────────
 // Space, black, a sky of stars; the swimmer riding ahead of the lens, seen from
-// behind as it was in the fly-in; and the archive adrift — monitors and the
-// furniture of four decades' bedrooms, passing on either side. Dead ahead is
-// the PORTAL: one monitor whose glass holds the first room of the descent.
-// See three/world/approach.js.
+// behind as it was in the fly-in, and nothing else while the two questions are
+// asked over it. Then, dead ahead, the SET: the 60s television whose glass
+// holds the tunnel (KALEIDO). See three/world/approach.js.
 export const APPROACH = {
 	// The flight's lens. It walks to NEST.seamFov over SCENES.approach.lens, so
 	// the frame this scene ends on is the frame the descent opens on.
@@ -391,24 +389,8 @@ export const APPROACH = {
 	// How it arrives: it does not fly past the lens at all — every version of
 	// that reads as a body stretched by a wide lens — it FADES IN at its riding
 	// distance, on the axis, where it rides.
-	// World units from the first frame to the portal's glass.
+	// World units from the first frame to the set's glass.
 	travel: 150,
-	// How much of the archive is adrift, and the tube it drifts in — a radius
-	// range, clear of the axis the swimmer and the portal are on. It is spread
-	// EVENLY ALONG THE FLIGHT, from where the swimmer is in
-	// (SCENES.approach.archiveFrom) all the way to the portal, and it comes out
-	// of the dark: a piece is unseen beyond `seen[1]` units ahead and fully
-	// there inside `seen[0]`. Nothing else — no thinning before the seam. The
-	// last of it flanks the portal as the glass takes the frame and leaves by
-	// the edges, which is what a tube round the axis does on its own.
-	// NOTHING flies by now (?flight=empty): both questions are asked over the
-	// swimmer, the stars and the debris, and the first drawing anyone sees is
-	// inside the glass. ?flight=few puts three dead sets — glass black, no
-	// room inside — far off the axis after the first answer, and nothing else.
-	screens: VARIANT.flight === 'few' ? 3 : 0,
-	furniture: 0,
-	tube: VARIANT.flight === 'few' ? [6.0, 11.0] : [3.0, 11.0],
-	seen: [22, 40],
 	// The sky, and the debris close in that makes the speed read.
 	stars: 1100,
 	brightStars: 90,
@@ -438,8 +420,15 @@ export const NEST = {
 	// The wall covers the FRAME, which only covers the frustum from infinitely
 	// far; the wall's own edge pixels are smeared outward this many times over.
 	wallCover: 2,
-	// The portal monitor's width, in world units, out in space.
-	portalWidth: 3.4,
+	// Out of the dark: the rooms are unseen beyond seen[1] units ahead and
+	// fully there inside seen[0], so the room at the tunnel's end is not there
+	// to be seen on the way in — it comes up as the tunnel brakes, over the
+	// last third of it, and is fully there as the search stops (the tunnel's
+	// length and pace are in kaleidoscope.js: 20 units out is about 0.63 of
+	// it, 12 about 0.75). Every distance in the fall itself is well inside
+	// seen[0] — the first room's back wall is under 8 units from the lens at
+	// rest.
+	seen: [12, 20],
 	// The swimmer down the axis: its cross-section, of the frame's half-height
 	// at the riding distance, and how far it rides toward the frame being
 	// fallen into.
@@ -448,13 +437,14 @@ export const NEST = {
 };
 
 // ── The kaleidoscope ─────────────────────────────────────────────────────────
-// What is inside the screen the flight ends in: the archive looped, in rings
-// down a tunnel, turning and cycling in colour, to the portal at its far end.
-// See three/world/kaleidoscope.js.
+// What is inside the set the flight ends in: the archive looped, in rings
+// down a tunnel, turning and cycling in colour, to the first room at its far
+// end. See three/world/kaleidoscope.js.
 export const KALEIDO = {
-	// The screen the flight flies into — its width, in world units — and the
-	// lens the tunnel opens out to (from NEST.seamFov, and back to it for the
-	// portal).
+	// The set the flight flies into — always the 60s one — its width, in world
+	// units, and the lens the tunnel opens out to (from NEST.seamFov, and back
+	// to it for the room at the far end).
+	screenDecade: '60s',
 	screenWidth: 3.4,
 	fov: 40,
 	// The swimmer's ride ahead of the lens through the glass, in world units.
@@ -471,15 +461,15 @@ export const KALEIDO = {
 	// Which drawings, in what order down the tunnel, and how wide each is.
 	keys: ['screen', 'desk', 'bed', 'poster', 'clock'],
 	size: { screen: 2.2, desk: 2.6, bed: 2.6, poster: 1.0, clock: 0.9 },
-	// A shade down, as the archive adrift is.
+	// A shade down.
 	dim: 0.85,
 	// Out of the dark: unseen beyond seen[1] units ahead, fully there inside
 	// seen[0]. The set's bezel has its own, further pair, so the set arrives
 	// a beat before the light inside it.
 	seen: [22, 40],
 	bezelSeen: [30, 60],
-	// The signal: the point of light where the set is, from the second answer
-	// until the set itself can be read. Device pixels, and the site's yellow.
-	signalSize: 13,
+	// The signal: the point of light where the set is, from the answers until
+	// the set itself can be read. Device pixels, and the site's yellow.
+	signalSize: 18,
 	signalColor: 0xffd426
 };

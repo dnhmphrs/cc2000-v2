@@ -5,9 +5,9 @@
 	import { advance } from '$lib/scenes/director';
 
 	// ── The stage ────────────────────────────────────────────────────────────
-	// One canvas, one renderer, one clock. It runs the two 3D scenes and nothing
-	// else: it does not know what either contains, only that each one answers
-	// the same calls.
+	// One canvas, one renderer, one clock. It runs the three 3D scenes and
+	// nothing else: it does not know what any of them contains, only that each
+	// one answers the same calls.
 	//
 	//   enter()      you are the active scene — reset yourself
 	//   update(dt)   a frame; return true when your duration is up
@@ -24,8 +24,8 @@
 	// backends draw the same picture. The scenes paint their own grounds now;
 	// there is no shader canvas behind this one.
 	//
-	// THREE SCENES, ONE SHOT. The approach flies up to a screen, the kaleido
-	// flies through it and down the tunnel inside to the portal, and the
+	// THREE SCENES, ONE SHOT. The approach flies up to a set, the kaleido
+	// flies through it and down the tunnel inside to the first room, and the
 	// descent falls through that: each frame one scene ends on is the frame
 	// the next opens on — the same call into the same world (kaleidoscope.js
 	// pose(0), nest.js pose(0)) — so there is no cut to cover and nothing to
@@ -51,8 +51,8 @@
 
 	function sync(name) {
 		const next = scenes[name];
-		// 'room' has no 3D of its own — it is a DOM screen over whatever the 3D
-		// last drew. Leave it alone.
+		// 'room' and 'error' have no 3D of their own — they are DOM screens
+		// over whatever the 3D last drew. Leave it alone.
 		if (!next) return;
 		if (entered === name) return;
 		entered = name;

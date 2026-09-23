@@ -1,8 +1,21 @@
-import { vec4, uniform, Fn, uv, length, atan, sin, smoothstep, exp, max, texture } from 'three/tsl';
+import {
+	vec4,
+	uniform,
+	Fn,
+	uv,
+	length,
+	atan,
+	sin,
+	smoothstep,
+	exp,
+	max,
+	texture,
+	positionView
+} from 'three/tsl';
 import { LAYERS, placement, elementUrl, DECADES, shuffle } from '$lib/data/roomElements';
 import { SCREEN_GLASS, GLASS_SAFETY, NEST, SCENES } from '$lib/config';
 import { PHI } from '$lib/three/geometry/icosahedron';
-import { glassOnly, glassCut } from '$lib/three/tsl/glass';
+import { glassOnly } from '$lib/three/tsl/glass';
 import { loadSwimmer } from '$lib/three/tsl/swimmer';
 import { ADD } from '$lib/three/tsl/materials';
 
@@ -12,12 +25,13 @@ import { ADD } from '$lib/three/tsl/materials';
 // monitor has a glass painted one flat colour. This puts the NEXT room inside
 // that glass, and the next inside that one's, and falls through them.
 //
-// It is built ONCE and walked by two scenes. The approach flies up to the
-// PORTAL — one monitor out in space whose glass holds room 0 — and the descent
-// falls from room 0 down to the last room, which is the answer's. Both ask this
-// file for the camera: pose(ζ) puts the lens at level ζ of the fall, and it is
-// a pure function of ζ, so the frame the approach ends on and the frame the
-// descent opens on are the same call with the same number.
+// It is built ONCE and walked by two scenes. The kaleido's tunnel ends on
+// ROOM 0 — the whole room, filling the frame's height, come out of the dark
+// as the search stops (NEST.seen) — and the descent falls from room 0 down to
+// the last room, which is the answer's. Both ask this file for the camera:
+// pose(ζ) puts the lens at level ζ of the fall, and it is a pure function of
+// ζ, so the frame the kaleido ends on and the frame the descent opens on are
+// the same call with the same number.
 //
 // Each level is a 3D similarity of its parent: level k+1's frame is placed on
 // level k's glass, scaled so the glass-aspect crop of the frame lands exactly
@@ -33,13 +47,13 @@ import { ADD } from '$lib/three/tsl/materials';
 // lands level (rollOf, pose).
 //
 // Each level is clipped to its parent's glass by a stencil chain, ONE LEVEL UP
-// from the screen the flight ends in (world/kaleidoscope.js, whose glass is
-// 0→1): the portal's bezel draws where the stencil is 1, its glass increments
-// it to 2, room 0 draws where it is 2, its glass increments to 3, and so on;
-// every level's desk and bed are drawn afterwards, deepest first, where the
-// stencil is ≥ theirs. Once the camera has passed a glass plane that level is
-// dropped and the stencil is CLEARED to the new base, so no material ever
-// changes. See rebase().
+// from the set the flight ends in (world/kaleidoscope.js, whose glass is 0→1):
+// room 0 draws where the stencil is 1 — inside the set's glass, or everywhere
+// once the camera is through it — its glass increments it to 2, room 1 draws
+// where it is 2, and so on; every level's desk and bed are drawn afterwards,
+// deepest first, where the stencil is ≥ theirs. Once the camera has passed a
+// glass plane that level is dropped and the stencil is CLEARED to the new
+// base, so no material ever changes. See rebase().
 //
 // The SPLOSH is a white blot on the last room's glass, and it lives here
 // because the glass does: the descent drives it with setSplosh().
@@ -51,7 +65,7 @@ const smooth = (a, b, x) => {
 };
 
 // The decades of a run's rooms, outermost first: `first` is chosen when the
-// portal is, before the answer is known, and the LAST room is the answer's.
+// run starts, before the answer is known, and the LAST room is the answer's.
 // No two neighbours alike, so every crossing is a change of decade.
 export function roomsFor(first, answer, count) {
 	const rooms = [first];
@@ -177,18 +191,25 @@ export async function createNest({ THREE, renderer }) {
 	// after the glass had taken the frame. Both are 1 for the whole descent.
 	const uDim = uniform(1);
 	const uDark = uniform(1);
-	const dimmed = (node) => vec4(node.rgb.mul(uDark), node.a.mul(uDim));
+	// And OUT OF THE DARK, by view depth. The room at the tunnel's end is not
+	// to be seen from the set's glass — the tunnel has no end you can see —
+	// and comes up as the lens closes on it, over NEST.seen, which is set so
+	// that it is up by the time the search stops. Every room deeper than it is
+	// inside its glass and nearer still, so the fall never sees this.
+	const uSeen0 = uniform(NEST.seen[0]);
+	const uSeen1 = uniform(NEST.seen[1]);
+	const nearN = smoothstep(uSeen0, uSeen1, positionView.z.negate()).oneMinus();
+	const dimmed = (node) => vec4(node.rgb.mul(uDark), node.a.mul(uDim).mul(nearN));
 
 	// ── The nest itself ──────────────────────────────────────────────────
 	const root = new THREE.Group();
 	root.name = 'nest';
 	let W = 2 * PHI;
 	let H = 2;
-	let portal = null;
 	let levels = [];
 	let clipZ = [];
 	let disposables = [];
-	let built = { portal: null, rooms: [], portrait: false };
+	let built = { rooms: [], portrait: false };
 	let lastBase = 0;
 	let logs = []; // each level's ln(N): the length of its crossing on screen
 
@@ -230,7 +251,6 @@ export async function createNest({ THREE, renderer }) {
 		for (const d of disposables) d.dispose?.();
 		disposables = [];
 		while (root.children.length) root.remove(root.children[0]);
-		portal = null;
 		levels = [];
 		clipZ = [];
 	}
@@ -240,19 +260,18 @@ export async function createNest({ THREE, renderer }) {
 	function refreshClips() {
 		root.updateMatrixWorld(true);
 		const v = new THREE.Vector3();
-		portal.glassZ = portal.group.localToWorld(v.set(portal.glass.x, portal.glass.y, 0)).z;
 		levels.forEach((lv) => {
 			lv.glassZ = lv.group.localToWorld(v.set(lv.glass.x, lv.glass.y, lv.glass.z)).z;
 		});
-		clipZ = [portal.glassZ, ...levels.map((lv) => lv.glassZ)];
+		clipZ = levels.map((lv) => lv.glassZ);
 	}
 
-	// Build the nest for a run: the portal monitor, and the rooms inside it,
-	// outermost first. Rebuilding is cheap — the textures are already up — so
-	// the approach builds one before the answer is known and again once it is.
-	function build({ portal: portalDecade, rooms, portrait = false }) {
+	// Build the nest for a run: the rooms, outermost first. Rebuilding is cheap
+	// — the textures are already up — so the approach builds one before the
+	// answer is known and again once it is.
+	function build({ rooms, portrait = false }) {
 		clear();
-		built = { portal: portalDecade, rooms: rooms.slice(), portrait };
+		built = { rooms: rooms.slice(), portrait };
 		if (portrait) {
 			W = 2;
 			H = 2 * PHI;
@@ -265,72 +284,28 @@ export async function createNest({ THREE, renderer }) {
 			return mat;
 		};
 
-		// The portal: a monitor, bezel and glass, at the end of the tunnel. The
-		// bezel is drawn where the stencil is 1 — inside the screen's glass, or
-		// everywhere once the camera is through it — and its glass increments
-		// it, so room 0 shows through the hole and nowhere else.
-		const pw = NEST.portalWidth;
-		const ph = pw / art(portalDecade, 'screen');
-		const pgm = SCREEN_GLASS[portalDecade];
-		const pg = {
-			x: (pgm.cx - 0.5) * pw,
-			y: (0.5 - pgm.cy) * ph,
-			z: 0,
-			w: pgm.w * pw,
-			h: pgm.h * ph
-		};
-		const pgroup = new THREE.Group();
-		root.add(pgroup);
-		const bezelMat = mk(
-			new THREE.MeshBasicNodeMaterial({ transparent: true, depthTest: false, depthWrite: false })
-		);
-		bezelMat.colorNode = dimmed(glassCut(portalDecade, textures[portalDecade].screen)());
-		stencilOf(bezelMat, 1, THREE.EqualStencilFunc, THREE.KeepStencilOp);
-		const bezel = new THREE.Mesh(plane, bezelMat);
-		bezel.scale.set(pw, ph, 1);
-		bezel.renderOrder = -1;
-		bezel.frustumCulled = false;
-		pgroup.add(bezel);
-		const holeMat = mk(
-			new THREE.MeshBasicNodeMaterial({
-				transparent: true,
-				depthTest: false,
-				depthWrite: false,
-				colorWrite: false
-			})
-		);
-		holeMat.colorNode = glassOnly(portalDecade, textures[portalDecade].screen)();
-		stencilOf(holeMat, 1, THREE.EqualStencilFunc, THREE.IncrementStencilOp);
-		const hole = new THREE.Mesh(plane, holeMat);
-		hole.scale.set(pw, ph, 1);
-		hole.renderOrder = -2;
-		hole.frustumCulled = false;
-		pgroup.add(hole);
-		portal = {
-			decade: portalDecade,
-			group: pgroup,
-			meshes: [bezel, hole],
-			glass: pg,
-			w: pw,
-			h: ph
-		};
-
-		// The rooms. Room 0 sits on the portal's glass, unturned, so the frame
-		// the approach ends on is square; every room after it is screwed.
-		let parent = portal;
+		// The rooms. Room 0 is at the root, unturned and at unit scale — it is
+		// what the tunnel ends on, and the frame it ends on is square — and
+		// every room after it sits on its parent's glass, screwed.
+		let parent = null;
 		const nLevels = rooms.length;
 		rooms.forEach((decade, k) => {
 			const r = room(decade, portrait);
 			const group = new THREE.Group();
-			const pgl = parent.glass;
-			const ga = pgl.w / pgl.h;
-			const Kw = ga < W / H ? H * ga : W;
-			const N = Kw / pgl.w;
-			group.position.set(pgl.x, pgl.y, pgl.z);
-			group.scale.setScalar(1 / N);
-			const screw = k === 0 ? 0 : SCREW;
-			group.quaternion.setFromAxisAngle(zAxis, screw);
-			parent.group.add(group);
+			let N = 1;
+			const screw = parent ? SCREW : 0;
+			if (parent) {
+				const pgl = parent.glass;
+				const ga = pgl.w / pgl.h;
+				const Kw = ga < W / H ? H * ga : W;
+				N = Kw / pgl.w;
+				group.position.set(pgl.x, pgl.y, pgl.z);
+				group.scale.setScalar(1 / N);
+				group.quaternion.setFromAxisAngle(zAxis, screw);
+				parent.group.add(group);
+			} else {
+				root.add(group);
+			}
 
 			const meshes = [];
 			let screenMesh = null;
@@ -347,7 +322,9 @@ export async function createNest({ THREE, renderer }) {
 				meshes.push(m);
 				return m;
 			};
-			const stencil = (mat, func, op) => stencilOf(mat, k + 2, func, op);
+			// Room k draws where the stencil is k + 1: 1 is inside the set's
+			// glass — world/kaleidoscope.js — or everywhere once through it.
+			const stencil = (mat, func, op) => stencilOf(mat, k + 1, func, op);
 			const flat = (key) => {
 				const m = mk(
 					new THREE.MeshBasicNodeMaterial({
@@ -433,12 +410,10 @@ export async function createNest({ THREE, renderer }) {
 	// ── The fall, as a function of the descent's progress ────────────────
 	// ζ runs at ONE PACE from the seam and eases to rest over the last `ease`
 	// of the scene, at `land` of the way into the last room. One pace ON
-	// SCREEN: a crossing is a zoom by its level's N, and the portal's is a
-	// smaller zoom than a room's monitor is, so equal time per level would
-	// lurch at the first glass. Equal time per unit of log(N) does not — the
-	// fall is measured in log-scale and turned back into a level at the end.
-	// Here rather than in the descent because the approach needs the pace it
-	// opens at, to arrive at it.
+	// SCREEN: a crossing is a zoom by its level's N, and no two decades'
+	// monitors are the same size, so equal time per level would lurch at each
+	// glass. Equal time per unit of log(N) does not — the fall is measured in
+	// log-scale and turned back into a level at the end.
 	function zetaEnd() {
 		return levels.length - 1 + SCENES.descent.land;
 	}
@@ -458,8 +433,7 @@ export async function createNest({ THREE, renderer }) {
 	// The rate down the fall: nil for `head` (the camera still on the found
 	// room), a straight ramp up over `easeIn`, one pace, and a straight ramp
 	// down over `ease` to rest at the landing. Integrated, normalised, and
-	// turned back into a level. head and easeIn are 0 when the fall carries
-	// straight on from the tunnel (?beat=flow).
+	// turned back into a level.
 	function zetaOf(u) {
 		const T = SCENES.descent;
 		const r = T.head ?? 0;
@@ -479,19 +453,6 @@ export async function createNest({ THREE, renderer }) {
 		}
 		return zetaOfLog(logEnd() * (h / area));
 	}
-	// World units per second the camera is moving at as the fall opens.
-	const probe = new THREE.PerspectiveCamera();
-	const pa = new THREE.Vector3();
-	function openingSpeed() {
-		const dz = 0.002;
-		pose(0, probe, 1);
-		pa.copy(probe.position);
-		pose(dz, probe, 1);
-		const perZeta = probe.position.distanceTo(pa) / dz;
-		const rate = (zetaOf(dz) - zetaOf(0)) / dz / SCENES.descent.duration;
-		return perZeta * rate;
-	}
-
 	// ── The camera at level ζ ────────────────────────────────────────────
 	// ζ = k + f: room k, f of the way through its crossing into room k+1. The
 	// frame at level ζ fills the height, whatever the lens — a dolly zoom while
@@ -575,8 +536,7 @@ export async function createNest({ THREE, renderer }) {
 		for (let i = 0; i < clipZ.length; i++) {
 			if (camZ < clipZ[i] + 1.5 * near) passed = i + 1;
 		}
-		portal.meshes.forEach((m) => (m.visible = passed === 0));
-		levels.forEach((l, i) => l.meshes.forEach((m) => (m.visible = i + 1 >= passed)));
+		levels.forEach((l, i) => l.meshes.forEach((m) => (m.visible = i >= passed)));
 		const base = floor + passed;
 		renderer.setClearStencil(base);
 		lastBase = base;
@@ -632,9 +592,6 @@ export async function createNest({ THREE, renderer }) {
 		get levels() {
 			return levels;
 		},
-		get portal() {
-			return portal;
-		},
 		get built() {
 			return built;
 		},
@@ -647,7 +604,6 @@ export async function createNest({ THREE, renderer }) {
 		fovAt,
 		zetaEnd,
 		zetaOf,
-		openingSpeed,
 		rebase,
 		glassRect,
 		lastGlassWorld,

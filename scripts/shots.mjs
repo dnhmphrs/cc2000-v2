@@ -30,12 +30,13 @@ import { launch } from './lane.mjs';
 
 const BASE = process.env.BASE ?? 'http://127.0.0.1:5178';
 const OUT = process.env.OUT ?? '.shots';
+// An extra query on every pin, e.g. QUERY='edge=past': ?edge=past|future seeds a
+// birthday with no answer, so key 4 pins the breakdown (config/dev.js).
+const QUERY = process.env.QUERY ? `&${process.env.QUERY}` : '';
 const W = Number(process.env.W ?? 1280);
 const H = Number(process.env.H ?? 800);
 const PLAN = JSON.parse(process.env.PLAN ?? '[["2",[0,0.25,0.5,0.75,1]]]');
 const SEED = process.env.SEED ?? '1';
-// Extra query, for a variant of the run: QUERY='beat=black&cap=date' (config/variants.js).
-const QUERY = process.env.QUERY ? `&${process.env.QUERY}` : '';
 const NAME = { 2: 'approach', 3: 'descent', 4: 'kaleido', 5: 'room' };
 
 fs.mkdirSync(OUT, { recursive: true });

@@ -43,7 +43,10 @@ rather than by position in `ORDER`, so a scene coming or going cannot slide a
 key and silently repoint every PLAN in this file and in `verify.mjs`.
 
 A `?at=` pin suppresses the two mid-flight popups, or every contact sheet past
-`askDob` comes back with a dialog across it.
+`ask` comes back with a dialog across it. `QUERY='edge=past'` puts an extra
+query on every pin: `?edge=past|future` seeds a birthday the archive cannot
+answer for instead of a real answer, so key 4 pins the breakdown (the set
+switching off) rather than the search.
 
 Two traps that have already cost a round each:
 
@@ -60,17 +63,6 @@ Two traps that have already cost a round each:
   screen and rooms match); a mean delta under 0.02/255 is what it measures
   today, anything past 1 is a real seam.
 
-## Cuts to compare, on one build
-
-`config/variants.js` reads a handful of URL switches once at load, so a
-creative note is answered with a link rather than a rebuild: `?flight=`,
-`?on=`, `?beat=`, `?rest=`, `?cap=` — the file says what each does, and the
-defaults are the cut being proposed. Every window a variant changes is still a
-pure function of progress, so `?at=` pins any of them. `shots.mjs` and
-`verify.mjs` take `QUERY='beat=black&cap=date'` to shoot or test a variant, and
-the seam checks above hold under every `?beat=` (under `black` both sides of
-the second seam are the black frame with the swimmer in it).
-
 Write scratch scripts and screenshots to the scratchpad, never into `scripts/`.
 A script living there cannot resolve the project's `node_modules`, so import by
 absolute path: `from '/home/user/cc2000-v2/node_modules/playwright/index.mjs'`.
@@ -80,16 +72,19 @@ absolute path: `from '/home/user/cc2000-v2/node_modules/playwright/index.mjs'`.
 The run is `three/Stage.svelte` on ONE `WebGPURenderer` (WebGL 2 behind it
 where there is no WebGPU; `?gl=1` forces it), and three 3D scenes that are
 plain modules under `three/world/`: the **approach** (`approach.js` — space,
-the swimmer ahead of the lens from behind, the archive adrift, a screen dead
-ahead), the **kaleido** (`kaleido.js` — through that screen's glass and down
-the tunnel inside it, the archive looped in rings, turning and cycling in
-colour, to the portal at the far end) and the **descent** (`descent.js` — rooms
-through rooms, down to the answer's room and the splosh on its screen). The
-first two walk the same **kaleidoscope** (`kaleidoscope.js` — the screen, the
-rings, the camera down the tunnel, and where the nest goes), the last two the
-same **nest** (`nest.js` — the rooms, the stencil chain, the camera pose and
-the glass rect), and the nest's stencil chain sits one level up from the
-screen's. `scenes/FlyIn|Conception|Computation.svelte`, `three/world/{tunnel,egg,lattice}.js`,
+the swimmer ahead of the lens from behind, the two questions over it, then the
+60s set dead ahead switching on), the **kaleido** (`kaleido.js` — through that
+set's glass and down the tunnel inside it, the archive looped in rings, turning
+and cycling in colour, to the first room at the far end — or, on a birthday the
+archive cannot answer for, the breakdown: the set switching off, and the
+verdict screen after it) and the **descent** (`descent.js` — rooms through
+rooms, from rest on that first room down to the answer's room and the splosh
+on its screen). The first two walk the same **kaleidoscope** (`kaleidoscope.js`
+— the set, the rings, the camera down the tunnel, where the nest goes, and the
+CRT mask), the last two the same **nest** (`nest.js` — the rooms, the stencil
+chain, the depth fade that keeps the first room out of sight until the search
+stops, the camera pose and the glass rect), and the nest's stencil chain sits
+one level up from the set's. `scenes/FlyIn|Conception|Computation.svelte`, `three/world/{tunnel,egg,lattice}.js`,
 `three/shaders/` and `components/Background.svelte` are the WebGL run they
 replaced, still playable at `/v2` on its own Stage (`three/StageV2.svelte`,
 `routes/v2/`): the same card, popups, room and director, switched to that run's
@@ -109,13 +104,17 @@ progress.
 
 Three consequences worth remembering:
 
-- **The answer resolves mid-flight**, not before it. The date is proved
-  answerable when the first popup closes and the archive is asked properly when
-  the second does. An out-of-range date is refused IN the popup — there is no
-  machine to report it on and no room to fall into. The screen, the nest's
-  portal and its first room are chosen when the run starts; the deeper rooms
-  are set the moment the answer is in, while they are too small to see
-  (`approach.js finalise()`).
+- **The answer resolves mid-flight**, not before it. The two popups come one
+  straight after the other: the birthday is probed when the first closes and
+  the archive is asked properly when the second does. An out-of-range date is
+  NOT refused — there is no machine to report it on and no room to fall into —
+  so `edge` is set, the flight goes in regardless, the tunnel breaks down on it
+  (`kaleido.js`: overload, collapse to a line, a dot, black) and
+  `director.advance('kaleido')` hands to the `error` scene, whose `ErrorScreen`
+  shows the verdict and whose way back is `director.recover()`. The set is
+  always the 60s one; the nest's first room is chosen when the run starts; the
+  deeper rooms are set the moment the answer is in, while they are too small to
+  see (`approach.js finalise()`).
 - **The loop home has no DOM half.** The camera flies through the room's monitor
   and `descent.js stepReturn()` hands the run to the approach when the glass has
   filled the frame. The glass is black and so is the space behind it, so there
