@@ -10,9 +10,10 @@ import {
 import {
 	APPROACH,
 	KALEIDO,
-	NEST,
+	LENS,
 	SCENES,
 	SCREEN_GLASS,
+	runSeconds,
 	span,
 	smoothstep,
 	easeInOutCubic
@@ -21,6 +22,7 @@ import { ADD } from '$lib/three/tsl/materials';
 import { DECADES, shuffle } from '$lib/data/roomElements';
 import { glassOnly, glassCut } from '$lib/three/tsl/glass';
 import { roomsFor } from './nest';
+import { wobbleEuler } from './wobble';
 
 // ── The kaleidoscope ─────────────────────────────────────────────────────────
 // What is inside the set. The flight ends by flying INTO a television — the
@@ -42,12 +44,16 @@ import { roomsFor } from './nest';
 // the kaleido opens on, and the frame the kaleido ends on is nest.pose(0),
 // which is the frame the descent opens on.
 //
-// ── The pace ─────────────────────────────────────────────────────────────────
+// ── The pace, the lens, the hand ─────────────────────────────────────────────
 // The approach flies at ONE SPEED all the way into the glass, and the tunnel
-// carries on at that speed; over its last `ease` it BRAKES TO REST on the
-// room — the search ends — and the fall drops from that rest (see
-// SCENES.descent.head). So the swimmer never slows in space, and the run
-// stops once, on the room it found.
+// opens at that speed and eases — one straight ramp over the whole of it
+// (SCENES.kaleido.ease) — to the speed the fall opens at, which the nest
+// works out from its own geometry (nest.openingSpeed). No stop at the room
+// and no restart after it: the fall carries on from the tunnel's last frame
+// at the pace it arrived at. The lens is the run's one lens (LENS) the whole
+// way, and the camera carries the run's one hand (world/wobble.js) on the
+// run's clock, so the seams either side of the tunnel are the same second of
+// the same wobble.
 //
 // ── The stencil chain, one level up ──────────────────────────────────────────
 // The set's glass is the first hole: bezel where the stencil is 0, glass 0→1,
@@ -252,7 +258,7 @@ export function createKaleidoscope({ THREE, nest }) {
 	let z0 = 0; // where the flight ends: the glass filling the frame's height
 	let zEnd = 0; // where the tunnel ends: nest.pose(0)'s camera
 	let v0 = 1; // the flight's one speed, world units a second
-	let v1 = 0; // the speed at the tunnel's end: nil, the stop
+	let v1 = 1; // the speed at the tunnel's end: the fall's opening speed
 	let Dend = 1; // nest.pose(0)'s D — the swimmer's ride at the seam
 	let placed = false;
 	const probe = new THREE.PerspectiveCamera();
@@ -266,6 +272,11 @@ export function createKaleidoscope({ THREE, nest }) {
 	}
 
 	function placeNest() {
+		// The speed the tunnel eases to is the fall's own, and the fall's own
+		// depends on every room in it, so both are worked out here — and
+		// again when the deeper rooms are set (approach.js finalise()).
+		v1 = nest.openingSpeed();
+		zEnd = z0 - travelled(1);
 		// Room 0 is at the nest's root, its frame centred on the axis.
 		nest.root.position.set(0, 0, 0);
 		nest.refreshClips();
@@ -293,12 +304,8 @@ export function createKaleidoscope({ THREE, nest }) {
 		zGlass = -APPROACH.travel;
 		uZ0.value = zGlass;
 		uHuePer.value = (Math.PI * 2) / (K.pitch * K.keys.length * DECADES.length);
-		z0 = zGlass + sg.h / 2 / Math.tan(rad(NEST.seamFov) / 2);
+		z0 = zGlass + sg.h / 2 / Math.tan(rad(LENS) / 2);
 		v0 = -z0 / SCENES.approach.duration;
-		// The tunnel brakes to REST over its last `ease`, and the fall drops
-		// from it: the search stops on the room it found.
-		v1 = 0;
-		zEnd = z0 - travelled(1);
 		placeNest();
 		placed = true;
 	}
@@ -314,19 +321,15 @@ export function createKaleidoscope({ THREE, nest }) {
 	}
 
 	// ── The camera at u of the tunnel ────────────────────────────────────
-	// Straight down the axis, level: the pattern turns, the lens does not.
-	// The lens opens from the seam's to K.fov and closes again for the room,
-	// and the frame at u = 1 is nest.pose(0)'s.
-	function fovAt(u) {
-		const open = easeInOutCubic(span(u, T.lensIn));
-		const close = easeInOutCubic(span(u, T.lensOut));
-		return NEST.seamFov + (K.fov - NEST.seamFov) * open * (1 - close);
-	}
+	// Straight down the axis on the run's one lens, with the run's one hand
+	// on it (world/wobble.js): the pattern turns, the lens does not. The
+	// frame at u = 1 is nest.pose(0)'s.
+	const euler = new THREE.Euler();
 	function pose(u, camera, aspect) {
 		const x = Math.max(0, Math.min(1, u));
-		const fov = fovAt(x);
+		const fov = LENS;
 		camera.position.set(0, 0, z0 - travelled(x));
-		camera.quaternion.identity();
+		camera.quaternion.setFromEuler(wobbleEuler(euler, runSeconds('kaleido', x)));
 		camera.fov = fov;
 		camera.aspect = aspect;
 		camera.near = 0.1;

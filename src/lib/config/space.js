@@ -372,25 +372,48 @@ export function aspectKind(w = 1, h = 1) {
 	return 'square';
 }
 
+// ── The lens, and the hand ───────────────────────────────────────────────────
+// ONE LENS for the whole run, in degrees, vertical. There is no dolly
+// anywhere: the approach flies into the glass on this, the tunnel runs on it
+// and the fall opens on it, so the frame never breathes at a seam, and the
+// swimmer — sized off the lens — is the same body, foreshortened the same,
+// everywhere.
+export const LENS = 40;
+// And ONE HAND on the camera: a slow pan, tilt and roll, running on the run's
+// own clock (timing.js runSeconds — nominal seconds, so ?speed= changes its
+// rate and nothing else) from the first frame of the flight to the landing,
+// where it dies out for the readout. The same hand in space, down the tunnel
+// and through the rooms, and the seams carry it — see three/world/wobble.js.
+// Each is [amplitude in degrees, radians per second, phase].
+export const WOBBLE = {
+	yaw: [2.4, 0.113, 0.6],
+	pitch: [1.4, 0.173, 0],
+	roll: [3.4, 0.14, 0],
+	roll2: [1.0, 0.353, 0]
+};
+
 // ── The approach (the first scene) ───────────────────────────────────────────
 // Space, black, a sky of stars; the swimmer riding ahead of the lens, seen from
 // behind as it was in the fly-in, and nothing else while the two questions are
 // asked over it. Then, dead ahead, the SET: the 60s television whose glass
 // holds the tunnel (KALEIDO). See three/world/approach.js.
 export const APPROACH = {
-	// The flight's lens. It walks to NEST.seamFov over SCENES.approach.lens, so
-	// the frame this scene ends on is the frame the descent opens on.
-	fov: 40,
-	// The swimmer: how far ahead of the lens it rides, and how much of the
-	// frame's half-height its cross-section covers (TUNNEL.spermLead/spermSpan,
-	// a shade bigger — there is no ovum to share the frame with).
+	// The swimmer: how far ahead of the lens it rides — here and down the
+	// tunnel; the fall rides it at NEST.spermRide of the frame ahead, which
+	// draws the same body, since it is sized off the lens either way — and
+	// how much of the frame's half-height its cross-section covers
+	// (TUNNEL.spermLead/spermSpan, a shade bigger — there is no ovum to share
+	// the frame with).
 	lead: 5.5,
 	span: 0.28,
 	// How it arrives: it does not fly past the lens at all — every version of
 	// that reads as a body stretched by a wide lens — it FADES IN at its riding
 	// distance, on the axis, where it rides.
-	// World units from the first frame to the set's glass.
-	travel: 150,
+	// World units from the first frame to the set's glass. SEVENTY, down from
+	// a hundred and fifty: the flight keeps the speed it opens at and loses
+	// distance, so the run to the set after the answers is five seconds
+	// rather than thirteen — see SCENES.approach.duration.
+	travel: 70,
 	// The sky, and the debris close in that makes the speed read.
 	stars: 1100,
 	brightStars: 90,
@@ -406,29 +429,27 @@ export const APPROACH = {
 // colour, and the next room sits inside it, scaled onto the glass and turned by
 // the screw. See three/world/nest.js.
 export const NEST = {
-	// The lens the descent opens on — which is the lens the approach ends on —
-	// and the one it opens out to over the first levels.
-	seamFov: 24,
-	fov: 34,
-	// Degrees of turn per level, and the lateral truck about the axis per level,
-	// in frame heights. Both come in from rest at the seam and the turn goes
-	// out before the last room, which lands level — see nest.js rollOf().
+	// The lens is the run's one lens, LENS — at the seam and all the way down.
+	// Degrees of turn per level. It comes in from rest at the seam and goes
+	// out before the last room, which lands level — see nest.js rollOf(). The
+	// only other motion on the camera is the hand on it (WOBBLE), the same as
+	// everywhere else in the run; the per-level sway it used to have is gone.
 	screw: 15,
-	sway: 0.06,
 	// ICOSA.roomDepth: how far behind its frame a room's back wall sits.
 	depth: 3.0,
 	// The wall covers the FRAME, which only covers the frustum from infinitely
-	// far; the wall's own edge pixels are smeared outward this many times over.
-	wallCover: 2,
+	// far; the wall's own edge pixels are smeared outward this many times over
+	// — enough that on LENS, with the back wall a room's depth behind the
+	// frame and the hand on the camera, the wall still fills the frustum.
+	wallCover: 2.6,
 	// Out of the dark: the rooms are unseen beyond seen[1] units ahead and
 	// fully there inside seen[0], so the room at the tunnel's end is not there
-	// to be seen on the way in — it comes up as the tunnel brakes, over the
-	// last third of it, and is fully there as the search stops (the tunnel's
-	// length and pace are in kaleidoscope.js: 20 units out is about 0.63 of
-	// it, 12 about 0.75). Every distance in the fall itself is well inside
-	// seen[0] — the first room's back wall is under 8 units from the lens at
-	// rest.
-	seen: [12, 20],
+	// to be seen on the way in — it comes up over the last third of the
+	// tunnel, as the search ends (the tunnel's length and pace are in
+	// kaleidoscope.js: 17 units out is about 0.64 of it, 10 about 0.81).
+	// Every distance in the fall itself is well inside seen[0] — the first
+	// room's back wall is under 6 units from the lens at the seam.
+	seen: [10, 17],
 	// The swimmer down the axis: its cross-section, of the frame's half-height
 	// at the riding distance, and how far it rides toward the frame being
 	// fallen into.
@@ -441,15 +462,10 @@ export const NEST = {
 // down a tunnel, turning and cycling in colour, to the first room at its far
 // end. See three/world/kaleidoscope.js.
 export const KALEIDO = {
-	// The set the flight flies into — always the 60s one — its width, in world
-	// units, and the lens the tunnel opens out to (from NEST.seamFov, and back
-	// to it for the room at the far end).
+	// The set the flight flies into — always the 60s one — and its width, in
+	// world units.
 	screenDecade: '60s',
 	screenWidth: 3.4,
-	fov: 40,
-	// The swimmer's ride ahead of the lens through the glass, in world units.
-	// The approach pulls in to this and the tunnel carries it to the fall's.
-	lead: 2.4,
 	// The rings: how many are built, how far apart, how many drawings to a
 	// ring, and the ellipse they sit on (x, y radii — the frame is wider than
 	// it is tall). `spiral` is the extra turn each ring takes on the last.

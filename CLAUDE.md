@@ -78,13 +78,18 @@ set's glass and down the tunnel inside it, the archive looped in rings, turning
 and cycling in colour, to the first room at the far end — or, on a birthday the
 archive cannot answer for, the breakdown: the set switching off, and the
 verdict screen after it) and the **descent** (`descent.js` — rooms through
-rooms, from rest on that first room down to the answer's room and the splosh
-on its screen). The first two walk the same **kaleidoscope** (`kaleidoscope.js`
-— the set, the rings, the camera down the tunnel, where the nest goes, and the
-CRT mask), the last two the same **nest** (`nest.js` — the rooms, the stencil
-chain, the depth fade that keeps the first room out of sight until the search
-stops, the camera pose and the glass rect), and the nest's stencil chain sits
-one level up from the set's. `scenes/FlyIn|Conception|Computation.svelte`, `three/world/{tunnel,egg,lattice}.js`,
+rooms, at the pace the tunnel eased to, down to the answer's room and the
+splosh on its screen). The first two walk the same **kaleidoscope**
+(`kaleidoscope.js` — the set, the rings, the camera down the tunnel, where the
+nest goes, and the CRT mask), the last two the same **nest** (`nest.js` — the
+rooms, the stencil chain, the depth fade that keeps the first room out of
+sight until the search ends, the camera pose and the glass rect), and the
+nest's stencil chain sits one level up from the set's. All three are shot on
+the run's ONE lens (`LENS`) with the run's ONE hand on the camera
+(`three/world/wobble.js`, a slow pan, tilt and roll on `runSeconds`, the run's
+own clock), and the tunnel eases from the flight's speed to the fall's over
+the whole of its length: no dolly, no stop and no restart anywhere, so nothing
+about the camera changes at a seam. `scenes/FlyIn|Conception|Computation.svelte`, `three/world/{tunnel,egg,lattice}.js`,
 `three/shaders/` and `components/Background.svelte` are the WebGL run they
 replaced, still playable at `/v2` on its own Stage (`three/StageV2.svelte`,
 `routes/v2/`): the same card, popups, room and director, switched to that run's
