@@ -88,6 +88,13 @@ export const calcZoom = writable(1);
 // three/world/descent.js.
 export const blaze = writable(0);
 
+// ── The machine's line ───────────────────────────────────────────────────────
+// What the machine types as the search stops (scenes/Caption.svelte): the text,
+// how much of it is out (`k`, 0..1, by progress) and how present it is (`on`,
+// 0..1). Written by: three/world/kaleido.js and descent.js; cleared by
+// approach.js enter().
+export const caption = writable({ text: '', k: 0, on: 0 });
+
 // ── The landing ──────────────────────────────────────────────────────────────
 // 0..1 through the computation's final fall into the room. The scanlines ride it
 // out: the raster is the screen the run is being WATCHED on, and the last thing

@@ -7,7 +7,18 @@ import {
 	smoothstep as tslSmoothstep,
 	hue
 } from 'three/tsl';
-import { APPROACH, KALEIDO, NEST, SCENES, SCREEN_GLASS, span, easeInOutCubic } from '$lib/config';
+import {
+	APPROACH,
+	KALEIDO,
+	NEST,
+	SCENES,
+	SCREEN_GLASS,
+	VARIANT,
+	span,
+	smoothstep,
+	easeInOutCubic
+} from '$lib/config';
+import { ADD } from '$lib/three/tsl/materials';
 import { DECADES, shuffle } from '$lib/data/roomElements';
 import { glassOnly, glassCut } from '$lib/three/tsl/glass';
 import { roomsFor } from './nest';
@@ -76,10 +87,18 @@ export function createKaleidoscope({ THREE, nest }) {
 	const uZ0 = uniform(0);
 	// Out of the dark, by view depth, as the archive is in the approach: the
 	// tunnel has no end you can see.
+	// uBright  the drawings' level — a shade down, up in the overload
+	// uGlow    the CRT hairline in the screen's glass, as it switches on
+	const uBright = uniform(K.dim);
+	const uGlow = uniform(0);
 	const uSeen0 = uniform(K.seen[0]);
 	const uSeen1 = uniform(K.seen[1]);
 	const near = tslSmoothstep(uSeen0, uSeen1, positionView.z.negate()).oneMinus();
 	const turned = uHue.add(uZ0.sub(positionWorld.z).mul(uHuePer));
+	// The set itself comes out of the dark a beat before the light inside it.
+	const uBSeen0 = uniform(K.bezelSeen[0]);
+	const uBSeen1 = uniform(K.bezelSeen[1]);
+	const nearBezel = tslSmoothstep(uBSeen0, uBSeen1, positionView.z.negate()).oneMinus();
 
 	// ── The ring materials, per drawing ──────────────────────────────────
 	// The drawings are the nest's, hue-turned. The screens keep their glass
@@ -95,7 +114,7 @@ export function createKaleidoscope({ THREE, nest }) {
 				depthWrite: false
 			});
 			const c = key === 'screen' ? glassCut(d, tex[d].screen)() : texture(tex[d][key]);
-			m.colorNode = vec4(hue(c.rgb, turned).mul(K.dim), c.a.mul(uOn).mul(near).mul(uDim));
+			m.colorNode = vec4(hue(c.rgb, turned).mul(uBright), c.a.mul(uOn).mul(near).mul(uDim));
 			stencilOf(m, 1, THREE.EqualStencilFunc, THREE.KeepStencilOp);
 			ringMat[d][key] = m;
 			disposables.push(m);
@@ -162,7 +181,7 @@ export function createKaleidoscope({ THREE, nest }) {
 			depthWrite: false
 		});
 		const c = glassCut(decade, tex[decade].screen)();
-		bezelMat.colorNode = vec4(c.rgb, c.a.mul(uDim));
+		bezelMat.colorNode = vec4(c.rgb, c.a.mul(uDim).mul(nearBezel));
 		stencilOf(bezelMat, 0, THREE.EqualStencilFunc, THREE.KeepStencilOp);
 		const bezel = new THREE.Mesh(plane, bezelMat);
 		bezel.scale.set(pw, ph, 1);
@@ -180,9 +199,41 @@ export function createKaleidoscope({ THREE, nest }) {
 		hole.scale.set(pw, ph, 1);
 		hole.renderOrder = -4;
 		hole.frustumCulled = false;
+		// The glass, OFF: black covers over the glass, top and bottom, drawn
+		// where the stencil is 1, and the hairline between them. setOpen()
+		// parts them — the CRT switching on. Gated by uDim like the bezel, so
+		// an unlit set is nothing on the dark.
+		const coverMat = new THREE.MeshBasicNodeMaterial({
+			transparent: true,
+			depthTest: false,
+			depthWrite: false
+		});
+		coverMat.colorNode = vec4(0, 0, 0, uDim);
+		stencilOf(coverMat, 1, THREE.EqualStencilFunc, THREE.KeepStencilOp);
+		const lineMat = new THREE.MeshBasicNodeMaterial({
+			transparent: true,
+			depthTest: false,
+			depthWrite: false,
+			...ADD
+		});
+		// Premultiplied additive (ADD): the level goes in the colour, not the alpha.
+		const lit = uGlow.mul(uDim);
+		lineMat.colorNode = vec4(lit, lit, lit, 1);
+		stencilOf(lineMat, 1, THREE.EqualStencilFunc, THREE.KeepStencilOp);
+		const top = new THREE.Mesh(plane, coverMat);
+		const bottom = new THREE.Mesh(plane, coverMat);
+		const line = new THREE.Mesh(plane, lineMat);
+		for (const m of [top, bottom, line]) {
+			m.frustumCulled = false;
+			screenRoot.add(m);
+		}
+		top.renderOrder = 5;
+		bottom.renderOrder = 5;
+		line.renderOrder = 6;
 		screenRoot.add(bezel, hole);
 		screenDisposables.push(bezelMat, holeMat);
-		screen = { decade, glass, meshes: [bezel, hole] };
+		screen = { decade, glass, meshes: [bezel, hole, top, bottom, line], top, bottom, line };
+		setOpen(1, 0);
 	}
 
 	// ── Where everything is ──────────────────────────────────────────────
@@ -236,7 +287,9 @@ export function createKaleidoscope({ THREE, nest }) {
 		uHuePer.value = (Math.PI * 2) / (K.pitch * K.keys.length * DECADES.length);
 		z0 = zGlass + sg.h / 2 / Math.tan(rad(NEST.seamFov) / 2);
 		v0 = -z0 / SCENES.approach.duration;
-		v1 = nest.openingSpeed();
+		// The fall's opening speed, or NIL: with the stop, the tunnel brakes to
+		// rest and the fall drops from it (?beat=rest, ?beat=black).
+		v1 = VARIANT.beat === 'flow' ? nest.openingSpeed() : 0;
 		zEnd = z0 - travelled(1);
 		placeNest();
 		placed = true;
@@ -282,10 +335,50 @@ export function createKaleidoscope({ THREE, nest }) {
 	// The tunnel at u: its turn, its colours, and the rings going out under
 	// the portal as it takes the frame — so the frame this ends on is the
 	// nest and nothing else.
+	// The glass switching on: `open` parts the covers from the middle line
+	// out, `glow` is the hairline. 1, 0 is a lit glass with the tunnel in it.
+	function setOpen(open, glow) {
+		if (!screen) return;
+		const g = screen.glass;
+		const { top, bottom, line } = screen;
+		const shut = 1 - open;
+		top.scale.set(g.w, (g.h / 2) * shut, 1);
+		top.position.set(g.x, g.y + (g.h / 4) * (1 + open), 0.001);
+		bottom.scale.set(g.w, (g.h / 2) * shut, 1);
+		bottom.position.set(g.x, g.y - (g.h / 4) * (1 + open), 0.001);
+		top.visible = bottom.visible = shut > 0.0005;
+		line.scale.set(g.w, g.h * 0.02, 1);
+		line.position.set(g.x, g.y, 0.002);
+		line.visible = glow > 0.001;
+		uGlow.value = glow;
+	}
+
+	// A rate of 1 to `a`, falling straight to nil by `b`, integrated: the turn
+	// and the hue run and then come to rest, and stay put.
+	function eased(x, [a, b]) {
+		if (x <= a) return x;
+		const s = Math.min(1, (x - a) / (b - a));
+		return a + (b - a) * (s - (s * s) / 2);
+	}
 	function set(u) {
 		const x = Math.max(0, Math.min(1, u));
-		rings.rotation.z = x * T.turns * Math.PI * 2;
-		uHue.value = x * T.hueCycles * Math.PI * 2;
+		// With the stop, the turn and the hue decelerate to rest over `lock`
+		// and the hue lands on true colour (see SCENES.kaleido.hueCycles).
+		const w = VARIANT.beat === 'flow' ? x : eased(x, T.lock);
+		let turn = w * T.turns * Math.PI * 2;
+		let hueA = w * T.hueCycles * Math.PI * 2;
+		let bright = K.dim;
+		if (VARIANT.beat === 'black') {
+			// The overload before the switch-off: brighter, faster, two whole
+			// turns of hue more — which is still true colour when it stops.
+			const o = smoothstep(T.overload[0], T.overload[1], x);
+			turn += o * o * Math.PI;
+			hueA += o * o * Math.PI * 4;
+			bright = K.dim + o * 0.55;
+		}
+		rings.rotation.z = turn;
+		uHue.value = hueA;
+		uBright.value = bright;
 		uOn.value = 1 - easeInOutCubic(span(x, T.out));
 	}
 
@@ -324,10 +417,74 @@ export function createKaleidoscope({ THREE, nest }) {
 		setDim(v) {
 			uDim.value = v;
 		},
+		setOpen,
 		dispose() {
 			for (const d of disposables) d.dispose?.();
 			for (const d of screenDisposables) d.dispose?.();
 			plane.dispose();
+		}
+	};
+}
+
+// ── The CRT mask ─────────────────────────────────────────────────────────────
+// The picture switching off, or on, as a set does: two black covers close from
+// the top and bottom of the frame to a bright line, the line shrinks to a dot,
+// black — and the reverse. A child of the camera, sized to the frame each call,
+// drawn over everything but the swimmer, which is the thing that was doing the
+// swimming and stays. ?beat=black uses it at the kaleido's tail and the
+// descent's head.
+export function createCrtMask(THREE) {
+	const plane = new THREE.PlaneGeometry(1, 1);
+	const black = new THREE.MeshBasicNodeMaterial({
+		transparent: true,
+		depthTest: false,
+		depthWrite: false
+	});
+	black.colorNode = vec4(0, 0, 0, 1);
+	const uGlow = uniform(0);
+	const white = new THREE.MeshBasicNodeMaterial({
+		transparent: true,
+		depthTest: false,
+		depthWrite: false,
+		...ADD
+	});
+	white.colorNode = vec4(uGlow, uGlow, uGlow, 1);
+	const group = new THREE.Group();
+	group.name = 'crt';
+	const top = new THREE.Mesh(plane, black);
+	const bottom = new THREE.Mesh(plane, black);
+	const line = new THREE.Mesh(plane, white);
+	for (const m of [top, bottom, line]) {
+		m.frustumCulled = false;
+		m.renderOrder = 90000;
+		group.add(m);
+	}
+	line.renderOrder = 90001;
+	const D = 1;
+	group.position.z = -D;
+	// open  0..1 how far the covers have parted (1 = the whole picture)
+	// width 0..1 how much of the line is lit (0 = a dot, and then nothing)
+	// glow  0..1 the line's brightness
+	function set(camera, open, width, glow) {
+		const h = 2 * Math.tan((camera.fov * Math.PI) / 360) * D;
+		const w = h * camera.aspect;
+		const shut = 1 - open;
+		top.scale.set(w, (h / 2) * shut, 1);
+		top.position.set(0, (h / 4) * (1 + open), 0);
+		bottom.scale.set(w, (h / 2) * shut, 1);
+		bottom.position.set(0, -(h / 4) * (1 + open), 0);
+		top.visible = bottom.visible = shut > 0.0005;
+		line.scale.set(Math.max(w * width, h * 0.006), h * 0.012, 1);
+		line.visible = glow > 0.001 && width > 0.0005;
+		uGlow.value = glow;
+	}
+	return {
+		group,
+		set,
+		dispose() {
+			plane.dispose();
+			black.dispose();
+			white.dispose();
 		}
 	};
 }

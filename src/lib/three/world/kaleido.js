@@ -5,13 +5,17 @@ import {
 	APPROACH,
 	KALEIDO,
 	TUNNEL,
+	VARIANT,
 	span,
 	lerp,
 	clamp01,
+	smoothstep,
 	smootherstep
 } from '$lib/config';
-import { decade, aspect } from '$lib/store/store';
+import { decade, aspect, conceived, caption } from '$lib/store/store';
+import { formatDay } from '$lib/functions/utils';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
+import { createCrtMask } from './kaleidoscope';
 import { roomsFor } from './nest';
 
 // ── Scene 2: the kaleido ─────────────────────────────────────────────────────
@@ -38,7 +42,20 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 	bu.uFade.value = 1;
 	scene.backgroundNode = deep(bu);
 	const camera = new THREE.PerspectiveCamera(NEST.seamFov, 1, 0.1, 400);
+	// In the scene, so the CRT mask can ride on it (?beat=black).
+	scene.add(camera);
+	const crt = createCrtMask(THREE);
+	camera.add(crt.group);
 	let aspectR = 1;
+	// The machine's line, as the search stops (?cap=). Fixed at enter, when
+	// the answer is in.
+	let capText = '';
+	function lineFor() {
+		if (VARIANT.cap === 'located') return 'bedroom located.';
+		if (VARIANT.cap === 'date' && get(conceived))
+			return `conceived roughly ${formatDay(get(conceived))}.`;
+		return '';
+	}
 	const sw = nest.swimmer;
 	// ?sperm=0 — see world/approach.js.
 	const SPERM =
@@ -78,8 +95,10 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		scene.add(sw.group);
 		sw.group.quaternion.identity();
 		kal.setDim(1);
+		kal.setOpen(1, 0);
 		nest.setDim(1);
 		nest.setDark(1);
+		capText = lineFor();
 		set(0);
 	}
 
@@ -97,6 +116,22 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		sw.spinner.rotation.z = sw.clock * SPIN;
 		sw.material.uniforms.uTime.value = sw.clock;
 		sw.material.uniforms.uOpacity.value = SPERM ? 1 : 0;
+
+		// ── The stop, and the switch-off ─────────────────────────────────
+		if (VARIANT.beat === 'black') {
+			// The covers close to a line, the line to a dot, and black; the
+			// machine's line waits for the picture to come back (descent.js).
+			const open = 1 - smootherstep(span(p, T.collapse));
+			const width = 1 - smootherstep(span(p, T.pinch));
+			const glow = p >= T.collapse[0] ? 1 - smoothstep(T.pinch[1], 1, p) : 0;
+			crt.set(camera, open, width, glow);
+			caption.set({ text: capText, k: 0, on: 0 });
+		} else {
+			crt.set(camera, 1, 1, 0);
+			if (VARIANT.beat === 'rest' && capText) {
+				caption.set({ text: capText, k: smoothstep(T.cap[0], T.cap[1], p), on: 1 });
+			}
+		}
 
 		kal.rebase(camera.position.z, camera.near);
 	}

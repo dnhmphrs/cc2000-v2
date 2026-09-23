@@ -6,33 +6,40 @@ Three sections, all shot headless and all pinned with `?at=` — every scene is 
 pure function of its own progress, so each frame is the frame the run would
 have drawn at that moment rather than a timed guess at it.
 
-**1 — the run, as it now is.** What `/` does on `main`: a title card over an
-approach held at zero, black; the card lifts, the sky comes up, the swimmer
-fades in where it rides, ahead of the lens and seen from behind, and the
-birthday is asked there, before anything else is out; then the archive comes
-out of the dark and passes — spread evenly down the flight, at one speed, no
-brake — the spice asked a third of the way in and the flight held while it is;
-a screen dead ahead, one of the archive's own, with the tunnel showing inside
-its glass, and the last of the archive beside it as the glass takes the frame;
-through the glass and down the tunnel, where the archive is looped — rings of
-eight of the same drawing, mirrored, turning, the hue cycling as the pattern
-repeats — to the portal at the far end, whose glass holds the first room; the
-descent through the decades, one room inside the next, at one pace on screen,
-the turn coming in from rest and going out before the answer's room, which
-lands level; the swimmer going into its screen and the screen going white; the
-readout in that glass; and "go again" — the readout gone, the camera from rest
-into the glass in a second and a half, black — which is the black the next
-flight opens on. One WebGPU renderer, and one shot from the flight through the
-screen into the fall: each scene ends on the frame the next opens on, and the
-tunnel arrives at the pace the fall opens at. Frames on the WebGL lane at
-`?seed=1`, so the decades and the archive fall the same way on every load.
+**1 — the run, as it now is.** What `/` does on `main`, in the cut being
+proposed: a title card over an approach held at zero, black; the card lifts,
+the sky comes up, the swimmer fades in where it rides, ahead of the lens and
+seen from behind, and the birthday is asked there, over the swimmer alone;
+nothing else flies by, for either question — the spice is asked a third of the
+way in over the same empty sky — and only when the second answer is in does
+anything appear ahead: a point of light, then a set coming out of the dark,
+dark, until it switches on with a CRT hairline that opens onto the tunnel
+inside its glass; through the glass and down the tunnel, where the archive is
+looped — rings of eight of the same drawing, mirrored, turning, the hue cycling
+as the pattern repeats — until the search STOPS: the turn and the hue
+decelerate to rest, the hue on true colour, the speed to nil, the machine
+types "bedroom located.", and the frame is the portal with the found room
+inside it, still; the fall drops from that rest through the decades, one room
+inside the next, at one pace on screen, the turn coming in from rest and going
+out before the answer's room, which lands level; the swimmer going into its
+screen and the screen going white; the readout in that glass; and "go again"
+— the readout gone, the camera from rest into the glass in a second and a
+half, black — which is the black the next flight opens on. One WebGPU
+renderer, and one shot from the flight through the screen into the fall: each
+scene ends on the frame the next opens on. The other cuts are on the same
+build by URL (`config/variants.js`): the search handing straight over at one
+pace as before (`?beat=flow`), or switching off through black and back on
+(`?beat=black`); a few dead sets after the first answer (`?flight=few`); the
+set lighting without the hairline (`?on=fade`); the typed conception date, or
+no line (`?cap=date`, `?cap=none`); the stop's length (`?rest=`). Frames on the
+WebGL lane at `?seed=1`, so the decades fall the same way on every load.
 
-| scene    | seconds | where                                                       |
-| -------- | ------- | ----------------------------------------------------------- |
-| approach | 15      | `three/world/approach.js`, held at the two asks             |
-| kaleido  | 7       | `three/world/kaleido.js` over `three/world/kaleidoscope.js` |
-| descent  | 9       | `three/world/descent.js` over `three/world/nest.js`         |
-| room     | —       | `scenes/Room.svelte`, until "go again"                      |
+| scene    | seconds | where                                                                   |
+| -------- | ------- | ----------------------------------------------------------------------- |
+| approach | 15      | `three/world/approach.js`, held at the two asks                         |
+| kaleido  | 7       | `three/world/kaleido.js` over `three/world/kaleidoscope.js`             |
+| descent  | 10.4    | `three/world/descent.js` over `three/world/nest.js`, 9 s of it the fall |
+| room     | —       | `scenes/Room.svelte`, until "go again"                                  |
 
 **2 — the lab cut it was made from.** The five sketches chained at `/v4`,
 55 s, from the round before: the approach and the descent were the two that were

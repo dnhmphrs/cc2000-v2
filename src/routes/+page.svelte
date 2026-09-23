@@ -6,6 +6,7 @@
 	import Room from '$lib/scenes/Room.svelte';
 	import Glass from '$lib/components/Glass.svelte';
 	import Dev from '$lib/components/Dev.svelte';
+	import Caption from '$lib/scenes/Caption.svelte';
 
 	// The whole site, in the order the layers stack:
 	//
@@ -35,6 +36,9 @@
 {#if $scene === 'room'}
 	<Room />
 {/if}
+
+<!-- And the machine's one line, where the search stops. -->
+<Caption />
 
 <!-- And what the flight is waiting for, if anything. -->
 {#if $gate === 'prelude'}

@@ -455,13 +455,29 @@ export async function createNest({ THREE, renderer }) {
 		}
 		return Math.min(levels.length - 1 + rest / logs[levels.length - 1], zetaEnd());
 	}
+	// The rate down the fall: nil for `head` (the camera still on the found
+	// room), a straight ramp up over `easeIn`, one pace, and a straight ramp
+	// down over `ease` to rest at the landing. Integrated, normalised, and
+	// turned back into a level. head and easeIn are 0 when the fall carries
+	// straight on from the tunnel (?beat=flow).
 	function zetaOf(u) {
-		const e = SCENES.descent.ease;
-		const n = 1 - e / 2;
+		const T = SCENES.descent;
+		const r = T.head ?? 0;
+		const i = T.easeIn ?? 0;
+		const e = T.ease;
 		const x = Math.max(0, Math.min(1, u));
-		const y = x - (1 - e);
-		const h = x <= 1 - e ? x / n : (1 - e + y - (y * y) / (2 * e)) / n;
-		return zetaOfLog(logEnd() * h);
+		const area = 1 - r - i / 2 - e / 2;
+		let h;
+		if (x <= r) h = 0;
+		else if (x <= r + i) {
+			const s = x - r;
+			h = (s * s) / (2 * i);
+		} else if (x <= 1 - e) h = i / 2 + (x - r - i);
+		else {
+			const y = x - (1 - e);
+			h = i / 2 + (1 - e - r - i) + y - (y * y) / (2 * e);
+		}
+		return zetaOfLog(logEnd() * (h / area));
 	}
 	// World units per second the camera is moving at as the fall opens.
 	const probe = new THREE.PerspectiveCamera();

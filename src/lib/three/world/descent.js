@@ -3,6 +3,7 @@ import {
 	SCENES,
 	NEST,
 	TUNNEL,
+	VARIANT,
 	span,
 	lerp,
 	clamp01,
@@ -11,7 +12,9 @@ import {
 	easeInOutCubic,
 	accelerate
 } from '$lib/config';
-import { decade, landing, monitorRect, blaze, aspect } from '$lib/store/store';
+import { decade, landing, monitorRect, blaze, aspect, conceived, caption } from '$lib/store/store';
+import { formatDay } from '$lib/functions/utils';
+import { createCrtMask } from './kaleidoscope';
 import { DECADES, shuffle } from '$lib/data/roomElements';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
 import { settled } from '$lib/scenes/director';
@@ -61,7 +64,18 @@ export function createDescent({ THREE, renderer, nest }) {
 	bu.uFade.value = 1;
 	scene.backgroundNode = deep(bu);
 	const camera = new THREE.PerspectiveCamera(NEST.seamFov, 1, 0.05, 100);
+	// In the scene, so the CRT mask can ride on it (?beat=black).
+	scene.add(camera);
+	const crt = createCrtMask(THREE);
+	camera.add(crt.group);
 	let aspectR = 1;
+	let capText = '';
+	function lineFor() {
+		if (VARIANT.cap === 'located') return 'bedroom located.';
+		if (VARIANT.cap === 'date' && get(conceived))
+			return `conceived roughly ${formatDay(get(conceived))}.`;
+		return '';
+	}
 	const sw = nest.swimmer;
 	// ?sperm=0 — see world/approach.js.
 	const SPERM =
@@ -109,6 +123,7 @@ export function createDescent({ THREE, renderer, nest }) {
 		nest.setSplosh(0, 1);
 		nest.setDim(1);
 		nest.setDark(1);
+		capText = lineFor();
 		set(0);
 	}
 
@@ -131,6 +146,30 @@ export function createDescent({ THREE, renderer, nest }) {
 		sw.spinner.rotation.z = sw.clock * SPIN;
 		sw.material.uniforms.uTime.value = sw.clock;
 		sw.material.uniforms.uOpacity.value = SPERM ? 1 - smoothstep(T.gone - 0.006, T.gone, p) : 0;
+
+		// ── The head: the rest, and the set switching back on ────────────
+		// The machine's line stays through the rest and goes as the fall
+		// drops. In black the picture comes back first: a dot, a line, the
+		// covers parting on the found room, and then the line is typed.
+		const head = T.head ?? 0;
+		const dropping = smoothstep(head, head + (T.easeIn ?? 0) * 0.6, p);
+		if (VARIANT.beat === 'black') {
+			const q = span(p, T.powerOn);
+			const width = smoothstep(0, 0.4, q);
+			const open = smoothstep(0.4, 1, q);
+			const glow = q > 0 ? 1 - smoothstep(0.7, 1, q) : 0;
+			crt.set(camera, open, width, glow);
+			if (capText)
+				caption.set({
+					text: capText,
+					k: smoothstep(T.capIn[0], T.capIn[1], p),
+					on: 1 - dropping
+				});
+		} else {
+			crt.set(camera, 1, 1, 0);
+			if (VARIANT.beat === 'rest' && capText)
+				caption.set({ text: capText, k: 1, on: 1 - dropping });
+		}
 
 		// ── The splosh, the flash, the raster ────────────────────────────
 		nest.setSplosh(smootherstep(span(p, T.splosh)), 1);
