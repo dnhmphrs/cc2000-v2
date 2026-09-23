@@ -6,6 +6,7 @@ import {
 	NEST,
 	KALEIDO,
 	TUNNEL,
+	VARIANT,
 	span,
 	lerp,
 	clamp01,
@@ -15,7 +16,7 @@ import {
 	DEV,
 	DEV_AT
 } from '$lib/config';
-import { gate, landing, decade, aspect } from '$lib/store/store';
+import { gate, landing, decade, aspect, caption } from '$lib/store/store';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
 import { dotMaterial, dots } from '$lib/three/tsl/materials';
 import { createMotes } from '$lib/three/tsl/motes';
@@ -193,10 +194,13 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 			else v = 0.5 + (v - 0.5) * (ba / ga);
 			uvs.setXY(i, u, v);
 		}
-		const room = new THREE.Mesh(geo, bgMat[decade]);
-		room.scale.set(gw, gh, 1);
-		room.position.set((gl.cx - 0.5) * width, (0.5 - gl.cy) * height, -0.03);
-		g.add(room);
+		// A DEAD set: no room behind the glass, the dark shows through it.
+		if (VARIANT.flight !== 'few') {
+			const room = new THREE.Mesh(geo, bgMat[decade]);
+			room.scale.set(gw, gh, 1);
+			room.position.set((gl.cx - 0.5) * width, (0.5 - gl.cy) * height, -0.03);
+			g.add(room);
+		}
 		return g;
 	}
 	function furniture(decade, key, width) {
@@ -241,6 +245,18 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		);
 	}
 
+	// ── The signal ───────────────────────────────────────────────────────
+	// One point of light dead ahead, where the set is, from the second answer
+	// until the set itself can be read: the answer did something, and that is
+	// where the flight is going.
+	const sigGeo = new THREE.BufferGeometry();
+	sigGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, 0, 0]), 3));
+	const sigMat = dotMaterial(KALEIDO.signalColor, KALEIDO.signalSize);
+	const signal = dots(sigGeo, sigMat);
+	signal.name = 'signal';
+	signal.frustumCulled = false;
+	scene.add(signal);
+
 	// ── The swimmer ──────────────────────────────────────────────────────
 	const sw = nest.swimmer;
 	const SPIN = -TUNNEL.spermSpin;
@@ -269,7 +285,12 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		// seen[1] ahead of the lens at archiveFrom — down to where the lens
 		// stops. Beyond that is the screen's glass, which nothing may sit in.
 		zFirst = zEnd * T.archiveFrom - A.seen[1];
-		for (const it of items) it.mesh.position.z = lerp(zFirst, zEnd, it.u);
+		// ?flight=few: the few dead sets pass after the first answer and are
+		// gone before the second; ?flight=empty has no items at all.
+		const zLast = VARIANT.flight === 'few' ? zEnd * T.fewTo : zEnd;
+		if (VARIANT.flight === 'few') zFirst = zEnd * T.fewFrom - A.seen[1];
+		for (const it of items) it.mesh.position.z = lerp(zFirst, zLast, it.u);
+		signal.position.set(0, 0, -A.travel);
 	}
 
 	function portrait() {
@@ -295,6 +316,7 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		askedSpicy = false;
 		finalised = false;
 		landing.set(0);
+		caption.set({ text: '', k: 0, on: 0 });
 		// A fresh run: the screen, the portal's set and the first room are
 		// drawn from the first frame, so they are chosen now, at random, and
 		// everything placed; the deeper rooms are set by finalise() when the
@@ -363,11 +385,24 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		for (const s of starMats) s.mat.uniforms.uOpacity.value = s.opacity * on;
 		motes.set(z, on, span(p, T.fadeIn));
 		uOn.value = on;
-		// The screen, the tunnel inside it and the portal at the tunnel's end
-		// come up with the sky, not before it: under the title card the frame
-		// is black.
-		nest.setDim(up);
-		kal.setDim(up);
+		// The set is OFF until the second answer is in — nothing at the centre
+		// of the frame but the swimmer for both questions — and then it comes
+		// out of the dark under the signal, and its glass switches on when its
+		// bezel can be read: a hairline that opens onto the tunnel (?on=crt),
+		// or it simply lights (?on=fade). The portal at the tunnel's end is on
+		// the same switch.
+		const lit = up * smoothstep(T.screenIn[0], T.screenIn[1], p);
+		nest.setDim(lit);
+		kal.setDim(lit);
+		sigMat.uniforms.uOpacity.value =
+			on *
+			smoothstep(T.signal[0], T.signal[1], p) *
+			(1 - smoothstep(T.signalOut[0], T.signalOut[1], p));
+		if (VARIANT.on === 'crt') {
+			const open = smoothstep(T.crtOn[0], T.crtOn[1], p);
+			const glow = p >= T.crtOn[0] ? 1 - smoothstep(T.crtOn[0], T.crtOn[1] + 0.04, p) : 0;
+			kal.setOpen(open, glow);
+		} else kal.setOpen(1, 0);
 		for (const it of items) it.mesh.rotation.z = it.rot0 + p * it.rate;
 
 		// ── The swimmer ──────────────────────────────────────────────────
@@ -425,6 +460,8 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		dispose() {
 			motes.dispose();
 			plane.dispose();
+			sigGeo.dispose();
+			sigMat.dispose();
 		}
 	};
 }

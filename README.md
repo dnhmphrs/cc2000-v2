@@ -67,6 +67,14 @@ pose for any level of the fall, and the glass rect the readout is drawn into.
 `src/lib/scenes/director.js` owns every transition — it is four functions long
 and it is the first file to read.
 
+**Cuts to compare, on one build.** A handful of URL switches (`config/variants.js`)
+pick between cuts of the run without a rebuild — nothing flying by in space or
+a few dead sets, the set switching on with a CRT hairline or simply lighting,
+the search stopping on the found room before the fall or handing over at one
+pace or switching off through black, how long the stop holds, and what the
+machine types as it stops. The defaults are the cut being proposed; every
+variant is still a pure function of progress, so `?at=` pins any of them.
+
 **The three 3D scenes are one shot.** The approach ends on
 `kaleidoscope.pose(0)` and the kaleido opens on it — the screen's glass filling
 the frame's height, the tunnel inside — and the kaleido ends on `nest.pose(0)`

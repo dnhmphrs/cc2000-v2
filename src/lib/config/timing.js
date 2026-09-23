@@ -1,4 +1,5 @@
 import { clamp01, easeInOutCubic } from './ease';
+import { VARIANT } from './variants';
 
 // ── Timing ───────────────────────────────────────────────────────────────────
 // Every animation in the experience is defined HERE, and nowhere else.
@@ -572,6 +573,23 @@ export const SCENES = scale({
 		askDob: 0.13,
 		askSpicy: 0.45,
 
+		// ── After the second answer ──────────────────────────────────────────
+		// The set dead ahead is OFF until the second answer is in: for both
+		// questions there is nothing at the centre of the frame but the
+		// swimmer. Then a SIGNAL — a point of light where the set is — and the
+		// set comes out of the dark under it, dark; at crtOn, close enough
+		// that the tunnel shows through its glass (through a small far glass
+		// you only see down the axis), the glass switches on: a CRT hairline
+		// that opens onto the tunnel (?on=crt), or it simply lights (?on=fade).
+		screenIn: [0.45, 0.52],
+		signal: [0.45, 0.5],
+		signalOut: [0.68, 0.78],
+		crtOn: [0.88, 0.94],
+		// ?flight=few: where the few dead sets pass — after the first answer,
+		// gone before the second.
+		fewFrom: 0.2,
+		fewTo: 0.42,
+
 		// ── ONE SPEED ────────────────────────────────────────────────────────
 		// The flight has no brake: it flies at one speed all the way into the
 		// glass, and the tunnel on the other side carries on at that speed —
@@ -615,9 +633,25 @@ export const SCENES = scale({
 		lensOut: [0.8, 0.97],
 
 		// Full turns of the hue, and of the tunnel about the axis, over the
-		// scene.
-		hueCycles: 1.5,
+		// scene. With the stop, the hue's turns are counted to the lock so it
+		// lands on TRUE colour: 2.5 cycles of a rate that runs to 0.68 and
+		// falls to nil by 0.92 is two whole turns.
+		hueCycles: VARIANT.beat === 'flow' ? 1.5 : 2.5,
 		turns: 0.35,
+
+		// ── The stop (?beat=rest, ?beat=black) ───────────────────────────────
+		// The search ENDS. Over `lock` the turn and the hue cycle decelerate to
+		// rest, the tunnel's speed brakes to nil over `ease` (kaleidoscope.js:
+		// v1 = 0), and the frame this ends on is nest.pose(0) reached AT REST,
+		// for the fall to drop from. The machine types its line over `cap`.
+		lock: [0.68, 0.92],
+		cap: [0.74, 0.94],
+		// ?beat=black: the picture overloads, collapses to a line, to a dot, to
+		// black — the set switching OFF — and the fall's head switches it back
+		// on (descent: blackHold, powerOn).
+		overload: [0.84, 0.92],
+		collapse: [0.92, 0.965],
+		pinch: [0.965, 0.99],
 
 		// The rings go out under the portal as it takes the frame, so the frame
 		// this ends on is the nest and nothing else.
@@ -636,9 +670,29 @@ export const SCENES = scale({
 	//  |the fall, one pace, six rooms deep       |raster|dive |splosh  |land
 	//                                     |easing to rest ................|
 	descent: {
-		// NINE. Fourteen was too slow through the monitors: at nine each crossing
-		// is a second and a half, which is the pace the lab sketch fell at.
-		duration: 9,
+		// NINE for the fall itself. Fourteen was too slow through the monitors:
+		// at nine each crossing is a second and a half, which is the pace the
+		// lab sketch fell at. The stop's head is added on top, so the fall's
+		// own pace does not change with the cut.
+		duration: { flow: 9, rest: 10.4, black: 11.4 }[VARIANT.beat],
+
+		// ── The head (?beat=rest, ?beat=black) ───────────────────────────────
+		// The fall starts from REST on the found room: for `head` of the scene
+		// the camera is still on nest.pose(0), then it drops into its one pace
+		// over `easeIn` (the mirror of the ease to rest at the end). In black
+		// the head is the set switching back ON — black with the swimmer
+		// (blackHold), the CRT line opening onto the room (powerOn), the
+		// machine's line typed (capIn) — and then the hold and the drop.
+		head:
+			VARIANT.beat === 'flow'
+				? 0
+				: VARIANT.beat === 'black'
+					? { short: 0.17, mid: 0.2, long: 0.26 }[VARIANT.rest]
+					: { short: 0.04, mid: 0.075, long: 0.13 }[VARIANT.rest],
+		easeIn: VARIANT.beat === 'flow' ? 0 : 0.14,
+		blackHold: [0, 0.09],
+		powerOn: [0.09, 0.14],
+		capIn: [0.14, 0.19],
 
 		// How many rooms deep, the last being the answer's, and how far into the
 		// last room's crossing the run comes to rest — past the point where the

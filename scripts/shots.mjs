@@ -34,6 +34,8 @@ const W = Number(process.env.W ?? 1280);
 const H = Number(process.env.H ?? 800);
 const PLAN = JSON.parse(process.env.PLAN ?? '[["2",[0,0.25,0.5,0.75,1]]]');
 const SEED = process.env.SEED ?? '1';
+// Extra query, for a variant of the run: QUERY='beat=black&cap=date' (config/variants.js).
+const QUERY = process.env.QUERY ? `&${process.env.QUERY}` : '';
 const NAME = { 2: 'approach', 3: 'descent', 4: 'kaleido', 5: 'room' };
 
 fs.mkdirSync(OUT, { recursive: true });
@@ -48,7 +50,7 @@ p.on('console', (m) => m.type() === 'error' && errs.push('CONSOLE: ' + m.text())
 for (const [key, ats] of PLAN) {
 	for (const at of ats) {
 		// DEV_AT is read once at module load, so each frame is its own page load.
-		await p.goto(`${BASE}/?at=${at}&seed=${SEED}`, { waitUntil: 'networkidle' });
+		await p.goto(`${BASE}/?at=${at}&seed=${SEED}${QUERY}`, { waitUntil: 'networkidle' });
 		// The stage warms every program up before its first frame and says so;
 		// a key pressed before that lands on a canvas still at opacity 0.
 		await p.waitForFunction(() => window.__stage, null, { timeout: 180000 }).catch(() => {});

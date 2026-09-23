@@ -1,3 +1,4 @@
+import { VARIANT } from './variants';
 // ── Space ────────────────────────────────────────────────────────────────────
 // Every distance, size and camera setting in the 3D, in one place.
 
@@ -400,9 +401,13 @@ export const APPROACH = {
 	// there inside `seen[0]`. Nothing else — no thinning before the seam. The
 	// last of it flanks the portal as the glass takes the frame and leaves by
 	// the edges, which is what a tube round the axis does on its own.
-	screens: 12,
-	furniture: 16,
-	tube: [3.0, 11.0],
+	// NOTHING flies by now (?flight=empty): both questions are asked over the
+	// swimmer, the stars and the debris, and the first drawing anyone sees is
+	// inside the glass. ?flight=few puts three dead sets — glass black, no
+	// room inside — far off the axis after the first answer, and nothing else.
+	screens: VARIANT.flight === 'few' ? 3 : 0,
+	furniture: 0,
+	tube: VARIANT.flight === 'few' ? [6.0, 11.0] : [3.0, 11.0],
 	seen: [22, 40],
 	// The sky, and the debris close in that makes the speed read.
 	stars: 1100,
@@ -469,6 +474,12 @@ export const KALEIDO = {
 	// A shade down, as the archive adrift is.
 	dim: 0.85,
 	// Out of the dark: unseen beyond seen[1] units ahead, fully there inside
-	// seen[0].
-	seen: [22, 40]
+	// seen[0]. The set's bezel has its own, further pair, so the set arrives
+	// a beat before the light inside it.
+	seen: [22, 40],
+	bezelSeen: [30, 60],
+	// The signal: the point of light where the set is, from the second answer
+	// until the set itself can be read. Device pixels, and the site's yellow.
+	signalSize: 13,
+	signalColor: 0xffd426
 };

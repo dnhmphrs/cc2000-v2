@@ -60,6 +60,17 @@ Two traps that have already cost a round each:
   screen and rooms match); a mean delta under 0.02/255 is what it measures
   today, anything past 1 is a real seam.
 
+## Cuts to compare, on one build
+
+`config/variants.js` reads a handful of URL switches once at load, so a
+creative note is answered with a link rather than a rebuild: `?flight=`,
+`?on=`, `?beat=`, `?rest=`, `?cap=` — the file says what each does, and the
+defaults are the cut being proposed. Every window a variant changes is still a
+pure function of progress, so `?at=` pins any of them. `shots.mjs` and
+`verify.mjs` take `QUERY='beat=black&cap=date'` to shoot or test a variant, and
+the seam checks above hold under every `?beat=` (under `black` both sides of
+the second seam are the black frame with the swimmer in it).
+
 Write scratch scripts and screenshots to the scratchpad, never into `scripts/`.
 A script living there cannot resolve the project's `node_modules`, so import by
 absolute path: `from '/home/user/cc2000-v2/node_modules/playwright/index.mjs'`.

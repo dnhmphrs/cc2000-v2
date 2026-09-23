@@ -25,6 +25,8 @@ import { launch } from './lane.mjs';
 
 const BASE = process.env.BASE ?? 'http://127.0.0.1:5178';
 const ROUTE = process.env.ROUTE ?? '/';
+// Extra query, for a variant of the run: QUERY='beat=black' (config/variants.js).
+const QUERY = process.env.QUERY ? `&${process.env.QUERY}` : '';
 const fails = [];
 const ok = (name, cond, detail) => {
 	console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`);
@@ -58,7 +60,7 @@ const answerDob = async (month, day, year) => {
 };
 
 // ?seed= pins every choice the run leaves to chance — config/dev.js.
-await p.goto(`${BASE}${ROUTE}?speed=6&seed=1`, { waitUntil: 'networkidle' });
+await p.goto(`${BASE}${ROUTE}?speed=6&seed=1${QUERY}`, { waitUntil: 'networkidle' });
 
 // ── The card lifts on its own ────────────────────────────────────────────────
 // Nothing is clicked. If this ever needs a click the run has grown a step.

@@ -16,3 +16,4 @@ export * from './space';
 export * from './layout';
 export * from './palette';
 export * from './dev';
+export * from './variants';
