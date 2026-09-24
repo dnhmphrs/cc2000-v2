@@ -35,10 +35,12 @@ import { wobbleEuler } from './wobble';
 //
 // "Go again" is the same crossing carried on: the camera flies from the
 // landing to the glass filling the frame, and through it, and what is behind
-// the glass is black — the space the next run opens on. From rest,
+// the glass is a RECORD — the readout's black gone to vinyl, gold grooves
+// turning under the lens, the spindle hole opening to take the frame — and
+// the black in the hole is the space the next run opens on. From rest,
 // accelerating, in SCENES.descent.home seconds; the readout is gone in the
 // first of them (scenes/Room.svelte) so nothing of the room rides the camera
-// into the glass. See stepReturn().
+// into the glass. See stepReturn() and nest.js, the record.
 //
 // It falls at ONE PACE from its first frame — the pace the tunnel eased to —
 // on the run's one lens, with the run's one hand on the camera
@@ -114,12 +116,14 @@ export function createDescent({ THREE, renderer, nest }) {
 		nest.setSplosh(0, 1);
 		nest.setDim(1);
 		nest.setDark(1);
+		nest.setRecord(0, 0, 0, NEST.record.hole, 1);
 		set(0);
 	}
 
 	function set(p) {
 		const zeta = nest.zetaOf(p);
 		const { D, fov, settle } = nest.pose(zeta, camera, aspectR);
+		nest.setDiscRin(aspectR);
 		// The run's one hand on the camera (world/wobble.js), on top of the
 		// pose — and off it over the last room's settle, so the glass is
 		// square in the frame for the readout. The swimmer below follows.
@@ -196,11 +200,26 @@ export function createDescent({ THREE, renderer, nest }) {
 		// with it: the run is a screen again. Then, black, it lets the ground
 		// through, which is the frame the next flight opens on.
 		const dark = smoothstep(T.homeDim[0], T.homeDim[1], q);
+		const dim = 1 - smoothstep(T.homeDim[1], 1, q);
 		nest.setDark(1 - dark);
-		nest.setDim(1 - smoothstep(T.homeDim[1], 1, q));
+		nest.setDim(dim);
 		landing.set(1 - dark);
+		// The record in the glass: the readout's black goes to vinyl over
+		// `record`, the grooves lit a beat behind, turning; and the spindle
+		// hole opens at the lens over `swallow` and takes the frame. It goes
+		// with the dim, so the frame this ends on is the black it always was
+		// — and the next flight is told it came this way.
+		const R = NEST.record;
+		nest.setRecord(
+			smoothstep(T.record[0], T.record[1], q),
+			smoothstep(T.record[0] + 0.08, T.record[1] + 0.08, q),
+			(q * R.turns) % 1,
+			lerp(R.hole, 1.6, accelerate(smoothstep(T.swallow[0], T.swallow[1], q), 2.2)),
+			dim
+		);
 		if (!handedOver && rt >= RETURN_DUR) {
 			handedOver = true;
+			nest.viaRecord = true;
 			settled();
 		}
 	}

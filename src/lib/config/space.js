@@ -405,6 +405,12 @@ export const APPROACH = {
 	// (TUNNEL.spermLead/spermSpan, a shade bigger — there is no ovum to share
 	// the frame with).
 	lead: 5.5,
+	// And how far ahead it pulls to come about for the questions: side-on at
+	// this distance, at its riding size, the body is about half the frame
+	// wide. `bank` is the lean into the turn, in radians, gone again once it
+	// is round. See SCENES.approach.pull.
+	far: 10,
+	bank: 0.25,
 	span: 0.28,
 	// How it arrives: it does not fly past the lens at all — every version of
 	// that reads as a body stretched by a wide lens — it FADES IN at its riding
@@ -454,7 +460,37 @@ export const NEST = {
 	// at the riding distance, and how far it rides toward the frame being
 	// fallen into.
 	spermSpan: 0.28,
-	spermRide: 0.5
+	spermRide: 0.5,
+	// ── The record ───────────────────────────────────────────────────────────
+	// The way home is through the record: the readout's glass goes to vinyl
+	// under the lens (nest.js, the record quad on the last room's glass;
+	// descent.js stepReturn drives it). Grooves per glass height in the song's
+	// last bars and in the lead-out; the label's radius and the spindle hole's,
+	// in glass heights; the light across it; the stroke, in glass heights,
+	// floored at a pixel; and how far it turns over the way home.
+	record: {
+		grooves: 80,
+		lead: 18,
+		label: 0.2,
+		hole: 0.045,
+		sheen: 1,
+		stroke: 0.0022,
+		turns: 0.78
+	},
+	// ── The disc at the tunnel's end ─────────────────────────────────────────
+	// The first room comes out of the dark as a record's LABEL: gold grooves
+	// round it, in its own plane, from `rin` room units out to `rout` — the
+	// search ends by dropping into a record, as the run ends by leaving
+	// through one. `rin` is the least it can be; the scenes push it outside
+	// the seam frame's corners on the live lens (nest.setDiscRin), so the seam
+	// and the fall never see a groove. `pitch` and `stroke` in room units.
+	disc: {
+		rin: 2.0,
+		rout: 16,
+		pitch: 0.09,
+		stroke: 0.012,
+		sheen: 1
+	}
 };
 
 // ── The kaleidoscope ─────────────────────────────────────────────────────────
@@ -487,5 +523,9 @@ export const KALEIDO = {
 	// The signal: the point of light where the set is, from the answers until
 	// the set itself can be read. Device pixels, and the site's yellow.
 	signalSize: 18,
-	signalColor: 0xffd426
+	signalColor: 0xffd426,
+	// The switch-on: the dot where the swimmer's nose touches the glass, and
+	// the hairline it draws out into, as fractions of the glass's height.
+	dot: 0.085,
+	hair: 0.02
 };

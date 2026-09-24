@@ -1,5 +1,20 @@
 import { get } from 'svelte/store';
 import {
+	Fn,
+	vec2,
+	vec3,
+	vec4,
+	uniform,
+	uv,
+	float,
+	length,
+	abs,
+	max,
+	min,
+	fwidth,
+	smoothstep as tslSmoothstep
+} from 'three/tsl';
+import {
 	SCENES,
 	APPROACH,
 	KALEIDO,
@@ -7,6 +22,7 @@ import {
 	TUNNEL,
 	runSeconds,
 	span,
+	lerp,
 	clamp01,
 	smoothstep,
 	smootherstep,
@@ -16,7 +32,7 @@ import {
 } from '$lib/config';
 import { gate, landing, decade, aspect } from '$lib/store/store';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
-import { dotMaterial, dots } from '$lib/three/tsl/materials';
+import { dotMaterial, dots, ADD } from '$lib/three/tsl/materials';
 import { createMotes } from '$lib/three/tsl/motes';
 import { rand } from '$lib/random';
 import { roomsFor } from './nest';
@@ -25,14 +41,16 @@ import { wobbleEuler } from './wobble';
 // ── Scene 1: the approach ────────────────────────────────────────────────────
 // The fly-in. Space, black, a sky of stars, blue debris streaking by — and the
 // swimmer, riding a few units ahead of the lens, seen from BEHIND, rolling
-// about the axis you are looking down. Nothing else flies by. The two
-// questions are asked over the swimmer alone, one straight after the other,
+// about the axis you are looking down. Nothing else flies by. For the two
+// questions it pulls ahead and comes about, SIDE-ON, and holds there while
+// they are asked, one straight after the other, then turns back and rides on;
 // and only once both are in does anything appear ahead: a point of light where
-// a set is, the set coming out of the dark — dark — and, when the lens is close
-// enough to see down it, its glass switching on with the tunnel inside
-// (world/kaleidoscope.js). The run ends with that glass filling the frame's
-// height on the seam lens, which is the exact frame the kaleido opens on —
-// kaleidoscope.pose(0), asked for by both scenes.
+// a set is, the set coming out of the dark — dark — until the swimmer's NOSE
+// reaches its glass and lights it: a dot where it touches, the hairline drawn
+// out of the dot, the covers parting about it onto the tunnel inside
+// (world/kaleidoscope.js setOpen). The run ends with that glass filling the
+// frame's height on the seam lens, which is the exact frame the kaleido opens
+// on — kaleidoscope.pose(0), asked for by both scenes.
 //
 // ── The opening ──────────────────────────────────────────────────────────────
 // The card lifts, the sky develops, and then the swimmer is there: it fades in
@@ -47,7 +65,30 @@ import { wobbleEuler } from './wobble';
 // frame. Holding t rather than running a second clock is what keeps every
 // frame a pure function of progress, so ?at= is exact. (The roll and the
 // tail's wobble are on the swimmer's own clock — the one thing in the run that
-// never stops, not even at the seam.)
+// never stops, not even at the seam.) The swimmer takes the questions SIDE-ON:
+// on a pivot at its centre, a child of the camera, it pulls ahead to A.far
+// and turns a quarter round (SCENES.approach.pull, turn), holds there at the
+// ask, rolling, and turns back and drops back to its ride (back, ride). The
+// questions are put to it, under it.
+//
+// ── The switch-on ────────────────────────────────────────────────────────────
+// The set does not switch itself on. Its glass is black until the swimmer's
+// nose reaches it — the contact p* is where the nose is on the glass plane at
+// the flight's one speed — and the beats hang off p* (SCENES.approach.switchOn):
+// a dot of light where the nose touches, drawn out sideways into the hairline
+// at that height, the covers parting about the line, the line going with them,
+// all done before the seam. WHERE on the glass is read off the live nose at the
+// first frame past p*: the roll is on real time, so it is the one thing about
+// the switch-on that is not a function of p — a pin past p* takes the nose
+// where it is.
+//
+// ── The lip ──────────────────────────────────────────────────────────────────
+// A run that came home through the record (world/descent.js stepReturn, the
+// spindle hole taking the frame) opens on the black in the hole, and the
+// record's last grooves go on past the lens over `lip` as the sky comes up —
+// gold rings, a child of the camera, expanding out of the frame and fading —
+// so the one becomes the other. The first run has no record behind it and
+// opens under the title card; nest.viaRecord says which.
 //
 // ── One speed, one lens, one hand, through the seam ──────────────────────────
 // The lens flies at ONE speed the whole way into the glass, no brake, on the
@@ -128,9 +169,78 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 	signal.frustumCulled = false;
 	scene.add(signal);
 
-	// ── The swimmer ──────────────────────────────────────────────────────
+	// ── The swimmer, on a pivot ──────────────────────────────────────────
+	// A child of the camera, riding `lead` ahead — on a PIVOT at its centre,
+	// so it can come about for the questions. Riding, the pivot is at −lead
+	// with the body at its origin, so the seam frame is exactly what it was.
 	const sw = nest.swimmer;
 	const SPIN = -TUNNEL.spermSpin;
+	const pivot = new THREE.Group();
+	pivot.name = 'pivot';
+	camera.add(pivot);
+	// The nose: the vertex furthest down the body's own axis, per unit of
+	// body height, carried on the spinner so the roll takes it round the axis
+	// as it does the body. It is what touches the set's glass.
+	const nose = new THREE.Object3D();
+	{
+		sw.group.updateMatrixWorld(true);
+		const v = new THREE.Vector3();
+		const tip = new THREE.Vector3(0, 0, Infinity);
+		sw.group.traverse((o) => {
+			if (!o.isMesh) return;
+			const pos = o.geometry.attributes.position;
+			for (let i = 0; i < pos.count; i++) {
+				v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+				if (v.z < tip.z) tip.copy(v);
+			}
+		});
+		nose.position.copy(tip);
+		sw.spinner.add(nose);
+	}
+	const halfLenUnit = -nose.position.z;
+
+	// ── The lip ──────────────────────────────────────────────────────────
+	// The record's last grooves, on a run that came home through it: three
+	// gold hairline rings on a quad that covers the frame a unit ahead of the
+	// lens, ADD, expanding out of the frame and fading over `lip`.
+	const lu = { uK: uniform(0), uA: uniform(0), uAspect: uniform(1) };
+	const lipMat = new THREE.MeshBasicNodeMaterial({
+		transparent: true,
+		depthTest: false,
+		depthWrite: false,
+		...ADD
+	});
+	lipMat.colorNode = Fn(() => {
+		const p = uv().sub(0.5).mul(vec2(lu.uAspect, 1.0));
+		const r = length(p);
+		const px = fwidth(r);
+		const grow = lu.uK.mul(5.0).add(1.0);
+		const w = float(0.006);
+		const ring = (r0, k) => {
+			const d = abs(r.sub(float(r0).mul(grow)));
+			const e = max(w, px);
+			return tslSmoothstep(0.0, e, d)
+				.oneMinus()
+				.mul(min(w.div(e), 1.0))
+				.mul(k);
+		};
+		const g = ring(0.3, 1.1).add(ring(0.45, 1.0)).add(ring(0.62, 0.8));
+		const col = vec3(0.94, 0.77, 0.36).mul(g).mul(lu.uA);
+		return vec4(col, 1.0);
+	})();
+	const lip = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), lipMat);
+	lip.name = 'lip';
+	lip.renderOrder = 90000;
+	lip.frustumCulled = false;
+	lip.position.z = -1;
+	lip.visible = false;
+	camera.add(lip);
+	const lipH = 2 * Math.tan(rad(LENS) / 2);
+	function sizeLip(aspectR) {
+		lu.uAspect.value = aspectR;
+		lip.scale.set(lipH * aspectR, lipH, 1);
+	}
+	let loopIn = false;
 	// ?sperm=0 hides the swimmer, for checking the seam pixel for pixel: its
 	// roll is on real time, so it is the one thing two loads never agree on.
 	const SPERM =
@@ -140,6 +250,10 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 	let t = 0;
 	let asked = false;
 	let finalised = false;
+	// The switch-on: where the nose reaches the glass plane, and where on the
+	// glass it touched (null until it has, on this run).
+	let pStar = 1;
+	let contact = null;
 	// Where the flight ends — the set's glass filling the frame's height on the
 	// seam lens. Asked of the kaleidoscope rather than worked out here, so the
 	// two scenes cannot disagree about it. ONE SPEED, no brake, so the flight
@@ -173,9 +287,17 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		kal.set(0, false);
 		if (kal.root.parent !== scene) scene.add(kal.root);
 		if (nest.root.parent !== scene) scene.add(nest.root);
-		camera.add(sw.group);
+		pivot.add(sw.group);
 		sw.group.quaternion.identity();
+		sw.group.position.set(0, 0, 0);
 		sw.material.uniforms.uOpacity.value = 0;
+		// The contact: the nose on the glass plane, z0·p − lead − halfLen = zGlass.
+		const bodyH = A.span * 2 * A.lead * Math.tan(rad(LENS) / 2);
+		pStar = (kal.zGlass + A.lead + halfLenUnit * bodyH) / zEnd;
+		contact = null;
+		// Came home through the record? Then the lip; and forget it.
+		loopIn = nest.viaRecord;
+		nest.viaRecord = false;
 		// The way home took the last room to black; this nest is lit.
 		nest.setDark(1);
 		set(0);
@@ -202,7 +324,12 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 	}
 
 	const camWorld = new THREE.Vector3();
+	const noseW = new THREE.Vector3();
 	const euler = new THREE.Euler();
+	const qYaw = new THREE.Quaternion();
+	const qBank = new THREE.Quaternion();
+	const Y = new THREE.Vector3(0, 1, 0);
+	const Z = new THREE.Vector3(0, 0, 1);
 	function set(p) {
 		// ── The camera: one speed, one lens, one hand ────────────────────
 		// Straight down the axis at one speed; the lens is the run's (LENS,
@@ -222,12 +349,44 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		for (const s of starMats) s.mat.uniforms.uOpacity.value = s.opacity * on;
 		motes.set(z, on, span(p, T.fadeIn));
 
-		// ── The set ──────────────────────────────────────────────────────
+		// ── The lip ──────────────────────────────────────────────────────
+		{
+			const k = smootherstep(span(p, T.lip));
+			const a = loopIn ? smoothstep(0, 0.02, p) * Math.pow(1 - k, 1.2) : 0;
+			lu.uK.value = k;
+			lu.uA.value = a;
+			lip.visible = a > 0.001;
+		}
+
+		// ── The swimmer ──────────────────────────────────────────────────
+		// It rides ahead of the LENS, dead centre — a child of the camera, so
+		// the hand on the camera leans the world round it and not it. Sized
+		// off the lens and the ride so it holds its place in the frame. It
+		// arrives by fading in, where it rides. For the questions it pulls
+		// ahead to A.far at that size, turns side-on about its centre with a
+		// lean into the turn that is gone once it is round, holds, and comes
+		// back: at the seam it is exactly the body it was.
+		const inK = smootherstep(span(p, T.swimmerIn));
+		const bodyH = A.span * 2 * A.lead * Math.tan(rad(LENS) / 2);
+		let dist = lerp(A.lead, A.far, smootherstep(span(p, T.pull)));
+		dist = lerp(dist, A.lead, smootherstep(span(p, T.ride)));
+		const turn = smootherstep(span(p, T.turn)) * (1 - smootherstep(span(p, T.back)));
+		const yaw = (turn * Math.PI) / 2;
+		const bank = Math.sin(2 * yaw) * A.bank;
+		pivot.position.set(0, 0, -dist);
+		pivot.quaternion.copy(qBank.setFromAxisAngle(Z, bank)).multiply(qYaw.setFromAxisAngle(Y, yaw));
+		sw.group.scale.setScalar(bodyH);
+		sw.spinner.rotation.z = sw.clock * SPIN;
+		sw.material.uniforms.uTime.value = sw.clock;
+		sw.material.uniforms.uOpacity.value = SPERM ? inK : 0;
+
+		// ── The set, and the switch-on ───────────────────────────────────
 		// OFF until the answers are in — nothing at the centre of the frame but
 		// the swimmer for both questions — then the signal, the set out of the
-		// dark under it, and at crtOn its glass switching on: a hairline that
-		// opens onto the tunnel. The room at the tunnel's end is on the same
-		// switch, and comes out of the dark in its own time (NEST.seen).
+		// dark under it, dark, and its glass switching on where the nose
+		// touches it: the dot, the line drawn out of it, the covers parting
+		// about the line. The room at the tunnel's end is on the same dimmer,
+		// and comes out of the dark in its own time (NEST.seen).
 		const lit = up * smoothstep(T.screenIn[0], T.screenIn[1], p);
 		nest.setDim(lit);
 		kal.setDim(lit);
@@ -235,23 +394,24 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 			on *
 			smoothstep(T.signal[0], T.signal[1], p) *
 			(1 - smoothstep(T.signalOut[0], T.signalOut[1], p));
-		const open = smoothstep(T.crtOn[0], T.crtOn[1], p);
-		const glow = p >= T.crtOn[0] ? 1 - smoothstep(T.crtOn[0], T.crtOn[1] + 0.04, p) : 0;
-		kal.setOpen(open, glow);
-
-		// ── The swimmer ──────────────────────────────────────────────────
-		// It rides ahead of the LENS, dead centre — a child of the camera, so
-		// the hand on the camera leans the world round it and not it. Sized
-		// off the lens and the ride so it holds its place in the frame. It
-		// arrives by fading in, where it rides.
-		const inK = smootherstep(span(p, T.swimmerIn));
-		const lead = A.lead;
-		const bodyH = A.span * 2 * lead * Math.tan(rad(LENS) / 2);
-		sw.group.position.set(0, 0, -lead);
-		sw.group.scale.setScalar(bodyH);
-		sw.spinner.rotation.z = sw.clock * SPIN;
-		sw.material.uniforms.uTime.value = sw.clock;
-		sw.material.uniforms.uOpacity.value = SPERM ? inK : 0;
+		const g = kal.screen.glass;
+		if (!contact && p >= pStar) {
+			// The first frame past the contact: where the nose is, on the glass,
+			// in the set's own frame (the set sits at −glass.x, −glass.y).
+			nose.getWorldPosition(noseW);
+			contact = { x: noseW.x + g.x, y: noseW.y + g.y };
+		}
+		const c = contact ?? { x: g.x, y: g.y };
+		const S = T.switchOn;
+		const B = Math.max(S.by - pStar, 0.005);
+		const win = ([a, b]) => [pStar + a * B, pStar + b * B];
+		const dot = smoothstep(...win(S.dot), p);
+		const width = smoothstep(...win(S.line), p);
+		const open = smoothstep(...win(S.open), p);
+		const glow = dot * (1 - smoothstep(...win(S.glow), p));
+		// The dot FLARES — brighter than the line it becomes, a point of light
+		// rather than the start of a bar — and settles as it draws out.
+		kal.setOpen(open, width, glow * (1 + 2.2 * (1 - width)), c.x, c.y);
 
 		// The stencil chain, for wherever the camera is. Always 0 here — the
 		// lens stops short of the set's glass — but the visibility has to be
@@ -279,6 +439,7 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 			camera.updateProjectionMatrix();
 			bu.aspectRatio.value = w / h;
 			bu.uPx.value = 1 / renderer.domElement.height;
+			sizeLip(w / h);
 		},
 		// Jump to a fraction of the scene's own duration, exactly. Used by the
 		// ?at= scrub — config/dev.js.
@@ -293,6 +454,8 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 			motes.dispose();
 			sigGeo.dispose();
 			sigMat.dispose();
+			lip.geometry.dispose();
+			lipMat.dispose();
 		}
 	};
 }

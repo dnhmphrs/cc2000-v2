@@ -253,7 +253,11 @@
 		z-index: 20;
 		pointer-events: auto;
 		display: grid;
-		place-items: center;
+		/* In the LOWER third, not the middle: the swimmer is side-on at the
+		   centre of the frame while these are asked, and the questions are put
+		   to it — under it, like a caption, rather than over it. */
+		place-items: end center;
+		padding-bottom: clamp(40px, 13vh, 120px);
 		font-family: var(--tech);
 		cursor: default;
 	}
