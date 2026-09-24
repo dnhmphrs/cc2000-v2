@@ -72,12 +72,13 @@ absolute path: `from '/home/user/cc2000-v2/node_modules/playwright/index.mjs'`.
 The run is `three/Stage.svelte` on ONE `WebGPURenderer` (WebGL 2 behind it
 where there is no WebGPU; `?gl=1` forces it), and three 3D scenes that are
 plain modules under `three/world/`: the **approach** (`approach.js` — space,
-the swimmer ahead of the lens from behind, the two questions over it, then the
-60s set dead ahead switching on), the **kaleido** (`kaleido.js` — through that
-set's glass and down the tunnel inside it, the archive looped in rings, turning
-and cycling in colour, to the first room at the far end — or, on a birthday the
-archive cannot answer for, the breakdown: the set switching off, and the
-verdict screen after it) and the **descent** (`descent.js` — rooms through
+the swimmer ahead of the lens from behind, coming about side-on to take the two
+questions, then the 60s set dead ahead, lit where the swimmer's nose touches
+its glass), the **kaleido** (`kaleido.js` — through that set's glass and down
+the tunnel inside it, the archive looped in rings, turning and cycling in
+colour, to the first room at the far end, come out of the dark as the label of
+a gold record — or, on a birthday the archive cannot answer for, the breakdown:
+the set switching off, and the verdict screen after it) and the **descent** (`descent.js` — rooms through
 rooms, at the pace the tunnel eased to, down to the answer's room and the
 splosh on its screen). The first two walk the same **kaleidoscope**
 (`kaleidoscope.js` — the set, the rings, the camera down the tunnel, where the
@@ -122,8 +123,12 @@ Three consequences worth remembering:
   see (`approach.js finalise()`).
 - **The loop home has no DOM half.** The camera flies through the room's monitor
   and `descent.js stepReturn()` hands the run to the approach when the glass has
-  filled the frame. The glass is black and so is the space behind it, so there
-  is nothing to cover the cut with because there is no cut to see.
+  filled the frame. Under the lens the glass goes to a RECORD (`nest.js`, on the
+  last room's glass), the spindle hole takes the frame, and the black in it is
+  the space the next flight opens on — which is told it came that way
+  (`nest.viaRecord`) so the record's last grooves can go on past the lens as the
+  sky comes up. There is nothing to cover the cut with because there is no cut
+  to see.
 - **The first frame is warmed up.** The Stage renders every object a few at a
   time before the loop starts, yielding to the page between, so the title card
   (which types on the clock, not on timers) keeps its rhythm on a slow GPU.

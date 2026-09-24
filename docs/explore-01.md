@@ -4,6 +4,15 @@
 
 Discovery, not a cut. Four scouts proposed twenty-four scene and transition ideas for the run, each through a different lens (the joins between beats; what the archive data affords; the swimmer and the lens; optical and analogue devices); three judges scored every one for fit with the run, novelty and buildability; the top six were built as lab sketches, each a pure function of its progress, so `/lab?sketch=<name>&at=0.42` pins any frame. Nothing here touches the run: `/` is as it was. To watch the six end to end, in the order they would sit in the run, `/v4?chain=explore` plays them as a reel with hard cuts between them (`?at=` pins the reel as a whole). Every sketch reuses the run's own modules (the nest, the kaleidoscope, the swimmer, the sky) where it can, so what is on the page is what the run would draw.
 
+**What went into the run, the round after.** Three of the six, on the notes: the
+swimmer comes about for the questions — to SIDE-ON, not all the way round — and
+the questions sit under it; the swimmer's nose lights the set, dot, line and
+covers as sketched; and the way home is through the record, with the record's
+last grooves going on past the lens as the next sky comes up. And from the
+"could the record come in at the tunnel's end" wondering: the first room now
+comes out of the dark as the label of a gold record. The many and the pilot
+stayed in the lab.
+
 ## The six, built
 
 ### About-face: the swimmer turns to take the questions

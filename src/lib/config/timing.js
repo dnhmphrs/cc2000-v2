@@ -542,9 +542,9 @@ const RAW = {
 	// the exact frame the kaleido opens on — at the speed it flew the whole
 	// way, on the run's one lens, with the same hand on the camera.
 	//
-	//  0  .1  .16 .25     .35             .55   .68     .86  .93 .985 1
-	//  |sky |swimmer|ask  |signal, the set out of the dark |set |CRT on|seam
-	//               both                    |signal out|             |sky out|
+	//  0  .1  .16 .25     .35             .55   .68       .91  .99 1
+	//  |sky |swimmer|ask  |signal, the set out of the dark |set |nose|seam
+	//     |pull, turn side-on|back, ride|  |signal out|     lights it|sky out
 	approach: {
 		// SEVEN. It was fifteen, and thirteen of them came after the answers —
 		// a long empty run at a set that was not getting bigger fast enough.
@@ -574,14 +574,39 @@ const RAW = {
 		// The set dead ahead is OFF until the answers are in: for both
 		// questions there is nothing at the centre of the frame but the
 		// swimmer. Then a SIGNAL — a point of light where the set is — and the
-		// set comes out of the dark under it, dark; at crtOn, close enough
-		// that the tunnel shows through its glass (through a small far glass
-		// you only see down the axis), the glass switches on: a CRT hairline
-		// that opens onto the tunnel.
+		// set comes out of the dark under it, dark, until the swimmer's nose
+		// reaches its glass and lights it (switchOn, below).
 		screenIn: [0.25, 0.35],
 		signal: [0.25, 0.32],
 		signalOut: [0.55, 0.68],
-		crtOn: [0.86, 0.93],
+
+		// ── The swimmer comes about for the questions ────────────────────────
+		// It pulls ahead (APPROACH.lead → APPROACH.far) and turns SIDE-ON, its
+		// centre on the axis, to take the questions — held at `ask`, rolling on
+		// its own clock — then turns back to the axis and drops back to its
+		// ride. Windows in p; the ask sits between `turn` and `back`.
+		pull: [0.1, 0.2],
+		turn: [0.13, 0.25],
+		back: [0.25, 0.34],
+		ride: [0.3, 0.42],
+
+		// ── The switch-on: the swimmer's nose lights the set ────────────────
+		// The glass switches on where the nose touches it, not by itself. The
+		// contact p* is worked out by the approach (the nose on the glass plane
+		// at the flight's one speed — about 0.91), and the beats hang off it as
+		// fractions of B = by − p*: the dot glows up as the nose lands, draws
+		// out sideways into the hairline, the covers part about that line, and
+		// the line goes with them — all done by `by`, before the seam.
+		switchOn: {
+			by: 0.99,
+			dot: [-0.2, 0.2],
+			line: [0, 0.55],
+			open: [0.35, 1],
+			glow: [0.6, 1]
+		},
+		// And on a run that came home through the record: the last of its
+		// grooves passing the lens as the sky comes up (approach.js, the lip).
+		lip: [0, 0.14],
 
 		// ── ONE SPEED, ONE LENS, ONE HAND ────────────────────────────────────
 		// The flight has no brake, no dolly and no levelling-off for the seam:
@@ -693,6 +718,13 @@ const RAW = {
 		// room.resultOut).
 		home: 1.4,
 		homeDim: [0.5, 0.92],
+		// And the record in the glass on the way home (nest.js, NEST.record):
+		// the readout's black goes to vinyl over `record` of the flight — after
+		// room.resultOut has taken the readout — and the spindle hole opens at
+		// the lens and takes the frame over `swallow`; the black in it is the
+		// next flight's.
+		record: [0.18, 0.4],
+		swallow: [0.72, 0.97],
 
 		// The swimmer leaves the axis for the glass, and goes in.
 		dive: [0.88, 0.972],

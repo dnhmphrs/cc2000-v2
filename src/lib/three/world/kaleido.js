@@ -23,8 +23,9 @@ import { roomsFor } from './nest';
 // rings turning and cycling round it, the same lens and the same hand on the
 // camera as in space. Then the search ENDS: over the last of the tunnel the
 // turn and the hue decelerate to rest, the hue landing on true colour, and a
-// room comes out of the dark at the tunnel's end — the whole room, not a set
-// — and takes the frame. The frame it ends on is nest.pose(0): the frame the
+// room comes out of the dark at the tunnel's end — the whole room, not a set,
+// as the LABEL of a record, gold grooves round it (nest.js, the disc) — and
+// takes the frame. The frame it ends on is nest.pose(0): the frame the
 // descent opens on, and the fall carries straight on from it.
 //
 // ── The breakdown ────────────────────────────────────────────────────────────
@@ -92,7 +93,10 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		camera.add(sw.group);
 		sw.group.quaternion.identity();
 		kal.setDim(1);
-		kal.setOpen(1, 0);
+		{
+			const g = kal.screen.glass;
+			kal.setOpen(1, 1, 0, g.x, g.y);
+		}
 		// No room at the end of a tunnel that is about to break down.
 		nest.setDim(broken ? 0 : 1);
 		nest.setDark(1);
@@ -102,6 +106,7 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 	function set(p) {
 		const { fov } = kal.pose(p, camera, aspectR);
 		kal.set(p, broken);
+		nest.setDiscRin(aspectR);
 
 		// ── The swimmer ──────────────────────────────────────────────────
 		// Ahead of the lens, dead centre, at the ride it arrived at — a child

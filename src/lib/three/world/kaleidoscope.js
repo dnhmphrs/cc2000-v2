@@ -1,7 +1,15 @@
 import {
+	Fn,
+	vec2,
+	vec3,
 	vec4,
 	uniform,
 	texture,
+	uv,
+	abs,
+	max,
+	length,
+	exp,
 	positionView,
 	positionWorld,
 	smoothstep as tslSmoothstep,
@@ -93,9 +101,13 @@ export function createKaleidoscope({ THREE, nest }) {
 	const uZ0 = uniform(0);
 	// Out of the dark, by view depth: the tunnel has no end you can see.
 	// uBright  the drawings' level — a shade down, up in the overload
-	// uGlow    the CRT hairline in the screen's glass, as it switches on
+	// uGlow    the light in the set's glass as it switches on — the dot and
+	//          the line, one capsule `uCap` across and high on a quad `uQuad`
 	const uBright = uniform(K.dim);
 	const uGlow = uniform(0);
+	const uCap = uniform(new THREE.Vector2(0.1, 0.1));
+	const uQuad = uniform(new THREE.Vector2(0.3, 0.3));
+	const YELLOW = new THREE.Color(K.signalColor);
 	const uSeen0 = uniform(K.seen[0]);
 	const uSeen1 = uniform(K.seen[1]);
 	const near = tslSmoothstep(uSeen0, uSeen1, positionView.z.negate()).oneMinus();
@@ -214,9 +226,10 @@ export function createKaleidoscope({ THREE, nest }) {
 		hole.frustumCulled = false;
 		// The glass, OFF: black covers over the glass, top and bottom, drawn
 		// where the stencil is 1 or more (the whole of the glass, whatever the
-		// nest inside has done to it) and after the tunnel, and the hairline
-		// between them. setOpen() parts them — the CRT switching on. Gated by
-		// uDim like the bezel, so an unlit set is nothing on the dark.
+		// nest inside has done to it) and after the tunnel, and the light
+		// between them. setOpen() parts them about where the swimmer's nose
+		// touched — the set switching on. Gated by uDim like the bezel, so an
+		// unlit set is nothing on the dark.
 		const coverMat = new THREE.MeshBasicNodeMaterial({
 			transparent: true,
 			depthTest: false,
@@ -224,15 +237,33 @@ export function createKaleidoscope({ THREE, nest }) {
 		});
 		coverMat.colorNode = vec4(0, 0, 0, uDim);
 		stencilOf(coverMat, 1, THREE.LessEqualStencilFunc, THREE.KeepStencilOp);
+		// The dot, and the line it draws out into: ONE quad, ADD, the site's
+		// yellow with a white core — a capsule `uCap` world units across and
+		// high, soft-edged, on a quad padded round it (`uQuad`) so the glow has
+		// room. As high as it is wide it is the dot where the nose touched;
+		// drawn out to the glass's width and thinned to the hairline it is the
+		// line the set switches on with. Premultiplied additive: the level goes
+		// in the colour, not the alpha. Stencil 1 or more: it is the GLASS
+		// lighting under the nose, not the nose.
 		const lineMat = new THREE.MeshBasicNodeMaterial({
 			transparent: true,
 			depthTest: false,
 			depthWrite: false,
 			...ADD
 		});
-		// Premultiplied additive (ADD): the level goes in the colour, not the alpha.
-		const lit = uGlow.mul(uDim);
-		lineMat.colorNode = vec4(lit, lit, lit, 1);
+		lineMat.colorNode = Fn(() => {
+			const p = uv().sub(0.5).mul(uQuad);
+			const r = uCap.y.mul(0.5);
+			const hx = max(uCap.x.mul(0.5).sub(r), 0.0);
+			const d = length(vec2(max(abs(p.x).sub(hx), 0.0), p.y)).div(r);
+			const soft = exp(d.mul(d).mul(-1.2));
+			const core = exp(d.mul(d).mul(-7.0));
+			const lit = uGlow.mul(uDim);
+			const col = vec3(YELLOW.r, YELLOW.g, YELLOW.b)
+				.mul(soft.mul(0.9))
+				.add(vec3(1, 1, 1).mul(core).mul(1.1));
+			return vec4(col.mul(lit), 1.0);
+		})();
 		stencilOf(lineMat, 1, THREE.LessEqualStencilFunc, THREE.KeepStencilOp);
 		const top = new THREE.Mesh(plane, coverMat);
 		const bottom = new THREE.Mesh(plane, coverMat);
@@ -247,7 +278,7 @@ export function createKaleidoscope({ THREE, nest }) {
 		screenRoot.add(bezel, hole);
 		screenDisposables.push(bezelMat, holeMat);
 		screen = { decade, glass, meshes: [bezel, hole, top, bottom, line], top, bottom, line };
-		setOpen(1, 0);
+		setOpen(1, 1, 0, glass.x, glass.y);
 	}
 
 	// ── Where everything is ──────────────────────────────────────────────
@@ -339,20 +370,40 @@ export function createKaleidoscope({ THREE, nest }) {
 		return { fov, Dend, zGlass };
 	}
 
-	// The glass switching on: `open` parts the covers from the middle line
-	// out, `glow` is the hairline. 1, 0 is a lit glass with the tunnel in it.
-	function setOpen(open, glow) {
+	// The glass switching on, from where the swimmer's nose touched it — xc,
+	// yc in the set's own frame (the glass's centre if nothing touched it):
+	// `open` parts the covers about that height, out to the glass's edges;
+	// `width` draws the line out from the dot at that point to the edges,
+	// thinning to the hairline as it goes; `glow` is its brightness. 1, 1, 0
+	// is a lit glass with the tunnel in it — the seam frame, whatever xc, yc.
+	function setOpen(open, width, glow, xc, yc) {
 		if (!screen) return;
 		const g = screen.glass;
 		const { top, bottom, line } = screen;
-		const shut = 1 - open;
-		top.scale.set(g.w, (g.h / 2) * shut, 1);
-		top.position.set(g.x, g.y + (g.h / 4) * (1 + open), 0.001);
-		bottom.scale.set(g.w, (g.h / 2) * shut, 1);
-		bottom.position.set(g.x, g.y - (g.h / 4) * (1 + open), 0.001);
-		top.visible = bottom.visible = shut > 0.0005;
-		line.scale.set(g.w, g.h * 0.02, 1);
-		line.position.set(g.x, g.y, 0.002);
+		const yT = g.y + g.h / 2;
+		const yB = g.y - g.h / 2;
+		// The covers: from the line's height out to the glass's edges,
+		// shrinking toward those edges as the glass opens.
+		const topH = (yT - yc) * (1 - open);
+		const botH = (yc - yB) * (1 - open);
+		top.scale.set(g.w, topH, 1);
+		top.position.set(g.x, yT - topH / 2, 0.001);
+		bottom.scale.set(g.w, botH, 1);
+		bottom.position.set(g.x, yB + botH / 2, 0.001);
+		top.visible = topH > 0.0005;
+		bottom.visible = botH > 0.0005;
+		// The line: a dot at the contact, drawn out to the glass's edges.
+		const DOT = g.h * K.dot;
+		const HAIR = g.h * K.hair;
+		const xL = xc - DOT / 2 + (g.x - g.w / 2 - (xc - DOT / 2)) * width;
+		const xR = xc + DOT / 2 + (g.x + g.w / 2 - (xc + DOT / 2)) * width;
+		const capW = xR - xL;
+		const capH = DOT + (HAIR - DOT) * width;
+		const pad = capH * 2.5;
+		uCap.value.set(capW, capH);
+		uQuad.value.set(capW + pad, capH + pad);
+		line.scale.set(capW + pad, capH + pad, 1);
+		line.position.set((xL + xR) / 2, yc, 0.002);
 		line.visible = glow > 0.001;
 		uGlow.value = glow;
 	}
@@ -408,6 +459,9 @@ export function createKaleidoscope({ THREE, nest }) {
 		},
 		get z0() {
 			return z0;
+		},
+		get zGlass() {
+			return zGlass;
 		},
 		get zEnd() {
 			return zEnd;
