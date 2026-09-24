@@ -18,20 +18,51 @@
 	//   ?at=0.42   pin the whole run at a fraction (every beat is a pure
 	//              function of progress, so this is exact)
 	//   ?gl=1      the WebGL 2 backend
-	const BEATS = [
-		{ key: 'approach', name: 'approach', seconds: 9 },
-		{ key: 'rooms', name: 'descent', seconds: 14 },
-		{ key: 'impact', name: 'conception', seconds: 12 },
-		{ key: 'lattice', name: 'lattice', seconds: 9 },
-		{ key: 'cube', name: 'bloom', seconds: 11 }
-	];
+	//
+	// ── And the explorations, in the run's order ─────────────────────────────
+	// ?chain=explore plays the six sketches of docs/explore-01.md end to end,
+	// each at its own length, in the order they would sit in the run:
+	//
+	//   about-face     10 s   the swimmer comes about to take the questions
+	//   sky-of-weeks    7 s   the sky is the archive; it swings to your week
+	//   switch-on     1.8 s   the swimmer's nose lights the set, into the seam
+	//   the-many        7 s   the swimmer joins the kaleidoscope
+	//   pilot           9 s   the swimmer leads the fall's roll
+	//   runout        2.3 s   the way home is through the record
+	//
+	// Hard cuts between them too: each is its own sketch on its own scene,
+	// and several of them replay the same stretch of the run from their own
+	// angle, so this is a reel, not a cut.
+	const CHAINS = {
+		v4: [
+			{ key: 'approach', name: 'approach', seconds: 9 },
+			{ key: 'rooms', name: 'descent', seconds: 14 },
+			{ key: 'impact', name: 'conception', seconds: 12 },
+			{ key: 'lattice', name: 'lattice', seconds: 9 },
+			{ key: 'cube', name: 'bloom', seconds: 11 }
+		],
+		explore: [
+			{ key: 'about-face', name: 'about-face', seconds: 10 },
+			{ key: 'sky-of-weeks', name: 'sky-of-weeks', seconds: 7 },
+			{ key: 'switch-on', name: 'switch-on', seconds: 1.82 },
+			{ key: 'the-many', name: 'the-many', seconds: 7 },
+			{ key: 'pilot', name: 'pilot', seconds: 9 },
+			{ key: 'runout', name: 'runout', seconds: 2.3 }
+		]
+	};
 	const HOLD = 1.5; // seconds on the last frame before the loop
 	const LOADERS = {
 		approach: () => import('$lib/lab/approach.js'),
 		rooms: () => import('$lib/lab/rooms.js'),
 		impact: () => import('$lib/lab/impact.js'),
 		lattice: () => import('$lib/lab/lattice.js'),
-		cube: () => import('$lib/lab/cube.js')
+		cube: () => import('$lib/lab/cube.js'),
+		'about-face': () => import('$lib/lab/about-face.js'),
+		'sky-of-weeks': () => import('$lib/lab/sky-of-weeks.js'),
+		'switch-on': () => import('$lib/lab/switch-on.js'),
+		'the-many': () => import('$lib/lab/the-many.js'),
+		pilot: () => import('$lib/lab/pilot.js'),
+		runout: () => import('$lib/lab/runout.js')
 	};
 
 	let canvas;
@@ -42,6 +73,9 @@
 		const atRaw = q.get('at');
 		const at = atRaw === null || atRaw === '' ? null : Math.max(0, Math.min(1, Number(atRaw)));
 		const forceWebGL = q.get('gl') === '1';
+		const chain = CHAINS[q.get('chain')] ? q.get('chain') : 'v4';
+		const BEATS = CHAINS[chain];
+		const TAG = chain === 'v4' ? 'v4 · rough cut' : `explore 01 · reel`;
 
 		const THREE = await import('three/webgpu');
 		const renderer = new THREE.WebGPURenderer({
@@ -79,9 +113,10 @@
 			const u = Math.min(1, (t - b.start) / b.seconds);
 			b.sketch.seek(u);
 			active = b;
-			status = `v4 · rough cut · ${b.name} ${t.toFixed(1)} s · ${lane}`;
+			status = `${TAG} · ${b.name} ${t.toFixed(1)} s · ${lane}`;
 			window.__v4 = {
 				lane,
+				chain,
 				at,
 				beat: b.name,
 				u: Number(u.toFixed(4)),
