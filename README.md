@@ -22,12 +22,12 @@ reads that to choose its build image, and the pin above already decides it.)
 
 Four routes:
 
-|                |                                                                                                                                                          |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`            | the run: approach → kaleido → descent → room, on WebGPU (WebGL 2 behind it where there is none; `?gl=1` forces it)                                       |
-| `/v2`          | the WebGL run this replaced, as it was: the tunnel, the ovum, the conception, the computation                                                            |
-| `/v4`          | the rebuild's four new beats, end to end — needs WebGPU (Chrome, Edge, Safari 26); `?gl=1` for the WebGL 2 fallback                                      |
-| `/lab?sketch=` | one sketch on a bare canvas: `approach`, `rooms`, `impact`, `lattice`, `cube` (the cut), `e8` (kept, on the side), `materials`; `heat`, `petals` retired |
+|                |                                                                                                                                                                                                                                                                                           |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`            | the run: approach → kaleido → descent → room, on WebGPU (WebGL 2 behind it where there is none; `?gl=1` forces it)                                                                                                                                                                        |
+| `/v2`          | the WebGL run this replaced, as it was: the tunnel, the ovum, the conception, the computation                                                                                                                                                                                             |
+| `/v4`          | the rebuild's four new beats, end to end — needs WebGPU (Chrome, Edge, Safari 26); `?gl=1` for the WebGL 2 fallback; `?chain=explore` plays the six exploration sketches of `docs/explore-01.md` in the run's order instead                                                               |
+| `/lab?sketch=` | one sketch on a bare canvas: `approach`, `rooms`, `impact`, `lattice`, `cube` (the cut), `e8` (kept, on the side), `materials`; `heat`, `petals` retired; and the exploration sketches of `docs/explore-01.md` — `about-face`, `switch-on`, `sky-of-weeks`, `runout`, `the-many`, `pilot` |
 
 `?at=0.42` pins any of them at a fraction of its run, exactly — every scene is a
 pure function of its own progress. See `docs/v4-plan.md` for where the rebuild
