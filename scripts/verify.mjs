@@ -116,8 +116,18 @@ if (ROUTE === '/') {
 // at its far end, over the first room — the fall's first frame.
 await answerDob(7, 14, 1986);
 await p.click('button.go');
-ok('the birthday lets it fly', await until(() => !document.querySelector('.ask'), 20));
-ok('the tunnel ends by asking how spicy', await until(asksSpicy, 80));
+// On /v2 the old flight asks the spice at its own mark, close enough behind
+// the birthday at this speed that the poll can miss the gap between them.
+ok(
+	'the birthday lets it fly',
+	await until(
+		() =>
+			!document.querySelector('.ask') ||
+			/spicy/i.test(document.querySelector('.ask .q')?.textContent ?? ''),
+		20
+	)
+);
+ok('the run goes on to ask how spicy', await until(asksSpicy, 80));
 await p.selectOption('#ask-spicy', '4');
 await p.click('button.go');
 ok('the second answer lets it dive', await until(() => !document.querySelector('.ask'), 20));

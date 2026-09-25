@@ -669,14 +669,17 @@ const RAW = {
 	//  |the fall, one pace, six rooms deep       |raster|dive |splosh  |land
 	//                                     |easing to rest ................|
 	descent: {
-		// NINE. Fourteen was too slow through the monitors: at nine each
-		// crossing is a second and a half, which is the pace the lab sketch
-		// fell at. There is no head: the tunnel has already eased to the pace
-		// the fall opens at (world/kaleidoscope.js), so the fall is falling on
-		// its first frame — once the spice is in. The fall's first frame is
-		// where the second question is asked, and the fall HOLDS there for it
+		// ELEVEN. Nine was the pace the lab sketch fell at — a second and a
+		// half a crossing — and each crossing is now longer by the funnel it
+		// falls down (NEST.funnel.zoom, 1.4 on top of the fit: ln 1.4 more
+		// zoom a level, seven e-folds in all against five and a half), so
+		// eleven keeps the pace on screen where nine had it. There is no
+		// head: the tunnel has already eased to the pace the fall opens at
+		// (world/kaleidoscope.js), so the fall is falling on its first frame
+		// — once the spice is in. The fall's first frame is where the second
+		// question is asked, and the fall HOLDS there for it
 		// (world/descent.js), as the flight holds for the first.
-		duration: 9,
+		duration: 11,
 
 		// How many rooms deep, the last being the answer's, and how far into the
 		// last room's crossing the run comes to rest — past the point where the

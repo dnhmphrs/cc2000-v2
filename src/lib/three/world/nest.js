@@ -20,7 +20,9 @@ import {
 	fwidth,
 	mix,
 	texture,
-	positionView
+	positionView,
+	positionLocal,
+	attribute
 } from 'three/tsl';
 import { LAYERS, placement, elementUrl, DECADES, shuffle } from '$lib/data/roomElements';
 import { SCREEN_GLASS, GLASS_SAFETY, NEST, LENS, SCENES } from '$lib/config';
@@ -28,6 +30,7 @@ import { PHI } from '$lib/three/geometry/icosahedron';
 import { glassOnly } from '$lib/three/tsl/glass';
 import { loadSwimmer } from '$lib/three/tsl/swimmer';
 import { ADD } from '$lib/three/tsl/materials';
+import { grooveDistNode } from '$lib/three/tsl/zeta';
 
 // ── The nest ─────────────────────────────────────────────────────────────────
 // Rooms inside rooms, through the decades. The site's room is six flat
@@ -43,13 +46,17 @@ import { ADD } from '$lib/three/tsl/materials';
 // ζ, so the frame the kaleido ends on and the frame the descent opens on are
 // the same call with the same number.
 //
-// Each level is a 3D similarity of its parent: level k+1's frame is placed on
-// level k's glass, scaled so the glass-aspect crop of the frame lands exactly
-// on the glass (N = crop width / glass width), and turned by the screw angle
-// about the glass centre. Every level has its own N and its own fixed point,
-// and the camera walks each level's spiral similarity to its fractional power
-// — c(f) = p' + R(fθ)·N^−f·(c0 − p') with p' = (I − R(θ)/N)⁻¹·g — so the frame
-// at ζ = k+1 IS the picture the child starts on, and the crossing has no seam.
+// Each level is a 3D similarity of its parent: level k+1's frame is placed
+// behind level k's glass — NEST.funnel.back glass heights behind it, on it
+// when that is 0 — scaled so the glass-aspect crop of the frame would land
+// exactly on the glass (N = crop width / glass width) and by NEST.funnel.zoom
+// on top of that, and turned by the screw angle about the glass centre. Every
+// level has its own N and its own fixed point, and the camera walks each
+// level's spiral similarity to its fractional power — c(f) = p' +
+// R(fθ)·N^−f·(c0 − p') with p' = (I − R(θ)/N)⁻¹·g, g where the child's origin
+// sits — so the frame at ζ = k+1 IS the picture the child starts on, and the
+// crossing has no seam. What is in the glass round the child, now that the
+// child is back and small in it, is the FUNNEL: see below.
 //
 // The fall runs at one pace ON SCREEN — equal time per unit of log(N), since
 // the crossings are zooms of different sizes (zetaOf) — from its first frame,
@@ -69,8 +76,10 @@ import { ADD } from '$lib/three/tsl/materials';
 //
 // The SPLOSH is a white blot on the last room's glass, and it lives here
 // because the glass does: the descent drives it with setSplosh(). So does the
-// RECORD the way home goes out through (setRecord), on the same glass; and
-// the DISC the first room is the label of, at the tunnel's end.
+// RECORD the way home goes out through (setRecord), on the same glass; the
+// DISC the first room is the label of, at the tunnel's end; and the FUNNEL
+// every room after it is the label of, between it and its parent's glass
+// (setFunnel).
 
 const rad = (d) => (d * Math.PI) / 180;
 const smooth = (a, b, x) => {
@@ -366,6 +375,112 @@ export async function createNest({ THREE, renderer }) {
 	})();
 	stencilOf(discMat, 1, THREE.LessEqualStencilFunc, THREE.KeepStencilOp);
 
+	// ── The funnel: the record between the rooms ─────────────────────────
+	// Every room after the first is the LABEL of a record with depth. Its
+	// frame sits NEST.funnel.back glass heights behind its parent's glass,
+	// and between the two is an open truncated cone of gold ζ grooves — the
+	// mouth at the glass, wide enough to fill it to its corners; the throat
+	// at the child's frame plane, round the label — and, where the throat is
+	// wider than the label, a flat annulus of the same grooves in the frame's
+	// plane closing the bottom. At `throat` = rin it is a cone down onto the
+	// label; at 'mouth' it is a can, a cylinder with a flat record at the
+	// bottom. Both are in the CHILD's group, in child units, axis z, so they
+	// scale and screw with the child and are dropped with it (rebase) once
+	// the lens is past the child's glass — by which time they are behind it.
+	//
+	// Opaque black between the grooves everywhere outside the label, blended
+	// OVER: it covers the child's wall smeared out past its frame, and the
+	// parent's painted glass round the child. Only where the stencil says
+	// the PARENT's glass — this room's own ref, k + 1 — and ≥ rather than =
+	// for the same reason as the disc: the whole funnel is outside the label,
+	// and the label is outside the frame the child's own glass is in, so
+	// nothing deeper is ever under it and the two are the same test. After
+	// the child's back layers, so it is over the wall, and before its front.
+	//
+	// The groove coordinate is the distance along the SURFACE from the
+	// label's edge, `g`: out across the annulus, then up the slant of the
+	// cone — baked into the geometry as an attribute, since it is linear
+	// along every edge — so one spiral runs from the label to the mouth
+	// whatever the shape (three/tsl/zeta.js). The label's radius is the
+	// disc's, uRin, pushed outside the frame's corners on the live lens
+	// (setDiscRin): nothing inside it is drawn, so no groove is inside the
+	// frame at ζ = k+1 exactly, where the child's frame fills the height and
+	// the crossing hands over.
+	//
+	// It moves — on the descent's progress, never on the clock, so a pin is
+	// still the frame the run would draw: the record turns, and a wave of
+	// light runs down the grooves to the throat (setFunnel; NEST.funnel).
+	const F = NEST.funnel;
+	const fu = { uTurn: uniform(0), uPhase: uniform(0) };
+	const grooveDist = grooveDistNode(THREE);
+	const funnelColor = Fn(() => {
+		const pos = positionLocal;
+		const th = atan(pos.y, pos.x);
+		const g = attribute('groove', 'float');
+		const px = fwidth(g);
+		const w = float(F.stroke);
+		// The label's edge, along the surface: uRin is a radius in the frame's
+		// plane and the geometry's throat is at rin, so it is uRin − rin out.
+		const edge = du.uRin.sub(D.rin);
+		const d = grooveDist(g, th.add(fu.uTurn.mul(2.0 * Math.PI)), F.pitch, F.amp, F.rate);
+		const band = sin(g.mul(2.3).add(0.4))
+			.mul(sin(g.mul(5.7)))
+			.mul(0.18)
+			.add(0.82);
+		// The pulse: a wave of light travelling down the funnel to the throat.
+		const pulse = sin(
+			g
+				.div(F.wave)
+				.add(fu.uPhase)
+				.mul(2.0 * Math.PI)
+		)
+			.mul(0.5)
+			.add(0.5)
+			.mul(F.depth)
+			.oneMinus();
+		const groove = hair(d, w, px)
+			.mul(band)
+			.mul(smoothstep(edge.add(0.04), edge.add(0.12), g));
+		const lock = hair(abs(g.sub(edge)), w.mul(1.4), px);
+		const sheen = pow(abs(cos(th.sub(1.15))), 3.0).mul(F.sheen);
+		const lit = mix(1.0 - 0.7 * F.sheen, 1.0, sheen);
+		const gloss = sheen.mul(0.045);
+		const outside = smoothstep(edge.sub(0.01), edge, g);
+		const a = outside.mul(nearN).mul(uDim);
+		const gold = vec3(GOLD.r, GOLD.g, GOLD.b);
+		const col = gold
+			.mul(groove.mul(lit).mul(pulse).mul(0.95).add(lock.mul(1.1)).add(gloss.mul(pulse)))
+			.mul(uDark);
+		return vec4(col.mul(a), a);
+	})();
+	// The geometry, per level: the cone from the mouth (z = `depth`, radius
+	// `mouthR`) down to the throat (z = 0, radius `throat`), open at both
+	// ends, and the annulus from the label's edge out to the throat where
+	// there is one. `groove` is the distance along the surface from the
+	// label's edge, rin: r − rin across the annulus, then up the slant.
+	const FUNNEL_SEGS = 128;
+	function funnelGeometry(mouthR, throat, depth) {
+		const cone = new THREE.CylinderGeometry(mouthR, throat, depth, FUNNEL_SEGS, 1, true);
+		cone.rotateX(Math.PI / 2);
+		cone.translate(0, 0, depth / 2);
+		const slant = Math.hypot(mouthR - throat, depth);
+		{
+			const p = cone.attributes.position;
+			const gv = new Float32Array(p.count);
+			for (let i = 0; i < p.count; i++) gv[i] = throat - D.rin + (p.getZ(i) / depth) * slant;
+			cone.setAttribute('groove', new THREE.BufferAttribute(gv, 1));
+		}
+		let ring = null;
+		if (throat > D.rin + 1e-4) {
+			ring = new THREE.RingGeometry(D.rin, throat, FUNNEL_SEGS, 1);
+			const p = ring.attributes.position;
+			const gv = new Float32Array(p.count);
+			for (let i = 0; i < p.count; i++) gv[i] = Math.hypot(p.getX(i), p.getY(i)) - D.rin;
+			ring.setAttribute('groove', new THREE.BufferAttribute(gv, 1));
+		}
+		return { cone, ring };
+	}
+
 	// ── The nest itself ──────────────────────────────────────────────────
 	const root = new THREE.Group();
 	root.name = 'nest';
@@ -451,7 +566,10 @@ export async function createNest({ THREE, renderer }) {
 
 		// The rooms. Room 0 is at the root, unturned and at unit scale — it is
 		// what the tunnel ends on, and the frame it ends on is square — and
-		// every room after it sits on its parent's glass, screwed.
+		// every room after it sits behind its parent's glass, screwed, at the
+		// bottom of its funnel. With the funnel off, on the glass, as it was.
+		const back = F.on ? F.back : 0;
+		const zoom = F.on ? F.zoom : 1;
 		let parent = null;
 		const nLevels = rooms.length;
 		rooms.forEach((decade, k) => {
@@ -463,8 +581,8 @@ export async function createNest({ THREE, renderer }) {
 				const pgl = parent.glass;
 				const ga = pgl.w / pgl.h;
 				const Kw = ga < W / H ? H * ga : W;
-				N = Kw / pgl.w;
-				group.position.set(pgl.x, pgl.y, pgl.z);
+				N = (Kw / pgl.w) * zoom;
+				group.position.set(pgl.x, pgl.y, pgl.z - back * pgl.h);
 				group.scale.setScalar(1 / N);
 				group.quaternion.setFromAxisAngle(zAxis, screw);
 				parent.group.add(group);
@@ -527,6 +645,27 @@ export async function createNest({ THREE, renderer }) {
 					10 * (nLevels + 1) + 10 * (nLevels - 1 - k) + j
 				)
 			);
+			// The funnel, from the parent's glass down to this room's frame —
+			// see above. In THIS level's meshes, so it goes with the room.
+			if (parent && F.on) {
+				const pgl = parent.glass;
+				const mouthR = F.mouth * (Math.hypot(pgl.w, pgl.h) / 2) * N;
+				const throat = F.throat === 'mouth' ? mouthR : F.throat;
+				const { cone, ring } = funnelGeometry(mouthR, throat, back * pgl.h * N);
+				const fm = mk(over());
+				fm.colorNode = funnelColor;
+				fm.side = THREE.DoubleSide;
+				stencil(fm, THREE.LessEqualStencilFunc, THREE.KeepStencilOp);
+				for (const geo of [cone, ring]) {
+					if (!geo) continue;
+					disposables.push(geo);
+					const m = new THREE.Mesh(geo, fm);
+					m.renderOrder = 10 * k + 5;
+					m.frustumCulled = false;
+					group.add(m);
+					meshes.push(m);
+				}
+			}
 			const lv = { ...r, group, meshes, screenMesh, N, screw, k };
 			levels.push(lv);
 			parent = lv;
@@ -574,17 +713,20 @@ export async function createNest({ THREE, renderer }) {
 		first.meshes.push(disc);
 
 		// Each level's fixed point, in its own coordinates: the point its
-		// child's spiral similarity x ↦ g + R(θ)·x/N leaves where it is. The
-		// last room has no child, so its crossing — the landing and the way
-		// home — uses the N a child would have had and NO screw: it lands
-		// level, and the fixed point of a plain similarity is g·N/(N−1).
+		// child's spiral similarity x ↦ g + R(θ)·x/N leaves where it is, g
+		// being where the child's origin sits — its funnel's depth behind the
+		// glass. The last room has no child, so its crossing — the landing
+		// and the way home — uses the N a child would have had, ON the glass
+		// and with NO screw, exactly as it always did: it lands level, and
+		// the fixed point of a plain similarity is g·N/(N−1).
 		levels.forEach((lv, k) => {
 			const gl = lv.glass;
 			const ga = gl.w / gl.h;
 			const Kw = ga < W / H ? H * ga : W;
-			lv.childN = k + 1 < levels.length ? levels[k + 1].N : Kw / gl.w;
-			lv.lnN = Math.log(lv.childN);
 			const last = k === levels.length - 1;
+			lv.childN = last ? Kw / gl.w : levels[k + 1].N;
+			lv.lnN = Math.log(lv.childN);
+			const gz = last ? gl.z : gl.z - back * gl.h;
 			const th = last ? 0 : SCREW;
 			const a = 1 - Math.cos(th) / lv.childN;
 			const b = Math.sin(th) / lv.childN;
@@ -592,10 +734,12 @@ export async function createNest({ THREE, renderer }) {
 			lv.fixed = new THREE.Vector3(
 				(a * gl.x - b * gl.y) / det,
 				(b * gl.x + a * gl.y) / det,
-				(lv.childN * gl.z) / (lv.childN - 1)
+				(lv.childN * gz) / (lv.childN - 1)
 			);
 		});
 		logs = levels.map((lv) => lv.lnN);
+		fu.uTurn.value = 0;
+		fu.uPhase.value = 0;
 		refreshClips();
 	}
 
@@ -825,8 +969,16 @@ export async function createNest({ THREE, renderer }) {
 		},
 		// The disc's label radius, pushed outside the frame's corners on the
 		// live lens (plus the hand's lean), so no groove is in the seam frame.
+		// The funnels' labels are the same radius, for the same reason at
+		// every crossing.
 		setDiscRin(aspect) {
 			du.uRin.value = Math.max(D.rin, Math.hypot(1, aspect) + 0.2);
+		},
+		// The funnels, at `p` of the descent: the record's turn and the
+		// pulse's phase, straight off the progress — NEST.funnel.
+		setFunnel(p) {
+			fu.uTurn.value = p * F.turns;
+			fu.uPhase.value = p * F.pulses;
 		},
 		// Set by the way home as it hands over, read and cleared by the next
 		// flight: it came through the record, so the record's last grooves

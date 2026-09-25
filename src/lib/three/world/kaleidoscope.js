@@ -10,6 +10,13 @@ import {
 	max,
 	length,
 	exp,
+	float,
+	atan,
+	sin,
+	cos,
+	pow,
+	mix,
+	fwidth,
 	positionView,
 	positionWorld,
 	smoothstep as tslSmoothstep,
@@ -27,6 +34,7 @@ import {
 	easeInOutCubic
 } from '$lib/config';
 import { ADD } from '$lib/three/tsl/materials';
+import { grooveDistNode, hair, TWO_PI } from '$lib/three/tsl/zeta';
 import { DECADES, shuffle } from '$lib/data/roomElements';
 import { glassOnly, glassCut } from '$lib/three/tsl/glass';
 import { roomsFor } from './nest';
@@ -43,6 +51,15 @@ import { wobbleEuler } from './wobble';
 // whole room, filling the frame's height, and not to be seen from the glass:
 // it comes out of the dark as the search stops (NEST.seen) — and the tunnel
 // gives way to it: the fall begins where the tunnel ends.
+//
+// Round the rings is the WALL (KALEIDO.wall): the tunnel is the inside of a
+// record, a cylinder of gold grooves from the glass plane to the room's, and
+// the room at the far end is its label — the disc round room 0 (nest.js) is
+// the same record's face. The grooves are ζ's, cut with three/tsl/zeta.js,
+// the song playing inward: t runs from the room end toward the glass, so the
+// flight down the tunnel is the needle's run in to the label. It turns with
+// the rings, recedes into the dark with them, and a wave of light runs down
+// it ahead of the lens — on the scene's progress, like everything here.
 //
 // Like the nest, it is built ONCE and walked by two scenes. The approach flies
 // up to the set with the tunnel showing inside its glass (the set's glass
@@ -145,6 +162,75 @@ export function createKaleidoscope({ THREE, nest }) {
 		}
 	}
 
+	// ── The wall ─────────────────────────────────────────────────────────
+	// One open cylinder on the axis, seen from inside, drawn where the stencil
+	// is 1 or more like the rings and just UNDER them, so the drawings sit on
+	// it and it sits on the disc where the disc reaches past its mouth (the
+	// disc runs out to NEST.disc.rout, well past the wall's radius; nothing of
+	// it past the mouth is ever in the frame but through the wall, so it is
+	// left as it is and the wall covers it). Laid OVER, premultiplied, black
+	// between the grooves — the wall is a surface, and what is behind it is
+	// the dark — or ADDED, gold alone over the black, by the knob.
+	//
+	// The groove coordinate is the distance down the axis from the ROOM end
+	// (uRoomZ, set with the nest), the angle is round the axis less the turn
+	// the rings have made (uTurn), and the stroke is hair()'s: floored at a
+	// screen pixel by the fwidth of the coordinate and dimmed by the same
+	// ratio, since down a wall seen at a grazing angle the grooves crowd to
+	// nothing long before the dark takes them. The sheen is fixed in the
+	// world while the grooves turn under it. The pulse is one sine down the
+	// axis, its phase the scene's progress (uPhase), running toward the room.
+	const W = K.wall;
+	const uTurn = uniform(0);
+	const uPhase = uniform(0);
+	const uRoomZ = uniform(0);
+	const GOLD = new THREE.Color(0xf0c45c);
+	const wallGeo = new THREE.CylinderGeometry(W.radius, W.radius, 1, W.segments, 1, true);
+	const wallMat = new THREE.MeshBasicNodeMaterial({
+		transparent: true,
+		depthTest: false,
+		depthWrite: false,
+		side: THREE.DoubleSide,
+		...(W.add
+			? ADD
+			: {
+					blending: THREE.CustomBlending,
+					blendSrc: THREE.OneFactor,
+					blendDst: THREE.OneMinusSrcAlphaFactor,
+					blendEquation: THREE.AddEquation
+				})
+	});
+	{
+		const grooveDist = grooveDistNode(THREE);
+		wallMat.colorNode = Fn(() => {
+			const s = positionWorld.z.sub(uRoomZ);
+			const th0 = atan(positionWorld.y, positionWorld.x);
+			const th = th0.sub(uTurn);
+			const d = grooveDist(s, th, float(W.pitch), float(W.amp), float(W.rate));
+			const groove = hair(d, float(W.stroke), fwidth(s));
+			const sheen = pow(abs(cos(th0.sub(1.15))), 3.0).mul(W.sheen);
+			const lit = mix(1.0 - 0.7 * W.sheen, 1.0, sheen);
+			const pulse = sin(s.div(W.wavelength).add(uPhase).mul(TWO_PI))
+				.mul(0.5)
+				.add(0.5)
+				.mul(W.depth)
+				.oneMinus();
+			const gold = hue(vec3(GOLD.r, GOLD.g, GOLD.b), turned.mul(W.hue));
+			const level = float(W.level).mul(mix(1.0, uBright.div(K.dim), W.overload));
+			const a = near.mul(uDim).mul(mix(1.0, uOn, W.out));
+			const col = gold.mul(groove.mul(lit).mul(pulse).mul(level));
+			return W.add ? vec4(col.mul(a), 1.0) : vec4(col.mul(a), a);
+		})();
+	}
+	stencilOf(wallMat, 1, THREE.LessEqualStencilFunc, THREE.KeepStencilOp);
+	disposables.push(wallMat, wallGeo);
+	const wall = new THREE.Mesh(wallGeo, wallMat);
+	wall.name = 'wall';
+	wall.rotation.x = Math.PI / 2;
+	wall.renderOrder = RING_ORDER - 1;
+	wall.frustumCulled = false;
+	wall.visible = W.on;
+
 	// ── The world ────────────────────────────────────────────────────────
 	const root = new THREE.Group();
 	root.name = 'kaleidoscope';
@@ -154,6 +240,7 @@ export function createKaleidoscope({ THREE, nest }) {
 	const rings = new THREE.Group();
 	rings.name = 'rings';
 	root.add(rings);
+	if (W.on) root.add(wall);
 
 	// The rings, all of them, built once: ring i is one drawing, K.ring of it
 	// round the axis, each turned to its place and every other one mirrored,
@@ -316,8 +403,13 @@ export function createKaleidoscope({ THREE, nest }) {
 		nest.root.position.z = zEnd - seamD;
 		nest.refreshClips();
 		Dend = D;
-		// The rings, from the glass plane down to just short of the room's.
+		// The rings, from the glass plane down to just short of the room's —
+		// and the wall the whole way, glass plane to room plane, its grooves
+		// counted from the room end.
 		const roomZ = zEnd - seamD;
+		wall.scale.set(1, zGlass - roomZ, 1);
+		wall.position.z = (zGlass + roomZ) / 2;
+		uRoomZ.value = roomZ;
 		let n = 0;
 		for (let i = 0; i < ringList.length; i++) {
 			const z = zGlass - (i + 0.5) * K.pitch;
@@ -436,6 +528,8 @@ export function createKaleidoscope({ THREE, nest }) {
 			bright = K.dim + o * 0.7;
 		}
 		rings.rotation.z = turn;
+		uTurn.value = turn * W.turn;
+		uPhase.value = x * W.pulses;
 		uHue.value = hueA;
 		uBright.value = bright;
 		uOn.value = breakdown ? 1 : 1 - easeInOutCubic(span(x, T.out));

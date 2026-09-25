@@ -162,6 +162,7 @@ export function createDescent({ THREE, renderer, nest }) {
 		const zeta = nest.zetaOf(p);
 		const { D, fov, settle } = nest.pose(zeta, camera, aspectR);
 		nest.setDiscRin(aspectR);
+		nest.setFunnel(p);
 		// The run's one hand on the camera (world/wobble.js), on top of the
 		// pose — and off it over the last room's settle, so the glass is
 		// square in the frame for the readout. The swimmer below follows.
