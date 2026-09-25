@@ -16,13 +16,16 @@ swimmer's nose reaches its glass and lights it: a dot at the glass's centre,
 the hairline drawn out of the dot, the covers parting about it onto the
 tunnel inside; through the glass and down the tunnel, where the archive is looped —
 rings of eight of the same drawing, mirrored, turning, the hue cycling as the
-pattern repeats — with no exit in sight, the tunnel easing from the flight's
+pattern repeats — round a wall of gold grooves cut with |ζ(½ + it)|, the
+tunnel the inside of a record, with no exit in sight, the tunnel easing from the flight's
 speed to the fall's the whole way down, until the search ENDS: the turn and
 the hue decelerate to rest, the hue on true colour, and a room comes out of
 the dark at the far end as the LABEL of a gold record — the whole room, not a
 set, grooves round it — and fills the frame, and the spice is asked there,
 under it, the fall holding for it; then the fall carries straight on
-through the decades, one room inside the next, at one pace on screen, the turn
+through the decades, one room inside the next, every room after the first at
+the bottom of a funnel of the same grooves inside its parent's glass, the
+record turning and a pulse of light running down it, at one pace on screen, the turn
 coming in from rest and going out before the answer's room, which lands level;
 the swimmer going into its screen and the screen going white; the readout in
 that glass; and "go again" — the readout gone, the glass gone to vinyl under

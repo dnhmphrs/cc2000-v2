@@ -50,22 +50,27 @@ spice at the tunnel's end.
                      └──────────────────────── go again ────────────────────────┘
 ```
 
-| #   | Scene        | What it is                                                                                                                                                                              | Where                             |
-| --- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind, the birthday asked under it; then the 60s set dead ahead, lit at its centre as the swimmer's nose reaches the glass. 3D.             | `src/lib/three/world/approach.js` |
-| 2   | **Kaleido**  | Through that set's glass and down the tunnel inside: the archive looped, in rings, turning and cycling in colour, to the first room, the label of a gold record — or the breakdown. 3D. | `src/lib/three/world/kaleido.js`  |
-| 3   | **Descent**  | The spice asked over the first room, then rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. 3D.                       | `src/lib/three/world/descent.js`  |
-| 4   | **Room**     | The answer, in that room's monitor. DOM.                                                                                                                                                | `src/lib/scenes/Room.svelte`      |
+| #   | Scene        | What it is                                                                                                                                                                                                      | Where                             |
+| --- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind, the birthday asked under it; then the 60s set dead ahead, lit at its centre as the swimmer's nose reaches the glass. 3D.                                     | `src/lib/three/world/approach.js` |
+| 2   | **Kaleido**  | Through that set's glass and down the tunnel inside: the archive looped, in rings, turning and cycling in colour, round a wall of gold ζ grooves, to the first room, the record's label — or the breakdown. 3D. | `src/lib/three/world/kaleido.js`  |
+| 3   | **Descent**  | The spice asked over the first room, then rooms through rooms, each at the bottom of a funnel of ζ grooves, down to the answer's room; the swimmer hits its screen and it goes white. 3D.                       | `src/lib/three/world/descent.js`  |
+| 4   | **Room**     | The answer, in that room's monitor. DOM.                                                                                                                                                                        | `src/lib/scenes/Room.svelte`      |
 
 The first two 3D scenes walk the same **kaleidoscope** —
 `src/lib/three/world/kaleidoscope.js`: the set the flight ends in, the rings
-of the archive down the tunnel behind its glass, the camera down that tunnel,
-and where the nest goes at the end of it. The last two walk the same **nest**
-— `src/lib/three/world/nest.js`: the first room at the tunnel's end, the rooms
-inside its glass one inside the next, the stencil chain that clips each to the
-glass above it (one level up from the set's), the depth fade that keeps the
-first room out of sight until the search stops, the camera pose for any level
-of the fall, and the glass rect the readout is drawn into.
+of the archive down the tunnel behind its glass, the wall of grooves round
+them, the camera down that tunnel, and where the nest goes at the end of it.
+The last two walk the same **nest** — `src/lib/three/world/nest.js`: the
+first room at the tunnel's end, the rooms inside its glass one inside the
+next, each behind a funnel of grooves, the stencil chain that clips each to
+the glass above it (one level up from the set's), the depth fade that keeps
+the first room out of sight until the search stops, the camera pose for any
+level of the fall, and the glass rect the readout is drawn into. The grooves
+— on the way home, round the first room, in the funnels, down the wall — are
+all cut with `|ζ(½ + it)|`: `src/lib/functions/zeta.js` works the critical
+line out, `src/lib/three/tsl/zeta.js` puts it in a texture and finds the
+nearest groove of a spiral whose radius wobbles by it.
 `src/lib/scenes/director.js` owns every transition — the way out to the verdict
 screen when the tunnel breaks down on a birthday the archive cannot answer for,
 and the way back, included — and it is the first file to read.
@@ -116,13 +121,14 @@ src/lib/
   three/
     Stage.svelte      the canvas, one WebGPU renderer, the clock, the three 3D scenes
     world/
-      kaleidoscope.js   the set, the rings down the tunnel, the camera down it, the CRT mask
-      nest.js           the rooms one inside the next, the stencil chain, the depth fade, pose(ζ)
+      kaleidoscope.js   the set, the rings down the tunnel, the wall, the camera down it, the CRT mask
+      nest.js           the rooms one inside the next, the stencil chain, the depth fade, the funnels, pose(ζ)
       approach.js       scene 1 — space, the swimmer, the birthday, the set switching on
       kaleido.js        scene 2 — down the tunnel to the first room, or the breakdown
       descent.js        scene 3 — the spice, the fall, the splosh, the readout's rect, the way back
     tsl/
       materials.js      every material, as TSL — line, holo, skin, dot, core
+      zeta.js           |ζ(½ + it)| as a texture, and the distance to the nearest groove cut with it
       backdrop.js       the grounds the scenes paint — deep, grid, flat, white
       swimmer.js        the sperm, loaded and normalised, on the hologram
       glass.js          the per-decade glass key — as a stencil, and as a cut-out

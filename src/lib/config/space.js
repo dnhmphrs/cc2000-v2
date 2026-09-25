@@ -440,8 +440,14 @@ export const NEST = {
 	// The wall covers the FRAME, which only covers the frustum from infinitely
 	// far; the wall's own edge pixels are smeared outward this many times over
 	// — enough that on LENS, with the back wall a room's depth behind the
-	// frame and the hand on the camera, the wall still fills the frustum.
-	wallCover: 2.6,
+	// frame and the hand on the camera, the wall still fills the frustum. And
+	// now the LABEL: every room after the first is seen through the round
+	// label of its funnel (NEST.funnel), `rin` room units across, from as far
+	// as the mouth, and a wall a room's depth behind the frame has to reach
+	// rin·(d + depth)/d to back the label's top from d away — 3.2 at the
+	// nearest the whole label is in the frame. 2.6 left a band of the
+	// parent's glass paint over every room's wall, mid-crossing.
+	wallCover: 3.4,
 	// Out of the dark: the rooms are unseen beyond seen[1] units ahead and
 	// fully there inside seen[0], so the room at the tunnel's end is not there
 	// to be seen on the way in — it comes up over the last third of the
@@ -484,6 +490,55 @@ export const NEST = {
 		pitch: 0.09,
 		stroke: 0.012,
 		sheen: 1
+	},
+	// ── The record between the rooms ─────────────────────────────────────────
+	// Every room after the first sits at the BOTTOM of a record with depth: a
+	// funnel of gold ζ grooves inside its parent's glass, the room its label
+	// (nest.js, the funnel). The child's frame used to sit ON the glass, its
+	// drawing cropped by it and its wall smeared to the glass's edges; now it
+	// sits back, smaller, and what is round it in the glass is grooves.
+	funnel: {
+		// Off is the old fall exactly: no funnel, no zoom, nothing set back.
+		on: true,
+		// How far behind its parent's glass the child's frame sits, in the
+		// parent's glass heights — the funnel's depth. Under 1.07 (the
+		// glass's own distance from the lens as its crop fills the height, on
+		// LENS) or the lens is through the glass before the crossing ends.
+		back: 0.5,
+		// Extra zoom per level, over the fit that lands the child's glass-aspect
+		// crop exactly on the glass: the child is this much smaller in it, and
+		// the rest of the glass is grooves. The fall paces itself in log(N),
+		// so every crossing is longer on screen by ln(zoom) — see
+		// SCENES.descent.duration. 1 is the old fit.
+		zoom: 1.4,
+		// The MOUTH, at the parent's glass, in radii of that glass's circumcircle
+		// (1 fills the glass with grooves to its corners; the painted glass of
+		// a set runs past the measured rect, so it is wider than that, or a
+		// band of the paint shows over the mouth); the THROAT, at the
+		// child's frame, in the child's room units (its frame is 2 tall). At
+		// `rin` — the disc's least label radius, the frame's corners — the
+		// funnel narrows to a cone whose bottom is the label; 'mouth' makes a
+		// cylinder, a can with a flat record at the bottom of it.
+		mouth: 1.3,
+		throat: 2.0,
+		// The grooves, in the child's room units: the pitch, the ζ swell (under
+		// half the pitch, or grooves cross — three/tsl/zeta.js) and the rate
+		// t runs along them (zeros a turn: about rate·ln(t/2π) — a couple by
+		// the mouth), the stroke, and the light across them, as the disc's.
+		pitch: 0.09,
+		amp: 0.03,
+		rate: 0.7,
+		stroke: 0.012,
+		sheen: 1,
+		// And how it moves, over the descent — on the scene's progress, so a
+		// pin is exact: turns of the record, and the pulse, a wave of light
+		// running down the funnel to the throat, taking `depth` of the light
+		// at its trough, `wave` child units from crest to crest, `pulses`
+		// crests passing over the scene.
+		turns: 1.5,
+		depth: 0.55,
+		wave: 0.6,
+		pulses: 6
 	}
 };
 
@@ -522,5 +577,54 @@ export const KALEIDO = {
 	// reaches it, and the hairline it draws out into, as fractions of the
 	// glass's height.
 	dot: 0.085,
-	hair: 0.02
+	hair: 0.02,
+	// ── The wall ─────────────────────────────────────────────────────────────
+	// The tunnel is the inside of a RECORD: a cylinder of gold grooves round
+	// the rings, from the set's glass to the room at the far end, whose label
+	// the room already is (NEST.disc). The flight down the tunnel is the
+	// needle's run in to the label — the song plays inward, t growing from the
+	// room toward the glass. The grooves are ζ's (three/tsl/zeta.js).
+	wall: {
+		// Off gives today's tunnel, exactly.
+		on: true,
+		// World units. Outside every ring drawing: the widest, a 2.6 desk at
+		// 3.6 out, reaches about 4.3.
+		radius: 6,
+		// Round the axis; enough that it is a circle at this radius.
+		segments: 128,
+		// The groove: world units per groove down the axis (the tunnel is some
+		// forty-odd units long), the wobble ζ puts on it (under half the
+		// pitch, or grooves cross), how fast t runs along the groove (zeros to
+		// a turn — about one and a half by the glass end; 0.4 uses the whole
+		// of the table over a forty-unit tunnel), and the stroke, in world
+		// units, floored at a pixel.
+		pitch: 0.25,
+		amp: 0.08,
+		rate: 0.4,
+		stroke: 0.04,
+		// The gold's level against the ring drawings — well under them, so the
+		// rings stay the picture; and how much of the rings' overload it takes
+		// in the breakdown (1 = all of it).
+		level: 0.4,
+		overload: 1,
+		// The light across it: two opposed sectors round the axis, fixed while
+		// the grooves turn, as the disc has; 0 is flat.
+		sheen: 0.6,
+		// The grooves turn with the rings, this much of their turn.
+		turn: 1,
+		// And cycle with them: 0 is always gold, 1 the rings' own hue turn.
+		hue: 0,
+		// Added over the black rather than laid over it (see kaleidoscope.js).
+		add: false,
+		// The PULSE: a brightness wave travelling down the tunnel ahead of the
+		// lens — how deep it dips, its length in world units, and how many
+		// pass over the scene. A function of the scene's progress, not of time.
+		depth: 0.5,
+		wavelength: 12,
+		pulses: 3,
+		// Whether it goes out with the rings under the room (1) or stays and
+		// leaves the frame on its own (0) — it does by the time the room has
+		// the frame either way.
+		out: 0
+	}
 };

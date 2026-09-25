@@ -76,16 +76,24 @@ the swimmer ahead of the lens from behind, the birthday asked under it as it
 rides, then the 60s set dead ahead, lit at its centre as the swimmer's nose
 reaches its glass), the **kaleido** (`kaleido.js` — through that set's glass and down
 the tunnel inside it, the archive looped in rings, turning and cycling in
-colour, to the first room at the far end, come out of the dark as the label of
-a gold record — or, on a birthday the archive cannot answer for, the breakdown:
-the set switching off, and the verdict screen after it) and the **descent** (`descent.js` — rooms through
-rooms, at the pace the tunnel eased to, down to the answer's room and the
-splosh on its screen). The first two walk the same **kaleidoscope**
-(`kaleidoscope.js` — the set, the rings, the camera down the tunnel, where the
-nest goes, and the CRT mask), the last two the same **nest** (`nest.js` — the
-rooms, the stencil chain, the depth fade that keeps the first room out of
-sight until the search ends, the camera pose and the glass rect), and the
-nest's stencil chain sits one level up from the set's. All three are shot on
+colour, round a WALL of gold ζ grooves that makes the tunnel the inside of a
+record, to the first room at the far end, come out of the dark as the label of
+that record — or, on a birthday the archive cannot answer for, the breakdown:
+the set switching off, and the verdict screen after it) and the **descent** (`descent.js` — the
+spice asked over the first room, then rooms through rooms, every room after the
+first at the bottom of a FUNNEL of the same grooves inside its parent's glass,
+at the pace the tunnel eased to, down to the answer's room and the splosh on
+its screen). The first two walk the same **kaleidoscope** (`kaleidoscope.js` —
+the set, the rings, the wall, the camera down the tunnel, where the nest goes,
+and the CRT mask), the last two the same **nest** (`nest.js` — the rooms, the
+stencil chain, the depth fade that keeps the first room out of sight until the
+search ends, the funnels, the camera pose and the glass rect), and the nest's
+stencil chain sits one level up from the set's. Every groove in the run is cut
+with `|ζ(½ + it)|` (`functions/zeta.js` the table, `three/tsl/zeta.js` the
+groove distance): a spiral whose radius wobbles by it, pinching at every zero
+— the record on the way home, the disc, the funnels and the wall alike, with
+their numbers in `NEST.record`, `NEST.disc`, `NEST.funnel` and `KALEIDO.wall`,
+and an `on` switch on the last two that gives the old picture. All three are shot on
 the run's ONE lens (`LENS`) with the run's ONE hand on the camera
 (`three/world/wobble.js`, a slow pan, tilt and roll on `runSeconds`, the run's
 own clock), and the tunnel eases from the flight's speed to the fall's over
