@@ -72,28 +72,30 @@ absolute path: `from '/home/user/cc2000-v2/node_modules/playwright/index.mjs'`.
 The run is `three/Stage.svelte` on ONE `WebGPURenderer` (WebGL 2 behind it
 where there is no WebGPU; `?gl=1` forces it), and three 3D scenes that are
 plain modules under `three/world/`: the **approach** (`approach.js` — space,
-the swimmer ahead of the lens from behind, the birthday asked under it as it
-rides, then the 60s set dead ahead, lit at its centre as the swimmer's nose
+the swimmer ahead of the lens from behind, the two questions asked under it as
+it rides, then the 60s set dead ahead, lit at its centre as the swimmer's nose
 reaches its glass), the **kaleido** (`kaleido.js` — through that set's glass and down
 the tunnel inside it, the archive looped in rings, turning and cycling in
 colour, round a WALL of gold ζ grooves that makes the tunnel the inside of a
 record, to the first room at the far end, come out of the dark as the label of
 that record — or, on a birthday the archive cannot answer for, the breakdown:
-the set switching off, and the verdict screen after it) and the **descent** (`descent.js` — the
-spice asked over the first room, then rooms through rooms, every room after the
-first at the bottom of a FUNNEL of the same grooves inside its parent's glass,
-at the pace the tunnel eased to, down to the answer's room and the splosh on
-its screen). The first two walk the same **kaleidoscope** (`kaleidoscope.js` —
-the set, the rings, the wall, the camera down the tunnel, where the nest goes,
-and the CRT mask), the last two the same **nest** (`nest.js` — the rooms, the
-stencil chain, the depth fade that keeps the first room out of sight until the
-search ends, the funnels, the camera pose and the glass rect), and the nest's
-stencil chain sits one level up from the set's. Every groove in the run is cut
-with `|ζ(½ + it)|` (`functions/zeta.js` the table, `three/tsl/zeta.js` the
-groove distance): a spiral whose radius wobbles by it, pinching at every zero
-— the record on the way home, the disc, the funnels and the wall alike, with
-their numbers in `NEST.record`, `NEST.disc`, `NEST.funnel` and `KALEIDO.wall`,
-and an `on` switch on the last two that gives the old picture. All three are shot on
+the set switching off, and the verdict screen after it) and the **descent** (`descent.js` — rooms
+through rooms, at the pace the tunnel eased to, down to the answer's room and
+the splosh on its screen). The first two walk the same **kaleidoscope**
+(`kaleidoscope.js` — the set, the rings, the wall, the camera down the tunnel,
+where the nest goes, and the CRT mask), the last two the same **nest**
+(`nest.js` — the rooms, the stencil chain, the depth fade that keeps the first
+room out of sight until the search ends, the camera pose and the glass rect),
+and the nest's stencil chain sits one level up from the set's. Every groove in
+the run is cut with `|ζ(½ + it)|` (`functions/zeta.js` the table,
+`three/tsl/zeta.js` the groove distance): a spiral whose radius wobbles by it,
+pinching at every zero — the record on the way home, the disc and the wall,
+with their numbers in `NEST.record`, `NEST.disc` and `KALEIDO.wall`. A FUNNEL
+of the same grooves between every room in the fall is built and OFF
+(`NEST.funnel.on`): the lead looked at it and took it out. The rooms' back
+walls are drawn well past their frames with the wallpaper LOOPED (mirrored
+repeat), so nothing of the room outside shows through a room's gaps
+(`NEST.wallCover`). All three are shot on
 the run's ONE lens (`LENS`) with the run's ONE hand on the camera
 (`three/world/wobble.js`, a slow pan, tilt and roll on `runSeconds`, the run's
 own clock), and the tunnel eases from the flight's speed to the fall's over
@@ -118,29 +120,29 @@ progress.
 
 Three consequences worth remembering:
 
-- **The answer resolves at the tunnel's end**, not before the flight. The
-  birthday is asked mid-flight and probed when its popup closes; the spice is
-  asked on the fall's FIRST FRAME, over the first room, where the descent holds
-  `t` for it exactly as the approach does (`descent.js update()`), and the
-  archive is asked properly when that popup closes. An out-of-range date is
+- **The answer resolves mid-flight**, not before it. The two popups come one
+  straight after the other: the birthday is probed when the first closes and
+  the archive is asked properly when the second does. An out-of-range date is
   NOT refused — there is no machine to report it on and no room to fall into —
   so `edge` is set, the flight goes in regardless, the tunnel breaks down on it
   (`kaleido.js`: overload, collapse to a line, a dot, black) and
   `director.advance('kaleido')` hands to the `error` scene, whose `ErrorScreen`
-  shows the verdict and whose way back is `director.recover()`; the spice is
-  never asked on such a run. The set is always the 60s one; the nest's first
-  room is chosen when the run starts; the deeper rooms are set the moment the
-  answer is in — the first three kept as the tunnel ended on them, the last two
-  chosen again (`descent.js finalise()`), while they are too small to
+  shows the verdict and whose way back is `director.recover()`. The set is
+  always the 60s one; the nest's first room is chosen when the run starts; the
+  deeper rooms are set the moment the answer is in, while they are too small to
   see (`approach.js finalise()`).
 - **The loop home has no DOM half.** The camera flies through the room's monitor
   and `descent.js stepReturn()` hands the run to the approach when the glass has
-  filled the frame. Under the lens the glass goes to a RECORD (`nest.js`, on the
-  last room's glass), the spindle hole takes the frame, and the black in it is
-  the space the next flight opens on — which is told it came that way
-  (`nest.viaRecord`) so the record's last grooves can go on past the lens as the
-  sky comes up. There is nothing to cover the cut with because there is no cut
-  to see.
+  filled the frame — three seconds of it (`SCENES.descent.home`), to be watched.
+  Under the lens the glass goes to a RECORD (`nest.js`, on the last room's
+  glass), turning, the spindle hole opens at the lens and takes the frame, and
+  the black in it is the space the next flight opens on — which is told it came
+  that way (`nest.viaRecord`) so the record's grooves go on passing the lens
+  for the first two seconds of the flight (`approach.js`, the lip) as the sky
+  comes up. There is nothing to cover the cut with because there is no cut to
+  see. The page under the canvas is the same blue-black the scenes paint
+  (`app.html`, `styles.css --bg`), so the first paint and the first frame are
+  one colour.
 - **The first frame is warmed up.** The Stage renders every object a few at a
   time before the loop starts, yielding to the page between, so the title card
   (which types on the clock, not on timers) keeps its rhythm on a slow GPU.

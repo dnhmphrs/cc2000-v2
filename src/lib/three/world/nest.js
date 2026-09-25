@@ -127,6 +127,13 @@ export async function createNest({ THREE, renderer }) {
 					const tex = await loader.loadAsync(elementUrl(decade, cfg.key));
 					tex.colorSpace = THREE.SRGBColorSpace;
 					tex.generateMipmaps = true;
+					// The wall is drawn past its own edges (wallPlane, below):
+					// LOOPED, mirrored at each edge so no seam shows, rather
+					// than its edge pixels smeared out — the wallpaper goes on.
+					if (cfg.key === 'bg') {
+						tex.wrapS = THREE.MirroredRepeatWrapping;
+						tex.wrapT = THREE.MirroredRepeatWrapping;
+					}
 					tex.minFilter = THREE.LinearMipmapLinearFilter;
 					tex.magFilter = THREE.LinearFilter;
 					tex.anisotropy = Math.min(4, maxAniso);

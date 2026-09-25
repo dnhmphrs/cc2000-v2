@@ -38,23 +38,22 @@ is going and `docs/v4-flow.md` for where it has got to.
 ## The four scenes
 
 The whole site is a title card, three 3D scenes and a room, and one store that
-says which is up. There is no machine: the two answers are asked on the way, by
-popups that hold the run while they are open — the birthday in the flight, the
-spice at the tunnel's end.
+says which is up. There is no machine: the two answers are asked mid-flight, by
+popups that hold the flight while they are open.
 
 ```
   title card      ┌──────────┐      ┌─────────┐      ┌─────────┐   splosh   ┌──────┐
   (lifts itself)  │ Approach │ ───▶ │ Kaleido │ ───▶ │ Descent │ ─────────▶ │ Room │
                   └──────────┘      └─────────┘      └─────────┘            └──────┘
-                     ▲  asks: birthday             asks: spice                  │
+                     ▲  asks: birthday · spice                                  │
                      └──────────────────────── go again ────────────────────────┘
 ```
 
 | #   | Scene        | What it is                                                                                                                                                                                                      | Where                             |
 | --- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind, the birthday asked under it; then the 60s set dead ahead, lit at its centre as the swimmer's nose reaches the glass. 3D.                                     | `src/lib/three/world/approach.js` |
+| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind, the two questions asked under it; then the 60s set dead ahead, lit at its centre as the swimmer's nose reaches the glass. 3D.                                | `src/lib/three/world/approach.js` |
 | 2   | **Kaleido**  | Through that set's glass and down the tunnel inside: the archive looped, in rings, turning and cycling in colour, round a wall of gold ζ grooves, to the first room, the record's label — or the breakdown. 3D. | `src/lib/three/world/kaleido.js`  |
-| 3   | **Descent**  | The spice asked over the first room, then rooms through rooms, each at the bottom of a funnel of ζ grooves, down to the answer's room; the swimmer hits its screen and it goes white. 3D.                       | `src/lib/three/world/descent.js`  |
+| 3   | **Descent**  | Rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. 3D.                                                                                         | `src/lib/three/world/descent.js`  |
 | 4   | **Room**     | The answer, in that room's monitor. DOM.                                                                                                                                                                        | `src/lib/scenes/Room.svelte`      |
 
 The first two 3D scenes walk the same **kaleidoscope** —
@@ -63,14 +62,15 @@ of the archive down the tunnel behind its glass, the wall of grooves round
 them, the camera down that tunnel, and where the nest goes at the end of it.
 The last two walk the same **nest** — `src/lib/three/world/nest.js`: the
 first room at the tunnel's end, the rooms inside its glass one inside the
-next, each behind a funnel of grooves, the stencil chain that clips each to
-the glass above it (one level up from the set's), the depth fade that keeps
-the first room out of sight until the search stops, the camera pose for any
-level of the fall, and the glass rect the readout is drawn into. The grooves
-— on the way home, round the first room, in the funnels, down the wall — are
-all cut with `|ζ(½ + it)|`: `src/lib/functions/zeta.js` works the critical
-line out, `src/lib/three/tsl/zeta.js` puts it in a texture and finds the
-nearest groove of a spiral whose radius wobbles by it.
+next, the stencil chain that clips each to the glass above it (one level up
+from the set's), the depth fade that keeps the first room out of sight until
+the search stops, the camera pose for any level of the fall, and the glass
+rect the readout is drawn into. The grooves — on the way home, round the
+first room, down the wall — are all cut with `|ζ(½ + it)|`:
+`src/lib/functions/zeta.js` works the critical line out,
+`src/lib/three/tsl/zeta.js` puts it in a texture and finds the nearest groove
+of a spiral whose radius wobbles by it. (A funnel of them between every room
+in the fall is built and switched off, `NEST.funnel.on`.)
 `src/lib/scenes/director.js` owns every transition — the way out to the verdict
 screen when the tunnel breaks down on a birthday the archive cannot answer for,
 and the way back, included — and it is the first file to read.
@@ -122,10 +122,10 @@ src/lib/
     Stage.svelte      the canvas, one WebGPU renderer, the clock, the three 3D scenes
     world/
       kaleidoscope.js   the set, the rings down the tunnel, the wall, the camera down it, the CRT mask
-      nest.js           the rooms one inside the next, the stencil chain, the depth fade, the funnels, pose(ζ)
-      approach.js       scene 1 — space, the swimmer, the birthday, the set switching on
+      nest.js           the rooms one inside the next, the stencil chain, the depth fade, pose(ζ)
+      approach.js       scene 1 — space, the swimmer, the two questions, the set switching on
       kaleido.js        scene 2 — down the tunnel to the first room, or the breakdown
-      descent.js        scene 3 — the spice, the fall, the splosh, the readout's rect, the way back
+      descent.js        scene 3 — the fall, the splosh, the readout's rect, the way back
     tsl/
       materials.js      every material, as TSL — line, holo, skin, dot, core
       zeta.js           |ζ(½ + it)| as a texture, and the distance to the nearest groove cut with it
@@ -596,11 +596,15 @@ at half resolution scaled up is a smear.
 On the site's run there is nothing to fly home into. "Go again" takes the
 readout off the glass (`SCENES.room.resultOut`) and flies the camera from the
 landing into the monitor — from rest, accelerating, in `SCENES.descent.home`
-seconds — with the room going to black under the glass and the raster coming
-back over the second half of it (`SCENES.descent.homeDim`), so the frame it ends
-on is the black the next flight opens on. `world/descent.js stepReturn()` owns
-all of it; the Stage drives it because by then the scene is held rather than
-running; and `director.settled()` hands over. No title card the second time.
+seconds, three of them — with the glass gone to a record under the lens,
+turning, the room going to black round it and the raster coming back over the
+second half (`SCENES.descent.homeDim`), and the spindle hole opening at the
+lens to take the frame, so the frame it ends on is the black the next flight
+opens on; the record's grooves go on passing the lens for the first two
+seconds of that flight as the sky comes up. `world/descent.js stepReturn()`
+owns all of it; the Stage drives it because by then the scene is held rather
+than running; and `director.settled()` hands over. No title card the second
+time.
 
 What follows is the **WebGL run's** loop, still playable at `/v2`, where there
 IS a machine to fly home into.

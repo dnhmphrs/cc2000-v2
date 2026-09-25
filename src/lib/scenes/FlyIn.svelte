@@ -21,7 +21,7 @@
 	import { CIRCUMRADIUS } from '$lib/three/geometry/icosahedron';
 	import { DEV, DEV_AT } from '$lib/config';
 	import { get } from 'svelte/store';
-	import { fieldFade, gate, landing } from '$lib/store/store';
+	import { fieldFade, gate, landing, decade, edge } from '$lib/store/store';
 
 	// The attitude the CONCEPTION holds this same body at — see the ovum's spin
 	// below. Built from the shared config rather than imported from the lattice
@@ -158,7 +158,10 @@
 
 		// The questions, in the order the shot makes room for them: the birthday
 		// while the swimmer is the only thing on screen, the spice once the ovum
-		// is up and there is something to swim at.
+		// is up and there is something to swim at — unless the popup has already
+		// asked it, which it does now, the moment the birthday is in
+		// (components/Prompt.svelte): then the answer is in the stores and this
+		// second mark asks nothing, rather than asking the same thing twice.
 		//
 		// NOT while the scene is pinned. ?at= is for looking at one frame of the
 		// flight, and a popup over it is the one thing that stops you seeing it —
@@ -169,7 +172,7 @@
 				gate.set('dob');
 			} else if (!askedSpicy && p >= T.askSpicy) {
 				askedSpicy = true;
-				gate.set('spicy');
+				if (!get(decade) && !get(edge)) gate.set('spicy');
 			}
 		}
 

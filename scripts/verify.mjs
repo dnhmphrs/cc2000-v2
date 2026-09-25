@@ -3,16 +3,15 @@
 // invisible in a diff and have actually broken.
 //
 // THIS BUILD HAS NO MACHINE. The run opens on a title card over a fly-in that is
-// already mounted and held at progress zero; the birthday is taken mid-flight by
-// a popup and the spice by another at the tunnel's end, on the fall's first
-// frame; an out-of-range birthday is NOT refused — the run goes in and the
-// tunnel breaks down onto the verdict screen before the spice is ever asked;
-// and the loop home flies the camera through the room's monitor straight back
-// into the flight. So what this checks is the gate and the two ways out, not a
-// calculator:
+// already mounted and held at progress zero; the two answers are taken mid-flight
+// by one popup that asks the second question the moment the first is answered;
+// an out-of-range birthday is NOT refused — the run goes in and the tunnel breaks
+// down onto the verdict screen; and the loop home flies the camera through the
+// room's monitor straight back into the flight. So what this checks is the gate
+// and the two ways out, not a calculator:
 //
 //   the card lifts on its own      no click, and the flight is under it
-//   the run stops to ask           in the flight, and again at the tunnel's end
+//   the flight stops to ask        twice, back to back, and holds until answered
 //   out of range breaks down       into the verdict, and calculate again flies on
 //   the run completes              a room, with a track in it
 //   the loop goes round            through the glass and back into the flight
@@ -78,22 +77,28 @@ ok('the flight asks for a birthday', await until(() => !!document.querySelector(
 
 if (ROUTE === '/') {
 	// ── Out of range breaks down ───────────────────────────────────────────
-	// The earliest year the dial offers is before the archive. It is taken and
-	// the run goes in; the tunnel breaks down and the verdict is given with
-	// its gif — the spice is never asked, there being no room to ask it over.
-	// Calculate again hands the run back to the flight, with no title card.
+	// The earliest year the dial offers is before the archive. It is taken, the
+	// spice is asked at once in the same panel, and the run goes in; the tunnel
+	// breaks down and the verdict is given with its gif. Calculate again hands
+	// the run back to the flight, with no title card.
 	const earliest = await p.evaluate(() => {
 		const sel = document.querySelector('#ask-year');
 		return +sel.options[sel.options.length - 1].value;
 	});
 	await answerDob(1, 14, earliest);
 	await p.click('button.go');
-	ok('the birthday lets it fly', await until(() => !document.querySelector('.ask'), 20));
+	await p.waitForTimeout(300);
+	ok(
+		'the spice is asked the moment the birthday is in, in the same panel',
+		(await p.evaluate(() => !!document.querySelector('.ask'))) && (await p.evaluate(asksSpicy))
+	);
+	await p.selectOption('#ask-spicy', '4');
+	await p.click('button.go');
+	ok('the second answer lets it fly', await until(() => !document.querySelector('.ask'), 20));
 	ok(
 		'an impossible birthday breaks down into the verdict',
 		await until(() => !!document.querySelector('.error-screen .verdict'), 80)
 	);
-	ok('without the spice ever being asked', !(await p.evaluate(asksSpicy)));
 	ok(
 		'with the right gif and the right line',
 		await p.evaluate(
@@ -112,22 +117,9 @@ if (ROUTE === '/') {
 }
 
 // ── A real date ──────────────────────────────────────────────────────────────
-// The birthday lets the flight go on into the tunnel, and the spice is asked
-// at its far end, over the first room — the fall's first frame.
 await answerDob(7, 14, 1986);
 await p.click('button.go');
-// On /v2 the old flight asks the spice at its own mark, close enough behind
-// the birthday at this speed that the poll can miss the gap between them.
-ok(
-	'the birthday lets it fly',
-	await until(
-		() =>
-			!document.querySelector('.ask') ||
-			/spicy/i.test(document.querySelector('.ask .q')?.textContent ?? ''),
-		20
-	)
-);
-ok('the run goes on to ask how spicy', await until(asksSpicy, 80));
+ok('the flight moves on and asks how spicy', await until(asksSpicy, 80));
 await p.selectOption('#ask-spicy', '4');
 await p.click('button.go');
 ok('the second answer lets it dive', await until(() => !document.querySelector('.ask'), 20));

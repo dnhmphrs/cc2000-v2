@@ -17,14 +17,12 @@
 	} from '$lib/store/store';
 	import { resolve } from '$lib/functions/answer';
 
-	// ── The two questions, asked on the way ──────────────────────────────────
-	// There is no machine, so the run takes its two answers as it goes: the
-	// birthday mid-flight, over the swimmer (world/approach.js asks it), and
-	// the spice at the tunnel's end, over the first room, where the fall
-	// holds for it (world/descent.js asks that one). The run is HELD while
-	// either is open — see the `gate` store — so nothing is ahead of the lens
-	// before it has been told what to look for, and the fall does not start
-	// before it knows how deep to go.
+	// ── The two questions, asked mid-flight ──────────────────────────────────
+	// There is no machine, so the run takes its two answers on the way in, one
+	// straight after the other over the swimmer: the birthday, and the spice
+	// the moment the birthday is in — this component asks the second itself.
+	// The flight is HELD while either is open — see the `gate` store — so
+	// nothing is ahead of the lens before it has been told what to look for.
 	//
 	// The controls are the machine's own: the clean HTML selects that lived on
 	// the CRT, not the rotary dials. They write the same three stores, so
@@ -129,19 +127,17 @@
 			edge.set(probe.edge ?? null);
 			status = '';
 			date.set(iso);
-			// And the flight goes on. The spice is the tunnel's end's to ask.
-			gate.set(null);
+			// And the spice, straight away: no swimming between the questions.
+			gate.set('spicy');
 			return;
 		}
 		// ── THE ANSWER, WORKED OUT HERE ──────────────────────────────────────
 		// This is the last thing that knows both halves, so it is where the
 		// archive is finally asked. The machine used to do it before the flight
-		// started; the run now does it at the tunnel's end, with the first room
-		// already in the frame — which is why the deeper rooms are set the
-		// moment this closes, while they are too small to see (world/descent.js
-		// finalise()). Everything downstream reads the same three stores it
-		// always read. On an edge there is nothing to find, and the tunnel has
-		// already broken down on it — this is never asked.
+		// started; the flight now does it on the way in, which is the only real
+		// consequence of moving the questions into the run — everything
+		// downstream reads the same three stores it always read. On an edge
+		// there is nothing to find, and the tunnel already knows.
 		if (!get(edge)) {
 			const found = resolve(get(date), $spicy);
 			if (found.edge) edge.set(found.edge);
@@ -258,9 +254,8 @@
 		pointer-events: auto;
 		display: grid;
 		/* In the LOWER third, not the middle: the swimmer rides at the centre
-		   of the frame while the first is asked, and the first room fills it
-		   for the second, and the questions are put under them, like a
-		   caption, rather than over them. */
+		   of the frame while these are asked, and the questions are put to it
+		   — under it, like a caption, rather than over it. */
 		place-items: end center;
 		padding-bottom: clamp(40px, 13vh, 120px);
 		font-family: var(--tech);
