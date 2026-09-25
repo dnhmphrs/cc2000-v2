@@ -13,8 +13,9 @@ import {
 	easeInOutCubic,
 	accelerate
 } from '$lib/config';
-import { decade, landing, monitorRect, blaze, aspect } from '$lib/store/store';
+import { decade, landing, monitorRect, blaze, aspect, gate } from '$lib/store/store';
 import { DECADES, shuffle } from '$lib/data/roomElements';
+import { DEV, DEV_AT } from '$lib/config/dev';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
 import { settled } from '$lib/scenes/director';
 import { roomsFor } from './nest';
@@ -48,6 +49,16 @@ import { wobbleEuler } from './wobble';
 // LEVEL and the hand comes off it, so the glass is square in the frame and
 // the readout sits in it. See nest.zetaOf() and nest.pose().
 //
+// ── The fall takes the second answer ─────────────────────────────────────────
+// The spice is asked HERE, on the fall's first frame — the tunnel's end, the
+// first room in the frame as the label of its record — and the fall holds for
+// it as the flight holds for the birthday: `t` stops and the swimmer's clock
+// does not (see the `gate` store). Only once it is in does the archive know
+// which room is the answer's, so the deeper rooms are set the moment the popup
+// closes (finalise()): the first three rooms are kept as the tunnel ended on
+// them, and only the last two — a thirtieth of the frame and less at the seam
+// — are chosen again, the last for the answer.
+//
 // Every value here is a pure function of scene progress, so ?at= is exact. The
 // one exception is the swimmer's roll and wobble, which run on its own clock
 // so they never stop — not for a popup, and not at the seam.
@@ -77,6 +88,8 @@ export function createDescent({ THREE, renderer, nest }) {
 	const SPIN = -TUNNEL.spermSpin;
 	let t = 0;
 	let held = 0; // seconds since landing, while the room is up
+	let asked = false;
+	let finalised = false;
 	let zetaEnd = 0;
 	const fwd = new THREE.Vector3();
 	const at = new THREE.Vector3();
@@ -99,6 +112,29 @@ export function createDescent({ THREE, renderer, nest }) {
 		nest.refreshClips();
 	}
 
+	// The rooms once the answer is in: the tunnel ended on the first three,
+	// so they stay; the last is the answer's, and the one before it is chosen
+	// again only if it was already the answer's decade (no two neighbours
+	// alike — see nest.roomsFor).
+	function withAnswer(rooms, answer) {
+		const out = rooms.slice();
+		const n = out.length;
+		out[n - 1] = answer;
+		if (out[n - 2] === answer) {
+			out[n - 2] = DECADES.find((d) => d !== answer && d !== out[n - 3]);
+		}
+		return out;
+	}
+	function finalise() {
+		finalised = true;
+		const answer = get(decade);
+		const rooms = nest.built.rooms;
+		if (rooms[rooms.length - 1] === answer) return;
+		nest.build({ rooms: withAnswer(rooms, answer), portrait: get(aspect) === 'portrait' });
+		nest.refreshClips();
+		zetaEnd = nest.zetaEnd();
+	}
+
 	function publish() {
 		monitorRect.set(nest.glassRect(camera, window.innerWidth, window.innerHeight));
 	}
@@ -106,6 +142,8 @@ export function createDescent({ THREE, renderer, nest }) {
 	function enter() {
 		t = 0;
 		held = 0;
+		asked = false;
+		finalised = !!get(decade);
 		ensureNest();
 		if (nest.root.parent !== scene) scene.add(nest.root);
 		scene.add(sw.group);
@@ -156,8 +194,19 @@ export function createDescent({ THREE, renderer, nest }) {
 	}
 
 	function update(dt) {
-		t += dt;
+		const heldBy = get(gate);
 		sw.clock += dt;
+		if (!heldBy) t += dt;
+		// The spice, on the first frame — unless the answer is already in (a
+		// jump straight in seeds one), or the scene is pinned: ?at= is for
+		// looking at one frame, and a popup over it is the one thing that stops
+		// you seeing it.
+		if (!heldBy && !(DEV.on && DEV_AT != null) && !asked && !get(decade)) {
+			asked = true;
+			gate.set('spicy');
+			return false;
+		}
+		if (!finalised && get(decade)) finalise();
 		set(clamp01(t / T.duration));
 		if (t >= T.duration) {
 			publish();

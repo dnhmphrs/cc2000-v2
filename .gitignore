@@ -12,3 +12,6 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .verify/
 .shots/
+
+# The harness keeps its worktrees here.
+.claude/

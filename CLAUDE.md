@@ -72,9 +72,9 @@ absolute path: `from '/home/user/cc2000-v2/node_modules/playwright/index.mjs'`.
 The run is `three/Stage.svelte` on ONE `WebGPURenderer` (WebGL 2 behind it
 where there is no WebGPU; `?gl=1` forces it), and three 3D scenes that are
 plain modules under `three/world/`: the **approach** (`approach.js` — space,
-the swimmer ahead of the lens from behind, coming about side-on to take the two
-questions, then the 60s set dead ahead, lit where the swimmer's nose touches
-its glass), the **kaleido** (`kaleido.js` — through that set's glass and down
+the swimmer ahead of the lens from behind, the birthday asked under it as it
+rides, then the 60s set dead ahead, lit at its centre as the swimmer's nose
+reaches its glass), the **kaleido** (`kaleido.js` — through that set's glass and down
 the tunnel inside it, the archive looped in rings, turning and cycling in
 colour, to the first room at the far end, come out of the dark as the label of
 a gold record — or, on a birthday the archive cannot answer for, the breakdown:
@@ -110,16 +110,20 @@ progress.
 
 Three consequences worth remembering:
 
-- **The answer resolves mid-flight**, not before it. The two popups come one
-  straight after the other: the birthday is probed when the first closes and
-  the archive is asked properly when the second does. An out-of-range date is
+- **The answer resolves at the tunnel's end**, not before the flight. The
+  birthday is asked mid-flight and probed when its popup closes; the spice is
+  asked on the fall's FIRST FRAME, over the first room, where the descent holds
+  `t` for it exactly as the approach does (`descent.js update()`), and the
+  archive is asked properly when that popup closes. An out-of-range date is
   NOT refused — there is no machine to report it on and no room to fall into —
   so `edge` is set, the flight goes in regardless, the tunnel breaks down on it
   (`kaleido.js`: overload, collapse to a line, a dot, black) and
   `director.advance('kaleido')` hands to the `error` scene, whose `ErrorScreen`
-  shows the verdict and whose way back is `director.recover()`. The set is
-  always the 60s one; the nest's first room is chosen when the run starts; the
-  deeper rooms are set the moment the answer is in, while they are too small to
+  shows the verdict and whose way back is `director.recover()`; the spice is
+  never asked on such a run. The set is always the 60s one; the nest's first
+  room is chosen when the run starts; the deeper rooms are set the moment the
+  answer is in — the first three kept as the tunnel ended on them, the last two
+  chosen again (`descent.js finalise()`), while they are too small to
   see (`approach.js finalise()`).
 - **The loop home has no DOM half.** The camera flies through the room's monitor
   and `descent.js stepReturn()` hands the run to the approach when the glass has
