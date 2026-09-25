@@ -38,22 +38,23 @@ is going and `docs/v4-flow.md` for where it has got to.
 ## The four scenes
 
 The whole site is a title card, three 3D scenes and a room, and one store that
-says which is up. There is no machine: the two answers are asked mid-flight, by
-popups that hold the flight while they are open.
+says which is up. There is no machine: the two answers are asked on the way, by
+popups that hold the run while they are open — the birthday in the flight, the
+spice at the tunnel's end.
 
 ```
   title card      ┌──────────┐      ┌─────────┐      ┌─────────┐   splosh   ┌──────┐
   (lifts itself)  │ Approach │ ───▶ │ Kaleido │ ───▶ │ Descent │ ─────────▶ │ Room │
                   └──────────┘      └─────────┘      └─────────┘            └──────┘
-                     ▲  asks: birthday · spice                                  │
+                     ▲  asks: birthday             asks: spice                  │
                      └──────────────────────── go again ────────────────────────┘
 ```
 
 | #   | Scene        | What it is                                                                                                                                                                              | Where                             |
 | --- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind; it comes about side-on for the two questions; then the 60s set dead ahead, lit where its nose touches the glass. 3D.                 | `src/lib/three/world/approach.js` |
+| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind, the birthday asked under it; then the 60s set dead ahead, lit at its centre as the swimmer's nose reaches the glass. 3D.             | `src/lib/three/world/approach.js` |
 | 2   | **Kaleido**  | Through that set's glass and down the tunnel inside: the archive looped, in rings, turning and cycling in colour, to the first room, the label of a gold record — or the breakdown. 3D. | `src/lib/three/world/kaleido.js`  |
-| 3   | **Descent**  | Rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. 3D.                                                                 | `src/lib/three/world/descent.js`  |
+| 3   | **Descent**  | The spice asked over the first room, then rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. 3D.                       | `src/lib/three/world/descent.js`  |
 | 4   | **Room**     | The answer, in that room's monitor. DOM.                                                                                                                                                | `src/lib/scenes/Room.svelte`      |
 
 The first two 3D scenes walk the same **kaleidoscope** —
@@ -117,9 +118,9 @@ src/lib/
     world/
       kaleidoscope.js   the set, the rings down the tunnel, the camera down it, the CRT mask
       nest.js           the rooms one inside the next, the stencil chain, the depth fade, pose(ζ)
-      approach.js       scene 1 — space, the swimmer, the two questions, the set switching on
+      approach.js       scene 1 — space, the swimmer, the birthday, the set switching on
       kaleido.js        scene 2 — down the tunnel to the first room, or the breakdown
-      descent.js        scene 3 — the fall, the splosh, the readout's rect, the way back
+      descent.js        scene 3 — the spice, the fall, the splosh, the readout's rect, the way back
     tsl/
       materials.js      every material, as TSL — line, holo, skin, dot, core
       backdrop.js       the grounds the scenes paint — deep, grid, flat, white
