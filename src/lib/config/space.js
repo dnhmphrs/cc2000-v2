@@ -394,9 +394,9 @@ export const WOBBLE = {
 
 // ── The approach (the first scene) ───────────────────────────────────────────
 // Space, black, a sky of stars; the swimmer riding ahead of the lens, seen from
-// behind as it was in the fly-in, and nothing else while the two questions are
-// asked over it. Then, dead ahead, the SET: the 60s television whose glass
-// holds the tunnel (KALEIDO). See three/world/approach.js.
+// behind as it was in the fly-in, and nothing else while the birthday is asked
+// over it. Then, dead ahead, the SET: the 60s television whose glass holds the
+// tunnel (KALEIDO). See three/world/approach.js.
 export const APPROACH = {
 	// The swimmer: how far ahead of the lens it rides — here and down the
 	// tunnel; the fall rides it at NEST.spermRide of the frame ahead, which
@@ -405,12 +405,6 @@ export const APPROACH = {
 	// (TUNNEL.spermLead/spermSpan, a shade bigger — there is no ovum to share
 	// the frame with).
 	lead: 5.5,
-	// And how far ahead it pulls to come about for the questions: side-on at
-	// this distance, at its riding size, the body is about half the frame
-	// wide. `bank` is the lean into the turn, in radians, gone again once it
-	// is round. See SCENES.approach.pull.
-	far: 10,
-	bank: 0.25,
 	span: 0.28,
 	// How it arrives: it does not fly past the lens at all — every version of
 	// that reads as a body stretched by a wide lens — it FADES IN at its riding
@@ -524,8 +518,9 @@ export const KALEIDO = {
 	// the set itself can be read. Device pixels, and the site's yellow.
 	signalSize: 18,
 	signalColor: 0xffd426,
-	// The switch-on: the dot where the swimmer's nose touches the glass, and
-	// the hairline it draws out into, as fractions of the glass's height.
+	// The switch-on: the dot at the glass's centre as the swimmer's nose
+	// reaches it, and the hairline it draws out into, as fractions of the
+	// glass's height.
 	dot: 0.085,
 	hair: 0.02
 };

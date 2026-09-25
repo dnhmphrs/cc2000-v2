@@ -544,7 +544,7 @@ const RAW = {
 	//
 	//  0  .1  .16 .25     .35             .55   .68       .91  .99 1
 	//  |sky |swimmer|ask  |signal, the set out of the dark |set |nose|seam
-	//     |pull, turn side-on|back, ride|  |signal out|     lights it|sky out
+	//                                    |signal out|     lights it|sky out
 	approach: {
 		// SEVEN. It was fifteen, and thirteen of them came after the answers —
 		// a long empty run at a set that was not getting bigger fast enough.
@@ -564,39 +564,30 @@ const RAW = {
 		swimmerIn: [0.03, 0.16],
 
 		// Where the flight stops to ask. ONE progress mark, not a window: the
-		// scene holds here until both popups are answered — the birthday, and
-		// the spice the moment the birthday is in (Prompt.svelte asks the
-		// second itself, so there is no swimming between them). The moment the
-		// swimmer is in.
+		// scene holds here until the birthday is answered. The spice is not
+		// asked here any more but at the tunnel's end, where the fall holds
+		// for it (SCENES.descent, world/descent.js). The moment the swimmer
+		// is in.
 		ask: 0.25,
 
-		// ── After the answers ────────────────────────────────────────────────
-		// The set dead ahead is OFF until the answers are in: for both
-		// questions there is nothing at the centre of the frame but the
-		// swimmer. Then a SIGNAL — a point of light where the set is — and the
-		// set comes out of the dark under it, dark, until the swimmer's nose
-		// reaches its glass and lights it (switchOn, below).
+		// ── After the answer ─────────────────────────────────────────────────
+		// The set dead ahead is OFF until the birthday is in: while it is
+		// asked there is nothing at the centre of the frame but the swimmer,
+		// riding as it rides. Then a SIGNAL — a point of light where the set
+		// is — and the set comes out of the dark under it, dark, until the
+		// swimmer's nose reaches its glass and lights it (switchOn, below).
 		screenIn: [0.25, 0.35],
 		signal: [0.25, 0.32],
 		signalOut: [0.55, 0.68],
 
-		// ── The swimmer comes about for the questions ────────────────────────
-		// It pulls ahead (APPROACH.lead → APPROACH.far) and turns SIDE-ON, its
-		// centre on the axis, to take the questions — held at `ask`, rolling on
-		// its own clock — then turns back to the axis and drops back to its
-		// ride. Windows in p; the ask sits between `turn` and `back`.
-		pull: [0.1, 0.2],
-		turn: [0.13, 0.25],
-		back: [0.25, 0.34],
-		ride: [0.3, 0.42],
-
 		// ── The switch-on: the swimmer's nose lights the set ────────────────
-		// The glass switches on where the nose touches it, not by itself. The
+		// The glass switches on when the nose reaches it, not by itself. The
 		// contact p* is worked out by the approach (the nose on the glass plane
 		// at the flight's one speed — about 0.91), and the beats hang off it as
-		// fractions of B = by − p*: the dot glows up as the nose lands, draws
-		// out sideways into the hairline, the covers part about that line, and
-		// the line goes with them — all done by `by`, before the seam.
+		// fractions of B = by − p*: the dot glows up at the glass's centre as
+		// the nose lands, draws out sideways into the hairline, the covers part
+		// about that line, and the line goes with them — all done by `by`,
+		// before the seam.
 		switchOn: {
 			by: 0.99,
 			dot: [-0.2, 0.2],
@@ -682,7 +673,9 @@ const RAW = {
 		// crossing is a second and a half, which is the pace the lab sketch
 		// fell at. There is no head: the tunnel has already eased to the pace
 		// the fall opens at (world/kaleidoscope.js), so the fall is falling on
-		// its first frame.
+		// its first frame — once the spice is in. The fall's first frame is
+		// where the second question is asked, and the fall HOLDS there for it
+		// (world/descent.js), as the flight holds for the first.
 		duration: 9,
 
 		// How many rooms deep, the last being the answer's, and how far into the
