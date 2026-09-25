@@ -10,13 +10,12 @@ import { AIR, aspectKind } from '$lib/config';
 // site is doing: the page picks which DOM screen to mount from it, and the
 // stage picks which 3D scene to run.
 //
-//   approach     space; the swimmer ahead of the lens, the birthday asked
-//                over it, a set dead ahead switching on
+//   approach     space; the swimmer ahead of the lens, the two questions
+//                asked over it, a set dead ahead switching on
 //   kaleido      through the glass: the archive looped, in rings down a
 //                tunnel, turning and cycling in colour, to the first room
-//   descent      the spice asked over the first room, then rooms through
-//                rooms, decade after decade, down to the answer's room and
-//                the splosh on its screen
+//   descent      rooms through rooms, decade after decade, down to the
+//                answer's room and the splosh on its screen
 //   room         the answer, in the room's monitor
 //   error        the verdict, when the tunnel broke down instead: a birthday
 //                the archive cannot answer for (`edge`)
@@ -120,17 +119,16 @@ export const goingBack = writable(false);
 //   'prelude'  the title card is up. The scene is mounted and held at progress
 //              zero, which is black air with motes in it, so the card is black
 //              over black and the flight is ALREADY RUNNING when it lifts.
-//   'dob'      the first popup, over the swimmer, mid-flight
-//   'spicy'    the second, over the first room at the tunnel's end, on the
-//              fall's first frame
+//   'dob'      the first popup, over the swimmer
+//   'spicy'    the second, the moment the first is answered
 //
-// Written by: three/world/approach.js (opens the first), three/world/descent.js
-// (opens the second) and the popup (components/Prompt.svelte: closes both).
+// Written by: three/world/approach.js (opens the first) and the popup
+// (components/Prompt.svelte: opens the second, closes both).
 //
-// While a gate is open the scene that opened it holds `t` and keeps the
-// swimmer's clock going, so the swimmer goes on rolling and the scene does not
-// freeze — it waits. Holding t rather than running a second clock is what
-// keeps every frame a pure function of progress, which is what ?at= depends on.
+// While a gate is open the approach holds `t` and keeps the swimmer's clock
+// going, so the swimmer goes on rolling and the scene does not freeze — it
+// waits. Holding t rather than running a second clock is what keeps every
+// frame a pure function of progress, which is what ?at= depends on.
 export const gate = writable('prelude');
 
 // ── Device ───────────────────────────────────────────────────────────────────

@@ -9,8 +9,9 @@ have drawn at that moment rather than a timed guess at it.
 **1 — the run, as it now is.** What `/` does on `main`, one cut: a title card
 over an approach held at zero, black; the card lifts, the sky comes up, the
 swimmer fades in where it rides, ahead of the lens and seen from behind, and
-the birthday is put to it there, under it, as it rides — nothing else flies
-by; only once that is in does anything appear ahead: a point of light, then
+both questions are put to it there, under it, as it rides, one straight after
+the other — nothing else flies by; only once the answers are in does anything
+appear ahead: a point of light, then
 the set coming out of the dark, dark — always the 60s television — until the
 swimmer's nose reaches its glass and lights it: a dot at the glass's centre,
 the hairline drawn out of the dot, the covers parting about it onto the
@@ -21,17 +22,15 @@ tunnel the inside of a record, with no exit in sight, the tunnel easing from the
 speed to the fall's the whole way down, until the search ENDS: the turn and
 the hue decelerate to rest, the hue on true colour, and a room comes out of
 the dark at the far end as the LABEL of a gold record — the whole room, not a
-set, grooves round it — and fills the frame, and the spice is asked there,
-under it, the fall holding for it; then the fall carries straight on
-through the decades, one room inside the next, every room after the first at
-the bottom of a funnel of the same grooves inside its parent's glass, the
-record turning and a pulse of light running down it, at one pace on screen, the turn
+set, grooves round it — and fills the frame; the fall carries straight on
+through the decades, one room inside the next, at one pace on screen, the turn
 coming in from rest and going out before the answer's room, which lands level;
 the swimmer going into its screen and the screen going white; the readout in
-that glass; and "go again" — the readout gone, the glass gone to vinyl under
-the lens, gold grooves turning, the lens dropping to the spindle hole, the hole
-taking the frame, black — which is the black the next flight opens on, where
-the record's last grooves go on past the lens as the sky comes up. A birthday
+that glass; and "go again" — three seconds of it: the readout gone, the glass
+gone to vinyl under the lens, gold grooves turning, the lens dropping to the
+spindle hole, the hole opening to take the frame, black — which is the black
+the next flight opens on, where the record's grooves go on passing the lens
+for two seconds as the sky comes up. A birthday
 the archive cannot answer for is not refused in the popup: the flight goes in
 regardless and the tunnel breaks down on it — overloads, collapses to a line,
 a dot, black, the swimmer alone in it — and the verdict comes up, its gif and

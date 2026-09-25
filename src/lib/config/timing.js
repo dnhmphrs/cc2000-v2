@@ -564,14 +564,14 @@ const RAW = {
 		swimmerIn: [0.03, 0.16],
 
 		// Where the flight stops to ask. ONE progress mark, not a window: the
-		// scene holds here until the birthday is answered. The spice is not
-		// asked here any more but at the tunnel's end, where the fall holds
-		// for it (SCENES.descent, world/descent.js). The moment the swimmer
-		// is in.
+		// scene holds here until both popups are answered — the birthday, and
+		// the spice the moment the birthday is in (Prompt.svelte asks the
+		// second itself, so there is no swimming between them). The moment the
+		// swimmer is in.
 		ask: 0.25,
 
-		// ── After the answer ─────────────────────────────────────────────────
-		// The set dead ahead is OFF until the birthday is in: while it is
+		// ── After the answers ────────────────────────────────────────────────
+		// The set dead ahead is OFF until the answers are in: while they are
 		// asked there is nothing at the centre of the frame but the swimmer,
 		// riding as it rides. Then a SIGNAL — a point of light where the set
 		// is — and the set comes out of the dark under it, dark, until the
@@ -596,8 +596,10 @@ const RAW = {
 			glow: [0.6, 1]
 		},
 		// And on a run that came home through the record: the last of its
-		// grooves passing the lens as the sky comes up (approach.js, the lip).
-		lip: [0, 0.14],
+		// grooves passing the lens as the sky comes up (approach.js, the lip)
+		// — over the first two seconds, so the one flight becomes the other
+		// rather than cutting to it.
+		lip: [0, 0.28],
 
 		// ── ONE SPEED, ONE LENS, ONE HAND ────────────────────────────────────
 		// The flight has no brake, no dolly and no levelling-off for the seam:
@@ -669,17 +671,14 @@ const RAW = {
 	//  |the fall, one pace, six rooms deep       |raster|dive |splosh  |land
 	//                                     |easing to rest ................|
 	descent: {
-		// ELEVEN. Nine was the pace the lab sketch fell at — a second and a
-		// half a crossing — and each crossing is now longer by the funnel it
-		// falls down (NEST.funnel.zoom, 1.4 on top of the fit: ln 1.4 more
-		// zoom a level, seven e-folds in all against five and a half), so
-		// eleven keeps the pace on screen where nine had it. There is no
-		// head: the tunnel has already eased to the pace the fall opens at
-		// (world/kaleidoscope.js), so the fall is falling on its first frame
-		// — once the spice is in. The fall's first frame is where the second
-		// question is asked, and the fall HOLDS there for it
-		// (world/descent.js), as the flight holds for the first.
-		duration: 11,
+		// NINE. Fourteen was too slow through the monitors: at nine each
+		// crossing is a second and a half, which is the pace the lab sketch
+		// fell at. (With the funnels on — NEST.funnel — each crossing is
+		// longer by the extra zoom, and eleven kept this pace; they are off.)
+		// There is no head: the tunnel has already eased to the pace the fall
+		// opens at (world/kaleidoscope.js), so the fall is falling on its
+		// first frame.
+		duration: 9,
 
 		// How many rooms deep, the last being the answer's, and how far into the
 		// last room's crossing the run comes to rest — past the point where the
@@ -709,10 +708,12 @@ const RAW = {
 		// accelerating, and over `homeDim` of that time the room goes to black
 		// under the glass (to black in colour, so the glass stays black over
 		// it) and the raster comes back — so the frame it ends on is the black
-		// the next flight opens on. Tight on purpose: a press, and you are
-		// through. The readout is gone in the first of it (Room.svelte,
-		// room.resultOut).
-		home: 1.4,
+		// the next flight opens on. THREE: it was 1.4, a press and you were
+		// through, and the record in the glass went by too fast to be seen
+		// turning; this is long enough to watch it, and for the hole to open
+		// at the lens rather than snap. The readout is gone in the first of
+		// it (Room.svelte, room.resultOut).
+		home: 3.0,
 		homeDim: [0.5, 0.92],
 		// And the record in the glass on the way home (nest.js, NEST.record):
 		// the readout's black goes to vinyl over `record` of the flight — after

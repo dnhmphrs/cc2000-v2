@@ -15,7 +15,10 @@
 	   behind the window are now the same colour, and there is nothing to swap. */
 	--ink-rgb: 240, 242, 248;
 
-	--bg: #14120e;
+	/* The ground: the blue-black the 3D scenes open on (0x090b14), so the page
+	   under the canvas, the verdict screen and the first paint are all the one
+	   colour the run settles into. See app.html. */
+	--bg: #090b14;
 	/* The pen. What is written ON the site's yellow — the buttons, the selection
 	   — which is a near-black ink and has nothing to do with the ground. It was
 	   var(--bg), which happened to be legible while the ground was navy and is a

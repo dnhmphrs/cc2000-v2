@@ -475,7 +475,9 @@ export const NEST = {
 		hole: 0.045,
 		sheen: 1,
 		stroke: 0.0022,
-		turns: 0.78
+		// A turn and two thirds over the way home: 33⅓ a minute at three
+		// seconds of it — a record, turning, to be watched.
+		turns: 1.6
 	},
 	// ── The disc at the tunnel's end ─────────────────────────────────────────
 	// The first room comes out of the dark as a record's LABEL: gold grooves
@@ -498,8 +500,11 @@ export const NEST = {
 	// drawing cropped by it and its wall smeared to the glass's edges; now it
 	// sits back, smaller, and what is round it in the glass is grooves.
 	funnel: {
-		// Off is the old fall exactly: no funnel, no zoom, nothing set back.
-		on: true,
+		// OFF: the lead looked at the fall through funnels and took them out
+		// again — the rooms are the picture, and a black ring round each was
+		// a ring too many. The funnel stays built behind this switch; off is
+		// the fall as it was: no funnel, no zoom, nothing set back.
+		on: false,
 		// How far behind its parent's glass the child's frame sits, in the
 		// parent's glass heights — the funnel's depth. Under 1.07 (the
 		// glass's own distance from the lens as its crop fills the height, on

@@ -40,9 +40,10 @@ import { wobbleEuler } from './wobble';
 // ── Scene 1: the approach ────────────────────────────────────────────────────
 // The fly-in. Space, black, a sky of stars, blue debris streaking by — and the
 // swimmer, riding a few units ahead of the lens, seen from BEHIND, rolling
-// about the axis you are looking down. Nothing else flies by. The birthday is
-// asked over it, where it rides — it does not turn to take the question — and
-// only once that is in does anything appear ahead: a point of light where a
+// about the axis you are looking down. Nothing else flies by. The two questions
+// are asked over it, where it rides — it does not turn to take them — one
+// straight after the other, and only once both are in does anything appear
+// ahead: a point of light where a
 // set is, the set coming out of the dark — dark — until the swimmer's NOSE
 // reaches its glass and lights it: a dot at the glass's centre, the hairline
 // drawn out of the dot, the covers parting about it onto the tunnel inside
@@ -55,16 +56,16 @@ import { wobbleEuler } from './wobble';
 // at its riding distance, on the axis. It does NOT fly past the lens from
 // behind: every version of that reads as a body being stretched by a wide lens.
 //
-// ── The flight takes the first answer ────────────────────────────────────────
-// There is no machine, so the run asks its questions on the way: the birthday
-// here, mid-flight, and the spice at the tunnel's end (world/descent.js). While
-// the popup is open the scene HOLDS: `t` stops and the swimmer's clock does
-// not, so it goes on rolling and what is on screen is a flight waiting rather
-// than a paused frame. Holding t rather than running a second clock is what
-// keeps every frame a pure function of progress, so ?at= is exact. (The roll
-// and the tail's wobble are on the swimmer's own clock — the one thing in the
-// run that never stops, not even at the seam.) The swimmer takes the question
-// as it rides: from behind, on the axis, and the question is put under it.
+// ── The flight takes the answers ─────────────────────────────────────────────
+// There is no machine, so the run asks its two questions on the way in — the
+// popup asks the second the moment the first is answered — and while they are
+// open the scene HOLDS: `t` stops and the swimmer's clock does not, so it goes
+// on rolling and what is on screen is a flight waiting rather than a paused
+// frame. Holding t rather than running a second clock is what keeps every
+// frame a pure function of progress, so ?at= is exact. (The roll and the
+// tail's wobble are on the swimmer's own clock — the one thing in the run that
+// never stops, not even at the seam.) The swimmer takes the questions as it
+// rides: from behind, on the axis, and they are put under it.
 //
 // ── The switch-on ────────────────────────────────────────────────────────────
 // The set does not switch itself on. Its glass is black until the swimmer's
@@ -191,9 +192,13 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 	const halfLenUnit = -nose.position.z;
 
 	// ── The lip ──────────────────────────────────────────────────────────
-	// The record's last grooves, on a run that came home through it: three
-	// gold hairline rings on a quad that covers the frame a unit ahead of the
-	// lens, ADD, expanding out of the frame and fading over `lip`.
+	// The record's last grooves, on a run that came home through it: gold
+	// hairline rings on a quad that covers the frame a unit ahead of the
+	// lens, ADD, expanding out of the frame and fading over `lip` — six of
+	// them, close-set, the smallest still short of the frame's corners when
+	// the window closes, so they go on passing the lens for the whole of it
+	// as the sky comes up: the record's tunnel becoming space, not a ripple
+	// on it.
 	const lu = { uK: uniform(0), uA: uniform(0), uAspect: uniform(1) };
 	const lipMat = new THREE.MeshBasicNodeMaterial({
 		transparent: true,
@@ -205,7 +210,7 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		const p = uv().sub(0.5).mul(vec2(lu.uAspect, 1.0));
 		const r = length(p);
 		const px = fwidth(r);
-		const grow = lu.uK.mul(5.0).add(1.0);
+		const grow = lu.uK.mul(4.0).add(1.0);
 		const w = float(0.006);
 		const ring = (r0, k) => {
 			const d = abs(r.sub(float(r0).mul(grow)));
@@ -215,7 +220,12 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 				.mul(min(w.div(e), 1.0))
 				.mul(k);
 		};
-		const g = ring(0.3, 1.1).add(ring(0.45, 1.0)).add(ring(0.62, 0.8));
+		const g = ring(0.12, 1.2)
+			.add(ring(0.2, 1.15))
+			.add(ring(0.3, 1.1))
+			.add(ring(0.45, 1.0))
+			.add(ring(0.62, 0.85))
+			.add(ring(0.8, 0.7));
 		const col = vec3(0.94, 0.77, 0.36).mul(g).mul(lu.uA);
 		return vec4(col, 1.0);
 	})();
@@ -297,8 +307,8 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		if (!held) t += dt;
 		const p = clamp01(t / T.duration);
 
-		// The birthday is asked here; the spice waits for the tunnel's end
-		// (world/descent.js). NOT while the scene is pinned: ?at= is for
+		// The questions: the first is asked here, and the popup asks the second
+		// the moment it is answered. NOT while the scene is pinned: ?at= is for
 		// looking at one frame of the flight, and a popup over it is the one
 		// thing that stops you seeing it.
 		if (!held && !(DEV.on && DEV_AT != null) && !asked && p >= T.ask) {
@@ -357,8 +367,8 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		sw.material.uniforms.uOpacity.value = SPERM ? inK : 0;
 
 		// ── The set, and the switch-on ───────────────────────────────────
-		// OFF until the birthday is in — nothing at the centre of the frame
-		// but the swimmer while it is asked — then the signal, the set out of
+		// OFF until the answers are in — nothing at the centre of the frame
+		// but the swimmer while they are asked — then the signal, the set out of
 		// the dark under it, dark, and its glass switching on as the nose
 		// reaches it: the dot at the centre, the line drawn out of it, the
 		// covers parting about the line. The room at the tunnel's end is on
