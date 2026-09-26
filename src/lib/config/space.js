@@ -560,7 +560,7 @@ export const KALEIDO = {
 	// The archive on a run it cannot answer for: the verdict's gif round the
 	// tunnel instead of the drawings (kaleidoscope.js setArchive) — which gif
 	// for which edge (data/gifs.js has the sheets), and the quads' width.
-	gif: { of: { past: 'the-past', future: 'the-future' }, size: 2.4 },
+	gif: { of: { past: 'the-past', future: 'the-future', unknown: '500' }, size: 2.4 },
 	// The archive as one atlas (kaleidoscope.js): every drawing fitted into
 	// a cell this many pixels square, keys across and decades down, this
 	// much clear padding round it so the mip levels never bleed a neighbour.

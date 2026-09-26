@@ -48,8 +48,9 @@ ERRORS only — a GL warning (a framebuffer the backend could not blit, say)
 leaves a frame flat with no error at all, so a frame that is only ground is
 worth a probe that reads warnings too. `QUERY='edge=past'` puts an extra
 query on every pin: `?edge=past|future` seeds a birthday the archive cannot
-answer for instead of a real answer, so key 4 pins the breakdown (the set
-switching off) rather than the search.
+answer for instead of a real answer (`?edge=unknown` the third verdict,
+the servers overheating), so key 4 pins the swim down that verdict's gif
+tunnel to its stop rather than the search.
 
 Two traps that have already cost a round each:
 
@@ -82,8 +83,9 @@ the tunnel inside it, the archive looped in rings, turning and cycling in
 colour, round a WALL of gold ζ grooves that makes the tunnel the inside of a
 record, to the face of that record at the far end, come out of the dark, whose
 spindle hole is a monitor's size and the glass the first room is seen through,
-so the fall's first crossing is every crossing — or, on a birthday the archive cannot answer for, the breakdown:
-the set switching off, and the verdict screen after it) and the **descent** (`descent.js` — rooms
+so the fall's first crossing is every crossing — or, on a birthday the archive
+cannot answer for, a tunnel made of the verdict's gif that the swimmer slows to
+a stop in, the verdict typed over it) and the **descent** (`descent.js` — rooms
 through rooms, at the pace the tunnel eased to, down to the answer's room and
 the splosh on its screen). The first two walk the same **kaleidoscope**
 (`kaleidoscope.js` — the set, the rings, the wall, the camera down the tunnel,
@@ -118,9 +120,11 @@ room's frame shows the room next door — a tesseract of rooms; only the real
 glass opens onto the next room. A run the archive cannot answer for goes
 down a tunnel made of the VERDICT'S GIF instead of the drawings
 (`kaleidoscope.js setArchive`, the moment `edge` is known, a second instanced
-draw whose frame is counted off the run's clock, `three/tsl/clock.js`), and
-the verdict is read over that gif tiled across the whole frame
-(`components/error/Tiles.svelte`); a gif cannot be a texture, so every gif in
+draw whose frame is counted off the run's clock, `three/tsl/clock.js`); the
+swimmer slows to a stop inside it (`SCENES.kaleido.stop`) and the verdict is
+typed over that frame, the gif still playing. Only the route's own error page,
+with no 3D under it, tiles the gif across the page
+(`components/error/Tiles.svelte`). A gif cannot be a texture, so every gif in
 `static/gifs` is baked into a sheet of its frames beside it by
 `node scripts/gifs.mjs`, which also writes `data/gifs.js`, how each sheet is
 cut — rerun it when a gif changes.
@@ -150,10 +154,15 @@ Three consequences worth remembering:
   straight after the other: the birthday is probed when the first closes and
   the archive is asked properly when the second does. An out-of-range date is
   NOT refused — there is no machine to report it on and no room to fall into —
-  so `edge` is set, the flight goes in regardless, the tunnel breaks down on it
-  (`kaleido.js`: overload, collapse to a line, a dot, black) and
+  so `edge` is set — `past`, `future` or `unknown`, the original site's three
+  verdicts (`functions/answer.js`) — the flight goes in regardless, down that
+  verdict's gif tunnel, stops in it (`kaleido.js`), and
   `director.advance('kaleido')` hands to the `error` scene, whose `ErrorScreen`
-  shows the verdict and whose way back is `director.recover()`. The set is
+  types the verdict over the stopped tunnel and whose way back is
+  `director.recover()`. The set turns INTO the tunnel's turn: leaned the other
+  way as it comes out of the dark, it comes round from `SCENES.approach.turnIn`
+  to reach the seam upright at the tunnel's own rate (`kaleidoscope.turnTo`),
+  so the turn has no start to see. The set is
   always the 60s one; the nest's first room is chosen when the run starts; the
   deeper rooms are set the moment the answer is in, while they are too small to
   see (`approach.js finalise()`).

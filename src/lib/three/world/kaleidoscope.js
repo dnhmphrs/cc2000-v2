@@ -33,7 +33,6 @@ import {
 	SCREEN_GLASS,
 	runSeconds,
 	span,
-	smoothstep,
 	easeInOutCubic
 } from '$lib/config';
 import { ADD } from '$lib/three/tsl/materials';
@@ -355,9 +354,14 @@ export function createKaleidoscope({ THREE, nest }) {
 	// ── The world ────────────────────────────────────────────────────────
 	const root = new THREE.Group();
 	root.name = 'kaleidoscope';
+	// The set turns about the axis — its glass's centre is on it — so it
+	// hangs from a pivot at the root's origin (turnTo).
+	const screenPivot = new THREE.Group();
+	screenPivot.name = 'screen-pivot';
+	root.add(screenPivot);
 	const screenRoot = new THREE.Group();
 	screenRoot.name = 'screen';
-	root.add(screenRoot);
+	screenPivot.add(screenRoot);
 	const rings = new THREE.Group();
 	rings.name = 'rings';
 	root.add(rings);
@@ -671,33 +675,31 @@ export function createKaleidoscope({ THREE, nest }) {
 		const s = Math.min(1, (x - a) / (b - a));
 		return a + (b - a) * (s - (s * s) / 2);
 	}
+	// The whole kaleidoscope turned to `turn` about the axis: the set, the
+	// rings and the wall's grooves together. The tunnel turns from the seam
+	// on (set, below); the approach turns the set INTO that turn before it
+	// (world/approach.js), so the turn has no start to see.
+	function turnTo(turn) {
+		screenPivot.rotation.z = turn;
+		rings.rotation.z = turn;
+		uTurn.value = turn * W.turn;
+	}
 	// The tunnel at u: its turn, its colours, and the rings going out under
 	// the room as it takes the frame — so the frame this ends on is the nest
 	// and nothing else. The turn and the hue decelerate to rest over `lock`,
 	// and the hue lands on true colour (see SCENES.kaleido.hueCycles).
 	//
-	// In the BREAKDOWN (world/kaleido.js) nothing stops: the turn and the hue
-	// run away over `overload`, brighter, and the rings stay up to the end —
-	// the CRT mask is what takes the picture, not the room.
-	function set(u, breakdown = false) {
+	// On an EDGE run (world/kaleido.js) there is no room to go out under:
+	// the rings — the verdict's gif — stay up, and the tunnel stops where the
+	// camera stops.
+	function set(u, edge = false) {
 		const x = Math.max(0, Math.min(1, u));
-		const w = breakdown ? x : eased(x, T.lock);
-		let turn = w * T.turns * Math.PI * 2;
-		let hueA = w * T.hueCycles * Math.PI * 2;
-		let bright = K.dim;
-		if (breakdown) {
-			const o = smoothstep(T.overload[0], T.overload[1], x);
-			// The runaway turns the way the tunnel turns, faster.
-			turn += Math.sign(T.turns || 1) * o * o * Math.PI * 2;
-			hueA += o * o * Math.PI * 6;
-			bright = K.dim + o * 0.7;
-		}
-		rings.rotation.z = turn;
-		uTurn.value = turn * W.turn;
+		const w = eased(x, T.lock);
+		turnTo(w * T.turns * Math.PI * 2);
 		uPhase.value = x * W.pulses;
-		uHue.value = hueA;
-		uBright.value = bright;
-		uOn.value = breakdown ? 1 : 1 - easeInOutCubic(span(x, T.out));
+		uHue.value = w * T.hueCycles * Math.PI * 2;
+		uBright.value = K.dim;
+		uOn.value = edge ? 1 : 1 - easeInOutCubic(span(x, T.out));
 	}
 
 	// The clear value for wherever the camera is: 0 with the set still
@@ -736,6 +738,7 @@ export function createKaleidoscope({ THREE, nest }) {
 		pose,
 		set,
 		rebase,
+		turnTo,
 		setDim(v) {
 			uDim.value = v;
 		},

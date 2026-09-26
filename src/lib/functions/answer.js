@@ -10,12 +10,31 @@ import { conceptionDate, previousDay, dateToDecade } from './utils';
 // or the room means seeding a real answer first, and it must be the SAME answer
 // the machine would have produced.
 //
-// Returns either { edge } — 'past' or 'future': the flight goes in regardless,
-// the tunnel breaks down on it and the verdict screen says so — or { track,
-// conceived, decade }.
+// Returns either { track, conceived, decade } or { edge }, one of three, each
+// with its own gif and its own line (components/error/ErrorScreen.svelte), as
+// the original site had them: the flight goes in regardless, down a tunnel
+// made of that gif, and the verdict is given there.
+//
+//   past      conceived before the archive starts — the time of dinosaurs
+//   future    born after today, or conceived after the archive's last
+//             week: the After Time
+//   unknown   neither, and still no chart to be found: the servers
+//             overheated
+//
+// The original site meant `future` to begin where the archive ends ("if
+// date is after 2023-03-05") and tested today instead; with a year-long
+// look-back, a birthday past about mid-2024 fell through to `past` — the
+// dinosaurs for anyone too young.
 
-// The chart archive starts here, and nobody has been conceived after today.
+// The chart archive starts here, and ends with its last week.
 export const ARCHIVE_START = '1958-06-01';
+export const ARCHIVE_END = Object.keys(data).sort().at(-1);
+const plusDays = (iso, n) => {
+	const d = new Date(`${iso}T00:00:00Z`);
+	d.setUTCDate(d.getUTCDate() + n);
+	return d.toISOString().slice(0, 10);
+};
+const LAST_WEEK = plusDays(ARCHIVE_END, 6);
 
 // Each day holds its top ten IN CHART ORDER, so the level picks a position: 1 is
 // the number one, 10 is the number ten. Days with no chart fall back to the most
@@ -31,7 +50,7 @@ export function resolve(dateStr, spicy) {
 	const today = new Date().toISOString().slice(0, 10);
 
 	if (cd <= ARCHIVE_START) return { edge: 'past' };
-	if (dateStr >= today) return { edge: 'future' };
+	if (dateStr >= today || cd > LAST_WEEK) return { edge: 'future' };
 
 	for (let i = 0; i < LOOKBACK; i++) {
 		const day = data[cd];
@@ -40,7 +59,7 @@ export function resolve(dateStr, spicy) {
 		}
 		cd = previousDay(cd);
 	}
-	return { edge: 'past' };
+	return { edge: 'unknown' };
 }
 
 // The earliest birthday the archive can answer for: a conception the day after

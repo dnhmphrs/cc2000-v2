@@ -33,10 +33,10 @@ that glass; and "go again" — three seconds of it: the readout gone, the camera
 into the glass, the room going to black under it, black — which is the black
 the next flight opens on, the sky coming up over it. A birthday
 the archive cannot answer for is not refused in the popup: the flight goes in
-regardless, down a tunnel made of the verdict's gif instead of the archive, and
-the tunnel breaks down on it — overloads, collapses to a line, a dot, black —
-and the verdict is typed over that gif, tiled across the whole frame,
-in the questions' own panel (too old for the archive, or too young),
+regardless, down a tunnel made of the verdict's gif instead of the archive,
+slows to a stop inside it, and the verdict is typed over that stopped tunnel,
+the gif still playing, in the questions' own panel (too old for the archive,
+too young for it, or too hot to calculate),
 and "calculate again" is the
 flight again with the answers kept. One WebGPU renderer, and one shot from the
 flight through the set into the fall: each scene ends on the frame the next
@@ -44,13 +44,13 @@ opens on, and the camera is one camera throughout — one lens, one slow hand on
 it, no dolly, no stop, no restart. Frames on the WebGL lane at `?seed=1`, so
 the decades fall the same way on every load.
 
-| scene    | seconds | where                                                                          |
-| -------- | ------- | ------------------------------------------------------------------------------ |
-| approach | 7       | `three/world/approach.js`, held at the ask                                     |
-| kaleido  | 7       | `three/world/kaleido.js` over `three/world/kaleidoscope.js` — or the breakdown |
-| descent  | 9       | `three/world/descent.js` over `three/world/nest.js`                            |
-| room     | —       | `scenes/Room.svelte`, until "go again"                                         |
-| verdict  | —       | `components/error/ErrorScreen.svelte`, until "calculate again"                 |
+| scene    | seconds | where                                                                                |
+| -------- | ------- | ------------------------------------------------------------------------------------ |
+| approach | 7       | `three/world/approach.js`, held at the ask                                           |
+| kaleido  | 7       | `three/world/kaleido.js` over `three/world/kaleidoscope.js` — or the stop in the gif |
+| descent  | 9       | `three/world/descent.js` over `three/world/nest.js`                                  |
+| room     | —       | `scenes/Room.svelte`, until "go again"                                               |
+| verdict  | —       | `components/error/ErrorScreen.svelte`, until "calculate again"                       |
 
 **2 — the lab cut it was made from.** The five sketches chained at `/v4`,
 55 s, from the round before: the approach and the descent were the two that were
@@ -70,7 +70,7 @@ though not in the cut.
 
 for the run (`2` approach, `4` kaleido, `3` descent — the shots tool waits for
 the stage's warm-up and presses the key; `?edge=past` seeds a birthday with no
-answer, so `4` pins the breakdown); the popups, the room, the way home and the
+answer, so `4` pins the swim down its gif tunnel); the popups, the room, the way home and the
 verdicts are a real run driven the way `scripts/verify.mjs` drives it. The
 second section is the same `?at=` pins against `/v4` on the WebGPU lane
 (`LANE=webgpu`, `scripts/lane.mjs`), the third against `/lab?sketch=e8`. The
