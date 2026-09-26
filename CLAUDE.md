@@ -80,8 +80,9 @@ it rides, then the 60s set dead ahead, lit at its centre as the swimmer's nose
 reaches its glass), the **kaleido** (`kaleido.js` — through that set's glass and down
 the tunnel inside it, the archive looped in rings, turning and cycling in
 colour, round a WALL of gold ζ grooves that makes the tunnel the inside of a
-record, to the first room at the far end, come out of the dark as the label of
-that record — or, on a birthday the archive cannot answer for, the breakdown:
+record, to the face of that record at the far end, come out of the dark, whose
+spindle hole is a monitor's size and the glass the first room is seen through,
+so the fall's first crossing is every crossing — or, on a birthday the archive cannot answer for, the breakdown:
 the set switching off, and the verdict screen after it) and the **descent** (`descent.js` — rooms
 through rooms, at the pace the tunnel eased to, down to the answer's room and
 the splosh on its screen). The first two walk the same **kaleidoscope**

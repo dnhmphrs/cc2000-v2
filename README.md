@@ -49,12 +49,12 @@ popups that hold the flight while they are open.
                      └──────────────────────── go again ────────────────────────┘
 ```
 
-| #   | Scene        | What it is                                                                                                                                                                                                      | Where                             |
-| --- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind, the two questions asked under it; then the 60s set dead ahead, lit at its centre as the swimmer's nose reaches the glass. 3D.                                | `src/lib/three/world/approach.js` |
-| 2   | **Kaleido**  | Through that set's glass and down the tunnel inside: the archive looped, in rings, turning and cycling in colour, round a wall of gold ζ grooves, to the first room, the record's label — or the breakdown. 3D. | `src/lib/three/world/kaleido.js`  |
-| 3   | **Descent**  | Rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. 3D.                                                                                         | `src/lib/three/world/descent.js`  |
-| 4   | **Room**     | The answer, in that room's monitor. DOM.                                                                                                                                                                        | `src/lib/scenes/Room.svelte`      |
+| #   | Scene        | What it is                                                                                                                                                                                                                             | Where                             |
+| --- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind, the two questions asked under it; then the 60s set dead ahead, lit at its centre as the swimmer's nose reaches the glass. 3D.                                                       | `src/lib/three/world/approach.js` |
+| 2   | **Kaleido**  | Through that set's glass and down the tunnel inside: the archive looped, in rings, turning and cycling in colour, round a wall of gold ζ grooves, to the face of a record whose hole is the first room's glass — or the breakdown. 3D. | `src/lib/three/world/kaleido.js`  |
+| 3   | **Descent**  | Rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. 3D.                                                                                                                | `src/lib/three/world/descent.js`  |
+| 4   | **Room**     | The answer, in that room's monitor. DOM.                                                                                                                                                                                               | `src/lib/scenes/Room.svelte`      |
 
 The first two 3D scenes walk the same **kaleidoscope** —
 `src/lib/three/world/kaleidoscope.js`: the set the flight ends in, the rings

@@ -674,7 +674,8 @@ const RAW = {
 		// There is no head: the tunnel has already eased to the pace the fall
 		// opens at (world/kaleidoscope.js), so the fall is falling on its
 		// first frame.
-		duration: 9,
+		// Seven levels now — the record's face to its hole, then six rooms.
+		duration: 10.5,
 
 		// How many rooms deep, the last being the answer's, and how far into the
 		// last room's crossing the run comes to rest — past the point where the

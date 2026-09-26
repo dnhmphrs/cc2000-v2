@@ -111,7 +111,6 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		const { fov } = kal.pose(p, camera, aspectR);
 		kal.set(p, broken);
 		runClock.value = runSeconds('kaleido', p);
-		nest.setDiscRin(aspectR);
 
 		// ── The swimmer ──────────────────────────────────────────────────
 		// Ahead of the lens, dead centre, at the ride it arrived at — a child
