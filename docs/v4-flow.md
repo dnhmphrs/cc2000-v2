@@ -6,10 +6,9 @@ Three sections, all shot headless and all pinned with `?at=` — every scene is 
 pure function of its own progress, so each frame is the frame the run would
 have drawn at that moment rather than a timed guess at it.
 
-**1 — the run, as it now is.** What `/` does on `main`, one cut, every frame
-of it through the SIGNAL — a composite signal's faults on the picture, the
-chroma off the luma, bright things trailing right, lines slipping, a tear, grain,
-on the run's clock: a title card
+**1 — the run, as it now is.** What `/` does on `main`, one cut (the frames
+below were shot with a post-process signal pass — colour fringing, grain, a
+tear — that has since been taken out; the raster is CSS again): a title card
 over an approach held at zero, black; the card lifts, the sky comes up, the
 swimmer fades in where it rides, ahead of the lens and seen from behind, and
 both questions are put to it there, in one panel at the centre of the frame,

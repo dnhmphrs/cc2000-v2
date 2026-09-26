@@ -111,6 +111,7 @@ export async function createNest({ THREE, renderer }) {
 	const SCREW = rad(NEST.screw);
 	const DEPTH = NEST.depth;
 	const WALL_COVER = NEST.wallCover;
+	const TILES = NEST.tiles;
 	const zAxis = new THREE.Vector3(0, 0, 1);
 
 	// ── The drawings, every decade ───────────────────────────────────────
@@ -510,14 +511,43 @@ export async function createNest({ THREE, renderer }) {
 			}
 
 			const meshes = [];
-			let screenMesh = null;
-			const sprite = (key, mat, order) => {
+			let screenMesh;
+			// The wallpaper's period: the back wall at cover, which the frame
+			// sits inside. The objects repeat on it, mirrored tile by tile as
+			// the wallpaper is (NEST.tiles), one instanced draw per layer.
+			const P = { w: r.L.bg.w, h: r.L.bg.h };
+			const M = new THREE.Matrix4();
+			const Q = new THREE.Quaternion();
+			const V = new THREE.Vector3();
+			const S = new THREE.Vector3();
+			const sprite = (key, mat, order, tiles = 0) => {
 				const l = r.L[key];
 				const wall = key === 'bg';
-				const m = new THREE.Mesh(wall ? wallPlane : plane, mat);
-				const f = wall ? WALL_COVER : 1;
-				m.scale.set(l.w * f, l.h * f, 1);
-				m.position.set(l.x, l.y, l.z);
+				let m;
+				if (tiles > 0) {
+					const side = 2 * tiles + 1;
+					m = new THREE.InstancedMesh(plane, mat, side * side);
+					let n = 0;
+					for (let j = -tiles; j <= tiles; j++) {
+						for (let i = -tiles; i <= tiles; i++) {
+							// An odd tile is the room reflected across the tile's
+							// edge: its objects mirrored, and placed as their
+							// reflections.
+							const sx = i % 2 ? -1 : 1;
+							const sy = j % 2 ? -1 : 1;
+							V.set(i * P.w + sx * l.x, j * P.h + sy * l.y, l.z);
+							S.set(sx * l.w, sy * l.h, 1);
+							m.setMatrixAt(n++, M.compose(V, Q, S));
+						}
+					}
+					m.instanceMatrix.needsUpdate = true;
+					disposables.push(m);
+				} else {
+					m = new THREE.Mesh(wall ? wallPlane : plane, mat);
+					const f = wall ? WALL_COVER : 1;
+					m.scale.set(l.w * f, l.h * f, 1);
+					m.position.set(l.x, l.y, l.z);
+				}
 				m.renderOrder = order;
 				m.frustumCulled = false;
 				group.add(m);
@@ -532,19 +562,21 @@ export async function createNest({ THREE, renderer }) {
 					new THREE.MeshBasicNodeMaterial({
 						transparent: true,
 						depthTest: false,
-						depthWrite: false
+						depthWrite: false,
+						// The mirrored tiles wind the other way.
+						side: THREE.DoubleSide
 					})
 				);
 				m.colorNode = dimmed(texture(textures[decade][key]));
 				return m;
 			};
 			BACK.forEach((key, i) => {
-				const m = sprite(
+				sprite(
 					key,
 					stencil(flat(key), THREE.EqualStencilFunc, THREE.KeepStencilOp),
-					10 * k + i
+					10 * k + i,
+					key === 'bg' ? 0 : TILES
 				);
-				if (key === 'screen') screenMesh = m;
 			});
 			const gm = mk(
 				new THREE.MeshBasicNodeMaterial({
@@ -555,13 +587,20 @@ export async function createNest({ THREE, renderer }) {
 				})
 			);
 			gm.colorNode = glassOnly(decade, textures[decade].screen)();
-			sprite('screen', stencil(gm, THREE.EqualStencilFunc, THREE.IncrementStencilOp), 10 * k + 4);
+			// The glass itself is the room's alone: only it opens onto the next
+			// room, and its mesh is where the readout's rect is measured from.
+			screenMesh = sprite(
+				'screen',
+				stencil(gm, THREE.EqualStencilFunc, THREE.IncrementStencilOp),
+				10 * k + 4
+			);
 			// Front layers: after every level's back, deepest level first.
 			FRONT.forEach((key, j) =>
 				sprite(
 					key,
 					stencil(flat(key), THREE.LessEqualStencilFunc, THREE.KeepStencilOp),
-					10 * (nLevels + 1) + 10 * (nLevels - 1 - k) + j
+					10 * (nLevels + 1) + 10 * (nLevels - 1 - k) + j,
+					TILES
 				)
 			);
 			// The funnel, from the parent's glass down to this room's frame —

@@ -7,8 +7,6 @@
 	import Glass from '$lib/components/Glass.svelte';
 	import Dev from '$lib/components/Dev.svelte';
 	import ErrorScreen from '$lib/components/error/ErrorScreen.svelte';
-	import SignalPanel from '$lib/components/SignalPanel.svelte';
-	import { DEV, CRT } from '$lib/config';
 
 	// The whole site, in the order the layers stack:
 	//
@@ -18,8 +16,6 @@
 	//   10 the screens  the room, or the verdict
 	//   20 the gate     the title card and the two questions, over the flight
 	//   30 Glass        scanlines, over everything, always
-	//   40 SignalPanel  the signal's dials, top right, while the dev harness
-	//                   is on and the signal pass is
 	//
 	// Dev is not a layer — it binds keys and nothing else. See config/dev.js.
 	//
@@ -33,9 +29,6 @@
 
 <Stage />
 <Glass />
-{#if DEV.on && CRT.on}
-	<SignalPanel />
-{/if}
 <!-- Keys for jumping around the run. Inert unless config/dev.js says otherwise. -->
 <Dev />
 

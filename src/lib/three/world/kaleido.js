@@ -8,13 +8,12 @@ import {
 	clamp01,
 	smoothstep,
 	smootherstep,
-	runSeconds,
-	CRT
+	runSeconds
 } from '$lib/config';
 import { decade, edge, aspect } from '$lib/store/store';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
 import { createCrtMask } from './kaleidoscope';
-import { runClock, crtGain } from '$lib/three/tsl/clock';
+import { runClock } from '$lib/three/tsl/clock';
 import { roomsFor } from './nest';
 
 // ── Scene 2: the kaleido ─────────────────────────────────────────────────────
@@ -112,14 +111,6 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		const { fov } = kal.pose(p, camera, aspectR);
 		kal.set(p, broken);
 		runClock.value = runSeconds('kaleido', p);
-		// The signal faults with the tunnel in the breakdown, and is clean
-		// under the verdict's black.
-		crtGain.value = broken
-			? 1 +
-				(CRT.overload - 1) *
-					smoothstep(T.overload[0], T.overload[1], p) *
-					(1 - smoothstep(T.pinch[1], 1, p))
-			: 1;
 		nest.setDiscRin(aspectR);
 
 		// ── The swimmer ──────────────────────────────────────────────────

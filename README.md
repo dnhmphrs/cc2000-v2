@@ -82,14 +82,7 @@ and the descent opens on it — the first room filling the frame's height,
 still falling — so there is no cut between them. They are also one camera:
 the run's one lens (`LENS`) and one slow hand on it (`three/world/wobble.js`,
 on the run's own clock), the tunnel easing from the flight's speed to the
-fall's, so nothing about the camera changes at a seam. Every frame of it is
-drawn through the SIGNAL (`src/lib/three/tsl/crt.js`): one post pass in which
-a composite signal's faults are put on the picture — colour fringing, bright
-things trailing right, lines slipping, a tear sweeping through, grain — on the
-run's clock, so a `?at=` pin is exact; `CRT` in `src/lib/config/space.js` has
-the amounts and the switch, `?crt=0` draws without it and `?crt=2` doubles it,
-and while the dev harness is on a panel in the top right corner has a dial for
-every one of them. The one cut in the run is the loop
+fall's, so nothing about the camera changes at a seam. The one cut in the run is the loop
 home: the camera flies through the last room's monitor, the room going to black
 under its glass, and that black is the space the next run opens on.
 
@@ -125,7 +118,6 @@ src/lib/
   store/store.js    every store, with its writer named in the comment
   components/
     Prompt.svelte       the two questions, asked mid-flight at the centre of the frame
-    SignalPanel.svelte  the signal's dials, top right, while the dev harness is on
     error/
       ErrorScreen.svelte  the verdict, typed over its gif
       Tiles.svelte        a gif's sheet, tiled over the whole frame, playing
@@ -141,8 +133,7 @@ src/lib/
       descent.js        scene 3 — the fall, the splosh, the readout's rect, the way back
     tsl/
       materials.js      every material, as TSL — line, holo, skin, dot, core
-      crt.js            the signal: the CRT pass every scene is drawn through
-      clock.js          the run's clock and the signal's gain, as uniforms
+      clock.js          the run's clock as a uniform, for the gif's frame down the tunnel
       zeta.js           |ζ(½ + it)| as a texture, and the distance to the nearest groove cut with it
       backdrop.js       the grounds the scenes paint — deep, grid, flat, white
       swimmer.js        the sperm, loaded and normalised, on the hologram

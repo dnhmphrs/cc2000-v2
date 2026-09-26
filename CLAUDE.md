@@ -43,15 +43,10 @@ rather than by position in `ORDER`, so a scene coming or going cannot slide a
 key and silently repoint every PLAN in this file and in `verify.mjs`.
 
 A `?at=` pin suppresses the two mid-flight popups, or every contact sheet past
-`ask` comes back with a dialog across it. `?crt=0` draws the scenes straight to
-the canvas without the signal pass (below), `?crt=raw` draws the bare pass, and
-`?crt=2` turns the pass's faults up to twice the config; the pass is on the
-run's clock, so a pin through it is exact and the seams stay at 0/255 with it
-on. `?signal=0` keeps the signal panel's tab (top right, while the dev harness
-is on) out of the frame; the shots tool passes it. The shots tool reports
-console ERRORS only — a GL warning (a framebuffer
-the backend could not blit, say) leaves a frame flat with no error at all, so
-a frame that is only ground is worth a probe that reads warnings too. `QUERY='edge=past'` puts an extra
+`ask` comes back with a dialog across it. The shots tool reports console
+ERRORS only — a GL warning (a framebuffer the backend could not blit, say)
+leaves a frame flat with no error at all, so a frame that is only ground is
+worth a probe that reads warnings too. `QUERY='edge=past'` puts an extra
 query on every pin: `?edge=past|future` seeds a birthday the archive cannot
 answer for instead of a real answer, so key 4 pins the breakdown (the set
 switching off) rather than the search.
@@ -108,26 +103,22 @@ the run's ONE lens (`LENS`) with the run's ONE hand on the camera
 (`three/world/wobble.js`, a slow pan, tilt and roll on `runSeconds`, the run's
 own clock), and the tunnel eases from the flight's speed to the fall's over
 the whole of its length: no dolly, no stop and no restart anywhere, so nothing
-about the camera changes at a seam. Every scene is drawn through THE SIGNAL
-(`three/tsl/crt.js`): one full-screen pass of whichever scene is running, in
-which a composite signal's faults are put on the picture — the chroma off the
-luma, bright things trailing to the right, every line's own slip, a band that
-tears through, a slow wave, grain — on the run's clock (`three/tsl/clock.js`
-`runClock`, which every scene's `set(p)` writes from `runSeconds`), so a pin is
-exact; `crtGain` scales it all and the breakdown turns it up. The amounts are
-`CRT` in `config/space.js`, with an `on` switch, and every one of them is a
-UNIFORM (`SIGNAL` in `crt.js`) with a dial in the panel in the top right corner
-(`components/SignalPanel.svelte`, there while `DEV.on`): turn them while the
-run plays, "copy" puts the numbers on the clipboard as the `CRT` block wants
-them, "reset" puts the config's back. The raster and the tube stay CSS over the
-page (`components/Glass.svelte`), since they are the screen the run is watched
-on rather than the signal it is sent. The pass's target carries the stencil (a
-depth-stencil texture of its own — the pass makes a plain depth texture
-otherwise, and on WebGL 2 the multisample resolve then fails silently), and
-the renderer's output buffer is eight-bit for it. A run the archive cannot
-answer for goes down a tunnel made of the VERDICT'S GIF instead of the
-drawings (`kaleidoscope.js setArchive`, the moment `edge` is known), and the
-verdict is read over that gif tiled across the whole frame
+about the camera changes at a seam. The raster and the tube are CSS over the
+page (`components/Glass.svelte`); there was a post-process CRT pass under
+them for one round and the lead took it out. The tunnel's archive is ONE
+instanced draw: the twenty drawings go into one ATLAS at start
+(`kaleidoscope.js`, keys across and decades down, `KALEIDO.atlas`), and every
+one of the 384 quads is an instance carrying its drawing's rectangle, laid
+far to near, which is the painter's order alpha-over needs and which 384
+meshes on twenty materials would not keep. The rooms' OBJECTS are tiled as
+the wallpaper is (`NEST.tiles`): poster, clock, screen, desk and bed repeat
+mirrored round every room, one instanced draw per layer, so a gap in a
+room's frame shows the room next door — a tesseract of rooms; only the real
+glass opens onto the next room. A run the archive cannot answer for goes
+down a tunnel made of the VERDICT'S GIF instead of the drawings
+(`kaleidoscope.js setArchive`, the moment `edge` is known, a second instanced
+draw whose frame is counted off the run's clock, `three/tsl/clock.js`), and
+the verdict is read over that gif tiled across the whole frame
 (`components/error/Tiles.svelte`); a gif cannot be a texture, so every gif in
 `static/gifs` is baked into a sheet of its frames beside it by
 `node scripts/gifs.mjs`, which also writes `data/gifs.js`, how each sheet is
@@ -146,9 +137,11 @@ answers the machine used to take are taken mid-flight by popups
 
 The one thing holding all of that together is the `gate` store: while it is
 non-null the approach holds `t` and keeps advancing `elapsed`, so the swimmer
-goes on rolling and the scene waits rather than freezing. Holding `t` rather
-than running a second clock is what keeps every frame a pure function of
-progress.
+goes on rolling and the scene waits rather than freezing — and the debris goes
+on streaming past at the flight's speed, its queue advanced by the hold's own
+distance while its slab stays on the lens (`tsl/motes.js uDrift`), so the wait
+looks like the flight. Holding `t` rather than running a second clock is what
+keeps every frame a pure function of progress.
 
 Three consequences worth remembering:
 

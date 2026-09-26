@@ -59,6 +59,9 @@ export function createMotes({ count, span, radius, length: len, ink = HOLO.mote,
 
 	const u = {
 		uCamZ: uniform(0),
+		// The queue advanced without the lens moving: a flight held in place
+		// (world/approach.js, the questions) keeps the debris passing.
+		uDrift: uniform(0),
 		uSpan: uniform(span),
 		uLen: uniform(len),
 		uOpacity: uniform(0),
@@ -79,7 +82,7 @@ export function createMotes({ count, span, radius, length: len, ink = HOLO.mote,
 	// Fold the mote into the slab of air ahead of the lens; a little behind it,
 	// so nothing pops into existence at it. The far end of the segment is the
 	// trailing one: a streak points back the way it came.
-	const d = mod(aPhase.sub(u.uCamZ), u.uSpan);
+	const d = mod(aPhase.sub(u.uCamZ).add(u.uDrift), u.uSpan);
 	const z = u.uCamZ
 		.add(4.0)
 		.sub(d)
@@ -106,10 +109,11 @@ export function createMotes({ count, span, radius, length: len, ink = HOLO.mote,
 		lines,
 		mat,
 		uniforms: u,
-		set(camZ, opacity, reveal) {
+		set(camZ, opacity, reveal, drift = 0) {
 			u.uCamZ.value = camZ;
 			u.uOpacity.value = opacity;
 			u.uReveal.value = reveal;
+			u.uDrift.value = drift;
 		},
 		dispose() {
 			geo.dispose();

@@ -448,6 +448,13 @@ export const NEST = {
 	// nearest the whole label is in the frame. 2.6 left a band of the
 	// parent's glass paint over every room's wall, mid-crossing.
 	wallCover: 3.4,
+	// And the room's OBJECTS go on past its frame the same way: poster, clock,
+	// screen, desk and bed repeated this many rooms out on every side, each
+	// copy mirrored as the wallpaper's is, so a gap in a room's frame shows
+	// the room next door rather than bare wallpaper — a tesseract of rooms.
+	// Every layer is one instanced draw of the (2·tiles + 1)² copies. 0 is the
+	// room alone.
+	tiles: 1,
 	// Out of the dark: the rooms are unseen beyond seen[1] units ahead and
 	// fully there inside seen[0], so the room at the tunnel's end is not there
 	// to be seen on the way in — it comes up over the last third of the
@@ -553,6 +560,10 @@ export const KALEIDO = {
 	// tunnel instead of the drawings (kaleidoscope.js setArchive) — which gif
 	// for which edge (data/gifs.js has the sheets), and the quads' width.
 	gif: { of: { past: 'the-past', future: 'the-future' }, size: 2.4 },
+	// The archive as one atlas (kaleidoscope.js): every drawing fitted into
+	// a cell this many pixels square, keys across and decades down, this
+	// much clear padding round it so the mip levels never bleed a neighbour.
+	atlas: { cell: 800, pad: 16 },
 	// A shade down.
 	dim: 0.85,
 	// Out of the dark: unseen beyond seen[1] units ahead, fully there inside
@@ -618,61 +629,4 @@ export const KALEIDO = {
 		// the frame either way.
 		out: 0
 	}
-};
-
-// ── The signal ───────────────────────────────────────────────────────────────
-// What a composite signal does to the picture on its way to the screen — see
-// three/tsl/crt.js, one full-screen pass over the 3D. Lengths in DEVICE
-// pixels; rates per second of the run's clock. Every key but `on`, `samples`
-// and `overload` is a dial in the panel in the top right corner
-// (components/SignalPanel.svelte) while the dev harness is on, and what the
-// panel copies out pastes straight back in here. `on` false renders the
-// scenes straight to the canvas (?crt=0 does the same for one load).
-export const CRT = {
-	on: true,
-	// MSAA in the pass's target — the canvas used to have it; 4 keeps it.
-	samples: 4,
-	// The whole signal, turned up or down (?crt=2 sets it for one load).
-	level: 1,
-	// The chroma off the luma, either side of green, and how much more so
-	// toward the corners (a multiple of the distance from the centre, squared).
-	split: 1.2,
-	splitEdge: 3.0,
-	// Bright things trail RIGHT: how much of the light comes along, over how
-	// many taps (of the ten the shader has) this far apart, falling off over
-	// `bleedTau` taps, and gated to what is brighter than `bleedFloor` (0..1
-	// of the luma) so black stays black.
-	bleed: 0.7,
-	bleedTaps: 6,
-	bleedStep: 2.0,
-	bleedTau: 2.4,
-	bleedFloor: 0.35,
-	// The picture again, this far to the right, this faint. Off.
-	ghost: 0,
-	ghostOffset: 40,
-	// Every line's own slip, re-rolled this many times a second; the tear, a
-	// band this tall (of the frame) slipping this far, sweeping through the
-	// frame this many times a second; the slow wave down the frame, this many
-	// waves tall, at this rate.
-	jitter: 0.6,
-	jitterRate: 30,
-	tear: 9,
-	tearWidth: 0.018,
-	tearRate: 0.31,
-	wobble: 0.7,
-	wobbleWaves: 7,
-	wobbleRate: 1.1,
-	// The vertical hold: how far the picture rolls up the frame (1 is right
-	// round), this many times a second. Off. And the hum bar, a dark band
-	// this deep drifting up the frame at this rate. Off.
-	roll: 0,
-	rollRate: 0.5,
-	hum: 0,
-	humRate: 0.12,
-	// Grain, in units of the picture (0.035 is three and a half percent), and
-	// the colour, 1 as rendered.
-	noise: 0.035,
-	sat: 1,
-	// The breakdown turns it all up to this (world/kaleido.js).
-	overload: 3.5
 };
