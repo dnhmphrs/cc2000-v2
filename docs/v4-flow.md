@@ -6,16 +6,16 @@ Three sections, all shot headless and all pinned with `?at=` — every scene is 
 pure function of its own progress, so each frame is the frame the run would
 have drawn at that moment rather than a timed guess at it.
 
-**1 — the run, as it now is.** What `/` does on `main`, one cut (the frames
-below were shot with a post-process signal pass — colour fringing, grain, a
-tear — that has since been taken out; the raster is CSS again): a title card
+**1 — the run, as it now is.** What `/` does on `main`, one cut: a title card
 over an approach held at zero, black; the card lifts, the sky comes up, the
 swimmer fades in where it rides, ahead of the lens and seen from behind, and
 both questions are put to it there, in one panel at the centre of the frame,
 the flight waiting in motion round it — the swimmer rolling, the debris
 streaming on — nothing else flies by; only once the answers are in does anything
 appear ahead: a point of light, then
-the set coming out of the dark, dark — always the 60s television — until the
+the set coming out of the dark, dark — always the 60s television — leaned
+ten degrees the other way, coming round as it grows so that it reaches the
+seam upright and already turning at the tunnel's own rate — until the
 swimmer's nose reaches its glass and lights it: a dot at the glass's centre,
 the hairline drawn out of the dot, the covers parting about it onto the
 tunnel inside; through the glass and down the tunnel, where the archive is looped —
@@ -23,10 +23,12 @@ rings of eight of the same drawing, mirrored, turning, the hue cycling as the
 pattern repeats — round a wall of gold grooves cut with |ζ(½ + it)|, the
 tunnel the inside of a record, with no exit in sight, the tunnel easing from the flight's
 speed to the fall's the whole way down, until the search ENDS: the turn and
-the hue decelerate to rest, the hue on true colour, and a room comes out of
-the dark at the far end as the LABEL of a gold record — the whole room, not a
-set, grooves round it — and fills the frame; the fall carries straight on
-through the decades, one room inside the next, at one pace on screen, the turn
+the hue decelerate to rest, the hue on true colour, and the FACE of a gold
+record comes out of the dark at the far end, its spindle hole a monitor's size
+with the first room behind it; the fall carries straight on through that hole
+as through every monitor after it — the same zoom, the same roll — and through
+the decades, one room inside the next, every room's objects tiled mirrored
+round it like its wallpaper, at one pace on screen, the turn
 coming in from rest and going out before the answer's room, which lands level;
 the swimmer going into its screen and the screen going white; the readout in
 that glass; and "go again" — three seconds of it: the readout gone, the camera
