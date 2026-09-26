@@ -448,6 +448,13 @@ export const NEST = {
 	// nearest the whole label is in the frame. 2.6 left a band of the
 	// parent's glass paint over every room's wall, mid-crossing.
 	wallCover: 3.4,
+	// The fall's world, in the tunnel's units: the rooms (2 tall, in their
+	// own units) are this many times bigger in the world. It is what lets the
+	// run gather speed all the way down: the lens meets the record's hole at
+	// the seam this far out (2.75 × scale world units), so the tunnel can
+	// hand over at a speed no slower than the one it took from the flight
+	// and the fall still opens at a watchable zoom (SCENES.descent.accel).
+	scale: 7,
 	// And the room's OBJECTS go on past its frame the same way: poster, clock,
 	// screen, desk and bed repeated this many rooms out on every side, each
 	// copy mirrored as the wallpaper's is, so a gap in a room's frame shows
@@ -455,14 +462,16 @@ export const NEST = {
 	// Every layer is one instanced draw of the (2·tiles + 1)² copies. 0 is the
 	// room alone.
 	tiles: 1,
-	// Out of the dark: the rooms are unseen beyond seen[1] units ahead and
-	// fully there inside seen[0], so the room at the tunnel's end is not there
-	// to be seen on the way in — it comes up over the last third of the
-	// tunnel, as the search ends (the tunnel's length and pace are in
-	// kaleidoscope.js: 17 units out is about 0.64 of it, 10 about 0.81).
-	// Every distance in the fall itself is well inside seen[0] — the first
-	// room's back wall is under 6 units from the lens at the seam.
-	seen: [10, 17],
+	// Out of the dark: the rooms are unseen beyond seen[1] SEAM DISTANCES
+	// ahead (the lens's from the record's hole as the fall opens: 2.75 room
+	// units on LENS, so 19.2 in the world) and fully there inside seen[0],
+	// so the room at the tunnel's end is not there to be seen on the way in
+	// — it comes up in the hole over the last quarter of the tunnel, as the
+	// search ends and after the record has (kaleidoscope.js has the
+	// tunnel's pace: 2.3 is about 0.73 of it, 1.3 about 0.93). Every room is
+	// flat on its glass, so at the seam the first one is one seam distance
+	// off and every distance in the fall after is nearer.
+	seen: [1.3, 2.3],
 	// The swimmer down the axis: its cross-section, of the frame's half-height
 	// at the riding distance, and how far it rides toward the frame being
 	// fallen into.
@@ -478,10 +487,40 @@ export const NEST = {
 		// The hole's radius, in room units: a monitor's glass is about 0.6
 		// across (LAYERS screen width × SCREEN_GLASS w of a 2φ-wide frame).
 		rin: 0.3,
-		rout: 16,
-		pitch: 0.09,
-		stroke: 0.012,
-		sheen: 1
+		// The funnel (nest.js): it meets the tunnel's wall this many SEAM
+		// DISTANCES up from the hole — the lens's distance from the hole as
+		// the fall opens, 2.75 room units on LENS — which must leave the wall
+		// out of the frame at the seam (0.7 does to an aspect of about 2.8),
+		// and carries on past the wall by `over` world units, out of sight.
+		join: 0.7,
+		over: 0.6,
+		segments: 256,
+		// The grooves, in WORLD units, as the wall's are: the pitch up the
+		// funnel; the wobble the primes put on it — TWICE the pitch, so the
+		// turns cross and weave: seen down the funnel's axis a swing kept
+		// clear of the next groove is a few hundredths of the ring's radius
+		// and every groove reads as a circle; how fast t runs along the
+		// groove (3: the 2-wave goes round about twice a turn, the 7-wave six
+		// times); how many primes and the amplitude each gets, p^−σ (σ = 1:
+		// 1/p, as asked; ½ is the critical line proper); what share of Σ p^−σ
+		// counts as a full swing (tsl/zeta.js primeWaveTexture); the stroke,
+		// floored at a pixel.
+		pitch: 0.3,
+		amp: 0.6,
+		rate: 3,
+		primes: 24,
+		sigma: 1,
+		reach: 0.75,
+		stroke: 0.035,
+		// The light: two opposed sectors round the axis; the gold's level;
+		// and how dark the throat is against the join (1 is flat).
+		sheen: 0.6,
+		level: 0.95,
+		throat: 0.2,
+		// Out of the dark: all there inside seen[0] seam distances of the
+		// lens, none of it beyond seen[1] — late, so the funnel draws the
+		// search down into it rather than arriving whole.
+		seen: [1.6, 3.6]
 	},
 	// ── The record between the rooms ─────────────────────────────────────────
 	// Every room after the first sits at the BOTTOM of a record with depth: a
@@ -560,7 +599,19 @@ export const KALEIDO = {
 	// The archive on a run it cannot answer for: the verdict's gif round the
 	// tunnel instead of the drawings (kaleidoscope.js setArchive) — which gif
 	// for which edge (data/gifs.js has the sheets), and the quads' width.
-	gif: { of: { past: 'the-past', future: 'the-future', unknown: '500' }, size: 2.4 },
+	gif: {
+		of: { past: 'the-past', future: 'the-future', unknown: '500' },
+		size: 2.4,
+		// In the site's gold: each gif's light laid on a ramp from `dark` to
+		// `gold` (the machine's yellow), `tint` of the way — 0 is the gif's
+		// own colours.
+		tint: 1,
+		dark: 0x120c03,
+		gold: 0xffd426,
+		// The stretch of the gif's light (as it looks, 0–1) the ramp spans:
+		// the gifs are greys, dark ones on mid ones, so the mids go to gold.
+		ramp: [0.08, 0.72]
+	},
 	// The archive as one atlas (kaleidoscope.js): every drawing fitted into
 	// a cell this many pixels square, keys across and decades down, this
 	// much clear padding round it so the mip levels never bleed a neighbour.

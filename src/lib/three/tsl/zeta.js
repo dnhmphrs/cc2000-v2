@@ -71,6 +71,98 @@ export function grooveDistNode(THREE) {
 	});
 }
 
+// ── The critical line from the primes ───────────────────────────────────────
+// The record at the tunnel's end cuts its grooves with the critical line as
+// the primes write it: log ζ(s) = Σ_p p^(−s) + …, so along the line the
+// signal is a sum of waves, one per prime p, of frequency log p in t and
+// amplitude p^(−σ) —
+//
+//   F(t) = Σ_p cos(t · log p) / p^σ          (σ = 1 by default: 1/p)
+//
+// — a polar view of the 1-D line when it is wound round the record, t
+// running along the groove. The sum only lines up at t = 0; everywhere else
+// it wanders well inside Σ p^(−σ), so it is scaled by `reach` of that (0.75
+// for 1/p: past t = 20 its peaks stay under 0.74 of the total) and clipped,
+// which puts F in [−1, 1] with its swings using most of it.
+//
+// Baked once, as the GROOVE sees it: one row a turn of the spiral, `cols`
+// samples round it, row n running t = rate · (2πn + θ) for θ from −π to π,
+// so each row ends where the next begins. A turn is 1024 samples however
+// far out it is — a 1-D table of t long enough for the whole funnel gave a
+// turn out at the frame's edge forty, and the grooves came out faceted —
+// and the texture is small and square-ish: past a GPU's limit on a side
+// (8192 on the sandbox's, 4096 on some phones) a texture does not fail
+// loudly, it uploads nothing and every groove comes out a plain circle.
+// Rows start `first` turns below the hole's, for the candidates below it.
+const PRIMES = (() => {
+	const out = [];
+	for (let n = 2; out.length < 200; n++) {
+		if (out.every((p) => n % p !== 0)) out.push(n);
+	}
+	return out;
+})();
+
+export function primeGrooveTexture(
+	THREE,
+	{ rate = 3, rows = 128, first = 0, cols = 1024, primes = 24, sigma = 1, reach = 0.75 } = {}
+) {
+	const P = PRIMES.slice(0, primes);
+	const logs = P.map((p) => Math.log(p));
+	const amps = P.map((p) => Math.pow(p, -sigma));
+	const scale = amps.reduce((a, b) => a + b, 0) * reach;
+	const bytes = new Uint8Array(cols * rows);
+	for (let r = 0; r < rows; r++) {
+		for (let j = 0; j < cols; j++) {
+			const th = -Math.PI + (2 * Math.PI * j) / (cols - 1);
+			const t = rate * (2 * Math.PI * (r + first) + th);
+			let f = 0;
+			for (let k = 0; k < P.length; k++) f += amps[k] * Math.cos(t * logs[k]);
+			bytes[r * cols + j] = Math.round((Math.max(-1, Math.min(1, f / scale)) * 0.5 + 0.5) * 255);
+		}
+	}
+	const tex = new THREE.DataTexture(bytes, cols, rows, THREE.RedFormat, THREE.UnsignedByteType);
+	tex.minFilter = THREE.LinearFilter;
+	tex.magFilter = THREE.LinearFilter;
+	tex.wrapS = THREE.ClampToEdgeWrapping;
+	tex.wrapT = THREE.ClampToEdgeWrapping;
+	tex.generateMipmaps = false;
+	tex.needsUpdate = true;
+	return tex;
+}
+
+// The distance from (s, th) to the nearest groove of the spiral that wobbles
+// by F: groove n at pitch · (n + th/2π) + amp · F(rate · (2πn + th)), th in
+// [−π, π] as atan gives it. The wobble is let reach PAST the pitch — seen
+// down a funnel's axis a swing that keeps clear of the next groove is a few
+// hundredths of the ring's radius, which reads as a circle — so neighbouring
+// turns cross, and every groove whose swing can reach the point is a
+// candidate: `span` of them either side, ceil((amp + stroke) / pitch).
+// `turns` is how many the table holds from the hole's; past them the last
+// row holds. The texture is returned too, to be disposed with the material.
+export function primeGrooveDistNode(THREE, { span = 1, turns = 128, cols = 1024, ...opts } = {}) {
+	const rows = turns + 2 * span;
+	const tex = primeGrooveTexture(THREE, { ...opts, rows, first: -span, cols });
+	const F = Fn(([n, turn]) => {
+		const u = turn
+			.add(0.5)
+			.mul((cols - 1) / cols)
+			.add(0.5 / cols);
+		const v = n.add(span + 0.5).div(rows);
+		return texture(tex, vec2(u, v)).r.mul(2.0).sub(1.0);
+	});
+	const dist = Fn(([s, th, pitch, amp]) => {
+		const turn = th.div(TWO_PI);
+		const n0 = floor(s.div(pitch).sub(turn));
+		const at = (n) => pitch.mul(n.add(turn)).add(amp.mul(F(n, turn)));
+		let d = abs(s.sub(at(n0)));
+		for (let k = 1; k <= span; k++) {
+			d = min(d, min(abs(s.sub(at(n0.add(k)))), abs(s.sub(at(n0.sub(k))))));
+		}
+		return d;
+	});
+	return { dist, tex };
+}
+
 // A stroke of `w` (in the units of `d`), floored at one screen pixel by `px`
 // (the fwidth of the coordinate), its light scaled down by the same ratio so
 // a groove that recedes gets fainter rather than sparkling. The record on the

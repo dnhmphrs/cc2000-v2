@@ -1,6 +1,6 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
-	import { scene as sceneStore, sceneTone, monitorRect, goingBack, blaze } from '$lib/store/store';
+	import { scene as sceneStore, sceneTone, goingBack, blaze } from '$lib/store/store';
 	import { CANVAS_FADE, clamp01, DEV, DEV_AT } from '$lib/config';
 	import { advance } from '$lib/scenes/director';
 
@@ -89,10 +89,12 @@
 		if (!active) {
 			// The room is up, over the descent's last frame.
 			if (!held) return;
-			if ($monitorRect && $goingBack) {
-				// On the way home the camera flies THROUGH the monitor. The room
-				// is still the scene on screen while it happens, so the signal is
-				// a store rather than a scene change. See director.again().
+			if ($goingBack) {
+				// On the way home the camera flies THROUGH the monitor — or, from
+				// the verdict, on down the tunnel into its dark. The room or the
+				// verdict is still the scene while it happens, so the signal is
+				// a store rather than a scene change. See director.again() and
+				// director.recover().
 				if (!returning) {
 					returning = true;
 					held.beginReturn?.();

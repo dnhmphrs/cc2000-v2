@@ -114,22 +114,24 @@ export function clearResult() {
 	flare.set(0);
 }
 
-// Through the glass. The room is let go of and the flight starts.
+// Through the glass — or into the tunnel's dark, from the verdict. The room
+// or the verdict is let go of and the flight starts.
 export function settled() {
+	// From the verdict, the run's result is cleared only now, as the flight
+	// takes over: the verdict screen was reading `edge` all the way out.
+	if (is('error')) clearResult();
 	goingBack.set(false);
 	monitorRect.set(null);
 	scene.set(ORDER[0]);
 	runId.update((n) => n + 1);
 }
 
-// The way back from the verdict: the flight again, from the top, the answers
-// kept as again() keeps them — both questions are asked again, and the one
-// that broke the run is there to be changed. Not the title card.
+// The way back from the verdict: the flight again, the answers kept as
+// again() keeps them — both questions are asked again, and the one that
+// broke the run is there to be changed. Not the title card, and not a cut:
+// the lens swims on down the tunnel it stopped in, into its dark, and hands
+// over when it is black (world/kaleido.js stepReturn, then settled()).
 export function recover() {
 	if (!is('error')) return;
-	clearResult();
-	monitorRect.set(null);
-	goingBack.set(false);
-	scene.set(ORDER[0]);
-	runId.update((n) => n + 1);
+	goingBack.set(true);
 }

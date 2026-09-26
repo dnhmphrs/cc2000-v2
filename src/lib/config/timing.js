@@ -551,6 +551,12 @@ const RAW = {
 		// The speed is the one the flight opens at (APPROACH.travel over
 		// this), so what was cut is distance, not pace.
 		duration: 7,
+		// EASE-IN. The flight GATHERS speed: a straight ramp from its start to
+		// this many times that at the set's glass, the same distance in the
+		// same seven seconds. The tunnel takes it on from there and keeps
+		// gathering (SCENES.kaleido.ease), and so does the fall
+		// (SCENES.descent.accel): the run never brakes until it lands.
+		accel: 1.5,
 
 		// The sky and the debris come up out of the black. The title card is
 		// over the first of this on the first run, and on every run after it
@@ -607,13 +613,13 @@ const RAW = {
 		// what is inside it, and nothing else.
 		skyOut: [0.9, 0.985],
 
-		// The set turns INTO the tunnel's turn, so the turn has no start: it
-		// comes out of the dark leaned a little the other way (about ten
-		// degrees, which falls out of this and the tunnel's own rate), still
-		// until `turnIn`, then comes round, gathering speed, to arrive at the
-		// seam upright and turning at exactly the tunnel's rate
-		// (world/approach.js, kaleidoscope.turnTo).
-		turnIn: 0.75
+		// The set is ALWAYS turning, gently: it fades in already turning,
+		// and the turn gathers speed as the set grows, to arrive at the seam
+		// upright and turning at exactly the tunnel's rate there
+		// (world/approach.js, kaleidoscope.turnTo). Its rate at the start of
+		// the flight, as a fraction of that — the lean it comes out of the dark
+		// with (about thirty degrees) falls out of this and the rate.
+		turnFrom: 0.5
 	},
 
 	// ── Kaleido ──────────────────────────────────────────────────────────────
@@ -627,12 +633,13 @@ const RAW = {
 		duration: 7,
 
 		// ── The pace ─────────────────────────────────────────────────────────
-		// The tunnel opens at the speed the flight arrived at and eases, over
+		// The tunnel opens at the speed the flight arrived at and ramps, over
 		// THIS fraction of it — all of it, one straight ramp — to the speed
 		// the fall opens at, which the nest works out from its own geometry
-		// (nest.openingSpeed). So there is no stop at the room and no restart
-		// after it: the fall simply carries on, and by the time the room is
-		// there to be seen the tunnel is already running at its pace.
+		// (nest.openingSpeed). With the fall's world at NEST.scale that is a
+		// little FASTER than the flight's, so the tunnel gathers speed into
+		// the record rather than braking for it, and the fall carries on
+		// from there, gathering too.
 		ease: 1,
 
 		// Full turns of the hue, and of the tunnel about the axis, over the
@@ -643,6 +650,11 @@ const RAW = {
 		// against you; the breakdown's runaway goes the same way as the turn.
 		hueCycles: 2.5,
 		turns: -0.35,
+		// And the turn EASES IN, as the speed does: it opens at this fraction
+		// of the rate above — the rate the set arrives turning at — and ramps
+		// up to the full rate by `turnRamp` of the tunnel.
+		turnSeam: 0.34,
+		turnRamp: 0.4,
 
 		// ── The search ends ──────────────────────────────────────────────────
 		// Over `lock` the turn and the hue cycle decelerate to rest — the
@@ -658,6 +670,15 @@ const RAW = {
 		// `stop[1]` (0.6 of the tunnel, still inside it), and is still for
 		// the rest of the scene, a beat before the verdict is typed over it.
 		stop: [0.4, 0.85],
+		// And the swimmer does not stop with it: it keeps the pace and pulls
+		// away down the tunnel, fading out over `swimOff`, before the verdict.
+		swimOff: [0.7, 0.9],
+		// "Calculate again": the lens swims on from where it stopped, from
+		// rest and gathering speed, into the tunnel's dark end over `home`
+		// seconds, everything going to black over `homeDim` of them — the
+		// black the next flight opens on (world/kaleido.js stepReturn).
+		home: 2.6,
+		homeDim: [0.45, 0.95],
 		// The breakdown the edge run used to have — the turn and the hue
 		// running away over `overload`, the picture collapsing to a line
 		// (`collapse`), to a dot, to black (`pinch`) — is gone from the run;
@@ -697,10 +718,17 @@ const RAW = {
 		rooms: 6,
 		land: 0.72,
 
-		// ONE PACE. The fall runs at constant speed from the seam — the picture
-		// is self-similar, so a constant rate down the levels is a constant
-		// pace on screen — and only eases to rest over this last fraction of
-		// the scene.
+		// EASE-IN. The fall's zoom gathers speed from the seam: it opens at
+		// the pace the tunnel arrived at and runs up in a straight ramp to
+		// this many times that by the start of the landing (then eases to
+		// rest over `ease`). The flight and the tunnel gather speed too — see
+		// SCENES.approach.accel, SCENES.kaleido.ease — so the run only ever
+		// speeds up until it lands.
+		accel: 1.5,
+
+		// The picture is self-similar, so a rate down the levels is a pace on
+		// screen; it ramps up (`accel`, above) and only eases to rest over
+		// this last fraction of the scene.
 		ease: 0.3,
 
 		// The last room lands LEVEL: its roll is nil and the sway dies out from
