@@ -43,7 +43,15 @@ rather than by position in `ORDER`, so a scene coming or going cannot slide a
 key and silently repoint every PLAN in this file and in `verify.mjs`.
 
 A `?at=` pin suppresses the two mid-flight popups, or every contact sheet past
-`ask` comes back with a dialog across it. `QUERY='edge=past'` puts an extra
+`ask` comes back with a dialog across it. `?crt=0` draws the scenes straight to
+the canvas without the signal pass (below), `?crt=raw` draws the bare pass, and
+`?crt=2` turns the pass's faults up to twice the config; the pass is on the
+run's clock, so a pin through it is exact and the seams stay at 0/255 with it
+on. `?signal=0` keeps the signal panel's tab (top right, while the dev harness
+is on) out of the frame; the shots tool passes it. The shots tool reports
+console ERRORS only — a GL warning (a framebuffer
+the backend could not blit, say) leaves a frame flat with no error at all, so
+a frame that is only ground is worth a probe that reads warnings too. `QUERY='edge=past'` puts an extra
 query on every pin: `?edge=past|future` seeds a birthday the archive cannot
 answer for instead of a real answer, so key 4 pins the breakdown (the set
 switching off) rather than the search.
@@ -89,8 +97,8 @@ room out of sight until the search ends, the camera pose and the glass rect),
 and the nest's stencil chain sits one level up from the set's. Every groove in
 the run is cut with `|ζ(½ + it)|` (`functions/zeta.js` the table,
 `three/tsl/zeta.js` the groove distance): a spiral whose radius wobbles by it,
-pinching at every zero — the record on the way home, the disc and the wall,
-with their numbers in `NEST.record`, `NEST.disc` and `KALEIDO.wall`. A FUNNEL
+pinching at every zero — the disc and the wall, with their numbers in
+`NEST.disc` and `KALEIDO.wall`. A FUNNEL
 of the same grooves between every room in the fall is built and OFF
 (`NEST.funnel.on`): the lead looked at it and took it out. The rooms' back
 walls are drawn well past their frames with the wallpaper LOOPED (mirrored
@@ -100,7 +108,31 @@ the run's ONE lens (`LENS`) with the run's ONE hand on the camera
 (`three/world/wobble.js`, a slow pan, tilt and roll on `runSeconds`, the run's
 own clock), and the tunnel eases from the flight's speed to the fall's over
 the whole of its length: no dolly, no stop and no restart anywhere, so nothing
-about the camera changes at a seam. `scenes/FlyIn|Conception|Computation.svelte`, `three/world/{tunnel,egg,lattice}.js`,
+about the camera changes at a seam. Every scene is drawn through THE SIGNAL
+(`three/tsl/crt.js`): one full-screen pass of whichever scene is running, in
+which a composite signal's faults are put on the picture — the chroma off the
+luma, bright things trailing to the right, every line's own slip, a band that
+tears through, a slow wave, grain — on the run's clock (`three/tsl/clock.js`
+`runClock`, which every scene's `set(p)` writes from `runSeconds`), so a pin is
+exact; `crtGain` scales it all and the breakdown turns it up. The amounts are
+`CRT` in `config/space.js`, with an `on` switch, and every one of them is a
+UNIFORM (`SIGNAL` in `crt.js`) with a dial in the panel in the top right corner
+(`components/SignalPanel.svelte`, there while `DEV.on`): turn them while the
+run plays, "copy" puts the numbers on the clipboard as the `CRT` block wants
+them, "reset" puts the config's back. The raster and the tube stay CSS over the
+page (`components/Glass.svelte`), since they are the screen the run is watched
+on rather than the signal it is sent. The pass's target carries the stencil (a
+depth-stencil texture of its own — the pass makes a plain depth texture
+otherwise, and on WebGL 2 the multisample resolve then fails silently), and
+the renderer's output buffer is eight-bit for it. A run the archive cannot
+answer for goes down a tunnel made of the VERDICT'S GIF instead of the
+drawings (`kaleidoscope.js setArchive`, the moment `edge` is known), and the
+verdict is read over that gif tiled across the whole frame
+(`components/error/Tiles.svelte`); a gif cannot be a texture, so every gif in
+`static/gifs` is baked into a sheet of its frames beside it by
+`node scripts/gifs.mjs`, which also writes `data/gifs.js`, how each sheet is
+cut — rerun it when a gif changes.
+`scenes/FlyIn|Conception|Computation.svelte`, `three/world/{tunnel,egg,lattice}.js`,
 `three/shaders/` and `components/Background.svelte` are the WebGL run they
 replaced, still playable at `/v2` on its own Stage (`three/StageV2.svelte`,
 `routes/v2/`): the same card, popups, room and director, switched to that run's
@@ -134,15 +166,13 @@ Three consequences worth remembering:
 - **The loop home has no DOM half.** The camera flies through the room's monitor
   and `descent.js stepReturn()` hands the run to the approach when the glass has
   filled the frame — three seconds of it (`SCENES.descent.home`), to be watched.
-  Under the lens the glass goes to a RECORD (`nest.js`, on the last room's
-  glass), turning, the spindle hole opens at the lens and takes the frame, and
-  the black in it is the space the next flight opens on — which is told it came
-  that way (`nest.viaRecord`) so the record's grooves go on passing the lens
-  for the first two seconds of the flight (`approach.js`, the lip) as the sky
-  comes up. There is nothing to cover the cut with because there is no cut to
-  see. The page under the canvas is the same blue-black the scenes paint
-  (`app.html`, `styles.css --bg`), so the first paint and the first frame are
-  one colour.
+  The room goes to black under the glass as it takes the frame, and that black
+  is the space the next flight opens on: no card, the sky coming up over it.
+  (There was a record in the glass, turning, and its grooves ran on into the
+  next flight; the lead looked at the loop twice and took both out.) There is
+  nothing to cover the cut with because there is no cut to see. The page under
+  the canvas is the same blue-black the scenes paint (`app.html`, `styles.css
+--bg`), so the first paint and the first frame are one colour.
 - **The first frame is warmed up.** The Stage renders every object a few at a
   time before the loop starts, yielding to the page between, so the title card
   (which types on the clock, not on timers) keeps its rhythm on a slow GPU.

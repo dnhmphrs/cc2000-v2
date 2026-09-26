@@ -461,24 +461,6 @@ export const NEST = {
 	// fallen into.
 	spermSpan: 0.28,
 	spermRide: 0.5,
-	// ── The record ───────────────────────────────────────────────────────────
-	// The way home is through the record: the readout's glass goes to vinyl
-	// under the lens (nest.js, the record quad on the last room's glass;
-	// descent.js stepReturn drives it). Grooves per glass height in the song's
-	// last bars and in the lead-out; the label's radius and the spindle hole's,
-	// in glass heights; the light across it; the stroke, in glass heights,
-	// floored at a pixel; and how far it turns over the way home.
-	record: {
-		grooves: 80,
-		lead: 18,
-		label: 0.2,
-		hole: 0.045,
-		sheen: 1,
-		stroke: 0.0022,
-		// A turn and two thirds over the way home: 33⅓ a minute at three
-		// seconds of it — a record, turning, to be watched.
-		turns: 1.6
-	},
 	// ── The disc at the tunnel's end ─────────────────────────────────────────
 	// The first room comes out of the dark as a record's LABEL: gold grooves
 	// round it, in its own plane, from `rin` room units out to `rout` — the
@@ -567,6 +549,10 @@ export const KALEIDO = {
 	// Which drawings, in what order down the tunnel, and how wide each is.
 	keys: ['screen', 'desk', 'bed', 'poster', 'clock'],
 	size: { screen: 2.2, desk: 2.6, bed: 2.6, poster: 1.0, clock: 0.9 },
+	// The archive on a run it cannot answer for: the verdict's gif round the
+	// tunnel instead of the drawings (kaleidoscope.js setArchive) — which gif
+	// for which edge (data/gifs.js has the sheets), and the quads' width.
+	gif: { of: { past: 'the-past', future: 'the-future' }, size: 2.4 },
 	// A shade down.
 	dim: 0.85,
 	// Out of the dark: unseen beyond seen[1] units ahead, fully there inside
@@ -632,4 +618,61 @@ export const KALEIDO = {
 		// the frame either way.
 		out: 0
 	}
+};
+
+// ── The signal ───────────────────────────────────────────────────────────────
+// What a composite signal does to the picture on its way to the screen — see
+// three/tsl/crt.js, one full-screen pass over the 3D. Lengths in DEVICE
+// pixels; rates per second of the run's clock. Every key but `on`, `samples`
+// and `overload` is a dial in the panel in the top right corner
+// (components/SignalPanel.svelte) while the dev harness is on, and what the
+// panel copies out pastes straight back in here. `on` false renders the
+// scenes straight to the canvas (?crt=0 does the same for one load).
+export const CRT = {
+	on: true,
+	// MSAA in the pass's target — the canvas used to have it; 4 keeps it.
+	samples: 4,
+	// The whole signal, turned up or down (?crt=2 sets it for one load).
+	level: 1,
+	// The chroma off the luma, either side of green, and how much more so
+	// toward the corners (a multiple of the distance from the centre, squared).
+	split: 1.2,
+	splitEdge: 3.0,
+	// Bright things trail RIGHT: how much of the light comes along, over how
+	// many taps (of the ten the shader has) this far apart, falling off over
+	// `bleedTau` taps, and gated to what is brighter than `bleedFloor` (0..1
+	// of the luma) so black stays black.
+	bleed: 0.7,
+	bleedTaps: 6,
+	bleedStep: 2.0,
+	bleedTau: 2.4,
+	bleedFloor: 0.35,
+	// The picture again, this far to the right, this faint. Off.
+	ghost: 0,
+	ghostOffset: 40,
+	// Every line's own slip, re-rolled this many times a second; the tear, a
+	// band this tall (of the frame) slipping this far, sweeping through the
+	// frame this many times a second; the slow wave down the frame, this many
+	// waves tall, at this rate.
+	jitter: 0.6,
+	jitterRate: 30,
+	tear: 9,
+	tearWidth: 0.018,
+	tearRate: 0.31,
+	wobble: 0.7,
+	wobbleWaves: 7,
+	wobbleRate: 1.1,
+	// The vertical hold: how far the picture rolls up the frame (1 is right
+	// round), this many times a second. Off. And the hum bar, a dark band
+	// this deep drifting up the frame at this rate. Off.
+	roll: 0,
+	rollRate: 0.5,
+	hum: 0,
+	humRate: 0.12,
+	// Grain, in units of the picture (0.035 is three and a half percent), and
+	// the colour, 1 as rendered.
+	noise: 0.035,
+	sat: 1,
+	// The breakdown turns it all up to this (world/kaleido.js).
+	overload: 3.5
 };

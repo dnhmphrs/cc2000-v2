@@ -19,6 +19,7 @@ import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
 import { settled } from '$lib/scenes/director';
 import { roomsFor } from './nest';
 import { wobbleEuler } from './wobble';
+import { runClock } from '$lib/three/tsl/clock';
 
 // ── Scene 3: the descent ─────────────────────────────────────────────────────
 // Rooms through rooms, decade after decade, with the swimmer riding down the
@@ -34,13 +35,11 @@ import { wobbleEuler } from './wobble';
 // (scenes/Room.svelte), which is measured here and published as monitorRect.
 //
 // "Go again" is the same crossing carried on: the camera flies from the
-// landing to the glass filling the frame, and through it, and what is behind
-// the glass is a RECORD — the readout's black gone to vinyl, gold grooves
-// turning under the lens, the spindle hole opening to take the frame — and
-// the black in the hole is the space the next run opens on. From rest,
-// accelerating, in SCENES.descent.home seconds; the readout is gone in the
-// first of them (scenes/Room.svelte) so nothing of the room rides the camera
-// into the glass. See stepReturn() and nest.js, the record.
+// landing to the glass filling the frame, and through it, the room going to
+// black under the glass as it does, and the black the glass leaves is the
+// space the next run opens on. From rest, accelerating, in SCENES.descent.home
+// seconds; the readout is gone in the first of them (scenes/Room.svelte) so
+// nothing of the room rides the camera into the glass. See stepReturn().
 //
 // It falls at ONE PACE from its first frame — the pace the tunnel eased to —
 // on the run's one lens, with the run's one hand on the camera
@@ -116,7 +115,6 @@ export function createDescent({ THREE, renderer, nest }) {
 		nest.setSplosh(0, 1);
 		nest.setDim(1);
 		nest.setDark(1);
-		nest.setRecord(0, 0, 0, NEST.record.hole, 1);
 		set(0);
 	}
 
@@ -128,9 +126,9 @@ export function createDescent({ THREE, renderer, nest }) {
 		// The run's one hand on the camera (world/wobble.js), on top of the
 		// pose — and off it over the last room's settle, so the glass is
 		// square in the frame for the readout. The swimmer below follows.
-		camera.quaternion.multiply(
-			wq.setFromEuler(wobbleEuler(euler, runSeconds('descent', p), 1 - settle))
-		);
+		const seconds = runSeconds('descent', p);
+		runClock.value = seconds;
+		camera.quaternion.multiply(wq.setFromEuler(wobbleEuler(euler, seconds, 1 - settle)));
 		camera.updateMatrixWorld(true);
 
 		// ── The swimmer ──────────────────────────────────────────────────
@@ -172,6 +170,7 @@ export function createDescent({ THREE, renderer, nest }) {
 	// The white drains out of the glass under the readout.
 	function hold(dt) {
 		held += dt;
+		runClock.value += dt;
 		nest.setSplosh(1, 1 - smoothstep(0.15, T.drain, held));
 	}
 
@@ -192,6 +191,7 @@ export function createDescent({ THREE, renderer, nest }) {
 	}
 	function stepReturn(dt) {
 		rt = Math.min(rt + dt, RETURN_DUR);
+		runClock.value += dt;
 		const q = rt / RETURN_DUR;
 		nest.pose(lerp(from, to, accelerate(q, 1.5)), camera, aspectR);
 		sw.material.uniforms.uOpacity.value = 0;
@@ -205,22 +205,8 @@ export function createDescent({ THREE, renderer, nest }) {
 		nest.setDark(1 - dark);
 		nest.setDim(dim);
 		landing.set(1 - dark);
-		// The record in the glass: the readout's black goes to vinyl over
-		// `record`, the grooves lit a beat behind, turning; and the spindle
-		// hole opens at the lens over `swallow` and takes the frame. It goes
-		// with the dim, so the frame this ends on is the black it always was
-		// — and the next flight is told it came this way.
-		const R = NEST.record;
-		nest.setRecord(
-			smoothstep(T.record[0], T.record[1], q),
-			smoothstep(T.record[0] + 0.08, T.record[1] + 0.08, q),
-			(q * R.turns) % 1,
-			lerp(R.hole, 1.6, accelerate(smoothstep(T.swallow[0], T.swallow[1], q), 2.2)),
-			dim
-		);
 		if (!handedOver && rt >= RETURN_DUR) {
 			handedOver = true;
-			nest.viaRecord = true;
 			settled();
 		}
 	}

@@ -253,11 +253,11 @@
 		z-index: 20;
 		pointer-events: auto;
 		display: grid;
-		/* In the LOWER third, not the middle: the swimmer rides at the centre
-		   of the frame while these are asked, and the questions are put to it
-		   — under it, like a caption, rather than over it. */
-		place-items: end center;
-		padding-bottom: clamp(40px, 13vh, 120px);
+		/* At the CENTRE of the frame, where the swimmer rides while these are
+		   asked: the question is put to it, over it, and the flight goes on
+		   round the panel — the debris streaming, the swimmer rolling — while
+		   it is answered. */
+		place-items: center;
 		font-family: var(--tech);
 		cursor: default;
 	}

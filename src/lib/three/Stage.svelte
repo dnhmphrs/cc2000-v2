@@ -40,6 +40,9 @@
 
 	let canvasFadeStart = null;
 	let flashEl;
+	// The signal — the CRT pass every scene is drawn through (tsl/crt.js), or
+	// null with ?crt=0, when the scenes draw straight to the canvas.
+	let crt = null;
 
 	// Which scene we last handed control to, so entering happens exactly once,
 	// and the last 3D scene to run, whose final frame is HELD while the room is
@@ -61,11 +64,20 @@
 		next.enter();
 	}
 
+	// One frame of a scene, through the signal.
+	function draw(s) {
+		if (crt) {
+			crt.use(s.scene, s.camera);
+			crt.render();
+		} else s.render();
+	}
+
 	function handleResize() {
 		if (!renderer) return;
 		const w = window.innerWidth;
 		const h = window.innerHeight;
 		renderer.setSize(w, h);
+		crt?.resize();
 		for (const s of Object.values(scenes)) s.resize?.(w, h);
 		if (entered === 'descent') scenes.descent?.remeasureMonitor?.();
 	}
@@ -102,7 +114,7 @@
 				returning = false;
 				held.hold?.(dt);
 			}
-			held.render();
+			draw(held);
 			return;
 		}
 
@@ -116,7 +128,7 @@
 			if (DEV.on && DEV.only === name) active.enter();
 			else advance(name);
 		}
-		active.render();
+		draw(active);
 	}
 
 	onMount(async () => {
@@ -129,6 +141,14 @@
 				antialias: true,
 				alpha: false,
 				stencil: true, // the nest's stencil chain
+				// Eight bits, not half floats: the run has nothing brighter than
+				// white to keep, and the CRT pass (tsl/crt.js) renders every
+				// scene into a target of this type first — one the WebGL 2
+				// backend can BLEND into everywhere, which a half-float target
+				// is not on every GL (SwiftShader drops every additive draw
+				// into one, and the stars, the debris and the swimmer are all
+				// additive).
+				outputBufferType: THREE.UnsignedByteType,
 				forceWebGL
 			});
 			await r.init();
@@ -150,13 +170,17 @@
 			{ createKaleidoscope },
 			{ createApproach },
 			{ createKaleido },
-			{ createDescent }
+			{ createDescent },
+			{ createCrt },
+			{ CRT }
 		] = await Promise.all([
 			import('./world/nest.js'),
 			import('./world/kaleidoscope.js'),
 			import('./world/approach.js'),
 			import('./world/kaleido.js'),
-			import('./world/descent.js')
+			import('./world/descent.js'),
+			import('./tsl/crt.js'),
+			import('$lib/config')
 		]);
 		nest = await createNest({ THREE, renderer });
 		kal = createKaleidoscope({ THREE, renderer, nest });
@@ -165,6 +189,14 @@
 			kaleido: createKaleido({ THREE, renderer, nest, kal }),
 			descent: createDescent({ THREE, renderer, nest })
 		};
+		if (CRT.on && q.get('crt') !== '0') {
+			crt = createCrt({
+				THREE,
+				renderer,
+				scene: scenes.approach.scene,
+				camera: scenes.approach.camera
+			});
+		}
 		handleResize();
 		// ── Warm-up ──────────────────────────────────────────────────────
 		// Every program and every texture the run needs, brought up BEFORE the
@@ -214,7 +246,15 @@
 		window.addEventListener('resize', handleResize);
 		// For the contact sheets and the smoke test: which backend ran, how long
 		// the warm-up took, and a handle on the scenes.
-		window.__stage = { lane, warm: Math.round(performance.now() - warmStart), scenes, nest, kal };
+		window.__stage = {
+			lane,
+			warm: Math.round(performance.now() - warmStart),
+			scenes,
+			nest,
+			kal,
+			renderer,
+			crt
+		};
 
 		last = performance.now();
 		renderer.setAnimationLoop(frame);
