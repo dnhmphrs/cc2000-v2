@@ -78,6 +78,17 @@ Write scratch scripts and screenshots to the scratchpad, never into `scripts/`.
 A script living there cannot resolve the project's `node_modules`, so import by
 absolute path: `from '/home/user/cc2000-v2/node_modules/playwright/index.mjs'`.
 
+## Two runs: v3 at `/` and `/v3`, v2 at `/v2`
+
+The site keeps two runs, each gathered into one component: **v3**
+(`runs/V3.svelte`, at `/` and at `/v3` — the address it keeps when the next run
+takes `/`) and **v2** (`runs/V2.svelte`, at `/v2`, the WebGL run v3 replaced).
+The switch in the top left corner (`components/Version.svelte`) moves between
+them with a full reload — each run mounts its own Stage and names its scenes
+its own way (`director.setRun`) — beside the build number. Everything below is
+v3 unless it says v2. The README is lean on purpose; the long design history
+of v2 is `docs/design-notes.md`.
+
 ## This build has no machine, and three scenes
 
 The run is `three/Stage.svelte` on ONE `WebGPURenderer` (WebGL 2 behind it
@@ -90,8 +101,13 @@ the tunnel inside it, the archive looped in rings, turning and cycling in
 colour, round a WALL of gold ζ grooves that makes the tunnel the inside of a
 record, into that record at the far end: a FUNNEL that takes the wall's
 grooves on down to its spindle hole, coming out of the dark late, from its rim
-inward, the throat darkest — the hole a monitor's size and the glass the first
-room is seen through, so the fall's first crossing is every crossing — or, on a
+inward, the throat darkest — the hole a monitor's size, the glass the first
+room is seen through, and set as deep behind the record's face as a room's
+monitor is behind its frame (the screen layer's depth), so the fall's first
+crossing IS every crossing: the pose heads for a point behind the glass in
+every room, and with the hole in the face's own plane the first crossing was a
+flatter zoom and the lens nearly doubled its speed going into the first room
+(the "speed-up at the descent") — or, on a
 birthday the archive cannot answer for, a tunnel made of the verdict's gif, in
 the site's gold, that the lens slows to a stop in while the swimmer swims on
 and fades, the verdict typed over it) and the **descent** (`descent.js` — rooms
@@ -102,28 +118,33 @@ where the nest goes, and the CRT mask), the last two the same **nest**
 (`nest.js` — the rooms, the stencil chain, the depth fade that keeps the first
 room out of sight until the search ends, the camera pose and the glass rect),
 and the nest's stencil chain sits one level up from the set's. The fall's
-world is `NEST.scale` (7) times the rooms' own units, so the lens meets the
-record's hole at the seam far enough out for the tunnel to hand over no slower
-than it took the flight. Every groove in the run is a spiral cut with the
-critical line: the wall's wobbles by `|ζ(½ + it)|`, pinching at every zero
-(`functions/zeta.js` the table, `three/tsl/zeta.js` the groove distance); the
-record's by the line as the primes write it, `Σ cos(t log p)/p`
-(`primeGrooveTexture`, baked a turn of the spiral to a row), swinging twice
-the pitch so the turns cross and weave — kept clear of each other they read as
-circles down the funnel's axis. Their numbers are in `KALEIDO.wall` and
-`NEST.disc`. A FUNNEL of grooves between every room in the fall is built and
-OFF (`NEST.funnel.on`): the lead looked at it and took it out. The rooms' back
+world is `NEST.scale` (3.5) times the rooms' own units: a zoom is the same at
+any scale, but the lens's speed in the world at the seam is that times the
+fall's opening rate, and the tunnel has to hand over at it (about 13 a second,
+a little over what it takes from the flight). The grooves — down the wall and
+into the record's funnel, ONE straight spiral counted from the hole, turning
+with the tunnel (`nest.setRecordTurn`; the fall sets the turn the tunnel came to
+rest at itself, `restRecord`, since a seek into the fall runs no tunnel) — are
+STRAIGHT, and COLOURED by the critical line as the primes write it,
+`Σ cos(t log p)/p` with t along the groove, through a ramp from violet to cream
+(`tsl/zeta.js primeWave, spiralGroove, waveRamp`; the numbers in `NEST.disc`,
+which the wall shares). They wobbled by it for a round and the lead asked for
+straight lines with the line's height in their colour. `|ζ(½ + it)|` itself
+(`functions/zeta.js`, `grooveDistNode`) is left to the dormant funnel between
+rooms (`NEST.funnel.on`, OFF: the lead looked at it and took it out). The rooms' back
 walls are drawn well past their frames with the wallpaper LOOPED (mirrored
 repeat), so nothing of the room outside shows through a room's gaps
 (`NEST.wallCover`). All three are shot on
 the run's ONE lens (`LENS`) with the run's ONE hand on the camera
 (`three/world/wobble.js`, a slow pan, tilt and roll on `runSeconds`, the run's
-own clock), and the run only ever GATHERS speed until it lands: the flight
-ramps up to `SCENES.approach.accel` times its opening speed, the tunnel on from
-there to the fall's opening speed over the whole of its length, the fall's
-zoom on up by `SCENES.descent.accel` before it eases to land — and the
-swimmer's roll with them (`nest.swimmer.roll`, stepped by each scene at its
-pace). No dolly, no stop and no restart anywhere, so nothing about the camera
+own clock — which LETS GO as the set comes up, `WOBBLE.still`, so the set
+arrives centred and level, and takes hold again down the tunnel), and the run
+only ever GATHERS speed until it lands: the flight ramps up to
+`SCENES.approach.accel` times its opening speed, the tunnel on from there to
+the fall's opening speed over the whole of its length, the fall's zoom on up by
+`SCENES.descent.accel` before it eases to land — and the swimmer's roll with
+them at half the gain (`TUNNEL.spinGain`, `nest.swimmer.spinAt`, stepped by
+each scene at its pace). No dolly, no stop and no restart anywhere, so nothing about the camera
 changes at a seam; `?at=` pins still hold, since each scene's pace is a
 function of its progress. The raster and the tube are CSS over the
 page (`components/Glass.svelte`); there was a post-process CRT pass under
@@ -142,7 +163,8 @@ down a tunnel made of the VERDICT'S GIF instead of the drawings
 draw whose frame is counted off the run's clock, `three/tsl/clock.js`); the
 lens slows to a stop inside it (`SCENES.kaleido.stop`) while the swimmer
 keeps the pace and pulls away, fading (`swimOff`), and the verdict is typed
-over that frame on the site's yellow, the gif still playing. The gif is laid
+over that frame on a card of the site's yellow — over the raster, not under
+it, big and in full ink, for reading — the gif still playing. The gif is laid
 in the site's gold (`KALEIDO.gif`, ramped on its light as it LOOKS — ramped
 linear, mid-greys came out olive) and the wall holds gold on that run rather
 than cycling. Only the route's own error page,
@@ -153,8 +175,8 @@ with no 3D under it, tiles the gif across the page
 cut — rerun it when a gif changes.
 `scenes/FlyIn|Conception|Computation.svelte`, `three/world/{tunnel,egg,lattice}.js`,
 `three/shaders/` and `components/Background.svelte` are the WebGL run they
-replaced, still playable at `/v2` on its own Stage (`three/StageV2.svelte`,
-`routes/v2/`): the same card, popups, room and director, switched to that run's
+replaced — v2, at `/v2` on its own Stage (`three/StageV2.svelte`,
+`runs/V2.svelte`): the same card, popups, room and director, switched to that run's
 scene names by `director.setRun('v2')`. `ROUTE=/v2 node scripts/verify.mjs`
 smoke-tests it. `Calculator.svelte` is imported by nothing.
 
@@ -186,10 +208,14 @@ Three consequences worth remembering:
   where it stopped into its dark (`kaleido.js stepReturn`,
   `SCENES.kaleido.home`), and the next flight opens on that black as it does
   after the room. The set is ALWAYS turning, gently: it fades in leaned the
-  other way and already turning (`SCENES.approach.turnFrom` of the tunnel's
-  opening rate), gathering to reach the seam upright at the tunnel's own rate,
-  and the tunnel opens at that rate (`SCENES.kaleido.turnSeam`) and ramps up
-  (`turnRamp`, `kaleidoscope.turnOf`), so the turn has no start to see. The set is
+  other way (about eleven degrees as it shows) and already turning
+  (`SCENES.approach.turnFrom` of the tunnel's opening rate), gathering to reach
+  the seam upright at the tunnel's own rate, and the tunnel opens at that rate
+  (`SCENES.kaleido.turnSeam`) and ramps up (`turnRamp`, `kaleidoscope.turnOf`),
+  so the turn has no start to see. It is framed by its BODY while far off and
+  slides across to be hung by its glass by the time the flight is into it
+  (`APPROACH.frame`, `kaleidoscope.frameSet`): the 60s set's glass is left of
+  its middle. The set is
   always the 60s one; the nest's first room is chosen when the run starts; the
   deeper rooms are set the moment the answer is in, while they are too small to
   see (`approach.js finalise()`).

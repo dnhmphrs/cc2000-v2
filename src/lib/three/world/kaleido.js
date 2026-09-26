@@ -146,8 +146,8 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 
 	function update(dt) {
 		// The roll gathers speed with the tunnel — at the swimmer's own pace,
-		// which on an edge run does not stop.
-		sw.roll += dt * SPIN * kal.tunnelPace(clamp01(t / T.duration));
+		// which on an edge run does not stop (nest.swimmer.spinAt).
+		sw.roll += dt * SPIN * sw.spinAt(kal.tunnelPace(clamp01(t / T.duration)));
 		t += dt;
 		sw.clock += dt;
 		set(clamp01(t / T.duration));

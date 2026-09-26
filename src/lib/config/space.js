@@ -116,6 +116,11 @@ export const TUNNEL = {
 	spermOffset: { x: 0.134, y: 0.127 },
 	// rad/s, linear, and it never stops. V1: -elapsedTime * 10.
 	spermSpin: 10,
+	// And it GATHERS with the run's pace — at this share of it: a pace of p
+	// (the flight's, the tunnel's, the fall's, against the flight's as it
+	// opens) spins it at spermSpin · (1 + spinGain · (p − 1)). 1 would spin
+	// it up as fast as the run speeds up; half is what the lead asked for.
+	spinGain: 0.5,
 	// V1 scaled the model (0.2, 0.4, 0.2) — twice as much along the body as
 	// across it. That stretch is part of the silhouette, so it is kept.
 	spermStretch: 2,
@@ -389,7 +394,14 @@ export const WOBBLE = {
 	yaw: [2.4, 0.113, 0.6],
 	pitch: [1.4, 0.173, 0],
 	roll: [3.4, 0.14, 0],
-	roll2: [1.0, 0.353, 0]
+	roll2: [1.0, 0.353, 0],
+	// And where it LETS GO, in the run's seconds: from still[0] to still[1]
+	// it eases off the camera as the set comes up dead ahead, so the set
+	// arrives centred and level and the swimmer's nose meets its glass at the
+	// glass's centre (at the seam, 7 s, the hand is 2.4° off in yaw and 3.4°
+	// in roll, which the set wore as a lean and a slide off centre); from
+	// still[2] to still[3] it takes hold again, down the tunnel.
+	still: [2.5, 5, 7, 9.5]
 };
 
 // ── The approach (the first scene) ───────────────────────────────────────────
@@ -406,6 +418,11 @@ export const APPROACH = {
 	// the frame with).
 	lead: 5.5,
 	span: 0.28,
+	// The set is framed by its body until frame[0] of the flight and by its
+	// glass from frame[1]: it slides across between the two, so it sits in
+	// the middle of the frame far off, and the glass the flight goes into is
+	// dead ahead by the time it goes in (kaleidoscope.frameSet).
+	frame: [0.7, 0.97],
 	// How it arrives: it does not fly past the lens at all — every version of
 	// that reads as a body stretched by a wide lens — it FADES IN at its riding
 	// distance, on the axis, where it rides.
@@ -449,12 +466,16 @@ export const NEST = {
 	// parent's glass paint over every room's wall, mid-crossing.
 	wallCover: 3.4,
 	// The fall's world, in the tunnel's units: the rooms (2 tall, in their
-	// own units) are this many times bigger in the world. It is what lets the
-	// run gather speed all the way down: the lens meets the record's hole at
-	// the seam this far out (2.75 × scale world units), so the tunnel can
-	// hand over at a speed no slower than the one it took from the flight
-	// and the fall still opens at a watchable zoom (SCENES.descent.accel).
-	scale: 7,
+	// own units) are this many times bigger in the world. The fall opens at
+	// the zoom it opens at whatever this is — a zoom is the same at any scale
+	// — but its speed in the world is this times it, and the tunnel has to
+	// hand over at that speed: the lens meets the record's hole at the seam
+	// 4.55 × scale world units out, moving at 5.3 × scale × the fall's
+	// opening rate (it heads for a point behind the hole, as it does in every
+	// room). At 3.5 that is about 13 a second, a little over what the tunnel
+	// takes from the flight, so the tunnel gathers speed gently into the
+	// fall (and the swimmer's roll, which follows the pace, with it).
+	scale: 3.5,
 	// And the room's OBJECTS go on past its frame the same way: poster, clock,
 	// screen, desk and bed repeated this many rooms out on every side, each
 	// copy mirrored as the wallpaper's is, so a gap in a room's frame shows
@@ -462,15 +483,14 @@ export const NEST = {
 	// Every layer is one instanced draw of the (2·tiles + 1)² copies. 0 is the
 	// room alone.
 	tiles: 1,
-	// Out of the dark: the rooms are unseen beyond seen[1] SEAM DISTANCES
-	// ahead (the lens's from the record's hole as the fall opens: 2.75 room
-	// units on LENS, so 19.2 in the world) and fully there inside seen[0],
-	// so the room at the tunnel's end is not there to be seen on the way in
-	// — it comes up in the hole over the last quarter of the tunnel, as the
-	// search ends and after the record has (kaleidoscope.js has the
-	// tunnel's pace: 2.3 is about 0.73 of it, 1.3 about 0.93). Every room is
-	// flat on its glass, so at the seam the first one is one seam distance
-	// off and every distance in the fall after is nearer.
+	// Out of the dark: the rooms are unseen beyond seen[1] HOLE DISTANCES
+	// ahead (the lens's from the record's hole as the fall opens: the seam
+	// distance, 2.75 room units on LENS, and the hole's depth behind the
+	// record's face, 1.8 — 31.8 in the world) and fully there inside
+	// seen[0], so the room at the tunnel's end is not there to be seen on the
+	// way in — it comes up in the hole as the search ends, after the record
+	// has. The first room's back wall is 1.2 hole distances off at the seam,
+	// inside seen[0], and every distance in the fall after is nearer.
 	seen: [1.3, 2.3],
 	// The swimmer down the axis: its cross-section, of the frame's half-height
 	// at the riding distance, and how far it rides toward the frame being
@@ -487,40 +507,46 @@ export const NEST = {
 		// The hole's radius, in room units: a monitor's glass is about 0.6
 		// across (LAYERS screen width × SCREEN_GLASS w of a 2φ-wide frame).
 		rin: 0.3,
-		// The funnel (nest.js): it meets the tunnel's wall this many SEAM
+		// The funnel (nest.js): it meets the tunnel's wall this many HOLE
 		// DISTANCES up from the hole — the lens's distance from the hole as
-		// the fall opens, 2.75 room units on LENS — which must leave the wall
-		// out of the frame at the seam (0.7 does to an aspect of about 2.8),
-		// and carries on past the wall by `over` world units, out of sight.
-		join: 0.7,
+		// the fall opens: the seam distance, 2.75 room units on LENS, plus the
+		// hole's depth behind the record's face, a screen's (1.8) — which
+		// must leave the wall out of the frame at the seam (0.75 does, to the
+		// corners of a 16:10 frame and of a portrait one), and carries on past
+		// the wall by `over` world units, out of sight.
+		join: 0.75,
 		over: 0.6,
 		segments: 256,
-		// The grooves, in WORLD units, as the wall's are: the pitch up the
-		// funnel; the wobble the primes put on it — TWICE the pitch, so the
-		// turns cross and weave: seen down the funnel's axis a swing kept
-		// clear of the next groove is a few hundredths of the ring's radius
-		// and every groove reads as a circle; how fast t runs along the
-		// groove (3: the 2-wave goes round about twice a turn, the 7-wave six
-		// times); how many primes and the amplitude each gets, p^−σ (σ = 1:
-		// 1/p, as asked; ½ is the critical line proper); what share of Σ p^−σ
-		// counts as a full swing (tsl/zeta.js primeWaveTexture); the stroke,
-		// floored at a pixel.
-		pitch: 0.3,
-		amp: 0.6,
-		rate: 3,
+		// The grooves, in WORLD units, and the same as the wall's so they run
+		// on from it at the join: the pitch up the funnel, and the stroke,
+		// floored at a pixel — few and broad enough to carry a colour.
+		// Straight: the line is in their colour.
+		pitch: 0.35,
+		stroke: 0.07,
+		// The line: how fast t runs along the groove (2: the 2-wave goes
+		// round about one and a half times a turn, the 7-wave four); how many primes
+		// and the amplitude each gets, p^−σ (σ = 1: 1/p, as asked; ½ is the
+		// critical line proper); what share of Σ p^−σ counts as full height
+		// (tsl/zeta.js primeWave). The wall's grooves carry the same line.
+		rate: 2,
 		primes: 24,
 		sigma: 1,
 		reach: 0.75,
-		stroke: 0.035,
-		// The light: two opposed sectors round the axis; the gold's level;
-		// and how dark the throat is against the join (1 is flat).
+		// Its height as colour, low to high: violet, crimson, orange, gold,
+		// cream — the gold at the middle of the line, where it mostly is.
+		ramp: [0x7a34c4, 0xd4305e, 0xf46a1c, 0xf6c03a, 0xfff4cc],
+		// The light: two opposed sectors round the axis; the level; how dark
+		// the throat is (1 is flat), and how far up the funnel (of the way to
+		// the join) it is full — from there it dims to the wall's own level
+		// at the join, so the wall runs into it without a seam.
 		sheen: 0.6,
-		level: 0.95,
+		level: 1.1,
 		throat: 0.2,
-		// Out of the dark: all there inside seen[0] seam distances of the
+		crest: 0.55,
+		// Out of the dark: all there inside seen[0] hole distances of the
 		// lens, none of it beyond seen[1] — late, so the funnel draws the
 		// search down into it rather than arriving whole.
-		seen: [1.6, 3.6]
+		seen: [1.3, 2.4]
 	},
 	// ── The record between the rooms ─────────────────────────────────────────
 	// Every room after the first sits at the BOTTOM of a record with depth: a
@@ -588,6 +614,8 @@ export const KALEIDO = {
 	// The rings: how many are built, how far apart, how many drawings to a
 	// ring, and the ellipse they sit on (x, y radii — the frame is wider than
 	// it is tall). `spiral` is the extra turn each ring takes on the last.
+	// Enough to reach from the set's glass to the record's funnel (placeNest
+	// switches off any past it).
 	rings: 48,
 	pitch: 2.2,
 	ring: 8,
@@ -646,17 +674,9 @@ export const KALEIDO = {
 		radius: 6,
 		// Round the axis; enough that it is a circle at this radius.
 		segments: 128,
-		// The groove: world units per groove down the axis (the tunnel is some
-		// forty-odd units long), the wobble ζ puts on it (under half the
-		// pitch, or grooves cross), how fast t runs along the groove (zeros to
-		// a turn — about one and a half by the glass end; 0.4 uses the whole
-		// of the table over a forty-unit tunnel), and the stroke, in world
-		// units, floored at a pixel.
-		pitch: 0.25,
-		amp: 0.08,
-		rate: 0.4,
-		stroke: 0.04,
-		// The gold's level against the ring drawings — well under them, so the
+		// The grooves are the record's (NEST.disc: pitch, stroke, and the line
+		// in their colour), so they run on into its funnel at the join.
+		// The level against the ring drawings — well under them, so the
 		// rings stay the picture; and how much of the rings' overload it takes
 		// in the breakdown (1 = all of it).
 		level: 0.4,
@@ -664,10 +684,9 @@ export const KALEIDO = {
 		// The light across it: two opposed sectors round the axis, fixed while
 		// the grooves turn, as the disc has; 0 is flat.
 		sheen: 0.6,
-		// The grooves turn with the rings, this much of their turn.
+		// The grooves turn with the rings, this much of their turn — and the
+		// record's with them.
 		turn: 1,
-		// And cycle with them: 0 is always gold, 1 the rings' own hue turn.
-		hue: 0,
 		// Added over the black rather than laid over it (see kaleidoscope.js).
 		add: false,
 		// The PULSE: a brightness wave travelling down the tunnel ahead of the

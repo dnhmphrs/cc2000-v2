@@ -138,15 +138,17 @@
 
 <svelte:window on:pointerdown={finish} />
 
+{#if !verdict}
+	<div class="error-ground" in:fade={{ duration: reduced ? 0 : 400 }}>
+		<Tiles name={v.gif} />
+		<div class="veil"></div>
+	</div>
+{/if}
 <div
 	class="error-screen"
 	in:fade={{ duration: reduced ? 0 : 400 }}
 	out:fade={{ duration: reduced ? 0 : 350 }}
 >
-	{#if !verdict}
-		<Tiles name={v.gif} />
-		<div class="veil"></div>
-	{/if}
 	<div
 		class="panel"
 		bind:this={panel}
@@ -183,16 +185,23 @@
 </div>
 
 <style>
-	/* Over the 3D and under the scanlines, like the room and the questions:
-	   the verdict is put to the run, not a page of its own. On a run its
-	   ground is the canvas — the gif tunnel, stopped, still playing, the
-	   swimmer at the centre of it. On the route's error page there is no
-	   canvas, and the ground is the gif, tiled over the whole frame, under
-	   a light veil. */
-	.error-screen {
+	/* The verdict is put to the run, not a page of its own: on a run its
+	   ground is the canvas — the gif tunnel, stopped, still playing — and on
+	   the route's error page, with no canvas, the gif tiled over the whole
+	   frame under a light veil (.error-ground). Both are under the scanlines,
+	   as the room and the questions are; the CARD is over them (z 31 against
+	   the raster's 30), because dark ink on the yellow with the raster's dark
+	   lines across it was hard to read. */
+	.error-ground {
 		position: fixed;
 		inset: 0;
 		z-index: 10;
+		pointer-events: none;
+	}
+	.error-screen {
+		position: fixed;
+		inset: 0;
+		z-index: 31;
 		display: grid;
 		/* At the centre, as the questions are put. */
 		place-items: center;
@@ -212,9 +221,9 @@
 	   stopped in — the one loud thing in the frame, as a verdict should be. */
 	.panel {
 		position: relative;
-		min-width: min(21rem, 80vw);
-		max-width: min(34rem, 92vw);
-		padding: clamp(18px, 2.8vh, 28px) clamp(20px, 2.4vw, 34px);
+		min-width: min(24rem, 86vw);
+		max-width: min(40rem, 92vw);
+		padding: clamp(22px, 3.4vh, 36px) clamp(22px, 3vw, 44px);
 		background: var(--yellow);
 		color: var(--on-yellow);
 		border: 1px solid var(--on-yellow);
@@ -227,7 +236,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: clamp(10px, 1.5vh, 16px);
+		gap: clamp(14px, 2vh, 22px);
 	}
 	.panel:focus,
 	.panel:focus-visible {
@@ -235,37 +244,43 @@
 		outline-offset: -5px;
 	}
 
-	.q {
+	/* Big, bold and in full ink: the card is small in a big frame and the
+	   face is a thin one, so nothing on it is under 12px or less than black. */
+	/* .panel .q, not .q: the site's stylesheet has a .panel .q of its own
+	   (the old popup's, light ink) that would otherwise win the tie. */
+	.panel .q {
 		margin: 0;
-		font-size: clamp(9px, 0.8vw, 11px);
+		font-size: clamp(12px, 1vw, 14px);
 		font-weight: 700;
-		letter-spacing: 0.28em;
+		letter-spacing: 0.2em;
 		text-transform: uppercase;
 		color: var(--on-yellow);
-		padding-bottom: 0.6em;
-		border-bottom: 1px solid rgba(23, 18, 12, 0.45);
+		padding-bottom: 0.7em;
+		border-bottom: 2px solid var(--on-yellow);
 	}
 
 	.lines {
 		display: flex;
 		flex-direction: column;
-		gap: 0.55em;
+		gap: 0.8em;
 		max-width: 100%;
 	}
 	.line {
 		position: relative;
 		margin: 0;
 		max-width: 100%;
-		line-height: 1.6;
-		letter-spacing: 0.04em;
+		line-height: 1.45;
+		letter-spacing: 0.03em;
 	}
 	.line.verdict {
-		font-size: clamp(11px, 1.1vw, 16px);
+		font-size: clamp(16px, 1.6vw, 22px);
+		font-weight: 700;
 		color: var(--on-yellow);
 	}
 	.line.detail {
-		font-size: clamp(10px, 0.95vw, 13px);
-		color: rgba(23, 18, 12, 0.72);
+		font-size: clamp(13px, 1.15vw, 16px);
+		font-weight: 400;
+		color: var(--on-yellow);
 	}
 	.ghost {
 		visibility: hidden;
@@ -296,16 +311,17 @@
 	}
 
 	.go {
-		margin-top: 0.2em;
+		margin-top: 0.3em;
 		font: inherit;
-		font-size: clamp(8px, 0.74vw, 10px);
-		letter-spacing: 0.26em;
+		font-size: clamp(12px, 1vw, 14px);
+		font-weight: 700;
+		letter-spacing: 0.2em;
 		text-transform: uppercase;
 		color: var(--yellow);
 		background: var(--on-yellow);
 		border: 1px solid var(--on-yellow);
 		border-radius: 2px;
-		padding: 0.75em 2.2em;
+		padding: 0.9em 2.4em;
 		cursor: pointer;
 		transition:
 			background 0.18s,

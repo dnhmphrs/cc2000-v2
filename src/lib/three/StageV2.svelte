@@ -20,7 +20,7 @@
 	// ── The stage of the WebGL run, kept at /v2 ──────────────────────────────
 	// This is the Stage the site ran on before the WebGPU rebuild, unchanged but
 	// for this note: WebGLRenderer, the tunnel and the lattice, and the three
-	// scenes FlyIn, Conception and Computation. routes/v2/+page.svelte mounts
+	// scenes FlyIn, Conception and Computation. runs/V2.svelte (at /v2) mounts
 	// it, with the director switched to that run's names (director.setRun).
 	//
 	// One canvas, one renderer, one clock. It runs the three 3D scenes and

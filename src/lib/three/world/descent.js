@@ -122,6 +122,7 @@ export function createDescent({ THREE, renderer, nest }) {
 		const zeta = nest.zetaOf(p);
 		const { D, fov, settle } = nest.pose(zeta, camera, aspectR);
 		nest.setFunnel(p);
+		nest.restRecord();
 		// The run's one hand on the camera (world/wobble.js), on top of the
 		// pose — and off it over the last room's settle, so the glass is
 		// square in the frame for the readout. The swimmer below follows.
@@ -155,8 +156,9 @@ export function createDescent({ THREE, renderer, nest }) {
 
 	function update(dt) {
 		// The roll gathers speed with the fall, and never drops below its
-		// base spin as the fall lands (nest.swimmer.roll).
-		sw.roll += dt * SPIN * Math.max(1, nest.paceOf(clamp01(t / T.duration)) * nest.seamPace);
+		// base spin as the fall lands (nest.swimmer.spinAt).
+		sw.roll +=
+			dt * SPIN * Math.max(1, sw.spinAt(nest.paceOf(clamp01(t / T.duration)) * nest.seamPace));
 		t += dt;
 		sw.clock += dt;
 		set(clamp01(t / T.duration));
