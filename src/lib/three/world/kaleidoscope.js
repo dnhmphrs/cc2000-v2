@@ -30,6 +30,7 @@ import {
 	APPROACH,
 	KALEIDO,
 	LENS,
+	NEST,
 	SCENES,
 	SCREEN_GLASS,
 	runSeconds,
@@ -37,7 +38,7 @@ import {
 	easeInOutCubic
 } from '$lib/config';
 import { ADD } from '$lib/three/tsl/materials';
-import { grooveDistNode, hair, TWO_PI } from '$lib/three/tsl/zeta';
+import { primeWave, spiralGroove, waveRamp, hair, TWO_PI } from '$lib/three/tsl/zeta';
 import { DECADES, shuffle } from '$lib/data/roomElements';
 import { GIFS } from '$lib/data/gifs';
 import { runClock } from '$lib/three/tsl/clock';
@@ -300,28 +301,33 @@ export function createKaleidoscope({ THREE, nest }) {
 	// ── The wall ─────────────────────────────────────────────────────────
 	// One open cylinder on the axis, seen from inside, drawn where the stencil
 	// is 1 or more like the rings and just UNDER them, so the drawings sit on
-	// it and it sits on the disc where the disc reaches past its mouth (the
-	// disc runs out to NEST.disc.rout, well past the wall's radius; nothing of
-	// it past the mouth is ever in the frame but through the wall, so it is
-	// left as it is and the wall covers it). Laid OVER, premultiplied, black
-	// between the grooves — the wall is a surface, and what is behind it is
-	// the dark — or ADDED, gold alone over the black, by the knob.
+	// it, down to where the record's funnel meets it (nest.recordJoin). Laid
+	// OVER, premultiplied, black between the grooves — the wall is a surface,
+	// and what is behind it is the dark — or ADDED, over the black, by the knob.
 	//
-	// The groove coordinate is the distance down the axis from the ROOM end
-	// (uRoomZ, set with the nest), the angle is round the axis less the turn
-	// the rings have made (uTurn), and the stroke is hair()'s: floored at a
-	// screen pixel by the fwidth of the coordinate and dimmed by the same
-	// ratio, since down a wall seen at a grazing angle the grooves crowd to
-	// nothing long before the dark takes them. The sheen is fixed in the
-	// world while the grooves turn under it. The pulse is one sine down the
-	// axis, its phase the scene's progress (uPhase), running toward the room.
+	// Its grooves are the record's, run the other way: ONE straight spiral,
+	// a turn a pitch (NEST.disc's), counted from the record's hole (uHoleZ,
+	// set with the nest), the angle round the axis less the turn the rings
+	// have made (uTurn) — which the record's funnel takes too
+	// (nest.setRecordTurn), so the spiral carries on through the join — and
+	// coloured by the critical line as the primes write it, t running along
+	// the groove (tsl/zeta.js primeWave, waveRamp): the record, the whole
+	// length of the tunnel. The stroke is hair()'s: floored at a screen pixel
+	// by the fwidth of the coordinate and dimmed by the same ratio, since
+	// down a wall seen at a grazing angle the grooves crowd to nothing long
+	// before the dark takes them. The sheen is fixed in the world while the
+	// grooves turn under it. The pulse is one sine down the axis, its phase
+	// the scene's progress (uPhase), running toward the room, and it dies out
+	// over the last wavelength to the join, where the funnel takes over.
 	const W = K.wall;
+	const R = NEST.disc;
 	const uTurn = uniform(0);
 	const uPhase = uniform(0);
-	const uRoomZ = uniform(0);
-	// 0 on a run down a verdict's gif: the wall stays the gold the gif is
-	// laid in rather than cycling with the drawings (setArchive).
-	const uWallHue = uniform(1);
+	const uHoleZ = uniform(0);
+	const uJoinS = uniform(0);
+	// 1 on a run down a verdict's gif: the wall's line laid in the gold the gif
+	// is, its light kept, rather than in the ramp's colours (setArchive).
+	const uWallGold = uniform(0);
 	const GOLD = new THREE.Color(0xf0c45c);
 	const wallGeo = new THREE.CylinderGeometry(W.radius, W.radius, 1, W.segments, 1, true);
 	const wallMat = new THREE.MeshBasicNodeMaterial({
@@ -339,24 +345,28 @@ export function createKaleidoscope({ THREE, nest }) {
 				})
 	});
 	{
-		const grooveDist = grooveDistNode(THREE);
+		const wave = primeWave({ primes: R.primes, sigma: R.sigma, reach: R.reach });
+		const ramp = waveRamp(THREE, R.ramp);
 		wallMat.colorNode = Fn(() => {
-			const s = positionWorld.z.sub(uRoomZ);
+			const s = positionWorld.z.sub(uHoleZ);
 			const th0 = atan(positionWorld.y, positionWorld.x);
 			const th = th0.sub(uTurn);
-			const d = grooveDist(s, th, float(W.pitch), float(W.amp), float(W.rate));
-			const groove = hair(d, float(W.stroke), fwidth(s));
+			const g = spiralGroove(s, th, float(R.pitch));
+			const groove = hair(g.x, float(R.stroke), fwidth(s));
+			const line = ramp(wave(g.y.mul(TWO_PI).add(th).mul(R.rate)));
+			const lum = dot(line, vec3(0.2126, 0.7152, 0.0722));
+			const tint = mix(line, vec3(GOLD.r, GOLD.g, GOLD.b).mul(lum.mul(2.0)), uWallGold);
 			const sheen = pow(abs(cos(th0.sub(1.15))), 3.0).mul(W.sheen);
 			const lit = mix(1.0 - 0.7 * W.sheen, 1.0, sheen);
 			const pulse = sin(s.div(W.wavelength).add(uPhase).mul(TWO_PI))
 				.mul(0.5)
 				.add(0.5)
 				.mul(W.depth)
+				.mul(tslSmoothstep(uJoinS, uJoinS.add(W.wavelength), s))
 				.oneMinus();
-			const gold = hue(vec3(GOLD.r, GOLD.g, GOLD.b), turned.mul(W.hue).mul(uWallHue));
 			const level = float(W.level).mul(mix(1.0, uBright.div(K.dim), W.overload));
 			const a = near.mul(uDim).mul(mix(1.0, uOn, W.out));
-			const col = gold.mul(groove.mul(lit).mul(pulse).mul(level));
+			const col = tint.mul(groove.mul(lit).mul(pulse).mul(level));
 			return W.add ? vec4(col.mul(a), 1.0) : vec4(col.mul(a), a);
 		})();
 	}
@@ -455,7 +465,7 @@ export function createKaleidoscope({ THREE, nest }) {
 		archive = kind;
 		const gif = kind ? gifs[K.gif.of[kind]] : null;
 		if (gif) loadGif(gif);
-		uWallHue.value = gif ? 1 - K.gif.tint : 1;
+		uWallGold.value = gif ? K.gif.tint : 0;
 		layoutRings();
 	}
 
@@ -594,12 +604,16 @@ export function createKaleidoscope({ THREE, nest }) {
 		// The rings, from the glass plane down to just short of the record's
 		// funnel — and the wall from the glass plane to where the funnel meets
 		// it (nest.recordJoin), its grooves counted from the record's hole so
-		// they line up with the funnel's at the join.
+		// they line up with the funnel's at the join, and the record's turned
+		// as the tunnel's are at the end of it — where they stay through the
+		// fall — until the tunnel turns them (turnTo).
 		const roomZ = zEnd - seamD;
 		const joinZ = roomZ + nest.recordJoin;
 		wall.scale.set(1, zGlass - joinZ, 1);
 		wall.position.z = (zGlass + joinZ) / 2;
-		uRoomZ.value = roomZ;
+		uHoleZ.value = roomZ + nest.recordHole;
+		uJoinS.value = nest.recordJoin - nest.recordHole;
+		nest.setRecordTurn(turnOf(1) * T.turns * Math.PI * 2 * W.turn, true);
 		let n = 0;
 		for (let i = 0; i < ringInfo.length; i++) {
 			const z = zGlass - (i + 0.5) * K.pitch;
@@ -738,6 +752,17 @@ export function createKaleidoscope({ THREE, nest }) {
 		screenPivot.rotation.z = turn;
 		rings.rotation.z = turn;
 		uTurn.value = turn * W.turn;
+		nest.setRecordTurn(turn * W.turn);
+	}
+	// The set framed by its BODY rather than its glass, `w` of the way (1 far
+	// off, 0 from the time the flight is into the glass): the 60s set's glass
+	// is left of its middle, the speaker to the right of it, so a set hung by
+	// its glass on the axis sits right of centre however level the lens is.
+	// It slides across to its glass as it comes (world/approach.js), and is
+	// hung by its glass for the whole of the tunnel (set, below).
+	function frameSet(w) {
+		const g = SCREEN_GLASS[K.screenDecade];
+		screenPivot.position.x = -(0.5 - g.cx) * K.screenWidth * w;
 	}
 	// The tunnel at u: its turn, its colours, and the rings going out under
 	// the room as it takes the frame — so the frame this ends on is the nest
@@ -751,6 +776,7 @@ export function createKaleidoscope({ THREE, nest }) {
 		const x = Math.max(0, Math.min(1, u));
 		const w = eased(x, T.lock);
 		turnTo(turnOf(x) * T.turns * Math.PI * 2);
+		frameSet(0);
 		uPhase.value = x * W.pulses;
 		uHue.value = w * T.hueCycles * Math.PI * 2;
 		uBright.value = K.dim;
@@ -807,6 +833,7 @@ export function createKaleidoscope({ THREE, nest }) {
 		set,
 		rebase,
 		turnTo,
+		frameSet,
 		setDim(v) {
 			uDim.value = v;
 		},

@@ -277,8 +277,9 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		const held = get(gate);
 		const p0 = clamp01(t / T.duration);
 		sw.clock += dt;
-		// The roll gathers speed with the flight (nest.swimmer.roll).
-		sw.roll += dt * SPIN * (kal.flightSpeed(p0) / kal.speeds.va);
+		// The roll gathers speed with the flight, at half its gain
+		// (nest.swimmer.spinAt).
+		sw.roll += dt * SPIN * sw.spinAt(kal.flightSpeed(p0) / kal.speeds.va);
 		if (!held) t += dt;
 		else heldZ += kal.flightSpeed(p0) * dt;
 		const p = clamp01(t / T.duration);
@@ -364,7 +365,11 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		kal.setOpen(open, width, glow * (1 + 2.2 * (1 - width)), g.x, g.y);
 
 		// ── The turn, begun ──────────────────────────────────────────────
+		// And the set framed by its body while it is far off, sliding across
+		// to be hung by its glass — dead ahead, on the axis — by the time the
+		// flight is into it (APPROACH.frame, kaleidoscope.frameSet).
 		kal.turnTo(lean(p));
+		kal.frameSet(1 - smoothstep(A.frame[0], A.frame[1], p));
 
 		// The stencil chain, for wherever the camera is. Always 0 here — the
 		// lens stops short of the set's glass — but the visibility has to be

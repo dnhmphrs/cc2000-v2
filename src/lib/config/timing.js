@@ -618,8 +618,10 @@ const RAW = {
 		// upright and turning at exactly the tunnel's rate there
 		// (world/approach.js, kaleidoscope.turnTo). Its rate at the start of
 		// the flight, as a fraction of that — the lean it comes out of the dark
-		// with (about thirty degrees) falls out of this and the rate.
-		turnFrom: 0.5
+		// with falls out of this and the rate: about eleven degrees as it
+		// shows, two by the last second (and the hand on the camera lets go
+		// over the same stretch, WOBBLE.still, so that is all of it).
+		turnFrom: 0.3
 	},
 
 	// ── Kaleido ──────────────────────────────────────────────────────────────
@@ -653,7 +655,7 @@ const RAW = {
 		// And the turn EASES IN, as the speed does: it opens at this fraction
 		// of the rate above — the rate the set arrives turning at — and ramps
 		// up to the full rate by `turnRamp` of the tunnel.
-		turnSeam: 0.34,
+		turnSeam: 0.18,
 		turnRamp: 0.4,
 
 		// ── The search ends ──────────────────────────────────────────────────
