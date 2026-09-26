@@ -645,11 +645,14 @@ export async function createNest({ THREE, renderer }) {
 
 		// The disc, in room 0's plane, round it — see above. In the level's
 		// meshes, so it is dropped with the room once the lens is past its glass.
+		// Drawn AFTER every room's layers, front ones included: the objects are
+		// tiled out past the frame now, and the grooves go over the tiles, not
+		// under them — the room is the label, and the record round it is on top.
 		const first = levels[0];
 		const disc = new THREE.Mesh(plane, discMat);
 		disc.scale.set(2 * D.rout, 2 * D.rout, 1);
 		disc.position.set(0, 0, 0.0005);
-		disc.renderOrder = 5;
+		disc.renderOrder = 10 * (2 * nLevels + 2);
 		disc.frustumCulled = false;
 		first.group.add(disc);
 		first.meshes.push(disc);
