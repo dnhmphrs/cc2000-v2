@@ -3,6 +3,7 @@ import {
 	vec4,
 	uniform,
 	Fn,
+	Discard,
 	uv,
 	float,
 	length,
@@ -252,17 +253,18 @@ export async function createNest({ THREE, renderer }) {
 			.mul(min(w.div(e), 1.0));
 	});
 
-	// ── The disc at the tunnel's end ─────────────────────────────────────
-	// The first room comes out of the dark as a record's LABEL (NEST.disc):
-	// gold grooves round it in its own plane, from `rin` room units out —
-	// pushed outside the seam frame's corners on the live lens by the scenes
-	// (setDiscRin), so the seam and the fall never see one — to `rout`. Drawn
-	// after the room's back layers, over the wall's spread, opaque outside the
-	// label, so what shows inside the grooves is a circle of the room's own
-	// wall with the frame in it. It comes out of the dark with the room
-	// (nearN) and goes with its dimmer, and the tunnel's rings draw over it
-	// as they do the room. The search ends by dropping into a record, as the
-	// run ends by leaving through one.
+	// ── The record at the tunnel's end ───────────────────────────────────
+	// The tunnel ends on the FACE of a record (NEST.disc): gold grooves in
+	// its plane from `rin` room units out to `rout`, and its spindle hole,
+	// `rin` across, is the GLASS the first room is seen through — a
+	// monitor's size, so the fall's first crossing, through the hole into
+	// the room, is every crossing: the same zoom, the same roll, the same
+	// distance. The record is the fall's first LEVEL (build), the hole its
+	// glass-only quad, and it is dropped once the lens is through the hole
+	// as a room is once through its glass. It comes out of the dark with the
+	// rooms (nearN) and goes with their dimmer, and the tunnel's rings draw
+	// over it as they do the room. The search ends by dropping into a
+	// record.
 	const D = NEST.disc;
 	const du = { uRin: uniform(D.rin), uOn: uniform(1) };
 	const discMat = over();
@@ -484,15 +486,64 @@ export async function createNest({ THREE, renderer }) {
 			return mat;
 		};
 
-		// The rooms. Room 0 is at the root, unturned and at unit scale — it is
-		// what the tunnel ends on, and the frame it ends on is square — and
-		// every room after it sits behind its parent's glass, screwed, at the
-		// bottom of its funnel. With the funnel off, on the glass, as it was.
+		// The RECORD is level 0, at the root, unturned and at unit scale — it
+		// is what the tunnel ends on — and its hole is the glass room 0 sits
+		// behind, screwed and scaled like every room behind its parent's
+		// glass. Every room after that sits behind its parent's glass, at
+		// the bottom of its funnel. With the funnel off, on the glass, as it
+		// was.
 		const back = F.on ? F.back : 0;
 		const zoom = F.on ? F.zoom : 1;
+		const nLevels = rooms.length + 1;
 		let parent = null;
-		const nLevels = rooms.length;
-		rooms.forEach((decade, k) => {
+		{
+			const group = new THREE.Group();
+			root.add(group);
+			const rin = D.rin;
+			const glass = { x: 0, y: 0, z: 0, w: 2 * rin, h: 2 * rin };
+			// The face: where the stencil is 1 or more (discMat), first of all.
+			const disc = new THREE.Mesh(plane, discMat);
+			disc.scale.set(2 * D.rout, 2 * D.rout, 1);
+			disc.renderOrder = 0;
+			disc.frustumCulled = false;
+			group.add(disc);
+			// The hole: a circle that takes the stencil from 1 to 2, so room 0
+			// draws inside it and nowhere else — the record's glass-only quad.
+			const hm = mk(
+				new THREE.MeshBasicNodeMaterial({
+					transparent: true,
+					depthTest: false,
+					depthWrite: false,
+					colorWrite: false
+				})
+			);
+			hm.colorNode = Fn(() => {
+				Discard(length(uv().sub(0.5)).greaterThan(0.5));
+				return vec4(0, 0, 0, 1);
+			})();
+			stencilOf(hm, 1, THREE.EqualStencilFunc, THREE.IncrementStencilOp);
+			const hole = new THREE.Mesh(plane, hm);
+			hole.scale.set(2 * rin, 2 * rin, 1);
+			hole.position.set(0, 0, 0.001);
+			hole.renderOrder = 4;
+			hole.frustumCulled = false;
+			group.add(hole);
+			const lv = {
+				decade: null,
+				L: {},
+				glass,
+				group,
+				meshes: [disc, hole],
+				screenMesh: hole,
+				N: 1,
+				screw: 0,
+				k: 0
+			};
+			levels.push(lv);
+			parent = lv;
+		}
+		rooms.forEach((decade) => {
+			const k = levels.length;
 			const r = room(decade, portrait);
 			const group = new THREE.Group();
 			let N = 1;
@@ -642,20 +693,6 @@ export async function createNest({ THREE, renderer }) {
 		su.uSize.value.set(last.glass.w / m, last.glass.h / m);
 		su.uT.value = 0;
 		su.uFade.value = 1;
-
-		// The disc, in room 0's plane, round it — see above. In the level's
-		// meshes, so it is dropped with the room once the lens is past its glass.
-		// Drawn AFTER every room's layers, front ones included: the objects are
-		// tiled out past the frame now, and the grooves go over the tiles, not
-		// under them — the room is the label, and the record round it is on top.
-		const first = levels[0];
-		const disc = new THREE.Mesh(plane, discMat);
-		disc.scale.set(2 * D.rout, 2 * D.rout, 1);
-		disc.position.set(0, 0, 0.0005);
-		disc.renderOrder = 10 * (2 * nLevels + 2);
-		disc.frustumCulled = false;
-		first.group.add(disc);
-		first.meshes.push(disc);
 
 		// Each level's fixed point, in its own coordinates: the point its
 		// child's spiral similarity x ↦ g + R(θ)·x/N leaves where it is, g
@@ -902,13 +939,10 @@ export async function createNest({ THREE, renderer }) {
 		setDark(v) {
 			uDark.value = v;
 		},
-		// The disc's label radius, pushed outside the frame's corners on the
-		// live lens (plus the hand's lean), so no groove is in the seam frame.
-		// The funnels' labels are the same radius, for the same reason at
-		// every crossing.
-		setDiscRin(aspect) {
-			du.uRin.value = Math.max(D.rin, Math.hypot(1, aspect) + 0.2);
-		},
+		// The hole is a monitor's size now, whatever the frame (NEST.disc.rin);
+		// this used to push the label out past the frame's corners, and the
+		// lab's sketches still call it.
+		setDiscRin() {},
 		// The funnels, at `p` of the descent: the record's turn and the
 		// pulse's phase, straight off the progress — NEST.funnel.
 		setFunnel(p) {

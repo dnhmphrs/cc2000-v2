@@ -76,11 +76,12 @@ ok(
 ok('the flight asks for a birthday', await until(() => !!document.querySelector('.ask'), 60));
 
 if (ROUTE === '/') {
-	// ── Out of range breaks down ───────────────────────────────────────────
+	// ── Out of range stops in its gif tunnel ───────────────────────────────
 	// The earliest year the dial offers is before the archive. It is taken, the
-	// spice is asked at once in the same panel, and the run goes in; the tunnel
-	// breaks down and the verdict is given, typed. Calculate again hands
-	// the run back to the flight, with no title card.
+	// spice is asked at once in the same panel, and the run goes in, down a
+	// tunnel made of the verdict's gif, stops inside it, and the verdict is
+	// given there, typed. Calculate again hands the run back to the flight,
+	// with no title card.
 	const earliest = await p.evaluate(() => {
 		const sel = document.querySelector('#ask-year');
 		return +sel.options[sel.options.length - 1].value;
@@ -96,7 +97,7 @@ if (ROUTE === '/') {
 	await p.click('button.go');
 	ok('the second answer lets it fly', await until(() => !document.querySelector('.ask'), 20));
 	ok(
-		'an impossible birthday breaks down into the verdict',
+		'an impossible birthday stops in its gif tunnel, with the verdict',
 		await until(() => !!document.querySelector('.error-screen .verdict'), 80)
 	);
 	ok(

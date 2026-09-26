@@ -78,6 +78,16 @@ import { runClock } from '$lib/three/tsl/clock';
 // while they are still too small to see; and if the birthday is changed on
 // the way back, they are given the drawings back.
 //
+// ── The turn, begun before the tunnel ────────────────────────────────────────
+// The tunnel turns from the seam on (kaleidoscope.set). It used to start
+// there, at its full rate, and the world began to spin the moment the
+// swimmer went in. Now the set is leaned the other way as it comes out of
+// the dark, and from `turnIn` it comes round — the tunnel inside its glass
+// with it — gathering speed as it grows, to reach the seam upright and
+// turning at exactly the tunnel's rate. Upright at the seam, so approach 1
+// is still kaleidoscope.pose(0) to the pixel; and at the tunnel's rate, so
+// the turn carries straight on through it.
+//
 // ── One speed, one lens, one hand, through the seam ──────────────────────────
 // The lens flies at ONE speed the whole way into the glass, no brake, on the
 // run's one lens (LENS — no dolly for the seam), with the run's one hand on
@@ -196,6 +206,16 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 	// two scenes cannot disagree about it. ONE SPEED, no brake, so the flight
 	// is simply zEnd · p.
 	let zEnd = 0;
+
+	// The tunnel's rate at the seam, in radians per unit of THIS scene's
+	// progress, and the lean that comes round to it: its rate rising as the
+	// square of the way through [turnIn, 1], so it starts from still.
+	const KT = SCENES.kaleido;
+	const OMEGA = ((KT.turns * 2 * Math.PI) / KT.duration) * T.duration;
+	function lean(p) {
+		const s = clamp01((p - T.turnIn) / (1 - T.turnIn));
+		return ((-OMEGA * (1 - T.turnIn)) / 3) * (1 - s * s * s);
+	}
 
 	function portrait() {
 		return get(aspect) === 'portrait';
@@ -337,6 +357,9 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		// The dot FLARES — brighter than the line it becomes, a point of light
 		// rather than the start of a bar — and settles as it draws out.
 		kal.setOpen(open, width, glow * (1 + 2.2 * (1 - width)), g.x, g.y);
+
+		// ── The turn, begun ──────────────────────────────────────────────
+		kal.turnTo(lean(p));
 
 		// The stencil chain, for wherever the camera is. Always 0 here — the
 		// lens stops short of the set's glass — but the visibility has to be

@@ -1,18 +1,7 @@
 import { get } from 'svelte/store';
-import {
-	SCENES,
-	APPROACH,
-	LENS,
-	TUNNEL,
-	span,
-	clamp01,
-	smoothstep,
-	smootherstep,
-	runSeconds
-} from '$lib/config';
+import { SCENES, APPROACH, LENS, TUNNEL, clamp01, runSeconds } from '$lib/config';
 import { decade, edge, aspect } from '$lib/store/store';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
-import { createCrtMask } from './kaleidoscope';
 import { runClock } from '$lib/three/tsl/clock';
 import { roomsFor } from './nest';
 
@@ -30,13 +19,16 @@ import { roomsFor } from './nest';
 // takes the frame. The frame it ends on is nest.pose(0): the frame the
 // descent opens on, and the fall carries straight on from it.
 //
-// ── The breakdown ────────────────────────────────────────────────────────────
+// ── A birthday the archive cannot answer for ─────────────────────────────────
 // An out-of-range birthday is not refused: the run goes in anyway, and it is
-// HERE that it fails. With `edge` set there is no answer and no room at the
-// tunnel's end; instead the picture overloads — brighter, faster, the hue
-// whirling — and collapses like a set switching off: to a line, to a dot, to
-// black, the swimmer alone in it. The scene ends black and the director hands
-// to the verdict screen (components/error/ErrorScreen.svelte).
+// HERE that it ends. With `edge` set there is no answer and no room at the
+// tunnel's end, and the tunnel is not the archive: its rings are the
+// verdict's own gif (kaleidoscope.js setArchive), playing. The swimmer swims
+// down it at the flight's pace and then SLOWS TO A STOP inside it over
+// `stop` — the camera, the turn and the hue all coming to rest together —
+// and the director hands to the verdict (components/error/ErrorScreen.svelte),
+// typed over this frame: the gif tunnel, still playing, the swimmer rolling
+// at the centre of it. No breakdown and no screen of its own.
 //
 // Every value here is a pure function of scene progress, so ?at= is exact;
 // the swimmer's roll and wobble are on its own clock, as everywhere.
@@ -53,10 +45,7 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 	bu.uFade.value = 1;
 	scene.backgroundNode = deep(bu);
 	const camera = new THREE.PerspectiveCamera(LENS, 1, 0.1, 400);
-	// In the scene, so the CRT mask can ride on it for the breakdown.
 	scene.add(camera);
-	const crt = createCrtMask(THREE);
-	camera.add(crt.group);
 	let aspectR = 1;
 	const sw = nest.swimmer;
 	// ?sperm=0 — see world/approach.js.
@@ -66,6 +55,8 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 	const SPIN = -TUNNEL.spermSpin;
 	let t = 0;
 	let broken = false;
+	// Seconds the verdict has been up: the gif goes on playing under it.
+	let heldT = 0;
 
 	// A run arrives here with everything built and placed by the approach, and
 	// the rooms set for the answer. A jump straight in has nothing, so it is
@@ -88,6 +79,7 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 
 	function enter() {
 		t = 0;
+		heldT = 0;
 		broken = !!get(edge);
 		ensure();
 		// The drawings down the tunnel, or the verdict's gif.
@@ -101,17 +93,27 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 			const g = kal.screen.glass;
 			kal.setOpen(1, 1, 0, g.x, g.y);
 		}
-		// No room at the end of a tunnel that is about to break down.
+		// No room at the end of a tunnel that has no answer at the end of it.
 		nest.setDim(broken ? 0 : 1);
 		nest.setDark(1);
 		set(0);
 	}
 
+	// The tunnel's progress on an edge run: the flight's pace to `stop[0]`,
+	// then slowing at an even rate to rest at `stop[1]`, and still after it.
+	function stopAt(p) {
+		const [a, b] = T.stop;
+		if (p <= a) return p;
+		const q = Math.min(p, b) - a;
+		return a + q - (q * q) / (2 * (b - a));
+	}
+
 	function set(p) {
-		const { fov } = kal.pose(p, camera, aspectR);
-		kal.set(p, broken);
-		runClock.value = runSeconds('kaleido', p);
-		nest.setDiscRin(aspectR);
+		const x = broken ? stopAt(p) : p;
+		const { fov } = kal.pose(x, camera, aspectR);
+		kal.set(x, broken);
+		// The gif's frame is on the run's clock, which does NOT stop.
+		runClock.value = runSeconds('kaleido', p) + heldT;
 
 		// ── The swimmer ──────────────────────────────────────────────────
 		// Ahead of the lens, dead centre, at the ride it arrived at — a child
@@ -126,15 +128,6 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		sw.material.uniforms.uTime.value = sw.clock;
 		sw.material.uniforms.uOpacity.value = SPERM ? 1 : 0;
 
-		// ── The breakdown ────────────────────────────────────────────────
-		// The covers close to a line, the line to a dot, and black.
-		if (broken) {
-			const open = 1 - smootherstep(span(p, T.collapse));
-			const width = 1 - smootherstep(span(p, T.pinch));
-			const glow = p >= T.collapse[0] ? 1 - smoothstep(T.pinch[1], 1, p) : 0;
-			crt.set(camera, open, width, glow);
-		} else crt.set(camera, 1, 1, 0);
-
 		kal.rebase(camera.position.z, camera.near);
 	}
 
@@ -146,15 +139,14 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 	}
 
 	// ── The verdict, being read ──────────────────────────────────────────
-	// After the breakdown the run hands to the verdict screen (a DOM screen
-	// over whatever this last drew: the set switched off, black, the swimmer
-	// alone in it), and the Stage holds this scene under it. The swimmer's
-	// clock goes on, so it goes on rolling under the verdict rather than
-	// freezing on the frame the tunnel ended on.
+	// On an edge run the run hands to the verdict (a panel over whatever this
+	// last drew: the gif tunnel, stopped), and the Stage holds this scene
+	// under it. The swimmer's clock goes on, so it goes on rolling, and so
+	// does the run's, so the gif goes on playing.
 	function hold(dt) {
 		sw.clock += dt;
+		heldT += dt;
 		set(clamp01(t / T.duration));
-		runClock.value += dt;
 	}
 
 	return {
@@ -180,9 +172,7 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		},
 		reset() {
 			t = 0;
-		},
-		dispose() {
-			crt.dispose();
+			heldT = 0;
 		}
 	};
 }

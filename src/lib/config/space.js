@@ -468,15 +468,16 @@ export const NEST = {
 	// fallen into.
 	spermSpan: 0.28,
 	spermRide: 0.5,
-	// ── The disc at the tunnel's end ─────────────────────────────────────────
-	// The first room comes out of the dark as a record's LABEL: gold grooves
-	// round it, in its own plane, from `rin` room units out to `rout` — the
-	// search ends by dropping into a record, as the run ends by leaving
-	// through one. `rin` is the least it can be; the scenes push it outside
-	// the seam frame's corners on the live lens (nest.setDiscRin), so the seam
-	// and the fall never see a groove. `pitch` and `stroke` in room units.
+	// ── The record at the tunnel's end ───────────────────────────────────────
+	// The tunnel ends on the face of a record: gold grooves in its plane from
+	// `rin` room units out to `rout`, and its spindle hole, `rin` across, is
+	// the glass the first room is seen through, a monitor's size, so the
+	// fall's first crossing is every crossing (nest.js, the record level).
+	// `pitch` and `stroke` in room units.
 	disc: {
-		rin: 2.0,
+		// The hole's radius, in room units: a monitor's glass is about 0.6
+		// across (LAYERS screen width × SCREEN_GLASS w of a 2φ-wide frame).
+		rin: 0.3,
 		rout: 16,
 		pitch: 0.09,
 		stroke: 0.012,
@@ -559,7 +560,7 @@ export const KALEIDO = {
 	// The archive on a run it cannot answer for: the verdict's gif round the
 	// tunnel instead of the drawings (kaleidoscope.js setArchive) — which gif
 	// for which edge (data/gifs.js has the sheets), and the quads' width.
-	gif: { of: { past: 'the-past', future: 'the-future' }, size: 2.4 },
+	gif: { of: { past: 'the-past', future: 'the-future', unknown: '500' }, size: 2.4 },
 	// The archive as one atlas (kaleidoscope.js): every drawing fitted into
 	// a cell this many pixels square, keys across and decades down, this
 	// much clear padding round it so the mip levels never bleed a neighbour.

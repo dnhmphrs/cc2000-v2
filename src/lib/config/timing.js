@@ -605,7 +605,15 @@ const RAW = {
 		// The sky and the debris go out under the set as it takes the frame:
 		// the tunnel has no sky, and the frame this ends on must be the set,
 		// what is inside it, and nothing else.
-		skyOut: [0.9, 0.985]
+		skyOut: [0.9, 0.985],
+
+		// The set turns INTO the tunnel's turn, so the turn has no start: it
+		// comes out of the dark leaned a little the other way (about ten
+		// degrees, which falls out of this and the tunnel's own rate), still
+		// until `turnIn`, then comes round, gathering speed, to arrive at the
+		// seam upright and turning at exactly the tunnel's rate
+		// (world/approach.js, kaleidoscope.turnTo).
+		turnIn: 0.75
 	},
 
 	// ── Kaleido ──────────────────────────────────────────────────────────────
@@ -644,11 +652,16 @@ const RAW = {
 		lock: [0.68, 0.92],
 
 		// ── The breakdown ────────────────────────────────────────────────────
-		// A birthday the archive cannot answer for (the `edge` store): there is
-		// no room at the far end and the search never stops. The turn and the
-		// hue run away over `overload`, the picture collapses to a line
-		// (`collapse`), the line to a dot, to black (`pinch`) — the set
-		// switching OFF — and the run hands to the verdict (ErrorScreen).
+		// A birthday the archive cannot answer for (the `edge` store): the
+		// tunnel is the verdict's gif, and the swimmer swims down it at the
+		// flight's pace to `stop[0]`, slows at an even rate to rest at
+		// `stop[1]` (0.6 of the tunnel, still inside it), and is still for
+		// the rest of the scene, a beat before the verdict is typed over it.
+		stop: [0.4, 0.85],
+		// The breakdown the edge run used to have — the turn and the hue
+		// running away over `overload`, the picture collapsing to a line
+		// (`collapse`), to a dot, to black (`pinch`) — is gone from the run;
+		// the lab's lcl-tunnel sketch still reads these three windows.
 		overload: [0.5, 0.78],
 		collapse: [0.78, 0.88],
 		pinch: [0.88, 0.93],
@@ -674,7 +687,8 @@ const RAW = {
 		// There is no head: the tunnel has already eased to the pace the fall
 		// opens at (world/kaleidoscope.js), so the fall is falling on its
 		// first frame.
-		duration: 9,
+		// Seven levels now — the record's face to its hole, then six rooms.
+		duration: 10.5,
 
 		// How many rooms deep, the last being the answer's, and how far into the
 		// last room's crossing the run comes to rest — past the point where the

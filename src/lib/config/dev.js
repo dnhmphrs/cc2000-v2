@@ -67,7 +67,7 @@ export const DEV_SEED = (() => {
 export const DEV_EDGE = (() => {
 	if (typeof window === 'undefined') return null;
 	const v = new URLSearchParams(window.location.search).get('edge');
-	return v === 'past' || v === 'future' ? v : null;
+	return v === 'past' || v === 'future' || v === 'unknown' ? v : null;
 })();
 
 export const DEV_AT = (() => {

@@ -9,21 +9,22 @@
 	import Tiles from './Tiles.svelte';
 
 	// ── The verdict screens ──────────────────────────────────────────────────
-	// Three of them, each with its gif and the machine's own line: too old for
-	// the archive, too young for it, and the page that does not exist (the
-	// server's own failure takes the same page with the fourth gif). The two
-	// verdicts are the end of a run — the tunnel broke down on the way to a
-	// room that was never there (world/kaleido.js), a tunnel that was made of
-	// this gif — and here the gif is the whole frame, TILED (Tiles.svelte),
-	// with the verdict read over it in the register of the two questions: the
+	// The original site's four, each with its gif and its own line: too old
+	// for the archive, too young for it, a moment the algorithm could not
+	// calculate, and the page that does not exist. The first three are the
+	// end of a run (functions/answer.js says which): the swimmer swam down a
+	// tunnel made of that gif and stopped inside it (world/kaleido.js), and
+	// the verdict is read THERE, over the 3D, the gif still playing — no
+	// screen of its own. It is put in the register of the two questions: the
 	// same glass panel, one hairline, at the centre, a heading in the site's
-	// yellow and the machine's lines TYPED on the clock as the title card
-	// types. "Calculate again" hands the run back to the flight
-	// (director.recover()). 404 and 500 are the route's error page
-	// (routes/+error.svelte), with no 3D under them, and go home.
+	// yellow and the lines TYPED on the clock as the title card types.
+	// "Calculate again" hands the run back to the flight (director.recover()).
+	// 404 and 500 are the route's error page (routes/+error.svelte), with no
+	// 3D under it, so there the gif is the frame, tiled (Tiles.svelte), and
+	// the way out is home.
 	export let status = 500;
 	export let message = '';
-	export let verdict = null; // 'past' | 'future' | null
+	export let verdict = null; // 'past' | 'future' | 'unknown' | null
 
 	const VERDICT = {
 		past: {
@@ -39,7 +40,15 @@
 				'you were born in the After Time. those lucky enough to be born were ' +
 				'conceived to "Baby" by Justin Bieber, as it is the only remaining ' +
 				'music allowed by The Council.',
-			detail: 'that date has not happened yet. no signal has been transmitted for it.'
+			detail: 'the archive stops in march 2023. nothing has been transmitted since.'
+		},
+		unknown: {
+			gif: '500',
+			head: 'overheated',
+			line:
+				'our servers overheated. the algorithm found your moment of conception too hot for ' +
+				'calculation. your parents FUCK.',
+			detail: ''
 		}
 	};
 	const ROUTE = {
@@ -130,8 +139,10 @@
 <svelte:window on:pointerdown={finish} />
 
 <div class="error-screen" in:fade={{ duration: reduced ? 0 : 400 }}>
-	<Tiles name={v.gif} />
-	<div class="veil"></div>
+	{#if !verdict}
+		<Tiles name={v.gif} />
+		<div class="veil"></div>
+	{/if}
 	<div
 		class="panel"
 		bind:this={panel}
@@ -169,11 +180,11 @@
 
 <style>
 	/* Over the 3D and under the scanlines, like the room and the questions:
-	   the verdict is a screen the run is watched on, not a page. Its ground
-	   is the gif, tiled over the whole frame, under a veil light enough that
-	   it is very much the picture; until the sheet arrives the canvas under
-	   it shows — black, with the swimmer alone in it — and on the route's
-	   error page the page ground, the same blue-black. */
+	   the verdict is put to the run, not a page of its own. On a run its
+	   ground is the canvas — the gif tunnel, stopped, still playing, the
+	   swimmer at the centre of it. On the route's error page there is no
+	   canvas, and the ground is the gif, tiled over the whole frame, under
+	   a light veil. */
 	.error-screen {
 		position: fixed;
 		inset: 0;
