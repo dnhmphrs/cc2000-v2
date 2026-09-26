@@ -22,6 +22,7 @@ import {
 	smoothstep as tslSmoothstep,
 	floor,
 	mod,
+	instancedBufferAttribute,
 	hue
 } from 'three/tsl';
 import {
@@ -40,7 +41,7 @@ import { grooveDistNode, hair, TWO_PI } from '$lib/three/tsl/zeta';
 import { DECADES, shuffle } from '$lib/data/roomElements';
 import { GIFS } from '$lib/data/gifs';
 import { runClock } from '$lib/three/tsl/clock';
-import { glassOnly, glassCut } from '$lib/three/tsl/glass';
+import { glassOnly, glassCut, GLASS_KEY } from '$lib/three/tsl/glass';
 import { roomsFor } from './nest';
 import { wobbleEuler } from './wobble';
 
@@ -138,33 +139,92 @@ export function createKaleidoscope({ THREE, nest }) {
 	const uBSeen1 = uniform(K.bezelSeen[1]);
 	const nearBezel = tslSmoothstep(uBSeen0, uBSeen1, positionView.z.negate()).oneMinus();
 
-	// ── The ring materials, per drawing ──────────────────────────────────
-	// The drawings are the nest's, hue-turned. The screens keep their glass
-	// cut out, so the ring behind shows through every one of them. Drawn
-	// where the stencil is 1 OR MORE — inside the set's glass, or everywhere
-	// once through it, whatever the nest has done to the stencil inside room
-	// 0's own glass — and AFTER the nest: the rings are nearer than the room
-	// at the tunnel's end and cover it, so they go on top. The set's covers
-	// go on top of them again, and the swimmer on top of everything.
+	// ── The rings' one material: the archive as an ATLAS ─────────────────
+	// The drawings are the nest's, hue-turned, and the screens keep their
+	// glass cut out so the ring behind shows through every one of them. All
+	// twenty are drawn ONCE into one atlas here (a canvas, keys across and
+	// decades down, the screens' glass cleared by the same colour key
+	// tsl/glass.js cuts it with), so the whole tunnel — every ring, every
+	// quad — is ONE instanced draw on one material, each instance carrying
+	// its drawing's rectangle of the atlas (aRect). One draw is what keeps
+	// the painter's order: the quads are alpha over with no depth, so they
+	// must go far to near, and 384 meshes on twenty materials would sort by
+	// material first. Drawn where the stencil is 1 OR MORE — inside the set's
+	// glass, or everywhere once through it, whatever the nest has done to the
+	// stencil inside room 0's own glass — and AFTER the nest: the rings are
+	// nearer than the room at the tunnel's end and cover it, so they go on
+	// top. The set's covers go on top of them again, and the swimmer on top
+	// of everything.
 	const RING_ORDER = 50000;
 	const COVER_ORDER = 60000;
 	const disposables = [];
-	const ringMat = {};
-	for (const d of DECADES) {
-		ringMat[d] = {};
-		for (const key of K.keys) {
-			const m = new THREE.MeshBasicNodeMaterial({
-				transparent: true,
-				depthTest: false,
-				depthWrite: false
-			});
-			const c = key === 'screen' ? glassCut(d, tex[d].screen)() : texture(tex[d][key]);
-			m.colorNode = vec4(hue(c.rgb, turned).mul(uBright), c.a.mul(uOn).mul(near).mul(uDim));
-			stencilOf(m, 1, THREE.LessEqualStencilFunc, THREE.KeepStencilOp);
-			ringMat[d][key] = m;
-			disposables.push(m);
-		}
+	const CELL = K.atlas.cell;
+	const PAD = K.atlas.pad;
+	const canvas = document.createElement('canvas');
+	canvas.width = CELL * K.keys.length;
+	canvas.height = CELL * DECADES.length;
+	const ctx = canvas.getContext('2d');
+	ctx.imageSmoothingQuality = 'high';
+	// decade -> key -> [u0, v0, du, dv] of the atlas (v up, as the texture is).
+	const rect = {};
+	DECADES.forEach((d, row) => {
+		rect[d] = {};
+		K.keys.forEach((key, col) => {
+			const img = tex[d][key].image;
+			const s = Math.min((CELL - 2 * PAD) / img.width, (CELL - 2 * PAD) / img.height, 1);
+			const dw = Math.round(img.width * s);
+			const dh = Math.round(img.height * s);
+			const x0 = col * CELL + Math.floor((CELL - dw) / 2);
+			const y0 = row * CELL + Math.floor((CELL - dh) / 2);
+			ctx.drawImage(img, x0, y0, dw, dh);
+			if (key === 'screen' && !GLASS_KEY[d].alpha) {
+				// The glass, cut out: every pixel within the key's tolerance of
+				// the decade's flat glass colour goes clear (tsl/glass.js).
+				const [kr, kg, kb] = GLASS_KEY[d].rgb.map((c) => Math.round(c * 255));
+				const TOL = 14;
+				const px = ctx.getImageData(x0, y0, dw, dh);
+				const a = px.data;
+				for (let i = 0; i < a.length; i += 4) {
+					if (
+						Math.abs(a[i] - kr) <= TOL &&
+						Math.abs(a[i + 1] - kg) <= TOL &&
+						Math.abs(a[i + 2] - kb) <= TOL
+					)
+						a[i + 3] = 0;
+				}
+				ctx.putImageData(px, x0, y0);
+			}
+			rect[d][key] = [
+				x0 / canvas.width,
+				1 - (y0 + dh) / canvas.height,
+				dw / canvas.width,
+				dh / canvas.height
+			];
+		});
+	});
+	const atlas = new THREE.CanvasTexture(canvas);
+	atlas.colorSpace = THREE.SRGBColorSpace;
+	atlas.generateMipmaps = true;
+	atlas.minFilter = THREE.LinearMipmapLinearFilter;
+	atlas.magFilter = THREE.LinearFilter;
+	atlas.anisotropy = tex[DECADES[0]].screen.anisotropy; // the drawings' own
+	disposables.push(atlas);
+	const QUADS = K.rings * K.ring;
+	const rectAttr = new THREE.InstancedBufferAttribute(new Float32Array(QUADS * 4), 4);
+	const aRect = instancedBufferAttribute(rectAttr, 'vec4');
+	const ringMat = new THREE.MeshBasicNodeMaterial({
+		transparent: true,
+		depthTest: false,
+		depthWrite: false,
+		// Every other quad is mirrored, and winds the other way.
+		side: THREE.DoubleSide
+	});
+	{
+		const c = texture(atlas, aRect.xy.add(uv().mul(aRect.zw)));
+		ringMat.colorNode = vec4(hue(c.rgb, turned).mul(uBright), c.a.mul(uOn).mul(near).mul(uDim));
 	}
+	stencilOf(ringMat, 1, THREE.LessEqualStencilFunc, THREE.KeepStencilOp);
+	disposables.push(ringMat);
 
 	// ── The archive on a run it cannot answer for: the gif ───────────────
 	// A birthday the archive has nothing for gets no drawings down the
@@ -174,10 +234,11 @@ export function createKaleidoscope({ THREE, nest }) {
 	// frame, the frame counted off the run's clock (tsl/clock.js runClock)
 	// so a pin is exact and the hold under the verdict plays on; hue-turned,
 	// dimmed and stencilled exactly as the drawings are, over the wall as
-	// they are. The materials are built here so the warm-up compiles them
-	// (the two quads on `rings` a hair across); the sheet itself is fetched
-	// the first time it is asked for (setArchive), while the rings are still
-	// too small to see, so a run the archive can answer for never loads it.
+	// they are, and one instanced draw of every quad as they are: built here,
+	// always in the scene with every instance at nought until it is asked
+	// for, so the warm-up compiles it; the sheet itself is fetched the first
+	// time it is asked for (setArchive), while the rings are still too small
+	// to see, so a run the archive can answer for never loads it.
 	const gifs = {};
 	for (const name of Object.values(K.gif.of)) {
 		const G = GIFS[name];
@@ -186,7 +247,8 @@ export function createKaleidoscope({ THREE, nest }) {
 		const m = new THREE.MeshBasicNodeMaterial({
 			transparent: true,
 			depthTest: false,
-			depthWrite: false
+			depthWrite: false,
+			side: THREE.DoubleSide
 		});
 		const frame = mod(floor(runClock.mul(G.fps)), G.frames);
 		const cx = mod(frame, G.cols);
@@ -205,7 +267,12 @@ export function createKaleidoscope({ THREE, nest }) {
 		m.colorNode = vec4(hue(c.rgb, turned).mul(uBright), uOn.mul(near).mul(uDim));
 		stencilOf(m, 1, THREE.LessEqualStencilFunc, THREE.KeepStencilOp);
 		disposables.push(m, tex);
-		gifs[name] = { tex, material: m, aspect: G.w / G.h, src: G.src, loaded: false };
+		const mesh = new THREE.InstancedMesh(plane, m, QUADS);
+		mesh.name = `gif:${name}`;
+		mesh.renderOrder = RING_ORDER;
+		mesh.frustumCulled = false;
+		disposables.push(mesh);
+		gifs[name] = { tex, material: m, mesh, aspect: G.w / G.h, src: G.src, loaded: false };
 	}
 	function loadGif(g) {
 		if (g.loaded) return;
@@ -296,12 +363,25 @@ export function createKaleidoscope({ THREE, nest }) {
 	root.add(rings);
 	if (W.on) root.add(wall);
 
-	// The rings, all of them, built once: ring i is one drawing, K.ring of it
-	// round the axis, each turned to its place and every other one mirrored,
-	// the ring itself a half-step on from the last and a shade further round
-	// the spiral. Which drawing is ring i's runs through the decades and the
-	// keys, so the pattern repeats every keys × decades rings.
-	const ringList = [];
+	// The rings, all of them, laid out once: ring i is one drawing, K.ring of
+	// it round the axis, each turned to its place and every other one
+	// mirrored, the ring itself a half-step on from the last and a shade
+	// further round the spiral. Which drawing is ring i's runs through the
+	// decades and the keys, so the pattern repeats every keys × decades
+	// rings. Every quad is one INSTANCE of the archive mesh (and of each
+	// gif's), in FAR-TO-NEAR order — the last ring's quads first — which is
+	// the painter's order alpha-over needs; placeNest() gives each ring its
+	// z and switches off the ones past the room, and layoutRings() writes the
+	// matrices.
+	const ringInfo = [];
+	const archiveMesh = new THREE.InstancedMesh(plane, ringMat, QUADS);
+	archiveMesh.name = 'archive';
+	archiveMesh.renderOrder = RING_ORDER;
+	archiveMesh.frustumCulled = false;
+	disposables.push(archiveMesh);
+	rings.add(archiveMesh);
+	for (const g of Object.values(gifs)) rings.add(g.mesh);
+	const slot = (i, j) => (K.rings - 1 - i) * K.ring + j;
 	{
 		const art = (d, key) => {
 			const t = tex[d][key];
@@ -310,50 +390,50 @@ export function createKaleidoscope({ THREE, nest }) {
 		for (let i = 0; i < K.rings; i++) {
 			const key = K.keys[i % K.keys.length];
 			const d = DECADES[Math.floor(i / K.keys.length) % DECADES.length];
-			const g = new THREE.Group();
 			const w = K.size[key];
 			const h = w / art(d, key);
-			// Its drawing, for setArchive to put back after a gif.
-			g.userData = { material: ringMat[d][key], w, h };
+			ringInfo.push({ w, h, z: 0, on: false });
+			for (let j = 0; j < K.ring; j++) rectAttr.set(rect[d][key], slot(i, j) * 4);
+		}
+		rectAttr.needsUpdate = true;
+	}
+	const zAxis = new THREE.Vector3(0, 0, 1);
+	const M4 = new THREE.Matrix4();
+	const Q4 = new THREE.Quaternion();
+	const V4 = new THREE.Vector3();
+	const S4 = new THREE.Vector3();
+	const NONE = new THREE.Vector3(0, 0, 0);
+	let archive = null;
+	function layoutRings() {
+		const gif = archive ? gifs[K.gif.of[archive]] : null;
+		for (let i = 0; i < K.rings; i++) {
+			const r = ringInfo[i];
 			for (let j = 0; j < K.ring; j++) {
+				const k = slot(i, j);
 				const th = (Math.PI * 2 * j) / K.ring + (i * Math.PI) / K.ring + i * K.spiral;
-				const m = new THREE.Mesh(plane, ringMat[d][key]);
-				m.position.set(Math.cos(th) * K.radius[0], Math.sin(th) * K.radius[1], 0);
-				m.rotation.z = th + Math.PI / 2;
-				m.scale.set(j % 2 ? -w : w, h, 1);
-				m.renderOrder = RING_ORDER;
-				g.add(m);
+				V4.set(Math.cos(th) * K.radius[0], Math.sin(th) * K.radius[1], r.z);
+				Q4.setFromAxisAngle(zAxis, th + Math.PI / 2);
+				const place = (mesh, w, h, on) => {
+					S4.set(j % 2 ? -w : w, h, 1);
+					mesh.setMatrixAt(k, M4.compose(V4, Q4, on ? S4 : NONE));
+				};
+				place(archiveMesh, r.w, r.h, r.on && !gif);
+				for (const g of Object.values(gifs))
+					place(g.mesh, K.gif.size, K.gif.size / g.aspect, r.on && g === gif);
 			}
-			rings.add(g);
-			ringList.push(g);
 		}
-		// The gif materials' warm-up quads: on the axis, a hair across.
-		for (const g of Object.values(gifs)) {
-			const m = new THREE.Mesh(plane, g.material);
-			m.name = 'gifWarm';
-			m.scale.setScalar(1e-4);
-			m.renderOrder = RING_ORDER;
-			rings.add(m);
-		}
+		archiveMesh.instanceMatrix.needsUpdate = true;
+		for (const g of Object.values(gifs)) g.mesh.instanceMatrix.needsUpdate = true;
 	}
 
 	// The rings' drawings, or the gif of an edge run: `kind` is null, 'past'
 	// or 'future' (K.gif.of says which gif), the quads resized to it.
-	let archive = null;
 	function setArchive(kind) {
 		if (kind === archive) return;
 		archive = kind;
 		const gif = kind ? gifs[K.gif.of[kind]] : null;
 		if (gif) loadGif(gif);
-		for (const g of ringList) {
-			const { material, w, h } = g.userData;
-			const gw = gif ? K.gif.size : w;
-			const gh = gif ? gw / gif.aspect : h;
-			g.children.forEach((m, j) => {
-				m.material = gif ? gif.material : material;
-				m.scale.set(j % 2 ? -gw : gw, gh, 1);
-			});
-		}
+		layoutRings();
 	}
 
 	// ── The set ──────────────────────────────────────────────────────────
@@ -494,13 +574,14 @@ export function createKaleidoscope({ THREE, nest }) {
 		wall.position.z = (zGlass + roomZ) / 2;
 		uRoomZ.value = roomZ;
 		let n = 0;
-		for (let i = 0; i < ringList.length; i++) {
+		for (let i = 0; i < ringInfo.length; i++) {
 			const z = zGlass - (i + 0.5) * K.pitch;
 			const on = z > roomZ + K.pitch * 0.5;
-			ringList[i].visible = on;
-			ringList[i].position.z = z;
+			ringInfo[i].z = z;
+			ringInfo[i].on = on;
 			if (on) n = i + 1;
 		}
+		layoutRings();
 		return n;
 	}
 

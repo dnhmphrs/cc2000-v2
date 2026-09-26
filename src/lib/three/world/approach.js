@@ -21,7 +21,7 @@ import { createMotes } from '$lib/three/tsl/motes';
 import { rand } from '$lib/random';
 import { roomsFor } from './nest';
 import { wobbleEuler } from './wobble';
-import { runClock, crtGain } from '$lib/three/tsl/clock';
+import { runClock } from '$lib/three/tsl/clock';
 
 // ── Scene 1: the approach ────────────────────────────────────────────────────
 // The fly-in. Space, black, a sky of stars, blue debris streaking by — and the
@@ -46,15 +46,17 @@ import { runClock, crtGain } from '$lib/three/tsl/clock';
 // There is no machine, so the run asks its two questions on the way in — both
 // in one panel at the centre of the frame, over the swimmer — and while they
 // are open the scene HOLDS: `t` stops, and the flight WAITS IN MOTION rather
-// than on a paused frame: the swimmer's clock goes on, so it rolls; the debris
-// goes on streaming past at the flight's speed (heldZ, on the hold's own
-// seconds) and the signal's clock with it, so the picture never stills. The
-// set does not come nearer, because t does not move: holding t rather than
-// running a second clock is what keeps every frame a pure function of
-// progress, so ?at= is exact — the hold's seconds only ever add to what is
-// looped or rolled, never to where the flight is. (The roll and the tail's
-// wobble are on the swimmer's own clock — the one thing in the run that never
-// stops, not even at the seam.)
+// than on a paused frame: the swimmer's clock goes on, so it rolls, and the
+// debris goes on streaming past at the flight's speed — its queue advanced by
+// the hold's own distance (heldZ, tsl/motes.js uDrift) while its slab stays
+// on the lens, so motes go on being born at the lens and passing, rather than
+// the slab sliding off ahead with the motes in it. The set does not come
+// nearer, because t does not move: holding t rather than running a second
+// clock is what keeps every frame a pure function of progress, so ?at= is
+// exact — the hold's seconds only ever add to what is looped or rolled, never
+// to where the flight is. (The roll and the tail's wobble are on the
+// swimmer's own clock — the one thing in the run that never stops, not even
+// at the seam.)
 //
 // ── The switch-on ────────────────────────────────────────────────────────────
 // The set does not switch itself on. Its glass is black until the swimmer's
@@ -232,8 +234,6 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		// The way home took the last room to black; this nest is lit.
 		nest.setDark(1);
 		heldZ = 0;
-		heldS = 0;
-		clockAhead = 0;
 		// The drawings down the tunnel, or the gif of a run the archive
 		// cannot answer for (the harness can seed one: ?edge=past|future).
 		archive = undefined;
@@ -241,12 +241,9 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		set(0);
 	}
 
-	// The hold's own seconds, and the distance the debris has streamed on
-	// them: the flight waiting in motion, see above. clockAhead is what the
-	// signal's clock is ahead of the run's while held, and nothing after.
+	// The distance the debris has streamed on the hold's own seconds: the
+	// flight waiting in motion, see above.
 	let heldZ = 0;
-	let heldS = 0;
-	let clockAhead = 0;
 	let archive;
 	function setArchive(kind) {
 		if (kind === archive) return;
@@ -258,11 +255,7 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		const held = get(gate);
 		sw.clock += dt;
 		if (!held) t += dt;
-		else {
-			heldZ += (zEnd / T.duration) * dt;
-			heldS += dt;
-		}
-		clockAhead = held ? heldS : 0;
+		else heldZ += (Math.abs(zEnd) / T.duration) * dt;
 		const p = clamp01(t / T.duration);
 
 		// The questions: the first is asked here, and the popup asks the second
@@ -291,8 +284,7 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		const z = zEnd * p;
 		rig.position.set(0, 0, z);
 		const seconds = runSeconds('approach', p);
-		runClock.value = seconds + clockAhead;
-		crtGain.value = 1;
+		runClock.value = seconds;
 		camera.quaternion.setFromEuler(wobbleEuler(euler, seconds));
 		camera.updateMatrixWorld(true);
 
@@ -302,7 +294,7 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		const up = smootherstep(span(p, T.fadeIn));
 		const on = up * (1 - easeInOutCubic(span(p, T.skyOut)));
 		for (const s of starMats) s.mat.uniforms.uOpacity.value = s.opacity * on;
-		motes.set(z + heldZ, on, span(p, T.fadeIn));
+		motes.set(z, on, span(p, T.fadeIn), heldZ);
 
 		// ── The swimmer ──────────────────────────────────────────────────
 		// It rides ahead of the LENS, dead centre — a child of the camera, so

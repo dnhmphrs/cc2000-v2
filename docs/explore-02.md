@@ -31,19 +31,17 @@ a rig-child quad in `approach.js` and the flash in its `set(p)`; the silhouette
 as a body under the hologram in `tsl/swimmer.js`, its rim driven by the
 approach and the descent; the LCL ramp on the ring, wall and disc materials
 with one colour uniform the lock drives; the noir ground as one constant in
-`palette.js` and `noir(u)` in `backdrop.js`, its over-grain folded into the
-signal pass; the strobe as frame-counted windows in `timing.js` and three
+`palette.js` and `noir(u)` in `backdrop.js`, its over-grain a pass of its own
+(the run's post pass was taken out); the strobe as frame-counted windows in
+`timing.js` and three
 camera-child quads in `descent.js`. Not looked at yet: the reel on the WebGPU
 lane, portrait, and any of it as a real run rather than a seek (the strobe and
 the card were run; the rest are pins). The reel was checked at one pin per beat
 on the WebGL lane.
 
-Also still to do, from the same round of notes and unrelated to these six:
-tile the rooms' OBJECTS (poster, clock, screen, desk, bed) as the wallpaper is
-tiled — mirrored 3×3 round each room, so the fall reads as a tesseract of
-rooms — and INSTANCE every repeated object in the fall and in the tunnel (the
-kaleidoscope's 384 ring quads are 384 meshes on twenty materials today; the
-rooms' layers are one mesh each). Neither is started.
+The rooms' objects are now tiled as the wallpaper is and every repeated
+object in the fall and the tunnel is instanced (the round after this one);
+nothing else from that round of notes is outstanding but these six.
 
 ## The six, built
 
@@ -113,7 +111,7 @@ rooms' layers are one mesh each). Neither is started.
 
 **As built.** The host IS the run: the run's own createApproach, createKaleido and createDescent on one nest and one kaleidoscope, entered in run order, with only `scene.backgroundNode` swapped on each. The ground is AIR's hue scaled to a luminance of 0.06 (#110f0c), a 25% top-to-bottom ramp, a signed ±4/255 grain from three/tsl's integer hash on the device pixel hashed again with the frame seed = floor(runSeconds(scene, p)·24), so a seek and a run land on the same seed and approach 1 / kaleido 0 share one seed, kaleido 1 / descent 0 another. The full-frame grain is a camera-child quad drawn last, a MULTIPLY (1 − k·hash) rather than an add, because an add of near-black size is under a step on a lit room while a multiply grains what is lit in proportion, as stock does. Measured at 1280×800: the noir corner is (12.4, 11.2, 8.7), warm, the top band 22% darker than the bottom; the run's deep ground has a (16, 20, 34) pool at the centre. Both seams with `?sperm=0` diff to mean 0/255, 0 pixels changed; the webgpu lane gives the same numbers to the pixel.
 
-**Notes.** WORKS: the approach's three beats are the picture the note asks for — the card's black, the swimmer's blue hologram and the set's yellow glass all on a flat warm off-black with fine grain in it instead of a blue pool; nothing but the ground moved; both seams are bit-identical because the grain seed is the run's clock. DOES NOT, said plainly: (1) the idea's fall beat is wrong for this build — the ground is never seen from the record label on: the rooms' back walls are drawn past their frames with the wallpaper looped, and the last monitor's glass is painted, so from u 0.55 to the end the only thing this treatment changes is the full-frame grain on the rooms; (2) in the tunnel the ground barely shows either — the wall of grooves and the CRT mask cover it; the ground is really the approach's, and the seam into the tunnel; (3) the over-grain is one-sided (a unorm8 target clamps at 1, so a multiply cannot brighten): at 8% it dims what is lit by 4% on average, an exposure tick invisible without an A/B but a real number; a mean-preserving grain would need a pass — which the run now has (the signal pass, `three/tsl/crt.js`, is exactly where this grain belongs); (4) the stars and motes are untouched and read colder on the warm black by contrast alone; (5) at sheet scale the ground grain is invisible; it reads at full size. WHAT THE CALIBRATION TAUGHT: the run has ColorManagement OFF, so a colour is used as set and a shader unit is a display unit; the first cut converted the grain through the sRGB slope and came out 2.3× too weak. TO MAKE IT REAL: one GROUND constant in config/palette.js read by the three scenes instead of the literal 0x090b14 in each; `noir(u)` in three/tsl/backdrop.js next to `deep` with ramp, grain, seed and channel uniforms, the seed from runSeconds() as the hand on the camera already is; the over-grain into the signal pass rather than a quad.
+**Notes.** WORKS: the approach's three beats are the picture the note asks for — the card's black, the swimmer's blue hologram and the set's yellow glass all on a flat warm off-black with fine grain in it instead of a blue pool; nothing but the ground moved; both seams are bit-identical because the grain seed is the run's clock. DOES NOT, said plainly: (1) the idea's fall beat is wrong for this build — the ground is never seen from the record label on: the rooms' back walls are drawn past their frames with the wallpaper looped, and the last monitor's glass is painted, so from u 0.55 to the end the only thing this treatment changes is the full-frame grain on the rooms; (2) in the tunnel the ground barely shows either — the wall of grooves and the CRT mask cover it; the ground is really the approach's, and the seam into the tunnel; (3) the over-grain is one-sided (a unorm8 target clamps at 1, so a multiply cannot brighten): at 8% it dims what is lit by 4% on average, an exposure tick invisible without an A/B but a real number; a mean-preserving grain would need a post pass of its own; (4) the stars and motes are untouched and read colder on the warm black by contrast alone; (5) at sheet scale the ground grain is invisible; it reads at full size. WHAT THE CALIBRATION TAUGHT: the run has ColorManagement OFF, so a colour is used as set and a shader unit is a display unit; the first cut converted the grain through the sRGB slope and came out 2.3× too weak. TO MAKE IT REAL: one GROUND constant in config/palette.js read by the three scenes instead of the literal 0x090b14 in each; `noir(u)` in three/tsl/backdrop.js next to `deep` with ramp, grain, seed and channel uniforms, the seed from runSeconds() as the hand on the camera already is; the over-grain into the signal pass rather than a quad.
 
 **Switches.** `?scene=run|approach|kaleido|descent ?ground=noir|flat|deep ?lift=0.06 ?warm=1 ?ramp=0.25 ?grain=4 ?over=8 ?fps=24 ?channel=0 ?edge=past|future ?sperm=0`.
 

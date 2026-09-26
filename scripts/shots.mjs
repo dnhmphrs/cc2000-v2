@@ -51,11 +51,7 @@ p.on('console', (m) => m.type() === 'error' && errs.push('CONSOLE: ' + m.text())
 for (const [key, ats] of PLAN) {
 	for (const at of ats) {
 		// DEV_AT is read once at module load, so each frame is its own page load.
-		// ?signal=0 keeps the signal panel's tab (components/SignalPanel.svelte)
-		// out of the corner of every frame.
-		await p.goto(`${BASE}/?at=${at}&seed=${SEED}&signal=0${QUERY}`, {
-			waitUntil: 'networkidle'
-		});
+		await p.goto(`${BASE}/?at=${at}&seed=${SEED}${QUERY}`, { waitUntil: 'networkidle' });
 		// The stage warms every program up before its first frame and says so;
 		// a key pressed before that lands on a canvas still at opacity 0.
 		await p.waitForFunction(() => window.__stage, null, { timeout: 180000 }).catch(() => {});
