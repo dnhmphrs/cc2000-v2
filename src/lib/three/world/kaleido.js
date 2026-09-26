@@ -140,12 +140,24 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		return t >= T.duration;
 	}
 
+	// ── The verdict, being read ──────────────────────────────────────────
+	// After the breakdown the run hands to the verdict screen (a DOM screen
+	// over whatever this last drew: the set switched off, black, the swimmer
+	// alone in it), and the Stage holds this scene under it. The swimmer's
+	// clock goes on, so it goes on rolling under the verdict rather than
+	// freezing on the frame the tunnel ended on.
+	function hold(dt) {
+		sw.clock += dt;
+		set(clamp01(t / T.duration));
+	}
+
 	return {
 		scene,
 		camera,
 		enter,
 		update,
 		set,
+		hold,
 		render() {
 			renderer.render(scene, camera);
 		},

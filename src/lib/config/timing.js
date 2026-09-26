@@ -636,9 +636,11 @@ const RAW = {
 		// Full turns of the hue, and of the tunnel about the axis, over the
 		// scene. The hue's turns are counted to the lock so it lands on TRUE
 		// colour: 2.5 cycles of a rate that runs to 0.68 and falls to nil by
-		// 0.92 is two whole turns.
+		// 0.92 is two whole turns. The tunnel's turn is NEGATIVE — clockwise
+		// on screen: it turned the other way and felt like it was pulling
+		// against you; the breakdown's runaway goes the same way as the turn.
 		hueCycles: 2.5,
-		turns: 0.35,
+		turns: -0.35,
 
 		// ── The search ends ──────────────────────────────────────────────────
 		// Over `lock` the turn and the hue cycle decelerate to rest — the

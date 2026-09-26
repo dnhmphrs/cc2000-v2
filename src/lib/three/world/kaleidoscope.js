@@ -523,7 +523,8 @@ export function createKaleidoscope({ THREE, nest }) {
 		let bright = K.dim;
 		if (breakdown) {
 			const o = smoothstep(T.overload[0], T.overload[1], x);
-			turn += o * o * Math.PI * 2;
+			// The runaway turns the way the tunnel turns, faster.
+			turn += Math.sign(T.turns || 1) * o * o * Math.PI * 2;
 			hueA += o * o * Math.PI * 6;
 			bright = K.dim + o * 0.7;
 		}

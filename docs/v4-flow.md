@@ -33,8 +33,9 @@ the next flight opens on, where the record's grooves go on passing the lens
 for two seconds as the sky comes up. A birthday
 the archive cannot answer for is not refused in the popup: the flight goes in
 regardless and the tunnel breaks down on it — overloads, collapses to a line,
-a dot, black, the swimmer alone in it — and the verdict comes up, its gif and
-its line (too old for the archive, or too young), and "calculate again" is the
+a dot, black, the swimmer alone in it, rolling — and the verdict is typed
+under it, in the questions' own panel (too old for the archive, or too young),
+and "calculate again" is the
 flight again with the answers kept. One WebGPU renderer, and one shot from the
 flight through the set into the fall: each scene ends on the frame the next
 opens on, and the camera is one camera throughout — one lens, one slow hand on

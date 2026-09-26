@@ -79,7 +79,7 @@ if (ROUTE === '/') {
 	// ── Out of range breaks down ───────────────────────────────────────────
 	// The earliest year the dial offers is before the archive. It is taken, the
 	// spice is asked at once in the same panel, and the run goes in; the tunnel
-	// breaks down and the verdict is given with its gif. Calculate again hands
+	// breaks down and the verdict is given, typed. Calculate again hands
 	// the run back to the flight, with no title card.
 	const earliest = await p.evaluate(() => {
 		const sel = document.querySelector('#ask-year');
@@ -100,11 +100,12 @@ if (ROUTE === '/') {
 		await until(() => !!document.querySelector('.error-screen .verdict'), 80)
 	);
 	ok(
-		'with the right gif and the right line',
-		await p.evaluate(
+		'with the right heading and the right line, typed',
+		await until(
 			() =>
-				/the-past\.gif/.test(document.querySelector('.error-screen img')?.src ?? '') &&
-				/dinosaurs/.test(document.querySelector('.error-screen .verdict')?.textContent ?? '')
+				/before 1958/i.test(document.querySelector('.error-screen .q')?.textContent ?? '') &&
+				/dinosaurs/.test(document.querySelector('.error-screen .verdict .live')?.textContent ?? ''),
+			40
 		)
 	);
 	await p.click('.error-screen .go');
