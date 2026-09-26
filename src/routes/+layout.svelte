@@ -1,6 +1,7 @@
 <script>
 	import './styles.css';
 	import { onMount } from 'svelte';
+	import Version from '$lib/components/Version.svelte';
 	import { screenSize, aspect } from '$lib/store/store';
 	import { aspectKind, applyChassisVars, chassisCss } from '$lib/config';
 	import { palette, applyCssVars } from '$lib/theme';
@@ -81,6 +82,7 @@
 <main>
 	<slot />
 </main>
+<Version />
 
 <style>
 	main {

@@ -1,5 +1,5 @@
 <script>
-	import { scene, gate, edge } from '$lib/store/store';
+	import { scene, gate, edge, goingBack } from '$lib/store/store';
 	import Stage from '$lib/three/Stage.svelte';
 	import Prelude from '$lib/scenes/Prelude.svelte';
 	import Prompt from '$lib/components/Prompt.svelte';
@@ -36,7 +36,7 @@
      answer for, the verdict. The only DOM screens left. -->
 {#if $scene === 'room'}
 	<Room />
-{:else if $scene === 'error'}
+{:else if $scene === 'error' && !$goingBack}
 	<ErrorScreen verdict={$edge} />
 {/if}
 

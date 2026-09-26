@@ -23,6 +23,7 @@ import {
 	floor,
 	mod,
 	instancedBufferAttribute,
+	dot,
 	hue
 } from 'three/tsl';
 import {
@@ -239,6 +240,9 @@ export function createKaleidoscope({ THREE, nest }) {
 	// time it is asked for (setArchive), while the rings are still too small
 	// to see, so a run the archive can answer for never loads it.
 	const gifs = {};
+	const srgb = (hex) => new THREE.Color(hex).getRGB(new THREE.Color(), THREE.SRGBColorSpace);
+	const GIF_DARK_S = srgb(K.gif.dark).toArray();
+	const GIF_GOLD_S = srgb(K.gif.gold).toArray();
 	for (const name of Object.values(K.gif.of)) {
 		const G = GIFS[name];
 		const tex = new THREE.Texture();
@@ -263,7 +267,18 @@ export function createKaleidoscope({ THREE, nest }) {
 				.div(G.rows)
 		);
 		const c = texture(tex, st);
-		m.colorNode = vec4(hue(c.rgb, turned).mul(uBright), uOn.mul(near).mul(uDim));
+		// In the site's gold: the gif's light laid on a ramp from a warm
+		// near-black to the machine's yellow (KALEIDO.gif.tint of the way;
+		// 0 is the gif's own colours, hue-turned as the drawings are). The
+		// ramp is taken on the light as it LOOKS, not as it is summed — the
+		// texture reads linear, where a mid-grey is a fifth, and a ramp on
+		// that left the gifs olive — stretched over KALEIDO.gif.ramp and
+		// mixed in the display's terms, then taken back to linear.
+		const luma = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
+		const lit = tslSmoothstep(K.gif.ramp[0], K.gif.ramp[1], pow(luma, 1 / 2.2));
+		const duo = pow(mix(vec3(...GIF_DARK_S), vec3(...GIF_GOLD_S), lit), vec3(2.2));
+		const col = mix(hue(c.rgb, turned), duo, K.gif.tint);
+		m.colorNode = vec4(col.mul(uBright), uOn.mul(near).mul(uDim));
 		stencilOf(m, 1, THREE.LessEqualStencilFunc, THREE.KeepStencilOp);
 		disposables.push(m, tex);
 		const mesh = new THREE.InstancedMesh(plane, m, QUADS);
@@ -304,6 +319,9 @@ export function createKaleidoscope({ THREE, nest }) {
 	const uTurn = uniform(0);
 	const uPhase = uniform(0);
 	const uRoomZ = uniform(0);
+	// 0 on a run down a verdict's gif: the wall stays the gold the gif is
+	// laid in rather than cycling with the drawings (setArchive).
+	const uWallHue = uniform(1);
 	const GOLD = new THREE.Color(0xf0c45c);
 	const wallGeo = new THREE.CylinderGeometry(W.radius, W.radius, 1, W.segments, 1, true);
 	const wallMat = new THREE.MeshBasicNodeMaterial({
@@ -335,7 +353,7 @@ export function createKaleidoscope({ THREE, nest }) {
 				.add(0.5)
 				.mul(W.depth)
 				.oneMinus();
-			const gold = hue(vec3(GOLD.r, GOLD.g, GOLD.b), turned.mul(W.hue));
+			const gold = hue(vec3(GOLD.r, GOLD.g, GOLD.b), turned.mul(W.hue).mul(uWallHue));
 			const level = float(W.level).mul(mix(1.0, uBright.div(K.dim), W.overload));
 			const a = near.mul(uDim).mul(mix(1.0, uOn, W.out));
 			const col = gold.mul(groove.mul(lit).mul(pulse).mul(level));
@@ -437,6 +455,7 @@ export function createKaleidoscope({ THREE, nest }) {
 		archive = kind;
 		const gif = kind ? gifs[K.gif.of[kind]] : null;
 		if (gif) loadGif(gif);
+		uWallHue.value = gif ? 1 - K.gif.tint : 1;
 		layoutRings();
 	}
 
@@ -542,7 +561,8 @@ export function createKaleidoscope({ THREE, nest }) {
 	let zGlass = 0; // the screen's glass plane, world z
 	let z0 = 0; // where the flight ends: the glass filling the frame's height
 	let zEnd = 0; // where the tunnel ends: nest.pose(0)'s camera
-	let v0 = 1; // the flight's one speed, world units a second
+	let va = 1; // the flight's speed as it opens, world units a second
+	let v0 = 1; // the flight's speed at the seam, which the tunnel opens at
 	let v1 = 1; // the speed at the tunnel's end: the fall's opening speed
 	let Dend = 1; // nest.pose(0)'s D — the swimmer's ride at the seam
 	let placed = false;
@@ -561,6 +581,7 @@ export function createKaleidoscope({ THREE, nest }) {
 		// depends on every room in it, so both are worked out here — and
 		// again when the deeper rooms are set (approach.js finalise()).
 		v1 = nest.openingSpeed();
+		nest.seamPace = v1 / va;
 		zEnd = z0 - travelled(1);
 		// Room 0 is at the nest's root, its frame centred on the axis.
 		nest.root.position.set(0, 0, 0);
@@ -570,17 +591,19 @@ export function createKaleidoscope({ THREE, nest }) {
 		nest.root.position.z = zEnd - seamD;
 		nest.refreshClips();
 		Dend = D;
-		// The rings, from the glass plane down to just short of the room's —
-		// and the wall the whole way, glass plane to room plane, its grooves
-		// counted from the room end.
+		// The rings, from the glass plane down to just short of the record's
+		// funnel — and the wall from the glass plane to where the funnel meets
+		// it (nest.recordJoin), its grooves counted from the record's hole so
+		// they line up with the funnel's at the join.
 		const roomZ = zEnd - seamD;
-		wall.scale.set(1, zGlass - roomZ, 1);
-		wall.position.z = (zGlass + roomZ) / 2;
+		const joinZ = roomZ + nest.recordJoin;
+		wall.scale.set(1, zGlass - joinZ, 1);
+		wall.position.z = (zGlass + joinZ) / 2;
 		uRoomZ.value = roomZ;
 		let n = 0;
 		for (let i = 0; i < ringInfo.length; i++) {
 			const z = zGlass - (i + 0.5) * K.pitch;
-			const on = z > roomZ + K.pitch * 0.5;
+			const on = z > joinZ + K.pitch * 0.5;
 			ringInfo[i].z = z;
 			ringInfo[i].on = on;
 			if (on) n = i + 1;
@@ -596,7 +619,11 @@ export function createKaleidoscope({ THREE, nest }) {
 		uZ0.value = zGlass;
 		uHuePer.value = (Math.PI * 2) / (K.pitch * K.keys.length * DECADES.length);
 		z0 = zGlass + sg.h / 2 / Math.tan(rad(LENS) / 2);
-		v0 = -z0 / SCENES.approach.duration;
+		// The flight covers -z0 in its duration, its speed a straight ramp up
+		// to `accel` times what it opened at.
+		const avg = -z0 / SCENES.approach.duration;
+		va = (2 * avg) / (1 + SCENES.approach.accel);
+		v0 = SCENES.approach.accel * va;
 		placeNest();
 		placed = true;
 	}
@@ -609,6 +636,25 @@ export function createKaleidoscope({ THREE, nest }) {
 		nest.build({ rooms: roomsFor(picks[0], answer, SCENES.descent.rooms), portrait });
 		buildScreen(K.screenDecade);
 		place();
+	}
+
+	// ── The flight to the set ────────────────────────────────────────────
+	// Where the approach's lens is at `p` of its flight — gathering speed in
+	// a straight ramp from va to v0, so z0 at p = 1 — its speed there, and
+	// the progress at which it reaches a world z. The approach asks these.
+	function flightZ(p) {
+		const T = SCENES.approach.duration;
+		return -T * (va * p + ((v0 - va) * p * p) / 2);
+	}
+	function flightSpeed(p) {
+		return va + (v0 - va) * p;
+	}
+	function flightAt(z) {
+		const T = SCENES.approach.duration;
+		const a = (T * (v0 - va)) / 2;
+		const b = T * va;
+		if (Math.abs(a) < 1e-9) return -z / b;
+		return (-b + Math.sqrt(b * b - 4 * a * z)) / (2 * a);
 	}
 
 	// ── The camera at u of the tunnel ────────────────────────────────────
@@ -679,6 +725,15 @@ export function createKaleidoscope({ THREE, nest }) {
 	// rings and the wall's grooves together. The tunnel turns from the seam
 	// on (set, below); the approach turns the set INTO that turn before it
 	// (world/approach.js), so the turn has no start to see.
+	// The tunnel's turn at x, in fractions of `turns`: it opens at `turnSeam`
+	// of the full rate — the rate the set arrived turning at — ramps up to
+	// the full rate by `turnRamp`, and decelerates to rest over `lock`.
+	function turnOf(x) {
+		const g0 = T.turnSeam;
+		const xr = T.turnRamp;
+		if (x <= xr) return g0 * x + ((1 - g0) * x * x) / (2 * xr);
+		return eased(x, T.lock) - ((1 - g0) * xr) / 2;
+	}
 	function turnTo(turn) {
 		screenPivot.rotation.z = turn;
 		rings.rotation.z = turn;
@@ -695,7 +750,7 @@ export function createKaleidoscope({ THREE, nest }) {
 	function set(u, edge = false) {
 		const x = Math.max(0, Math.min(1, u));
 		const w = eased(x, T.lock);
-		turnTo(w * T.turns * Math.PI * 2);
+		turnTo(turnOf(x) * T.turns * Math.PI * 2);
 		uPhase.value = x * W.pulses;
 		uHue.value = w * T.hueCycles * Math.PI * 2;
 		uBright.value = K.dim;
@@ -728,7 +783,20 @@ export function createKaleidoscope({ THREE, nest }) {
 			return zEnd;
 		},
 		get speeds() {
-			return { v0, v1 };
+			return { va, v0, v1 };
+		},
+		flightZ,
+		flightSpeed,
+		flightAt,
+		// The lens's world z at u of the tunnel (pose's, without the hand).
+		tunnelZ(u) {
+			return z0 - travelled(Math.max(0, Math.min(1, u)));
+		},
+		// The tunnel's pace at u against the flight's as it opened (world
+		// speeds): what the swimmer's roll runs at there.
+		tunnelPace(u) {
+			const x = Math.max(0, Math.min(1, u));
+			return (v0 + (v1 - v0) * x) / va;
 		},
 		buildScreen,
 		place,

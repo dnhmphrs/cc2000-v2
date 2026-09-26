@@ -49,12 +49,12 @@ popups that hold the flight while they are open.
                      └──────────────────────── go again ────────────────────────┘
 ```
 
-| #   | Scene        | What it is                                                                                                                                                                                                                                                                               | Where                             |
-| --- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind, the two questions asked under it; then the 60s set dead ahead, lit at its centre as the swimmer's nose reaches the glass. 3D.                                                                                                         | `src/lib/three/world/approach.js` |
-| 2   | **Kaleido**  | Through that set's glass and down the tunnel inside: the archive looped, in rings, turning and cycling in colour, round a wall of gold ζ grooves, to the face of a record whose hole is the first room's glass — or, with no answer, a tunnel of the verdict's gif that it stops in. 3D. | `src/lib/three/world/kaleido.js`  |
-| 3   | **Descent**  | Rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. 3D.                                                                                                                                                                  | `src/lib/three/world/descent.js`  |
-| 4   | **Room**     | The answer, in that room's monitor. DOM.                                                                                                                                                                                                                                                 | `src/lib/scenes/Room.svelte`      |
+| #   | Scene        | What it is                                                                                                                                                                                                                                                                                        | Where                             |
+| --- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| 1   | **Approach** | Space. The swimmer ahead of the lens, from behind, the two questions asked under it; then the 60s set dead ahead, lit at its centre as the swimmer's nose reaches the glass. 3D.                                                                                                                  | `src/lib/three/world/approach.js` |
+| 2   | **Kaleido**  | Through that set's glass and down the tunnel inside: the archive looped, in rings, turning and cycling in colour, round a wall of gold ζ grooves, into a record's funnel whose hole is the first room's glass — or, with no answer, a tunnel of the verdict's gif, in gold, that it stops in. 3D. | `src/lib/three/world/kaleido.js`  |
+| 3   | **Descent**  | Rooms through rooms, decade after decade, down to the answer's room; the swimmer hits its screen and it goes white. 3D.                                                                                                                                                                           | `src/lib/three/world/descent.js`  |
+| 4   | **Room**     | The answer, in that room's monitor. DOM.                                                                                                                                                                                                                                                          | `src/lib/scenes/Room.svelte`      |
 
 The first two 3D scenes walk the same **kaleidoscope** —
 `src/lib/three/world/kaleidoscope.js`: the set the flight ends in, the rings
@@ -65,15 +65,18 @@ first room at the tunnel's end, the rooms inside its glass one inside the
 next, the stencil chain that clips each to the glass above it (one level up
 from the set's), the depth fade that keeps the first room out of sight until
 the search stops, the camera pose for any level of the fall, and the glass
-rect the readout is drawn into. The grooves — on the way home, round the
-first room, down the wall — are all cut with `|ζ(½ + it)|`:
-`src/lib/functions/zeta.js` works the critical line out,
-`src/lib/three/tsl/zeta.js` puts it in a texture and finds the nearest groove
-of a spiral whose radius wobbles by it. (A funnel of them between every room
-in the fall is built and switched off, `NEST.funnel.on`.)
+rect the readout is drawn into. The grooves are all cut with the critical
+line: down the wall with `|ζ(½ + it)|` — `src/lib/functions/zeta.js` works
+it out, `src/lib/three/tsl/zeta.js` puts it in a texture and finds the
+nearest groove of a spiral whose radius wobbles by it — and down the record's
+funnel at the tunnel's end with the line as the primes write it, `Σ cos(t log
+p)/p`, baked a turn of the spiral to a row and swinging past the pitch, so the
+turns cross and weave. (A funnel of grooves between every room in the fall is
+built and switched off, `NEST.funnel.on`.)
 `src/lib/scenes/director.js` owns every transition — the way out to the verdict
-when the swimmer stops in the gif tunnel of a birthday the archive cannot
-answer for, and the way back, included — and it is the first file to read.
+when the lens stops in the gif tunnel of a birthday the archive cannot answer
+for, and the way back down that tunnel into the next flight, included — and it
+is the first file to read.
 
 **The three 3D scenes are one shot.** The approach ends on
 `kaleidoscope.pose(0)` and the kaleido opens on it — the set's glass filling
@@ -81,10 +84,13 @@ the frame's height, the tunnel inside — and the kaleido ends on `nest.pose(0)`
 and the descent opens on it — the first room filling the frame's height,
 still falling — so there is no cut between them. They are also one camera:
 the run's one lens (`LENS`) and one slow hand on it (`three/world/wobble.js`,
-on the run's own clock), the tunnel easing from the flight's speed to the
-fall's, so nothing about the camera changes at a seam. The one cut in the run is the loop
+on the run's own clock), and one pace that only ever gathers until the fall
+lands — the flight ramping up, the tunnel on from there to the fall's opening
+speed, the fall's zoom on up again, the swimmer's roll with all three — so
+nothing about the camera changes at a seam. The one cut in the run is the loop
 home: the camera flies through the last room's monitor, the room going to black
-under its glass, and that black is the space the next run opens on.
+under its glass, and that black is the space the next run opens on. From the
+verdict it is the same black, reached by swimming on down the gif tunnel.
 
 ---
 
@@ -608,6 +614,14 @@ frame it ends on is the black the next flight opens on, the sky coming up over
 it. `world/descent.js stepReturn()` owns all of it; the Stage drives it because
 by then the scene is held rather than running; and `director.settled()` hands
 over. No title card the second time.
+
+"Calculate again" on the verdict goes the same way from the other end: the
+verdict fades off and the lens swims on down the gif tunnel from where it
+stopped — from rest, gathering speed, `SCENES.kaleido.home` seconds — into the
+tunnel's dark end, everything going to black over `SCENES.kaleido.homeDim`, and
+the next flight opens on that black, asking both questions again with the
+answers kept. `world/kaleido.js stepReturn()` owns it; `director.recover()`
+only raises `goingBack`, as `again()` does.
 
 What follows is the **WebGL run's** loop, still playable at `/v2`, where there
 IS a machine to fly home into.

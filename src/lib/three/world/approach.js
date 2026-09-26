@@ -203,18 +203,19 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 	let pStar = 1;
 	// Where the flight ends — the set's glass filling the frame's height on the
 	// seam lens. Asked of the kaleidoscope rather than worked out here, so the
-	// two scenes cannot disagree about it. ONE SPEED, no brake, so the flight
-	// is simply zEnd · p.
+	// two scenes cannot disagree about it; and the flight there, which GATHERS
+	// SPEED (kal.flightZ: a straight ramp up in speed, SCENES.approach.accel).
 	let zEnd = 0;
 
-	// The tunnel's rate at the seam, in radians per unit of THIS scene's
-	// progress, and the lean that comes round to it: its rate rising as the
-	// square of the way through [turnIn, 1], so it starts from still.
+	// The tunnel's turn rate at the seam, in radians per unit of THIS
+	// scene's progress — the tunnel opens at `turnSeam` of its full rate —
+	// and the set's angle, always turning: its rate a straight ramp from
+	// `turnFrom` of that at p = 0 up to all of it at the seam, upright there.
 	const KT = SCENES.kaleido;
-	const OMEGA = ((KT.turns * 2 * Math.PI) / KT.duration) * T.duration;
+	const OMEGA = ((KT.turnSeam * KT.turns * 2 * Math.PI) / KT.duration) * T.duration;
 	function lean(p) {
-		const s = clamp01((p - T.turnIn) / (1 - T.turnIn));
-		return ((-OMEGA * (1 - T.turnIn)) / 3) * (1 - s * s * s);
+		const r0 = T.turnFrom * OMEGA;
+		return -(r0 * (1 - p) + ((OMEGA - r0) * (1 - p * p)) / 2);
 	}
 
 	function portrait() {
@@ -248,9 +249,10 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		sw.group.quaternion.identity();
 		sw.group.position.set(0, 0, -A.lead);
 		sw.material.uniforms.uOpacity.value = 0;
-		// The contact: the nose on the glass plane, z0·p − lead − halfLen = zGlass.
+		// The contact: the nose on the glass plane — the lens at
+		// zGlass + lead + halfLen — found on the flight's own profile.
 		const bodyH = A.span * 2 * A.lead * Math.tan(rad(LENS) / 2);
-		pStar = (kal.zGlass + A.lead + halfLenUnit * bodyH) / zEnd;
+		pStar = kal.flightAt(kal.zGlass + A.lead + halfLenUnit * bodyH);
 		// The way home took the last room to black; this nest is lit.
 		nest.setDark(1);
 		heldZ = 0;
@@ -273,9 +275,12 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 
 	function update(dt) {
 		const held = get(gate);
+		const p0 = clamp01(t / T.duration);
 		sw.clock += dt;
+		// The roll gathers speed with the flight (nest.swimmer.roll).
+		sw.roll += dt * SPIN * (kal.flightSpeed(p0) / kal.speeds.va);
 		if (!held) t += dt;
-		else heldZ += (Math.abs(zEnd) / T.duration) * dt;
+		else heldZ += kal.flightSpeed(p0) * dt;
 		const p = clamp01(t / T.duration);
 
 		// The questions: the first is asked here, and the popup asks the second
@@ -301,7 +306,7 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		// set once); and the slow pan, tilt and roll on it is the hand the
 		// whole run is shot with, on the run's clock (world/wobble.js) — the
 		// tunnel picks it up at the seam at the same second.
-		const z = zEnd * p;
+		const z = kal.flightZ(p);
 		rig.position.set(0, 0, z);
 		const seconds = runSeconds('approach', p);
 		runClock.value = seconds;
@@ -327,7 +332,7 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		const bodyH = A.span * 2 * A.lead * Math.tan(rad(LENS) / 2);
 		sw.group.position.set(0, 0, -A.lead);
 		sw.group.scale.setScalar(bodyH);
-		sw.spinner.rotation.z = sw.clock * SPIN;
+		sw.spinner.rotation.z = sw.roll;
 		sw.material.uniforms.uTime.value = sw.clock;
 		sw.material.uniforms.uOpacity.value = SPERM ? inK : 0;
 

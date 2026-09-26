@@ -14,43 +14,48 @@ the flight waiting in motion round it — the swimmer rolling, the debris
 streaming on — nothing else flies by; only once the answers are in does anything
 appear ahead: a point of light, then
 the set coming out of the dark, dark — always the 60s television — leaned
-ten degrees the other way, coming round as it grows so that it reaches the
-seam upright and already turning at the tunnel's own rate — until the
+some thirty degrees the other way and already turning, gently, the turn
+gathering as it grows so that it reaches the seam upright and turning at the
+tunnel's own rate, the flight gathering speed all the while — until the
 swimmer's nose reaches its glass and lights it: a dot at the glass's centre,
 the hairline drawn out of the dot, the covers parting about it onto the
 tunnel inside; through the glass and down the tunnel, where the archive is looped —
 rings of eight of the same drawing, mirrored, turning, the hue cycling as the
 pattern repeats — round a wall of gold grooves cut with |ζ(½ + it)|, the
-tunnel the inside of a record, with no exit in sight, the tunnel easing from the flight's
-speed to the fall's the whole way down, until the search ENDS: the turn and
-the hue decelerate to rest, the hue on true colour, and the FACE of a gold
-record comes out of the dark at the far end, its spindle hole a monitor's size
-with the first room behind it; the fall carries straight on through that hole
-as through every monitor after it — the same zoom, the same roll — and through
-the decades, one room inside the next, every room's objects tiled mirrored
-round it like its wallpaper, at one pace on screen, the turn
+tunnel the inside of a record, with no exit in sight, still gathering speed
+the whole way down, until the search ENDS: the turn and the hue decelerate to
+rest, the hue on true colour, and the record's FUNNEL comes out of the dark at
+the far end, rim first — its grooves the critical line as the primes write
+it, Σ cos(t log p)/p, wound round and crossing — narrowing into a dark throat
+to a spindle hole a monitor's size, the first room coming up in it last; the
+fall carries straight on through that hole as through every monitor after it
+— the same zoom, the same roll — and through the decades, one room inside the
+next, every room's objects tiled mirrored round it like its wallpaper, its
+pace still gathering, the swimmer's roll with it, the turn
 coming in from rest and going out before the answer's room, which lands level;
 the swimmer going into its screen and the screen going white; the readout in
 that glass; and "go again" — three seconds of it: the readout gone, the camera
 into the glass, the room going to black under it, black — which is the black
 the next flight opens on, the sky coming up over it. A birthday
 the archive cannot answer for is not refused in the popup: the flight goes in
-regardless, down a tunnel made of the verdict's gif instead of the archive,
-slows to a stop inside it, and the verdict is typed over that stopped tunnel,
-the gif still playing, in the questions' own panel (too old for the archive,
-too young for it, or too hot to calculate),
-and "calculate again" is the
-flight again with the answers kept. One WebGPU renderer, and one shot from the
+regardless, down a tunnel made of the verdict's gif, laid in the site's gold,
+instead of the archive; the lens slows to a stop inside it while the swimmer
+swims on down it and fades, and the verdict is typed over that stopped tunnel,
+the gif still playing, on a card of the site's yellow (too old for the
+archive, too young for it, or too hot to calculate), and "calculate again"
+swims on down the tunnel into its dark, which is the black the next flight
+opens on, with the answers kept. One WebGPU renderer, and one shot from the
 flight through the set into the fall: each scene ends on the frame the next
 opens on, and the camera is one camera throughout — one lens, one slow hand on
-it, no dolly, no stop, no restart. Frames on the WebGL lane at `?seed=1`, so
+it, no dolly, no stop, no restart, and a pace that only gathers until the
+fall lands. Frames on the WebGL lane at `?seed=1`, so
 the decades fall the same way on every load.
 
 | scene    | seconds | where                                                                                |
 | -------- | ------- | ------------------------------------------------------------------------------------ |
 | approach | 7       | `three/world/approach.js`, held at the ask                                           |
 | kaleido  | 7       | `three/world/kaleido.js` over `three/world/kaleidoscope.js` — or the stop in the gif |
-| descent  | 9       | `three/world/descent.js` over `three/world/nest.js`                                  |
+| descent  | 10.5    | `three/world/descent.js` over `three/world/nest.js`                                  |
 | room     | —       | `scenes/Room.svelte`, until "go again"                                               |
 | verdict  | —       | `components/error/ErrorScreen.svelte`, until "calculate again"                       |
 

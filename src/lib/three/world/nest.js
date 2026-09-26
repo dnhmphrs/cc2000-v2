@@ -16,7 +16,6 @@ import {
 	max,
 	min,
 	abs,
-	fract,
 	fwidth,
 	mix,
 	texture,
@@ -25,12 +24,12 @@ import {
 	attribute
 } from 'three/tsl';
 import { LAYERS, placement, elementUrl, DECADES, shuffle } from '$lib/data/roomElements';
-import { SCREEN_GLASS, GLASS_SAFETY, NEST, LENS, SCENES } from '$lib/config';
+import { SCREEN_GLASS, GLASS_SAFETY, NEST, KALEIDO, LENS, SCENES } from '$lib/config';
 import { PHI } from '$lib/three/geometry/icosahedron';
 import { glassOnly } from '$lib/three/tsl/glass';
 import { loadSwimmer } from '$lib/three/tsl/swimmer';
 import { ADD } from '$lib/three/tsl/materials';
-import { grooveDistNode } from '$lib/three/tsl/zeta';
+import { grooveDistNode, primeGrooveDistNode } from '$lib/three/tsl/zeta';
 
 // ── The nest ─────────────────────────────────────────────────────────────────
 // Rooms inside rooms, through the decades. The site's room is six flat
@@ -176,9 +175,12 @@ export async function createNest({ THREE, renderer }) {
 	swimmer.group.name = 'swimmer';
 	swimmer.material.depthTest = false;
 	// Its own clock, in seconds, advanced by whichever scene is running it: the
-	// roll and the tail's wobble are on this, so they never stop — not for a
-	// popup holding the flight, and not at the seam.
+	// tail's wobble is on this, so it never stops — not for a popup holding
+	// the flight, and not at the seam. And its ROLL, an angle each scene
+	// advances at the base spin times the run's pace there — so the roll
+	// gathers speed as the run does, and carries through every seam.
 	swimmer.clock = 0;
+	swimmer.roll = 0;
 	swimmer.group.traverse((o) => {
 		o.renderOrder = 100000;
 		o.frustumCulled = false;
@@ -226,8 +228,11 @@ export async function createNest({ THREE, renderer }) {
 	// and comes up as the lens closes on it, over NEST.seen, which is set so
 	// that it is up by the time the search stops. Every room deeper than it is
 	// inside its glass and nearer still, so the fall never sees this.
-	const uSeen0 = uniform(NEST.seen[0]);
-	const uSeen1 = uniform(NEST.seen[1]);
+	// In seam distances, which build() sets in the world's units — the seam
+	// distance is the frame's (a portrait frame is taller).
+	const KS = NEST.scale;
+	const uSeen0 = uniform(1);
+	const uSeen1 = uniform(2);
 	const nearN = smoothstep(uSeen0, uSeen1, positionView.z.negate()).oneMinus();
 	const dimmed = (node) => vec4(node.rgb.mul(uDark), node.a.mul(uDim).mul(nearN));
 
@@ -253,49 +258,67 @@ export async function createNest({ THREE, renderer }) {
 			.mul(min(w.div(e), 1.0));
 	});
 
-	// ── The record at the tunnel's end ───────────────────────────────────
-	// The tunnel ends on the FACE of a record (NEST.disc): gold grooves in
-	// its plane from `rin` room units out to `rout`, and its spindle hole,
-	// `rin` across, is the GLASS the first room is seen through — a
-	// monitor's size, so the fall's first crossing, through the hole into
-	// the room, is every crossing: the same zoom, the same roll, the same
-	// distance. The record is the fall's first LEVEL (build), the hole its
-	// glass-only quad, and it is dropped once the lens is through the hole
-	// as a room is once through its glass. It comes out of the dark with the
-	// rooms (nearN) and goes with their dimmer, and the tunnel's rings draw
-	// over it as they do the room. The search ends by dropping into a
-	// record.
+	// ── The record at the tunnel's end: a funnel ─────────────────────────
+	// The tunnel ends in a RECORD pressed into a funnel (NEST.disc): its
+	// grooves carry on from the tunnel's wall — the funnel meets the wall at
+	// its radius (KALEIDO.wall.radius) — and narrow, round the axis, to the
+	// spindle hole, `rin` across: a monitor's size, the GLASS the first room
+	// is seen through, so the fall's first crossing, through the hole into
+	// the room, is every crossing — the same zoom, the same roll, the same
+	// distance. The funnel meets the wall `join` seam distances up from the
+	// hole (the seam distance is the lens's from the hole as the fall
+	// opens), which puts the wall behind the frame by the seam: at the seam
+	// the frame is the funnel and the hole, and nothing of the tunnel, so the
+	// kaleido's last frame and the fall's first are the same picture. It
+	// carries on past the wall by `over`, out of sight behind it.
+	//
+	// The grooves are the critical line as the primes write it
+	// (tsl/zeta.js primeGrooveDistNode): one spiral up the funnel, its
+	// height the groove coordinate, wobbling by Σ cos(t log p)/p^σ with t
+	// running along the groove — the 1-D line wound round the record. The
+	// light falls off into the throat (`throat`), and the funnel comes out
+	// of the dark late, over `seen` seam distances of the lens, so the
+	// search ends by being drawn down into it rather than by the whole of it
+	// arriving at once. The record is the fall's first LEVEL (build), the
+	// hole its glass-only quad, and both are dropped once the lens is
+	// through the hole, as a room is once through its glass.
 	const D = NEST.disc;
-	const du = { uRin: uniform(D.rin), uOn: uniform(1) };
-	const discMat = over();
-	discMat.colorNode = Fn(() => {
-		const p = uv()
-			.sub(0.5)
-			.mul(2 * D.rout);
-		const r = length(p);
-		const th = atan(p.y, p.x);
-		const px = fwidth(r);
-		const w = float(D.stroke);
-		const f = fract(r.div(D.pitch));
-		const d = min(f, f.oneMinus()).mul(D.pitch);
-		const band = sin(r.mul(2.3).add(0.4))
-			.mul(sin(r.mul(5.7)))
-			.mul(0.18)
-			.add(0.82);
-		const groove = hair(d, w, px)
-			.mul(band)
-			.mul(smoothstep(du.uRin.add(0.04), du.uRin.add(0.12), r));
-		const lock = hair(abs(r.sub(du.uRin)), w.mul(1.4), px);
-		const sheen = pow(abs(cos(th.sub(1.15))), 3.0).mul(D.sheen);
-		const lit = mix(1.0 - 0.7 * D.sheen, 1.0, sheen);
-		const gloss = sheen.mul(0.045);
-		const outside = smoothstep(du.uRin.sub(0.01), du.uRin, r);
-		const a = outside.mul(nearN).mul(uDim).mul(du.uOn);
-		const gold = vec3(GOLD.r, GOLD.g, GOLD.b);
-		const col = gold.mul(groove.mul(lit).mul(0.95).add(lock.mul(1.1)).add(gloss)).mul(uDark);
-		return vec4(col.mul(a), a);
-	})();
-	stencilOf(discMat, 1, THREE.LessEqualStencilFunc, THREE.KeepStencilOp);
+	const recU = { uJoin: uniform(1), uF0: uniform(1), uF1: uniform(2) };
+	const recordMat = over();
+	recordMat.side = THREE.DoubleSide;
+	let recordTex = null;
+	{
+		// The table holds every turn the funnel can have: the most is on a
+		// portrait frame, whose seam distance is φ times a landscape one's.
+		const d0 = (PHI / Math.tan(rad(LENS) / 2)) * KS;
+		const slope = (KALEIDO.wall.radius - D.rin * KS) / (D.join * d0);
+		const turns = Math.ceil((KALEIDO.wall.radius + D.over - D.rin * KS) / slope / D.pitch) + 2;
+		const groove = primeGrooveDistNode(THREE, {
+			rate: D.rate,
+			primes: D.primes,
+			sigma: D.sigma,
+			reach: D.reach,
+			span: Math.ceil((D.amp + D.stroke) / D.pitch),
+			turns
+		});
+		recordTex = groove.tex;
+		const grooveDist = groove.dist;
+		recordMat.colorNode = Fn(() => {
+			const s = positionLocal.z;
+			const th = atan(positionLocal.y, positionLocal.x);
+			const d = grooveDist(s, th, float(D.pitch / KS), float(D.amp / KS));
+			const groove = hair(d, float(D.stroke / KS), fwidth(s));
+			const sheen = pow(abs(cos(th.sub(1.15))), 3.0).mul(D.sheen);
+			const lit = mix(1.0 - 0.7 * D.sheen, 1.0, sheen);
+			const shade = mix(float(D.throat), 1.0, smoothstep(0.0, recU.uJoin, s));
+			const fade = smoothstep(recU.uF0, recU.uF1, positionView.z.negate()).oneMinus();
+			const a = fade.mul(uDim);
+			const gold = vec3(GOLD.r, GOLD.g, GOLD.b);
+			const col = gold.mul(groove.mul(lit).mul(shade).mul(D.level)).mul(uDark);
+			return vec4(col.mul(a), a);
+		})();
+	}
+	stencilOf(recordMat, 1, THREE.LessEqualStencilFunc, THREE.KeepStencilOp);
 
 	// ── The funnel: the record between the rooms ─────────────────────────
 	// Every room after the first is the LABEL of a record with depth. Its
@@ -341,9 +364,8 @@ export async function createNest({ THREE, renderer }) {
 		const g = attribute('groove', 'float');
 		const px = fwidth(g);
 		const w = float(F.stroke);
-		// The label's edge, along the surface: uRin is a radius in the frame's
-		// plane and the geometry's throat is at rin, so it is uRin − rin out.
-		const edge = du.uRin.sub(D.rin);
+		// The label's edge, along the surface: the throat, less the hole.
+		const edge = float(Math.max(0, F.throat - D.rin));
 		const d = grooveDist(g, th.add(fu.uTurn.mul(2.0 * Math.PI)), F.pitch, F.amp, F.rate);
 		const band = sin(g.mul(2.3).add(0.4))
 			.mul(sin(g.mul(5.7)))
@@ -406,6 +428,12 @@ export async function createNest({ THREE, renderer }) {
 	// ── The nest itself ──────────────────────────────────────────────────
 	const root = new THREE.Group();
 	root.name = 'nest';
+	// The fall's world is NEST.scale times the rooms' own units: big enough
+	// that the lens, at the seam, is far enough from the record's hole for
+	// the tunnel to arrive at the fall's pace without braking (see
+	// SCENES.descent.accel and kaleidoscope.js).
+	root.scale.setScalar(KS);
+	let recordJoin = 0; // world height, above the hole, of the funnel's join to the wall
 	let W = 2 * PHI;
 	let H = 2;
 	let levels = [];
@@ -501,9 +529,27 @@ export async function createNest({ THREE, renderer }) {
 			root.add(group);
 			const rin = D.rin;
 			const glass = { x: 0, y: 0, z: 0, w: 2 * rin, h: 2 * rin };
-			// The face: where the stencil is 1 or more (discMat), first of all.
-			const disc = new THREE.Mesh(plane, discMat);
-			disc.scale.set(2 * D.rout, 2 * D.rout, 1);
+			// The funnel, in room units: from the hole, up and out to the
+			// wall's radius at `join` seam distances, and on past it by `over`.
+			const d0 = H / 2 / Math.tan(rad(LENS) / 2);
+			const joinH = D.join * d0;
+			const joinR = KALEIDO.wall.radius / KS;
+			const slope = (joinR - rin) / joinH;
+			const rimR = (KALEIDO.wall.radius + D.over) / KS;
+			const rimH = (rimR - rin) / slope;
+			const coneGeo = new THREE.CylinderGeometry(rimR, rin, rimH, D.segments, 1, true);
+			coneGeo.rotateX(Math.PI / 2);
+			coneGeo.translate(0, 0, rimH / 2);
+			disposables.push(coneGeo);
+			recordJoin = joinH * KS;
+			recU.uJoin.value = joinH;
+			recU.uF0.value = D.seen[0] * d0 * KS;
+			recU.uF1.value = D.seen[1] * d0 * KS;
+			uSeen0.value = NEST.seen[0] * d0 * KS;
+			uSeen1.value = NEST.seen[1] * d0 * KS;
+			// The funnel: where the stencil is 1 or more, first of all.
+			const disc = new THREE.Mesh(coneGeo, recordMat);
+			disc.name = 'record';
 			disc.renderOrder = 0;
 			disc.frustumCulled = false;
 			group.add(disc);
@@ -748,20 +794,34 @@ export async function createNest({ THREE, renderer }) {
 		}
 		return Math.min(levels.length - 1 + rest / logs[levels.length - 1], zetaEnd());
 	}
-	// The rate down the fall: one pace from the first frame — the tunnel has
-	// already eased to it — and a straight ramp down over `ease` to rest at
-	// the landing. Integrated, normalised, and turned back into a level.
+	// The rate down the fall: EASING IN from the first frame — the pace the
+	// tunnel arrived at, a straight ramp up to `accel` times that by the
+	// start of the landing — then a straight ramp down over `ease` to rest.
+	// So the run never brakes until it lands: the flight gathers speed, the
+	// tunnel gathers speed into the fall, the fall gathers speed into the
+	// rooms. Integrated, normalised, and turned back into a level.
 	function zetaOf(u) {
-		const e = SCENES.descent.ease;
+		const { ease: e, accel } = SCENES.descent;
+		const a = 1 / accel;
 		const x = Math.max(0, Math.min(1, u));
-		const area = 1 - e / 2;
+		const cruise = ((1 - e) * (1 + a)) / 2;
+		const area = cruise + e / 2;
 		let h;
-		if (x <= 1 - e) h = x;
+		if (x <= 1 - e) h = a * x + ((1 - a) * x * x) / (2 * (1 - e));
 		else {
 			const y = x - (1 - e);
-			h = 1 - e + y - (y * y) / (2 * e);
+			h = cruise + y - (y * y) / (2 * e);
 		}
 		return zetaOfLog(logEnd() * (h / area));
+	}
+	// The fall's pace at u, against its pace as it opens: 1 at the seam,
+	// rising to `accel` by the landing, and down to nothing as it lands.
+	function paceOf(u) {
+		const { ease: e, accel } = SCENES.descent;
+		const a = 1 / accel;
+		const x = Math.max(0, Math.min(1, u));
+		const rate = x <= 1 - e ? a + ((1 - a) * x) / (1 - e) : 1 - (x - (1 - e)) / e;
+		return rate / a;
 	}
 	// World units per second the camera is moving at as the fall opens — the
 	// speed the tunnel eases to, so the fall carries straight on from it
@@ -926,6 +986,11 @@ export async function createNest({ THREE, renderer }) {
 		zetaEnd,
 		zetaOf,
 		openingSpeed,
+		paceOf,
+		// The fall's opening pace against the flight's (set by the tunnel as
+		// it places the nest): what the swimmer's roll is running at by the
+		// seam, so the fall's roll carries on from it.
+		seamPace: 1,
 		rebase,
 		glassRect,
 		lastGlassWorld,
@@ -943,6 +1008,12 @@ export async function createNest({ THREE, renderer }) {
 		// this used to push the label out past the frame's corners, and the
 		// lab's sketches still call it.
 		setDiscRin() {},
+		// The world height, above the record's hole, at which its funnel
+		// meets the tunnel's wall — where the wall and the rings stop
+		// (kaleidoscope.js placeNest).
+		get recordJoin() {
+			return recordJoin;
+		},
 		// The funnels, at `p` of the descent: the record's turn and the
 		// pulse's phase, straight off the progress — NEST.funnel.
 		setFunnel(p) {
@@ -955,7 +1026,8 @@ export async function createNest({ THREE, renderer }) {
 			plane.dispose();
 			wallPlane.dispose();
 			sploshMat.dispose();
-			discMat.dispose();
+			recordMat.dispose();
+			recordTex?.dispose();
 		}
 	};
 }

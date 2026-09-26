@@ -1,9 +1,10 @@
 import { get } from 'svelte/store';
-import { SCENES, APPROACH, LENS, TUNNEL, clamp01, runSeconds } from '$lib/config';
+import { SCENES, APPROACH, LENS, TUNNEL, clamp01, smoothstep, runSeconds } from '$lib/config';
 import { decade, edge, aspect } from '$lib/store/store';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
 import { runClock } from '$lib/three/tsl/clock';
 import { roomsFor } from './nest';
+import { settled } from '$lib/scenes/director';
 
 // ── Scene 2: the kaleido ─────────────────────────────────────────────────────
 // Through the glass and down the tunnel. It opens on the frame the approach
@@ -20,6 +21,12 @@ import { roomsFor } from './nest';
 // descent opens on, and the fall carries straight on from it.
 //
 // ── A birthday the archive cannot answer for ─────────────────────────────────
+// (The swimmer does not stop with the lens: it keeps the tunnel's pace and
+// pulls away down it as the lens slows, fading out before the verdict is up.
+// And "calculate again" does not cut to the flight: the lens swims on down
+// the tunnel from where it stopped, gathering speed, into the tunnel's dark,
+// and the next flight opens on that black — stepReturn, as the way home
+// through the room's monitor does.)
 // An out-of-range birthday is not refused: the run goes in anyway, and it is
 // HERE that it ends. With `edge` set there is no answer and no room at the
 // tunnel's end, and the tunnel is not the archive: its rings are the
@@ -119,19 +126,28 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		// Ahead of the lens, dead centre, at the ride it arrived at — a child
 		// of the camera, as in the approach, so the hand on the camera leans
 		// the tunnel round it and not it. (The fall rides it nearer, sized to
-		// match: the same body on screen, so nothing moves at the seam.)
+		// match: the same body on screen, so nothing moves at the seam.) On
+		// an edge run it keeps the pace the lens gives up — it is where the
+		// lens would have been, `lead` ahead — pulling away down the tunnel
+		// as the lens stops, smaller as it goes, and fading out over
+		// `swimOff`, before the verdict.
 		const lead = APPROACH.lead;
 		const bodyH = APPROACH.span * 2 * lead * Math.tan(rad(fov) / 2);
-		sw.group.position.set(0, 0, -lead);
+		const gap = broken ? kal.tunnelZ(x) - kal.tunnelZ(p) : 0;
+		const off = broken ? 1 - smoothstep(T.swimOff[0], T.swimOff[1], p) : 1;
+		sw.group.position.set(0, 0, -(lead + gap));
 		sw.group.scale.setScalar(bodyH);
-		sw.spinner.rotation.z = sw.clock * SPIN;
+		sw.spinner.rotation.z = sw.roll;
 		sw.material.uniforms.uTime.value = sw.clock;
-		sw.material.uniforms.uOpacity.value = SPERM ? 1 : 0;
+		sw.material.uniforms.uOpacity.value = SPERM ? off : 0;
 
 		kal.rebase(camera.position.z, camera.near);
 	}
 
 	function update(dt) {
+		// The roll gathers speed with the tunnel — at the swimmer's own pace,
+		// which on an edge run does not stop.
+		sw.roll += dt * SPIN * kal.tunnelPace(clamp01(t / T.duration));
 		t += dt;
 		sw.clock += dt;
 		set(clamp01(t / T.duration));
@@ -149,6 +165,40 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		set(clamp01(t / T.duration));
 	}
 
+	// ── On, after the verdict ────────────────────────────────────────────
+	// "Calculate again" (director.recover) hands the run back through the
+	// tunnel rather than cutting to the flight: from where the lens stopped
+	// it swims on, from rest and gathering speed, down the rest of the tunnel
+	// into its dark end over SCENES.kaleido.home seconds, everything going
+	// to black over `homeDim` of that — so the frame it ends on is the black
+	// the next flight opens on, as the way home through the room's monitor
+	// ends (world/descent.js). The gif plays on to the last.
+	let rt = 0;
+	let xFrom = 0;
+	let handedOver = false;
+	function beginReturn() {
+		rt = 0;
+		handedOver = false;
+		xFrom = broken ? stopAt(1) : 1;
+	}
+	function stepReturn(dt) {
+		rt = Math.min(rt + dt, T.home);
+		heldT += dt;
+		sw.clock += dt;
+		const q = rt / T.home;
+		const x = xFrom + (1 - xFrom) * q * q;
+		kal.pose(x, camera, aspectR);
+		kal.set(x, broken);
+		runClock.value = runSeconds('kaleido', 1) + heldT;
+		kal.setDim(1 - smoothstep(T.homeDim[0], T.homeDim[1], q));
+		sw.material.uniforms.uOpacity.value = 0;
+		kal.rebase(camera.position.z, camera.near);
+		if (!handedOver && rt >= T.home) {
+			handedOver = true;
+			settled();
+		}
+	}
+
 	return {
 		scene,
 		camera,
@@ -156,6 +206,8 @@ export function createKaleido({ THREE, renderer, nest, kal }) {
 		update,
 		set,
 		hold,
+		beginReturn,
+		stepReturn,
 		render() {
 			renderer.render(scene, camera);
 		},

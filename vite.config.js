@@ -1,6 +1,25 @@
 import adapter from '@sveltejs/adapter-vercel';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+
+// The version in the top left corner (components/Version.svelte): the
+// package's own number, bumped with every PR to main, and the commit it was
+// built from — Vercel's, or the checkout's — so any two deploys can be told
+// apart at a glance. SvelteKit hands it to the page as `version` from
+// $app/environment (and uses it to notice a new deploy, which is what it is).
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+const commit = (() => {
+	if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7);
+	try {
+		return execSync('git rev-parse --short=7 HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+			.toString()
+			.trim();
+	} catch {
+		return '';
+	}
+})();
 
 // The whole SvelteKit configuration lives here now (Kit 2.63+ takes it as
 // options to the plugin; there is no svelte.config.js). Two things to know:
@@ -19,7 +38,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	plugins: [
 		sveltekit({
-			adapter: adapter({ runtime: 'nodejs22.x' })
+			adapter: adapter({ runtime: 'nodejs22.x' }),
+			version: { name: commit ? `${pkg.version} · ${commit}` : pkg.version }
 		})
 	]
 });

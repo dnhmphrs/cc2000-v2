@@ -138,7 +138,11 @@
 
 <svelte:window on:pointerdown={finish} />
 
-<div class="error-screen" in:fade={{ duration: reduced ? 0 : 400 }}>
+<div
+	class="error-screen"
+	in:fade={{ duration: reduced ? 0 : 400 }}
+	out:fade={{ duration: reduced ? 0 : 350 }}
+>
 	{#if !verdict}
 		<Tiles name={v.gif} />
 		<div class="veil"></div>
@@ -203,21 +207,22 @@
 		background: rgba(4, 4, 8, 0.28);
 	}
 
-	/* The questions' own glass: no chrome, one hairline, the ground behind it
-	   barely darkened so the swimmer still reads underneath. */
+	/* The site's own YELLOW: the verdict is a card in the colour of the
+	   machine's buttons, near-black ink on it, over the gold tunnel it
+	   stopped in — the one loud thing in the frame, as a verdict should be. */
 	.panel {
 		position: relative;
 		min-width: min(21rem, 80vw);
 		max-width: min(34rem, 92vw);
-		padding: clamp(16px, 2.4vh, 24px) clamp(18px, 2.2vw, 30px);
-		background: rgba(10, 10, 12, 0.82);
-		border: 1px solid rgba(255, 212, 38, 0.45);
+		padding: clamp(18px, 2.8vh, 28px) clamp(20px, 2.4vw, 34px);
+		background: var(--yellow);
+		color: var(--on-yellow);
+		border: 1px solid var(--on-yellow);
 		border-radius: 3px;
 		box-shadow:
-			0 0 0 1px rgba(0, 0, 0, 0.5),
+			0 0 0 1px var(--yellow),
+			0 0 44px rgba(255, 212, 38, 0.35),
 			0 24px 70px rgba(0, 0, 0, 0.55);
-		outline: 1px solid var(--edge);
-		outline-offset: 1px;
 		text-align: center;
 		display: flex;
 		flex-direction: column;
@@ -226,16 +231,19 @@
 	}
 	.panel:focus,
 	.panel:focus-visible {
-		outline: 1px solid var(--edge);
-		outline-offset: 1px;
+		outline: 2px solid var(--on-yellow);
+		outline-offset: -5px;
 	}
 
 	.q {
 		margin: 0;
-		font-size: clamp(8px, 0.74vw, 10px);
-		letter-spacing: 0.24em;
+		font-size: clamp(9px, 0.8vw, 11px);
+		font-weight: 700;
+		letter-spacing: 0.28em;
 		text-transform: uppercase;
-		color: var(--yellow);
+		color: var(--on-yellow);
+		padding-bottom: 0.6em;
+		border-bottom: 1px solid rgba(23, 18, 12, 0.45);
 	}
 
 	.lines {
@@ -253,11 +261,11 @@
 	}
 	.line.verdict {
 		font-size: clamp(11px, 1.1vw, 16px);
-		color: var(--ink);
+		color: var(--on-yellow);
 	}
 	.line.detail {
 		font-size: clamp(10px, 0.95vw, 13px);
-		color: var(--ink-soft);
+		color: rgba(23, 18, 12, 0.72);
 	}
 	.ghost {
 		visibility: hidden;
@@ -273,7 +281,7 @@
 		width: 0.5em;
 		height: 0.9em;
 		vertical-align: text-bottom;
-		background: var(--ink);
+		background: var(--on-yellow);
 		animation: blink 1.05s steps(1) infinite;
 	}
 	@keyframes blink {
@@ -294,8 +302,8 @@
 		letter-spacing: 0.26em;
 		text-transform: uppercase;
 		color: var(--yellow);
-		background: transparent;
-		border: 1px solid rgba(255, 212, 38, 0.55);
+		background: var(--on-yellow);
+		border: 1px solid var(--on-yellow);
 		border-radius: 2px;
 		padding: 0.75em 2.2em;
 		cursor: pointer;
@@ -305,8 +313,7 @@
 			border-color 0.18s;
 	}
 	.go:hover {
-		background: var(--yellow);
-		border-color: var(--yellow);
+		background: transparent;
 		color: var(--on-yellow);
 	}
 

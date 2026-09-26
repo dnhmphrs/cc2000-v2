@@ -142,7 +142,7 @@ export function createDescent({ THREE, renderer, nest }) {
 		sw.group.position.copy(at);
 		sw.group.quaternion.copy(camera.quaternion);
 		sw.group.scale.setScalar(bodyH);
-		sw.spinner.rotation.z = sw.clock * SPIN;
+		sw.spinner.rotation.z = sw.roll;
 		sw.material.uniforms.uTime.value = sw.clock;
 		sw.material.uniforms.uOpacity.value = SPERM ? 1 - smoothstep(T.gone - 0.006, T.gone, p) : 0;
 
@@ -154,6 +154,9 @@ export function createDescent({ THREE, renderer, nest }) {
 	}
 
 	function update(dt) {
+		// The roll gathers speed with the fall, and never drops below its
+		// base spin as the fall lands (nest.swimmer.roll).
+		sw.roll += dt * SPIN * Math.max(1, nest.paceOf(clamp01(t / T.duration)) * nest.seamPace);
 		t += dt;
 		sw.clock += dt;
 		set(clamp01(t / T.duration));
