@@ -33,6 +33,20 @@
 	// Hard cuts between them too: each is its own sketch on its own scene,
 	// and several of them replay the same stretch of the run from their own
 	// angle, so this is a reel, not a cut.
+	//
+	// ── And the Evangelion feel, back to back ────────────────────────────────
+	// ?chain=explore2 (or /eva) plays the six sketches of docs/explore-02.md
+	// end to end, in the order they would sit in the run:
+	//
+	//   episode-card  8.9 s   the title as a cut, a negative, black, the spiel
+	//   red-sun       8.5 s   the egg behind the set; the swimmer's flash at it
+	//   silhouette      8 s   a black body with a hot rim, over the sun and in
+	//   lcl-tunnel      7 s   the archive in one red; colour arrives with the room
+	//   noir-ground    25 s   a flat, warm, grained off-black under the whole run
+	//   strobe        3.6 s   the splosh as a negative, white, black and a cut
+	//
+	// The card is DOM over the canvas and hides itself once it has lifted, so
+	// it goes first.
 	const CHAINS = {
 		v4: [
 			{ key: 'approach', name: 'approach', seconds: 9 },
@@ -48,6 +62,14 @@
 			{ key: 'the-many', name: 'the-many', seconds: 7 },
 			{ key: 'pilot', name: 'pilot', seconds: 9 },
 			{ key: 'runout', name: 'runout', seconds: 2.3 }
+		],
+		explore2: [
+			{ key: 'episode-card', name: 'episode-card', seconds: 8.9 },
+			{ key: 'red-sun', name: 'red-sun', seconds: 8.5 },
+			{ key: 'silhouette', name: 'silhouette', seconds: 8 },
+			{ key: 'lcl-tunnel', name: 'lcl-tunnel', seconds: 7 },
+			{ key: 'noir-ground', name: 'noir-ground', seconds: 25 },
+			{ key: 'strobe', name: 'strobe', seconds: 3.6 }
 		]
 	};
 	const HOLD = 1.5; // seconds on the last frame before the loop
@@ -62,7 +84,13 @@
 		'switch-on': () => import('$lib/lab/switch-on.js'),
 		'the-many': () => import('$lib/lab/the-many.js'),
 		pilot: () => import('$lib/lab/pilot.js'),
-		runout: () => import('$lib/lab/runout.js')
+		runout: () => import('$lib/lab/runout.js'),
+		'episode-card': () => import('$lib/lab/episode-card.js'),
+		'red-sun': () => import('$lib/lab/red-sun.js'),
+		silhouette: () => import('$lib/lab/silhouette.js'),
+		'lcl-tunnel': () => import('$lib/lab/lcl-tunnel.js'),
+		'noir-ground': () => import('$lib/lab/noir-ground.js'),
+		strobe: () => import('$lib/lab/strobe.js')
 	};
 
 	let canvas;
@@ -75,7 +103,12 @@
 		const forceWebGL = q.get('gl') === '1';
 		const chain = CHAINS[q.get('chain')] ? q.get('chain') : 'v4';
 		const BEATS = CHAINS[chain];
-		const TAG = chain === 'v4' ? 'v4 · rough cut' : `explore 01 · reel`;
+		const TAG =
+			chain === 'v4'
+				? 'v4 · rough cut'
+				: chain === 'explore'
+					? 'explore 01 · reel'
+					: 'explore 02 · reel';
 
 		const THREE = await import('three/webgpu');
 		const renderer = new THREE.WebGPURenderer({

@@ -6,11 +6,15 @@ Three sections, all shot headless and all pinned with `?at=` — every scene is 
 pure function of its own progress, so each frame is the frame the run would
 have drawn at that moment rather than a timed guess at it.
 
-**1 — the run, as it now is.** What `/` does on `main`, one cut: a title card
+**1 — the run, as it now is.** What `/` does on `main`, one cut, every frame
+of it through the SIGNAL — a composite signal's faults on the picture, the
+chroma off the luma, bright things trailing right, lines slipping, a tear, grain,
+on the run's clock: a title card
 over an approach held at zero, black; the card lifts, the sky comes up, the
 swimmer fades in where it rides, ahead of the lens and seen from behind, and
-both questions are put to it there, under it, as it rides, one straight after
-the other — nothing else flies by; only once the answers are in does anything
+both questions are put to it there, in one panel at the centre of the frame,
+the flight waiting in motion round it — the swimmer rolling, the debris
+streaming on — nothing else flies by; only once the answers are in does anything
 appear ahead: a point of light, then
 the set coming out of the dark, dark — always the 60s television — until the
 swimmer's nose reaches its glass and lights it: a dot at the glass's centre,
@@ -26,15 +30,14 @@ set, grooves round it — and fills the frame; the fall carries straight on
 through the decades, one room inside the next, at one pace on screen, the turn
 coming in from rest and going out before the answer's room, which lands level;
 the swimmer going into its screen and the screen going white; the readout in
-that glass; and "go again" — three seconds of it: the readout gone, the glass
-gone to vinyl under the lens, gold grooves turning, the lens dropping to the
-spindle hole, the hole opening to take the frame, black — which is the black
-the next flight opens on, where the record's grooves go on passing the lens
-for two seconds as the sky comes up. A birthday
+that glass; and "go again" — three seconds of it: the readout gone, the camera
+into the glass, the room going to black under it, black — which is the black
+the next flight opens on, the sky coming up over it. A birthday
 the archive cannot answer for is not refused in the popup: the flight goes in
-regardless and the tunnel breaks down on it — overloads, collapses to a line,
-a dot, black, the swimmer alone in it, rolling — and the verdict is typed
-under it, in the questions' own panel (too old for the archive, or too young),
+regardless, down a tunnel made of the verdict's gif instead of the archive, and
+the tunnel breaks down on it — overloads, collapses to a line, a dot, black —
+and the verdict is typed over that gif, tiled across the whole frame,
+in the questions' own panel (too old for the archive, or too young),
 and "calculate again" is the
 flight again with the answers kept. One WebGPU renderer, and one shot from the
 flight through the set into the fall: each scene ends on the frame the next

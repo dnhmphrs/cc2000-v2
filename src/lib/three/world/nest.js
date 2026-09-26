@@ -11,7 +11,6 @@ import {
 	cos,
 	smoothstep,
 	exp,
-	log,
 	pow,
 	max,
 	min,
@@ -76,7 +75,6 @@ import { grooveDistNode } from '$lib/three/tsl/zeta';
 //
 // The SPLOSH is a white blot on the last room's glass, and it lives here
 // because the glass does: the descent drives it with setSplosh(). So does the
-// RECORD the way home goes out through (setRecord), on the same glass; the
 // DISC the first room is the label of, at the tunnel's end; and the FUNNEL
 // every room after it is the label of, between it and its parent's glass
 // (setFunnel).
@@ -231,40 +229,11 @@ export async function createNest({ THREE, renderer }) {
 	const nearN = smoothstep(uSeen0, uSeen1, positionView.z.negate()).oneMinus();
 	const dimmed = (node) => vec4(node.rgb.mul(uDark), node.a.mul(uDim).mul(nearN));
 
-	// ── The record ───────────────────────────────────────────────────────
-	// The way home is through the record. "Go again" flies the lens into the
-	// answer's monitor, and the black inside that glass is not empty: it is
-	// VINYL. The glass goes to black-with-grooves under where the readout was
-	// — hairline gold rings, the tight ones of the song's last bars, then the
-	// wide turns of the lead-out, then the lock groove at the label's edge,
-	// the groove that turns after the song has ended — turning, while the
-	// room round the monitor goes to black as it does anyway. The lens drops
-	// to the spindle hole at the centre, the hole takes the frame, and the
-	// black in it is the black the next flight opens on.
-	//
-	// ONE quad on the last room's glass, where the splosh is, a hair nearer,
-	// blended OVER rather than added, so its alpha is what takes the painted
-	// glass to black beneath the grooves — it works on the 60s yellow as on
-	// the 90s black. Only where the stencil says glass: the last room's
-	// glass-only quad increments the stencil to levels + 1 inside the glass,
-	// and nothing else is at that ref. NOT in the level's meshes: rebase()
-	// hides those once the lens has passed the glass, and by then the frame
-	// is all glass — the record stays. The grooves are hair() strokes floored
-	// at a screen pixel by fwidth, with the light scaled down by the same
-	// ratio, so a groove that recedes gets fainter rather than sparkling.
-	// descent.js stepReturn drives it with setRecord(); NEST.record has the
-	// numbers.
-	const R = NEST.record;
-	const ru = {
-		uTurn: uniform(0),
-		uIn: uniform(0),
-		uLit: uniform(0),
-		uHole: uniform(R.hole),
-		uOut: uniform(1),
-		uSize: uniform(new THREE.Vector2(1, 1))
-	};
+	// Gold, in hairlines, drawn OVER: what the disc and the funnels are made
+	// of. hair() is a stroke floored at a screen pixel by fwidth, with the
+	// light scaled down by the same ratio, so a groove that recedes gets
+	// fainter rather than sparkling.
 	const GOLD = new THREE.Color(0xf0c45c);
-	const PAPER = new THREE.Color(0x3a2c14);
 	const over = () =>
 		new THREE.MeshBasicNodeMaterial({
 			transparent: true,
@@ -281,63 +250,6 @@ export async function createNest({ THREE, renderer }) {
 			.oneMinus()
 			.mul(min(w.div(e), 1.0));
 	});
-	const softplus = Fn(([x]) => log(exp(x).add(1.0)));
-	const sigmoid = Fn(([x]) => exp(x.negate()).add(1.0).reciprocal());
-	const recordMat = over();
-	recordMat.colorNode = Fn(() => {
-		const p = uv().sub(0.5).mul(ru.uSize);
-		const r = length(p);
-		const th = atan(p.y, p.x);
-		const px = fwidth(r);
-		const w = float(R.stroke);
-		// The grooves. Tight outside the lead-out, wide inside it: the pitch
-		// changes smoothly over K, and the phase is its integral.
-		const R1 = R.label + 0.1;
-		const K = 0.012;
-		const x = r.sub(R1).div(K);
-		const phase = r.mul(R.lead).add(softplus(x).mul(K * (R.grooves - R.lead)));
-		const dPhase = sigmoid(x)
-			.mul(R.grooves - R.lead)
-			.add(R.lead);
-		const f = fract(phase.add(th.div(2.0 * Math.PI)).add(ru.uTurn));
-		const d = min(f, f.oneMinus()).div(dPhase);
-		// The song's last bars: the tight grooves come in bands, as a track's
-		// loud and quiet bars do on an LP under a lamp.
-		const band = sin(r.mul(23.0).add(0.4))
-			.mul(sin(r.mul(57.0)))
-			.mul(0.18)
-			.add(0.82);
-		const groove = hair(d, w, px)
-			.mul(smoothstep(R.label + 0.006, R.label + 0.02, r))
-			.mul(mix(1.0, band, smoothstep(R1, R1 + 0.08, r)));
-		// The lock groove: a circle at the label's edge, the last groove there is.
-		const lock = hair(abs(r.sub(R.label)), w.mul(1.4), px);
-		// The light across the record: two opposed sectors, fixed while it turns.
-		const sheen = pow(abs(cos(th.sub(1.15))), 3.0).mul(R.sheen);
-		const lit = mix(1.0 - 0.7 * R.sheen, 1.0, sheen);
-		// And the lamp in the vinyl itself: a whisper of gold between the
-		// grooves, in the same two sectors.
-		const gloss = sheen.mul(0.045).mul(smoothstep(R.label, R.label + 0.03, r));
-		// The label: paper, dim, with one printed ring; and the hole, black.
-		const label = smoothstep(R.label - 0.004, R.label, r).oneMinus();
-		const ring = hair(abs(r.sub(R.label * 0.55)), w, px).mul(0.35);
-		const hole = smoothstep(ru.uHole.sub(0.004), ru.uHole, r).oneMinus();
-		const lip = hair(abs(r.sub(ru.uHole)), w, px).mul(0.6);
-		const gold = vec3(GOLD.r, GOLD.g, GOLD.b);
-		const paper = vec3(PAPER.r, PAPER.g, PAPER.b);
-		const col = gold
-			.mul(groove.mul(lit).mul(0.95).add(lock.mul(1.1)).add(ring).add(lip).add(gloss))
-			.add(paper.mul(label).mul(0.45))
-			.mul(hole.oneMinus())
-			.mul(ru.uLit)
-			.mul(ru.uOut);
-		return vec4(col, ru.uIn.mul(ru.uOut));
-	})();
-	recordMat.stencilWrite = true;
-	recordMat.stencilFunc = THREE.EqualStencilFunc;
-	recordMat.stencilFail = THREE.KeepStencilOp;
-	recordMat.stencilZFail = THREE.KeepStencilOp;
-	recordMat.stencilZPass = THREE.KeepStencilOp;
 
 	// ── The disc at the tunnel's end ─────────────────────────────────────
 	// The first room comes out of the dark as a record's LABEL (NEST.disc):
@@ -692,22 +604,6 @@ export async function createNest({ THREE, renderer }) {
 		su.uT.value = 0;
 		su.uFade.value = 1;
 
-		// The record, on the same glass, a hair nearer — see above. Off until
-		// the way home switches it on.
-		recordMat.stencilRef = levels.length + 1;
-		const record = new THREE.Mesh(plane, recordMat);
-		record.scale.set(last.glass.w, last.glass.h, 1);
-		record.position.set(last.glass.x, last.glass.y, last.glass.z + 0.003);
-		record.renderOrder = 200001;
-		record.frustumCulled = false;
-		last.group.add(record);
-		ru.uSize.value.set(last.glass.w / last.glass.h, 1);
-		ru.uIn.value = 0;
-		ru.uLit.value = 0;
-		ru.uOut.value = 1;
-		ru.uTurn.value = 0;
-		ru.uHole.value = R.hole;
-
 		// The disc, in room 0's plane, round it — see above. In the level's
 		// meshes, so it is dropped with the room once the lens is past its glass.
 		const first = levels[0];
@@ -964,16 +860,6 @@ export async function createNest({ THREE, renderer }) {
 		setDark(v) {
 			uDark.value = v;
 		},
-		// The record on the way home: how far the glass has gone to vinyl
-		// (`k`), how lit the grooves are, the turn (0..1 of a revolution), the
-		// spindle hole's radius in glass heights, and the fade out (`out`).
-		setRecord(k, lit, turn, hole, out) {
-			ru.uIn.value = k;
-			ru.uLit.value = lit;
-			ru.uTurn.value = turn;
-			ru.uHole.value = hole;
-			ru.uOut.value = out;
-		},
 		// The disc's label radius, pushed outside the frame's corners on the
 		// live lens (plus the hand's lean), so no groove is in the seam frame.
 		// The funnels' labels are the same radius, for the same reason at
@@ -987,17 +873,12 @@ export async function createNest({ THREE, renderer }) {
 			fu.uTurn.value = p * F.turns;
 			fu.uPhase.value = p * F.pulses;
 		},
-		// Set by the way home as it hands over, read and cleared by the next
-		// flight: it came through the record, so the record's last grooves
-		// can go on past the lens as the sky comes up.
-		viaRecord: false,
 		dispose() {
 			clear();
 			for (const d of Object.values(textures)) for (const t of Object.values(d)) t.dispose();
 			plane.dispose();
 			wallPlane.dispose();
 			sploshMat.dispose();
-			recordMat.dispose();
 			discMat.dispose();
 		}
 	};

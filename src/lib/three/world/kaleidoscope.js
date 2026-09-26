@@ -20,6 +20,8 @@ import {
 	positionView,
 	positionWorld,
 	smoothstep as tslSmoothstep,
+	floor,
+	mod,
 	hue
 } from 'three/tsl';
 import {
@@ -36,6 +38,8 @@ import {
 import { ADD } from '$lib/three/tsl/materials';
 import { grooveDistNode, hair, TWO_PI } from '$lib/three/tsl/zeta';
 import { DECADES, shuffle } from '$lib/data/roomElements';
+import { GIFS } from '$lib/data/gifs';
+import { runClock } from '$lib/three/tsl/clock';
 import { glassOnly, glassCut } from '$lib/three/tsl/glass';
 import { roomsFor } from './nest';
 import { wobbleEuler } from './wobble';
@@ -162,6 +166,56 @@ export function createKaleidoscope({ THREE, nest }) {
 		}
 	}
 
+	// ── The archive on a run it cannot answer for: the gif ───────────────
+	// A birthday the archive has nothing for gets no drawings down the
+	// tunnel — the tunnel is about to break down on it (world/kaleido.js) —
+	// and the rings are the verdict's own gif instead: a sheet of its frames
+	// (data/gifs.js, baked by scripts/gifs.mjs), every quad on the same
+	// frame, the frame counted off the run's clock (tsl/clock.js runClock)
+	// so a pin is exact and the hold under the verdict plays on; hue-turned,
+	// dimmed and stencilled exactly as the drawings are, over the wall as
+	// they are. The materials are built here so the warm-up compiles them
+	// (the two quads on `rings` a hair across); the sheet itself is fetched
+	// the first time it is asked for (setArchive), while the rings are still
+	// too small to see, so a run the archive can answer for never loads it.
+	const gifs = {};
+	for (const name of Object.values(K.gif.of)) {
+		const G = GIFS[name];
+		const tex = new THREE.Texture();
+		tex.colorSpace = THREE.SRGBColorSpace;
+		const m = new THREE.MeshBasicNodeMaterial({
+			transparent: true,
+			depthTest: false,
+			depthWrite: false
+		});
+		const frame = mod(floor(runClock.mul(G.fps)), G.frames);
+		const cx = mod(frame, G.cols);
+		const cy = floor(frame.div(G.cols));
+		// Half a pixel in from the cell's edges, so a neighbour never bleeds in.
+		const inset = vec2(0.5 / G.w, 0.5 / G.h);
+		const q = mix(inset, vec2(1.0, 1.0).sub(inset), uv());
+		const st = vec2(
+			q.x.add(cx).div(G.cols),
+			float(G.rows - 1)
+				.sub(cy)
+				.add(q.y)
+				.div(G.rows)
+		);
+		const c = texture(tex, st);
+		m.colorNode = vec4(hue(c.rgb, turned).mul(uBright), uOn.mul(near).mul(uDim));
+		stencilOf(m, 1, THREE.LessEqualStencilFunc, THREE.KeepStencilOp);
+		disposables.push(m, tex);
+		gifs[name] = { tex, material: m, aspect: G.w / G.h, src: G.src, loaded: false };
+	}
+	function loadGif(g) {
+		if (g.loaded) return;
+		g.loaded = true;
+		new THREE.ImageLoader().load(g.src, (img) => {
+			g.tex.image = img;
+			g.tex.needsUpdate = true;
+		});
+	}
+
 	// ── The wall ─────────────────────────────────────────────────────────
 	// One open cylinder on the axis, seen from inside, drawn where the stencil
 	// is 1 or more like the rings and just UNDER them, so the drawings sit on
@@ -259,6 +313,8 @@ export function createKaleidoscope({ THREE, nest }) {
 			const g = new THREE.Group();
 			const w = K.size[key];
 			const h = w / art(d, key);
+			// Its drawing, for setArchive to put back after a gif.
+			g.userData = { material: ringMat[d][key], w, h };
 			for (let j = 0; j < K.ring; j++) {
 				const th = (Math.PI * 2 * j) / K.ring + (i * Math.PI) / K.ring + i * K.spiral;
 				const m = new THREE.Mesh(plane, ringMat[d][key]);
@@ -270,6 +326,33 @@ export function createKaleidoscope({ THREE, nest }) {
 			}
 			rings.add(g);
 			ringList.push(g);
+		}
+		// The gif materials' warm-up quads: on the axis, a hair across.
+		for (const g of Object.values(gifs)) {
+			const m = new THREE.Mesh(plane, g.material);
+			m.name = 'gifWarm';
+			m.scale.setScalar(1e-4);
+			m.renderOrder = RING_ORDER;
+			rings.add(m);
+		}
+	}
+
+	// The rings' drawings, or the gif of an edge run: `kind` is null, 'past'
+	// or 'future' (K.gif.of says which gif), the quads resized to it.
+	let archive = null;
+	function setArchive(kind) {
+		if (kind === archive) return;
+		archive = kind;
+		const gif = kind ? gifs[K.gif.of[kind]] : null;
+		if (gif) loadGif(gif);
+		for (const g of ringList) {
+			const { material, w, h } = g.userData;
+			const gw = gif ? K.gif.size : w;
+			const gh = gif ? gw / gif.aspect : h;
+			g.children.forEach((m, j) => {
+				m.material = gif ? gif.material : material;
+				m.scale.set(j % 2 ? -gw : gw, gh, 1);
+			});
 		}
 	}
 
@@ -568,6 +651,7 @@ export function createKaleidoscope({ THREE, nest }) {
 		place,
 		placeNest,
 		freshRun,
+		setArchive,
 		pose,
 		set,
 		rebase,

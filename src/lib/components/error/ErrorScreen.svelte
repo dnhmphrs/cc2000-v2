@@ -6,20 +6,20 @@
 	import { SCENES } from '$lib/config';
 	import { scene, gate } from '$lib/store/store';
 	import { recover } from '$lib/scenes/director';
+	import Tiles from './Tiles.svelte';
 
 	// ── The verdict screens ──────────────────────────────────────────────────
-	// Three of them, each with the machine's own line: too old for the archive,
-	// too young for it, and the page that does not exist. The two verdicts are
-	// the end of a run — the tunnel broke down on the way to a room that was
-	// never there (world/kaleido.js): the set switched off, and what is left
-	// on the canvas is the black and the swimmer alone in it, still rolling
-	// (the kaleido holds its last frame and keeps the swimmer's clock going).
-	// The verdict is put to it there, in the register of the two questions —
-	// the same glass panel on the void, one hairline, in the lower third, the
-	// lines TYPED on the clock as the title card types — rather than a screen
-	// of its own with a picture on it. There used to be a gif in the slot; it
-	// belonged to another site. "Calculate again" hands the run back to the
-	// flight (director.recover()). 404 and 500 are the route's error page
+	// Three of them, each with its gif and the machine's own line: too old for
+	// the archive, too young for it, and the page that does not exist (the
+	// server's own failure takes the same page with the fourth gif). The two
+	// verdicts are the end of a run — the tunnel broke down on the way to a
+	// room that was never there (world/kaleido.js), a tunnel that was made of
+	// this gif — and here the gif is the whole frame, TILED (Tiles.svelte),
+	// with the verdict read over it in the register of the two questions: the
+	// same glass panel, one hairline, at the centre, a heading in the site's
+	// yellow and the machine's lines TYPED on the clock as the title card
+	// types. "Calculate again" hands the run back to the flight
+	// (director.recover()). 404 and 500 are the route's error page
 	// (routes/+error.svelte), with no 3D under them, and go home.
 	export let status = 500;
 	export let message = '';
@@ -27,11 +27,13 @@
 
 	const VERDICT = {
 		past: {
+			gif: 'the-past',
 			head: 'no signal before 1958',
 			line: 'you were born in the time of dinosaurs. there was no music.',
 			detail: 'the archive starts in 1958. your moment predates the broadcast record.'
 		},
 		future: {
+			gif: 'the-future',
 			head: 'no signal yet',
 			line:
 				'you were born in the After Time. those lucky enough to be born were ' +
@@ -41,8 +43,9 @@
 		}
 	};
 	const ROUTE = {
-		404: { head: 'no such channel', line: "you shouldn't be here. run.", detail: '' },
+		404: { gif: '404', head: 'no such channel', line: "you shouldn't be here. run.", detail: '' },
 		500: {
+			gif: '500',
 			head: 'overheated',
 			line:
 				'our servers overheated. the algorithm found your moment of conception too hot for ' +
@@ -126,7 +129,9 @@
 
 <svelte:window on:pointerdown={finish} />
 
-<div class="error-screen" class:centred={!verdict} in:fade={{ duration: reduced ? 0 : 400 }}>
+<div class="error-screen" in:fade={{ duration: reduced ? 0 : 400 }}>
+	<Tiles name={v.gif} />
+	<div class="veil"></div>
 	<div
 		class="panel"
 		bind:this={panel}
@@ -164,31 +169,33 @@
 
 <style>
 	/* Over the 3D and under the scanlines, like the room and the questions:
-	   the verdict is a screen the run is watched on, not a page. No ground of
-	   its own — the canvas under it is black with the swimmer alone in it, and
-	   that is the picture. On the route's error page there is no canvas, and
-	   the page ground is the same blue-black. */
+	   the verdict is a screen the run is watched on, not a page. Its ground
+	   is the gif, tiled over the whole frame, under a veil light enough that
+	   it is very much the picture; until the sheet arrives the canvas under
+	   it shows — black, with the swimmer alone in it — and on the route's
+	   error page the page ground, the same blue-black. */
 	.error-screen {
 		position: fixed;
 		inset: 0;
 		z-index: 10;
 		display: grid;
-		/* In the LOWER third, under the swimmer, as the questions are put. */
-		place-items: end center;
-		padding-bottom: clamp(40px, 13vh, 120px);
+		/* At the centre, as the questions are put. */
+		place-items: center;
 		background: transparent;
 		font-family: var(--tech);
 		pointer-events: auto;
 		cursor: default;
 	}
-	.error-screen.centred {
-		place-items: center;
-		padding-bottom: 0;
+	.veil {
+		position: absolute;
+		inset: 0;
+		background: rgba(4, 4, 8, 0.28);
 	}
 
 	/* The questions' own glass: no chrome, one hairline, the ground behind it
 	   barely darkened so the swimmer still reads underneath. */
 	.panel {
+		position: relative;
 		min-width: min(21rem, 80vw);
 		max-width: min(34rem, 92vw);
 		padding: clamp(16px, 2.4vh, 24px) clamp(18px, 2.2vw, 30px);

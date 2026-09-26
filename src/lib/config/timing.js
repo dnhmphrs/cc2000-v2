@@ -595,12 +595,6 @@ const RAW = {
 			open: [0.35, 1],
 			glow: [0.6, 1]
 		},
-		// And on a run that came home through the record: the last of its
-		// grooves passing the lens as the sky comes up (approach.js, the lip)
-		// — over the first two seconds, so the one flight becomes the other
-		// rather than cutting to it.
-		lip: [0, 0.28],
-
 		// ── ONE SPEED, ONE LENS, ONE HAND ────────────────────────────────────
 		// The flight has no brake, no dolly and no levelling-off for the seam:
 		// it flies at one speed all the way into the glass, on the run's one
@@ -711,19 +705,13 @@ const RAW = {
 		// under the glass (to black in colour, so the glass stays black over
 		// it) and the raster comes back — so the frame it ends on is the black
 		// the next flight opens on. THREE: it was 1.4, a press and you were
-		// through, and the record in the glass went by too fast to be seen
-		// turning; this is long enough to watch it, and for the hole to open
-		// at the lens rather than snap. The readout is gone in the first of
-		// it (Room.svelte, room.resultOut).
+		// through; this is long enough to watch the glass take the frame. The
+		// readout is gone in the first of it (Room.svelte, room.resultOut).
+		// There used to be a record in the glass here, and its grooves went
+		// on past the lens into the next flight; both are gone — the glass
+		// goes to black and the black is the flight's.
 		home: 3.0,
 		homeDim: [0.5, 0.92],
-		// And the record in the glass on the way home (nest.js, NEST.record):
-		// the readout's black goes to vinyl over `record` of the flight — after
-		// room.resultOut has taken the readout — and the spindle hole opens at
-		// the lens and takes the frame over `swallow`; the black in it is the
-		// next flight's.
-		record: [0.18, 0.4],
-		swallow: [0.72, 0.97],
 
 		// The swimmer leaves the axis for the glass, and goes in.
 		dive: [0.88, 0.972],

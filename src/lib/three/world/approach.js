@@ -1,20 +1,5 @@
 import { get } from 'svelte/store';
 import {
-	Fn,
-	vec2,
-	vec3,
-	vec4,
-	uniform,
-	uv,
-	float,
-	length,
-	abs,
-	max,
-	min,
-	fwidth,
-	smoothstep as tslSmoothstep
-} from 'three/tsl';
-import {
 	SCENES,
 	APPROACH,
 	KALEIDO,
@@ -29,13 +14,14 @@ import {
 	DEV,
 	DEV_AT
 } from '$lib/config';
-import { gate, landing, decade, aspect } from '$lib/store/store';
+import { gate, landing, decade, edge, aspect } from '$lib/store/store';
 import { deep, backdropUniforms } from '$lib/three/tsl/backdrop';
-import { dotMaterial, dots, ADD } from '$lib/three/tsl/materials';
+import { dotMaterial, dots } from '$lib/three/tsl/materials';
 import { createMotes } from '$lib/three/tsl/motes';
 import { rand } from '$lib/random';
 import { roomsFor } from './nest';
 import { wobbleEuler } from './wobble';
+import { runClock, crtGain } from '$lib/three/tsl/clock';
 
 // ── Scene 1: the approach ────────────────────────────────────────────────────
 // The fly-in. Space, black, a sky of stars, blue debris streaking by — and the
@@ -57,15 +43,18 @@ import { wobbleEuler } from './wobble';
 // behind: every version of that reads as a body being stretched by a wide lens.
 //
 // ── The flight takes the answers ─────────────────────────────────────────────
-// There is no machine, so the run asks its two questions on the way in — the
-// popup asks the second the moment the first is answered — and while they are
-// open the scene HOLDS: `t` stops and the swimmer's clock does not, so it goes
-// on rolling and what is on screen is a flight waiting rather than a paused
-// frame. Holding t rather than running a second clock is what keeps every
-// frame a pure function of progress, so ?at= is exact. (The roll and the
-// tail's wobble are on the swimmer's own clock — the one thing in the run that
-// never stops, not even at the seam.) The swimmer takes the questions as it
-// rides: from behind, on the axis, and they are put under it.
+// There is no machine, so the run asks its two questions on the way in — both
+// in one panel at the centre of the frame, over the swimmer — and while they
+// are open the scene HOLDS: `t` stops, and the flight WAITS IN MOTION rather
+// than on a paused frame: the swimmer's clock goes on, so it rolls; the debris
+// goes on streaming past at the flight's speed (heldZ, on the hold's own
+// seconds) and the signal's clock with it, so the picture never stills. The
+// set does not come nearer, because t does not move: holding t rather than
+// running a second clock is what keeps every frame a pure function of
+// progress, so ?at= is exact — the hold's seconds only ever add to what is
+// looped or rolled, never to where the flight is. (The roll and the tail's
+// wobble are on the swimmer's own clock — the one thing in the run that never
+// stops, not even at the seam.)
 //
 // ── The switch-on ────────────────────────────────────────────────────────────
 // The set does not switch itself on. Its glass is black until the swimmer's
@@ -79,13 +68,13 @@ import { wobbleEuler } from './wobble';
 // reproduce, so reading the spot off it put the dot wherever the roll had the
 // head that frame, high in the glass as often as not.
 //
-// ── The lip ──────────────────────────────────────────────────────────────────
-// A run that came home through the record (world/descent.js stepReturn, the
-// spindle hole taking the frame) opens on the black in the hole, and the
-// record's last grooves go on past the lens over `lip` as the sky comes up —
-// gold rings, a child of the camera, expanding out of the frame and fading —
-// so the one becomes the other. The first run has no record behind it and
-// opens under the title card; nest.viaRecord says which.
+// ── A run the archive cannot answer for ──────────────────────────────────────
+// An out-of-range birthday sets `edge` and no answer, and the flight goes in
+// regardless — toward a tunnel that will break down (world/kaleido.js). The
+// archive down that tunnel is not the drawings: the moment the edge is known
+// the rings are given the verdict's gif instead (kaleidoscope.js setArchive),
+// while they are still too small to see; and if the birthday is changed on
+// the way back, they are given the drawings back.
 //
 // ── One speed, one lens, one hand, through the seam ──────────────────────────
 // The lens flies at ONE speed the whole way into the glass, no brake, on the
@@ -96,9 +85,7 @@ import { wobbleEuler } from './wobble';
 //
 // The set is always the 60s one. Room 0 at the tunnel's end is chosen when the
 // run begins; the deeper rooms are set the moment the answer is in, while they
-// are still too small to see. See finalise(). An out-of-range date sets no
-// answer at all: the flight goes in regardless and the tunnel breaks down
-// (world/kaleido.js).
+// are still too small to see. See finalise().
 //
 // Every number here comes from config/timing.js (SCENES.approach) and
 // config/space.js (APPROACH, KALEIDO, NEST).
@@ -191,57 +178,6 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 	}
 	const halfLenUnit = -nose.position.z;
 
-	// ── The lip ──────────────────────────────────────────────────────────
-	// The record's last grooves, on a run that came home through it: gold
-	// hairline rings on a quad that covers the frame a unit ahead of the
-	// lens, ADD, expanding out of the frame and fading over `lip` — six of
-	// them, close-set, the smallest still short of the frame's corners when
-	// the window closes, so they go on passing the lens for the whole of it
-	// as the sky comes up: the record's tunnel becoming space, not a ripple
-	// on it.
-	const lu = { uK: uniform(0), uA: uniform(0), uAspect: uniform(1) };
-	const lipMat = new THREE.MeshBasicNodeMaterial({
-		transparent: true,
-		depthTest: false,
-		depthWrite: false,
-		...ADD
-	});
-	lipMat.colorNode = Fn(() => {
-		const p = uv().sub(0.5).mul(vec2(lu.uAspect, 1.0));
-		const r = length(p);
-		const px = fwidth(r);
-		const grow = lu.uK.mul(4.0).add(1.0);
-		const w = float(0.006);
-		const ring = (r0, k) => {
-			const d = abs(r.sub(float(r0).mul(grow)));
-			const e = max(w, px);
-			return tslSmoothstep(0.0, e, d)
-				.oneMinus()
-				.mul(min(w.div(e), 1.0))
-				.mul(k);
-		};
-		const g = ring(0.12, 1.2)
-			.add(ring(0.2, 1.15))
-			.add(ring(0.3, 1.1))
-			.add(ring(0.45, 1.0))
-			.add(ring(0.62, 0.85))
-			.add(ring(0.8, 0.7));
-		const col = vec3(0.94, 0.77, 0.36).mul(g).mul(lu.uA);
-		return vec4(col, 1.0);
-	})();
-	const lip = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), lipMat);
-	lip.name = 'lip';
-	lip.renderOrder = 90000;
-	lip.frustumCulled = false;
-	lip.position.z = -1;
-	lip.visible = false;
-	camera.add(lip);
-	const lipH = 2 * Math.tan(rad(LENS) / 2);
-	function sizeLip(aspectR) {
-		lu.uAspect.value = aspectR;
-		lip.scale.set(lipH * aspectR, lipH, 1);
-	}
-	let loopIn = false;
 	// ?sperm=0 hides the swimmer, for checking the seam pixel for pixel: its
 	// roll is on real time, so it is the one thing two loads never agree on.
 	const SPERM =
@@ -293,18 +229,40 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		// The contact: the nose on the glass plane, z0·p − lead − halfLen = zGlass.
 		const bodyH = A.span * 2 * A.lead * Math.tan(rad(LENS) / 2);
 		pStar = (kal.zGlass + A.lead + halfLenUnit * bodyH) / zEnd;
-		// Came home through the record? Then the lip; and forget it.
-		loopIn = nest.viaRecord;
-		nest.viaRecord = false;
 		// The way home took the last room to black; this nest is lit.
 		nest.setDark(1);
+		heldZ = 0;
+		heldS = 0;
+		clockAhead = 0;
+		// The drawings down the tunnel, or the gif of a run the archive
+		// cannot answer for (the harness can seed one: ?edge=past|future).
+		archive = undefined;
+		setArchive(get(edge) || null);
 		set(0);
+	}
+
+	// The hold's own seconds, and the distance the debris has streamed on
+	// them: the flight waiting in motion, see above. clockAhead is what the
+	// signal's clock is ahead of the run's while held, and nothing after.
+	let heldZ = 0;
+	let heldS = 0;
+	let clockAhead = 0;
+	let archive;
+	function setArchive(kind) {
+		if (kind === archive) return;
+		archive = kind;
+		kal.setArchive(kind);
 	}
 
 	function update(dt) {
 		const held = get(gate);
 		sw.clock += dt;
 		if (!held) t += dt;
+		else {
+			heldZ += (zEnd / T.duration) * dt;
+			heldS += dt;
+		}
+		clockAhead = held ? heldS : 0;
 		const p = clamp01(t / T.duration);
 
 		// The questions: the first is asked here, and the popup asks the second
@@ -316,6 +274,7 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 			gate.set('dob');
 		}
 		if (!finalised && get(decade)) finalise();
+		setArchive(get(edge) || null);
 
 		set(p);
 		return t >= T.duration;
@@ -331,7 +290,10 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		// tunnel picks it up at the seam at the same second.
 		const z = zEnd * p;
 		rig.position.set(0, 0, z);
-		camera.quaternion.setFromEuler(wobbleEuler(euler, runSeconds('approach', p)));
+		const seconds = runSeconds('approach', p);
+		runClock.value = seconds + clockAhead;
+		crtGain.value = 1;
+		camera.quaternion.setFromEuler(wobbleEuler(euler, seconds));
 		camera.updateMatrixWorld(true);
 
 		// ── The sky and the debris ───────────────────────────────────────
@@ -340,16 +302,7 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 		const up = smootherstep(span(p, T.fadeIn));
 		const on = up * (1 - easeInOutCubic(span(p, T.skyOut)));
 		for (const s of starMats) s.mat.uniforms.uOpacity.value = s.opacity * on;
-		motes.set(z, on, span(p, T.fadeIn));
-
-		// ── The lip ──────────────────────────────────────────────────────
-		{
-			const k = smootherstep(span(p, T.lip));
-			const a = loopIn ? smoothstep(0, 0.02, p) * Math.pow(1 - k, 1.2) : 0;
-			lu.uK.value = k;
-			lu.uA.value = a;
-			lip.visible = a > 0.001;
-		}
+		motes.set(z + heldZ, on, span(p, T.fadeIn));
 
 		// ── The swimmer ──────────────────────────────────────────────────
 		// It rides ahead of the LENS, dead centre — a child of the camera, so
@@ -419,7 +372,6 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 			camera.updateProjectionMatrix();
 			bu.aspectRatio.value = w / h;
 			bu.uPx.value = 1 / renderer.domElement.height;
-			sizeLip(w / h);
 		},
 		// Jump to a fraction of the scene's own duration, exactly. Used by the
 		// ?at= scrub — config/dev.js.
@@ -434,8 +386,6 @@ export async function createApproach({ THREE, renderer, nest, kal }) {
 			motes.dispose();
 			sigGeo.dispose();
 			sigMat.dispose();
-			lip.geometry.dispose();
-			lipMat.dispose();
 		}
 	};
 }
