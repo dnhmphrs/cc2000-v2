@@ -35,6 +35,10 @@ title card, the two mid-flight questions, the room and the director
 The workshop is beside them: `/lab?sketch=…` puts one sketch on a bare canvas,
 and `/v4` chains the rebuild's sketches end to end (`docs/v4-plan.md` is the
 plan v3 was built from — the "v4" in those names is the rebuild's, not a run).
+The next rebuild is being looked for at **`/log`**: the run as maths on a
+blackboard — the golden-spiral swimmer, the golden-angle tunnel, the Möbius
+turn, the fall into the rooms — every variant of every beat, and a reel of one
+of each (`docs/explore-03.md`).
 
 ### v3
 

@@ -17,6 +17,8 @@
 	let canvas;
 	let status = 'booting';
 
+	const SKETCHES = import.meta.glob('/src/lib/lab/*.js');
+
 	onMount(async () => {
 		const q = new URLSearchParams(location.search);
 		const name = q.get('sketch') ?? 'rooms';
@@ -26,9 +28,13 @@
 		const steps = Number(q.get('steps') ?? 0) || undefined;
 
 		// Both imports are dynamic on purpose: three/webgpu must never be
-		// evaluated during SSR, and each sketch is its own module.
+		// evaluated during SSR, and each sketch is its own module. The sketches
+		// are a glob rather than a template import, which Vite fixes when the
+		// dev server starts: a glob it watches, so a new sketch is there at once.
 		const THREE = await import('three/webgpu');
-		const mod = await import(`$lib/lab/${name}.js`);
+		const load = SKETCHES[`/src/lib/lab/${name}.js`];
+		if (!load) throw new Error(`no sketch called ${name} in src/lib/lab`);
+		const mod = await load();
 		const make = mod.default;
 
 		// A sketch may ask for more of the renderer than the default — the

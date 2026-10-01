@@ -47,6 +47,16 @@
 	//
 	// The card is DOM over the canvas and hides itself once it has lifted, so
 	// it goes first.
+	//
+	// ── And the blackboard, the log of everything ────────────────────────────
+	// ?chain=log (linked from /log, the index) plays the six sketches of
+	// docs/explore-03.md — the rebuild drawn as maths on a dark board, one
+	// variant of each — in the order of the run: the orb the questions fly at,
+	// the golden-spiral swimmer, the swim down the golden-angle tunnel, the
+	// beat at its centre, the Möbius zoom out, and the fall into the rooms.
+	// Each beat is its sketch's own length (its info.seconds), and
+	// ?pick=rings,,cylinder names another variant for any beat, in order (a
+	// blank keeps the chain's own). The board is a 2D canvas over the page.
 	const CHAINS = {
 		v4: [
 			{ key: 'approach', name: 'approach', seconds: 9 },
@@ -70,6 +80,14 @@
 			{ key: 'lcl-tunnel', name: 'lcl-tunnel', seconds: 7 },
 			{ key: 'noir-ground', name: 'noir-ground', seconds: 25 },
 			{ key: 'strobe', name: 'strobe', seconds: 3.6 }
+		],
+		log: [
+			{ key: 'log-orb', name: 'orb', v: 'net' },
+			{ key: 'log-sperm', name: 'swimmer', v: 'fib' },
+			{ key: 'log-tunnel', name: 'tunnel', v: 'plane' },
+			{ key: 'log-beat', name: 'beat', v: 'invert' },
+			{ key: 'log-mobius', name: 'möbius', v: 'sphere' },
+			{ key: 'log-fall', name: 'fall', v: 'droste' }
 		]
 	};
 	const HOLD = 1.5; // seconds on the last frame before the loop
@@ -90,7 +108,13 @@
 		silhouette: () => import('$lib/lab/silhouette.js'),
 		'lcl-tunnel': () => import('$lib/lab/lcl-tunnel.js'),
 		'noir-ground': () => import('$lib/lab/noir-ground.js'),
-		strobe: () => import('$lib/lab/strobe.js')
+		strobe: () => import('$lib/lab/strobe.js'),
+		'log-orb': () => import('$lib/lab/log-orb.js'),
+		'log-sperm': () => import('$lib/lab/log-sperm.js'),
+		'log-tunnel': () => import('$lib/lab/log-tunnel.js'),
+		'log-beat': () => import('$lib/lab/log-beat.js'),
+		'log-mobius': () => import('$lib/lab/log-mobius.js'),
+		'log-fall': () => import('$lib/lab/log-fall.js')
 	};
 
 	let canvas;
@@ -103,12 +127,13 @@
 		const forceWebGL = q.get('gl') === '1';
 		const chain = CHAINS[q.get('chain')] ? q.get('chain') : 'v4';
 		const BEATS = CHAINS[chain];
-		const TAG =
-			chain === 'v4'
-				? 'v4 · rough cut'
-				: chain === 'explore'
-					? 'explore 01 · reel'
-					: 'explore 02 · reel';
+		const TAG = {
+			v4: 'v4 · rough cut',
+			explore: 'explore 01 · reel',
+			explore2: 'explore 02 · reel',
+			log: 'explore 03 · the log reel'
+		}[chain];
+		const picks = (q.get('pick') ?? '').split(',');
 
 		const THREE = await import('three/webgpu');
 		const renderer = new THREE.WebGPURenderer({
@@ -124,12 +149,23 @@
 		renderer.setClearColor(0x000000, 1);
 		const lane = renderer.backend.isWebGPUBackend ? 'webgpu' : 'webgl';
 
-		// Every beat is built up front, pinned at its start.
+		// Every beat is built up front, pinned at its start. A log sketch takes
+		// its variant from the chain (or ?pick=) rather than the page's ?v=.
+		const { pickVariant } = await import('$lib/lab/log/board.js');
 		const beats = [];
-		for (const b of BEATS) {
+		for (const [i, b] of BEATS.entries()) {
 			const { default: make } = await LOADERS[b.key]();
+			const v = picks[i] || b.v;
+			pickVariant(v);
 			const sketch = await make({ THREE, renderer, at: 0 });
-			beats.push({ ...b, sketch });
+			pickVariant(null);
+			const seconds = b.seconds ?? sketch.info.seconds;
+			beats.push({
+				...b,
+				seconds,
+				name: v ? `${b.name} · ${sketch.info.variant}` : b.name,
+				sketch
+			});
 		}
 		const total = beats.reduce((s, b) => s + b.seconds, 0);
 		let start = 0;

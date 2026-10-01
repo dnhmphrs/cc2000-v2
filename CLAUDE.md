@@ -89,6 +89,13 @@ its own way (`director.setRun`) — beside the build number. Everything below is
 v3 unless it says v2. The README is lean on purpose; the long design history
 of v2 is `docs/design-notes.md`.
 
+The NEXT run is being looked for, not built: **`/log`** indexes the blackboard
+sketches (`lab/log-*.js` on the shared kit `lab/log/`, a 2D canvas over the
+page, not the Stage — `docs/explore-03.md`), and `/v4?chain=log` plays one
+variant of each. A log sketch reads its variant from `?v=`, or from the reel
+(`pickVariant` round its `make()`). `/lab` finds sketches by a glob Vite
+watches, so a new file in `src/lib/lab/` is there without a restart.
+
 ## This build has no machine, and three scenes
 
 The run is `three/Stage.svelte` on ONE `WebGPURenderer` (WebGL 2 behind it

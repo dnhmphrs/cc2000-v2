@@ -127,9 +127,11 @@ await p.click('button.go');
 ok('the second answer lets it dive', await until(() => !document.querySelector('.ask'), 20));
 
 // ── The run ──────────────────────────────────────────────────────────────────
+// Two minutes: on the webgpu lane (SwiftShader) the dive takes 56–58 s from
+// the second answer even at ?speed=6, and a minute was failing it by chance.
 ok(
 	'run completes',
-	await until(() => !!document.querySelector('.again') || !!document.querySelector('.card'))
+	await until(() => !!document.querySelector('.again') || !!document.querySelector('.card'), 240)
 );
 ok(
 	'answer lands in the monitor glass',
