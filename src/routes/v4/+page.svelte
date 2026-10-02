@@ -57,6 +57,13 @@
 	// Each beat is its sketch's own length (its info.seconds), and
 	// ?pick=rings,,cylinder names another variant for any beat, in order (a
 	// blank keeps the chain's own). The board is a 2D canvas over the page.
+	//
+	// ?chain=clopen plays the second round's (docs/explore-04.md) in the
+	// run's order, with the first round's orb and tunnel between: a
+	// beginning, the orb, the tunnel, the way into spacetime closed up, the
+	// closure of space round the sphere, and the room appearing. ?chain=play
+	// plays its five films of clopen maths back to back — each opens and ends
+	// on a lit point at the centre, so they chain into one loop.
 	const CHAINS = {
 		v4: [
 			{ key: 'approach', name: 'approach', seconds: 9 },
@@ -88,6 +95,21 @@
 			{ key: 'log-beat', name: 'beat', v: 'invert' },
 			{ key: 'log-mobius', name: 'möbius', v: 'sphere' },
 			{ key: 'log-fall', name: 'fall', v: 'droste' }
+		],
+		clopen: [
+			{ key: 'log-dawn', name: 'dawn', v: 'fullstop' },
+			{ key: 'log-orb', name: 'orb', v: 'net' },
+			{ key: 'log-tunnel', name: 'tunnel', v: 'plane' },
+			{ key: 'log-spacetime', name: 'spacetime', v: 'penrose' },
+			{ key: 'log-closure', name: 'closure', v: 'projective' },
+			{ key: 'log-arrival', name: 'arrival', v: 'glass' }
+		],
+		play: [
+			{ key: 'log-clopen', name: 'play', v: 'schottky' },
+			{ key: 'log-clopen', name: 'play', v: 'doyle' },
+			{ key: 'log-clopen', name: 'play', v: 'apollonian' },
+			{ key: 'log-clopen', name: 'play', v: 'padic' },
+			{ key: 'log-clopen', name: 'play', v: 'ford' }
 		]
 	};
 	const HOLD = 1.5; // seconds on the last frame before the loop
@@ -114,7 +136,12 @@
 		'log-tunnel': () => import('$lib/lab/log-tunnel.js'),
 		'log-beat': () => import('$lib/lab/log-beat.js'),
 		'log-mobius': () => import('$lib/lab/log-mobius.js'),
-		'log-fall': () => import('$lib/lab/log-fall.js')
+		'log-fall': () => import('$lib/lab/log-fall.js'),
+		'log-dawn': () => import('$lib/lab/log-dawn.js'),
+		'log-spacetime': () => import('$lib/lab/log-spacetime.js'),
+		'log-closure': () => import('$lib/lab/log-closure.js'),
+		'log-arrival': () => import('$lib/lab/log-arrival.js'),
+		'log-clopen': () => import('$lib/lab/log-clopen.js')
 	};
 
 	let canvas;
@@ -131,7 +158,9 @@
 			v4: 'v4 · rough cut',
 			explore: 'explore 01 · reel',
 			explore2: 'explore 02 · reel',
-			log: 'explore 03 · the log reel'
+			log: 'explore 03 · the log reel',
+			clopen: 'explore 04 · the clopen reel',
+			play: 'explore 04 · play'
 		}[chain];
 		const picks = (q.get('pick') ?? '').split(',');
 
