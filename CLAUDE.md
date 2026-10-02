@@ -93,8 +93,10 @@ The NEXT run is being looked for, not built: **`/log`** indexes the blackboard
 sketches (`lab/log-*.js` on the shared kit `lab/log/`, a 2D canvas over the
 page, not the Stage — `docs/explore-03.md`), and `/v4?chain=log` plays one
 variant of each. A log sketch reads its variant from `?v=`, or from the reel
-(`pickVariant` round its `make()`). `/lab` finds sketches by a glob Vite
-watches, so a new file in `src/lib/lab/` is there without a restart.
+(`pickVariant` round its `make()`). `/lab` finds sketches by a glob, and in
+dev fetches one the glob does not know by its path — the dev server here does
+not see files added after it started — so a new file in `src/lib/lab/` is
+there without a restart.
 
 ## This build has no machine, and three scenes
 
