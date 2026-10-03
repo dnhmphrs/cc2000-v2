@@ -147,6 +147,26 @@ export const BOARD = [
 		]
 	},
 	{
+		sketch: 'log-charts',
+		cut: 'mercator',
+		name: 'Coordinate charts',
+		round: 3,
+		what: 'A space is covered by charts, flat maps of pieces of it; closed in one chart, open in the next.',
+		variants: [
+			[
+				'mercator',
+				'the sphere unrolled into Mercator’s chart, which is log z: every loxodrome a straight line'
+			],
+			['atlas', 'the sphere in two charts, from N and from S, glued on their overlap by w = 1/z'],
+			[
+				'kruskal',
+				'one black hole, three charts: Schwarzschild, Kruskal, Penrose, and Flamm’s bridge'
+			],
+			['desitter', 'de Sitter’s hyperboloid sliced closed, flat and open: it depends on the chart'],
+			['torus', 'the flat torus as a glued square, rolled up; the straight line a trefoil knot']
+		]
+	},
+	{
 		sketch: 'log-arrival',
 		cut: 'assemble',
 		name: 'The rooms appear',
