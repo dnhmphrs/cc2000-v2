@@ -134,6 +134,19 @@ export const BOARD = [
 		]
 	},
 	{
+		sketch: 'log-universe',
+		cut: 'torus',
+		name: 'Closed universes',
+		round: 3,
+		what: 'Spaces with no edge and finite volume, seen from inside: closed, yet open wherever you stand.',
+		variants: [
+			['torus', 'T³: a cube whose faces are glued; from inside, the same room through every wall'],
+			['dodeca', 'Poincaré’s dodecahedral space: opposite faces glued with a tenth of a turn'],
+			['mirror', 'a Klein bottle: the swimmer comes round and back as its own mirror image'],
+			['sphere', 'Einstein’s S³: what recedes past the equator grows again, and fills the sky']
+		]
+	},
+	{
 		sketch: 'log-arrival',
 		cut: 'assemble',
 		name: 'The rooms appear',
