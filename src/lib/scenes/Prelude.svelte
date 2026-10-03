@@ -31,7 +31,7 @@
 	const LINES = [
 		'in the earth year 2000, human technology advanced',
 		'allowing all of mankind to calculate the song playing',
-		'at their exact moment of conception'
+		'at their exact moment of conception.'
 	];
 
 	let shown = LINES.map(() => 0);

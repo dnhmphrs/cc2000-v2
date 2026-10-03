@@ -35,6 +35,19 @@ title card, the two mid-flight questions, the room and the director
 The workshop is beside them: `/lab?sketch=…` puts one sketch on a bare canvas,
 and `/v4` chains the rebuild's sketches end to end (`docs/v4-plan.md` is the
 plan v3 was built from — the "v4" in those names is the rebuild's, not a run).
+The next rebuild is being looked for at **`/log`**: the run as maths on a
+blackboard — the golden-spiral swimmer, the golden-angle tunnel, the Möbius
+turn, the fall into the rooms — every variant of every beat, and a reel of one
+of each (`docs/explore-03.md`), and the second round on the same board —
+beginnings, the way into spacetime, space closing up round the sphere, the
+rooms appearing, and some play with the clopen geometry
+(`docs/explore-04.md`); and the third round, Einstein meets Gödel — his
+rotating universe where time closes up, the closed universes from inside,
+coordinate charts, more rooms out of the dot, and moving through rooms in
+other geometries (`docs/explore-05.md`). `/log` lists every experiment there
+has been, `/cut` plays
+one of each beat end to end in the run's order, and a small bar in the corner
+of any of them steps to the next.
 
 ### v3
 

@@ -89,6 +89,29 @@ its own way (`director.setRun`) — beside the build number. Everything below is
 v3 unless it says v2. The README is lean on purpose; the long design history
 of v2 is `docs/design-notes.md`.
 
+The NEXT run is being looked for, not built: **`/log`** indexes the blackboard
+sketches (`lab/log-*.js` on the shared kit `lab/log/`, a 2D canvas over the
+page, not the Stage — `docs/explore-03.md`, `-04`, `-05`), and
+`/v4?chain=log`, `?chain=clopen` and `?chain=play` play one variant of each,
+and **`/cut`** (`?chain=all`) is THE CUT: everything there is, one variant of
+each beat in the run's order, the variant each beat's `cut` names in the
+registry, so a beat that lands in the registry is in the cut. A
+log sketch reads its variant from `?v=`, or from the reel (`pickVariant` round
+its `make()`). EVERY experiment is listed once, in `data/experiments.js` — the
+board's beats and variants in the run's order, the reels, the rounds before
+the board, the runs — and that list is what `/log` indexes and what the small
+bar in the bottom right of the lab, the reels and the index
+(`components/LabBar.svelte`, mounted from the layout so it sits above the
+board's canvas) steps through; a new sketch or variant goes in that list or it
+is nowhere. The kit is `board.js` (the board, views, strokes, maths type,
+the clock), `space.js` (the lens, keyframed paths, a depth buffer for hidden
+lines, 3D lines), `ink.js` (the orb, lit points, the lecture), `rooms.js` (the
+bedrooms on the board), `plate.js` and `sperm.js`; use it rather than copying
+a sketch's own helpers. `/lab` finds sketches by a glob, and in
+dev fetches one the glob does not know by its path — the dev server here does
+not see files added after it started — so a new file in `src/lib/lab/` is
+there without a restart.
+
 ## This build has no machine, and three scenes
 
 The run is `three/Stage.svelte` on ONE `WebGPURenderer` (WebGL 2 behind it
