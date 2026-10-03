@@ -86,16 +86,21 @@ import { orbit, line3, circle3, label3 } from './log/space.js';
 //            one angle) pouring into the pole, added as light is on a plate,
 //            so the pole whitens into the orb. The exposure closes, the trails
 //            fade, the light is left.
-//   title    the whole board as a lecture's opening: "Lecture 1" top left,
-//            today's date top right, the title double-ruled, the sentence
-//            boxed in chalk — and corrected in red chalk, the board's own gag:
-//            "advanced" struck out, "peaked" written over it. Then the full
-//            stop, and the same zoom into it as fullstop, the correction
-//            riding out with the rest.
+//   terminal the title card as the terminal it always wanted to be: the
+//            site's mono face, a block caret blinking alone on the dark, then
+//            `$ ./conception --calculate` typed at a keystroke rhythm (uneven,
+//            seeded: a hitch at every space, a longer one at punctuation),
+//            run, and the three lines printed below it the same way, with a
+//            pause before the last word. The caret waits after "conception",
+//            then the full stop is typed: the block caret closes to the dot,
+//            which swells, lights, and is the orb, and the lens zooms into it
+//            as fullstop does, the lines streaming out past the edges.
 //
-// How: the card variants lay their lines out once per board size (every
+// How: the typed variants lay their lines out once per board size (every
 // character's offset from the measured width of its prefix, so kerning
-// holds) and draw them through one similarity, z ↦ e^{Z}(z − stop) + pan.
+// holds) and draw them through one similarity, z ↦ e^{Z}(z − stop) + pan;
+// the terminal's keystrokes are a table of times built once, so the count
+// typed at any u is a lookup.
 // The cone is projected by hand (space.js orbit and line3), its generators
 // sampled geometrically so they reach the light. The sky precomputes the
 // flow, θ(t) and K(t) = log of the zoom, on a fine table; every star follows
@@ -112,12 +117,12 @@ const SECONDS = 10;
 const ORB_R = 6; // the orb log-orb (net) opens on: 6 px at the centre
 
 export default async function make({ at }) {
-	const v = variant(['fullstop', 'axiom', 'cone', 'sky', 'title']);
+	const v = variant(['fullstop', 'axiom', 'cone', 'sky', 'terminal']);
 	const b = getBoard();
 	const time = clock(SECONDS, at);
 	const q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
 	const ask = q?.get('ask') === '1';
-	if (v === 'fullstop' || v === 'title') {
+	if (v === 'fullstop' || v === 'terminal') {
 		// The head is set in the site's own face, which the page preloads; be
 		// sure it is in before the first frame is measured.
 		try {
@@ -126,7 +131,7 @@ export default async function make({ at }) {
 			// The board's fallbacks will do.
 		}
 	}
-	const card = v === 'fullstop' || v === 'title' ? makeCard(v) : null;
+	const card = v === 'fullstop' ? makeCard() : v === 'terminal' ? makeTerminal() : null;
 	const sky = v === 'sky' ? makeSky() : null;
 
 	function render() {
@@ -300,7 +305,7 @@ function question(ctx, w, h, u, secs) {
 		);
 }
 
-// ── fullstop & title: the sentence, and its point ────────────────────────────
+// ── fullstop: the sentence, and its point ────────────────────────────────────
 const HEAD = 'CONCEPTION CALCULATOR 2000';
 const LINES = [
 	'in the earth year 2000, human technology advanced',
@@ -323,36 +328,18 @@ const CARD = {
 		swell: [0.6, 0.68],
 		pan: [0.65, 0.84],
 		zoom: [0.68, 0.93]
-	},
-	title: {
-		date: [0.02, 0.06],
-		lecture: [0.045, 0.08],
-		head: [0.08, 0.135],
-		rule: [0.128, 0.165],
-		lines: [
-			[0.175, 0.28],
-			[0.295, 0.405],
-			[0.42, 0.49]
-		],
-		box: [0.5, 0.575],
-		strike: [0.585, 0.605],
-		fix: [0.61, 0.645],
-		stop: 0.675,
-		swell: [0.69, 0.74],
-		pan: [0.71, 0.86],
-		zoom: [0.72, 0.94]
 	}
 };
 // How far the lens goes into the point: e^{ZOOM}, a little past where the
 // last glyph has dissolved.
 const ZOOM = Math.log(55);
 
-function makeCard(v) {
+function makeCard() {
 	let L = null;
 	return {
 		draw(ctx, w, h, u, secs, os) {
-			if (!L || L.w !== w || L.h !== h) L = layoutCard(ctx, w, h, v);
-			card(ctx, L, w, h, u, secs, os, v);
+			if (!L || L.w !== w || L.h !== h) L = layoutCard(ctx, w, h);
+			card(ctx, L, w, h, u, secs, os);
 		}
 	};
 }
@@ -372,7 +359,7 @@ function layLine(ctx, text, font, size, x, y, track = 0, align = 'center') {
 const SERIF = (s) => `italic 400 ${s}px ${MATH_FONT}`;
 const TECH = (s) => `400 ${s}px ${TECH_FONT}`;
 
-function layoutCard(ctx, w, h, v) {
+function layoutCard(ctx, w, h) {
 	ctx.save();
 	ctx.font = SERIF(100);
 	const W100 = Math.max(...LINES.map((s, i) => ctx.measureText(i === 2 ? s + '.' : s).width));
@@ -382,9 +369,9 @@ function layoutCard(ctx, w, h, v) {
 	const cx = w / 2;
 	// The block: the head, its rule, and the three lines, a little above the
 	// middle of the board.
-	const top = h * (v === 'title' ? 0.3 : 0.345);
+	const top = h * 0.345;
 	const head = layLine(ctx, HEAD, TECH, hs, cx, top, hs * 0.32);
-	const y1 = top + fs * (v === 'title' ? 3.2 : 2.35);
+	const y1 = top + fs * 2.35;
 	const lines = LINES.map((s, i) => {
 		const full = i === 2 ? s + '.' : s;
 		const ln = layLine(ctx, full, SERIF, fs, cx, y1 + i * step);
@@ -414,54 +401,6 @@ function layoutCard(ctx, w, h, v) {
 			12
 		)
 	];
-	if (v === 'title') {
-		const mx = Math.max(28, w * 0.05);
-		const my = Math.max(40, h * 0.08);
-		const d = new Date();
-		const pad = (n) => String(n).padStart(2, '0');
-		L.date = layLine(
-			ctx,
-			`${pad(d.getDate())} · ${pad(d.getMonth() + 1)} · ${d.getFullYear()}`,
-			SERIF,
-			fs * 0.72,
-			w - mx,
-			my + fs * 0.25,
-			0,
-			'right'
-		);
-		L.lecture = layLine(ctx, 'Lecture 1', SERIF, fs * 0.9, mx, my + fs * 0.3, 0, 'left');
-		L.lectureRule = hand([mx - 2, my + fs * 0.62], [mx + L.lecture.W + 4, my + fs * 0.6], 0.6, 21);
-		// The box round the sentence, hand drawn: four strokes that overrun
-		// their corners a little.
-		const x0 = Math.min(...lines.map((l) => l.x0)) - fs * 0.9;
-		const x1 = Math.max(...lines.map((l) => l.x0 + l.W)) + fs * 0.9;
-		const y0 = lines[0].y - fs * 1.3;
-		const y1b = lines[2].y + fs * 0.8;
-		const o = fs * 0.35;
-		L.box = [
-			hand([x0 - o, y0], [x1 + o * 0.6, y0 + 1.5], 1.1, 31),
-			hand([x1, y0 - o * 0.8], [x1 + 1.5, y1b + o], 1.1, 32),
-			hand([x1 + o * 0.5, y1b], [x0 - o * 0.7, y1b + 2], 1.1, 33),
-			hand([x0, y1b + o * 0.6], [x0 + 1, y0 - o * 0.9], 1.1, 34)
-		];
-		// The correction: "advanced" struck out, "peaked" written over it.
-		const l1 = lines[0];
-		const k = l1.text.indexOf('advanced');
-		const ax0 = l1.x0 + l1.xs[k];
-		const ax1 = l1.x0 + l1.xs[k + 8];
-		const sy = l1.y - fs * 0.3;
-		L.strike = hand([ax0 - fs * 0.1, sy + 1], [ax1 + fs * 0.1, sy - 2], 0.8, 41);
-		L.fix = layLine(
-			ctx,
-			'peaked',
-			SERIF,
-			fs * 0.92,
-			(ax0 + ax1) / 2 + fs * 0.2,
-			l1.y - fs * 1.08,
-			0,
-			'center'
-		);
-	}
 	ctx.restore();
 	return L;
 }
@@ -486,22 +425,18 @@ function hand(a, b, wob = 1, seed = 1) {
 	return pts;
 }
 
-// Characters of a laid-out line through the lens T (scale s), written on by
-// `p` (0..1; the newest character fades in over a character's time), each
-// culled off the board.
-const FADE = 1.2;
-function writeLine(ctx, ln, T, s, p, alpha, w, h, color = PAL.chalk) {
-	if (p <= 0 || alpha <= 0.003) return;
-	const n = p * (ln.text.length + FADE);
+// Characters of a laid-out line through the lens T (scale s), each at the
+// alpha `aOf(i)` gives it (drawing stops at the first 0) and in the colour
+// `color` (a string, or a function of i), each culled off the board.
+function glyphs(ctx, ln, T, s, aOf, alpha, w, h, color) {
 	const size = ln.size * s;
 	const big = passing(size);
-	if (size < 0.5 || big <= 0.003) return;
+	if (size < 0.5 || big <= 0.003 || alpha <= 0.003) return;
 	ctx.save();
 	ctx.font = ln.font(size);
-	ctx.fillStyle = color;
 	ctx.textBaseline = 'alphabetic';
 	for (let i = 0; i < ln.text.length; i++) {
-		const a = clamp01((n - i) / FADE);
+		const a = aOf(i);
 		if (a <= 0) break;
 		const ch = ln.text[i];
 		if (ch === ' ') continue;
@@ -510,9 +445,26 @@ function writeLine(ctx, ln, T, s, p, alpha, w, h, color = PAL.chalk) {
 		if (X > w + 8 || X + adv * 1.5 + size * 0.2 < -8 || Y - size > h + 8 || Y + size * 0.4 < -8)
 			continue;
 		ctx.globalAlpha = alpha * a * 0.94 * big;
+		ctx.fillStyle = typeof color === 'function' ? color(i) : color;
 		ctx.fillText(ch, X, Y);
 	}
 	ctx.restore();
+}
+
+// A line WRITTEN on by `p` (0..1): the newest character fades in over a
+// character's time, as chalk arrives.
+const FADE = 1.2;
+function writeLine(ctx, ln, T, s, p, alpha, w, h, color = PAL.chalk) {
+	if (p <= 0) return;
+	const n = p * (ln.text.length + FADE);
+	glyphs(ctx, ln, T, s, (i) => clamp01((n - i) / FADE), alpha, w, h, color);
+}
+
+// A line TYPED to its first `n` characters: each there whole, as a terminal
+// prints it.
+function typeLine(ctx, ln, T, s, n, alpha, w, h, color = PAL.chalk) {
+	if (n <= 0) return;
+	glyphs(ctx, ln, T, s, (i) => (i < n ? 1 : 0), alpha, w, h, color);
 }
 
 // Chalk at a size no board has dissolves as it passes the lens: by its size
@@ -523,8 +475,8 @@ const passing = (px) => 1 - smooth(span(px, 600, 1250));
 const caretX = (ln, p) =>
 	ln.x0 + ln.xs[Math.min(ln.text.length, Math.max(0, Math.floor(p * (ln.text.length + FADE))))];
 
-function card(ctx, L, w, h, u, secs, os, v) {
-	const B = CARD[v];
+function card(ctx, L, w, h, u, secs, os) {
+	const B = CARD.fullstop;
 	const { stop } = L;
 	// The lens: a log zoom into the stop, z ↦ e^{Z} z about it, while the stop
 	// pans to the middle of the board.
@@ -536,19 +488,6 @@ function card(ctx, L, w, h, u, secs, os, v) {
 	const T = ([x, y]) => [ox + s * (x - stop.x), oy + s * (y - stop.y)];
 	const Tp = (pts) => pts.map(T);
 	const gone = passing(L.fs * s);
-
-	// The title variant's furniture: the date, the lecture's number.
-	if (v === 'title') {
-		writeLine(ctx, L.date, T, s, span(u, B.date[0], B.date[1]), 0.8, w, h);
-		writeLine(ctx, L.lecture, T, s, span(u, B.lecture[0], B.lecture[1]), 0.92, w, h);
-		const lr = span(u, B.lecture[1] - 0.01, B.lecture[1] + 0.02);
-		stroke(ctx, Tp(L.lectureRule), {
-			color: PAL.chalk,
-			width: 1.6 * s,
-			alpha: 0.7 * gone,
-			upto: lr
-		});
-	}
 
 	// The head and its rule.
 	writeLine(ctx, L.head, T, s, span(u, B.head[0], B.head[1]), 0.95, w, h);
@@ -572,23 +511,6 @@ function card(ctx, L, w, h, u, secs, os, v) {
 		const p = span(u, a, b2);
 		writeLine(ctx, ln, T, s, p, 1, w, h);
 	});
-
-	// The box and the correction (title).
-	if (v === 'title') {
-		const bx = span(u, B.box[0], B.box[1]);
-		L.box.forEach((p, i) =>
-			stroke(ctx, Tp(p), {
-				color: PAL.chalk,
-				width: 2 * s,
-				alpha: 0.75 * gone,
-				upto: smooth(span(bx, i * 0.24, i * 0.24 + 0.3))
-			})
-		);
-		const st = span(u, B.strike[0], B.strike[1]);
-		stroke(ctx, Tp(L.strike), { color: PAL.red, width: 3 * s, alpha: 0.95 * gone, upto: st });
-		const fx = span(u, B.fix[0], B.fix[1]);
-		writeLine(ctx, L.fix, T, s, fx, 1, w, h, PAL.red);
-	}
 
 	// The cursor (log-orb's): steady ahead of whatever is being written,
 	// blinking where the next thing will be — the head's start before
@@ -645,6 +567,189 @@ function circlePts(x, y, r, n = 64) {
 	for (let i = 0; i <= n; i++)
 		pts.push([x + r * Math.cos((TAU * i) / n), y + r * Math.sin((TAU * i) / n)]);
 	return pts;
+}
+
+// ── terminal: the card as a terminal ─────────────────────────────────────────
+// The site's mono face; a prompt, a command, and the sentence printed as its
+// output, every keystroke on a table of times built once (so the count typed
+// at any u is a lookup): a base interval jittered by a seeded random, a hitch
+// after every space, a longer one at punctuation, a line's gap, a run's pause
+// after the command, and a pause before the last word. The block caret blinks
+// on the clock while it waits and holds steady within a keystroke of the last
+// one. The full stop is the last keystroke: the caret closes to the dot, the
+// dot swells into the orb, and the lens goes into it as fullstop's does.
+const TERM = {
+	cmd: '$ ./conception --calculate',
+	lead: 0.45, // the caret alone, s
+	keyCmd: 0.03, // base interval, s, for the command
+	keyOut: 0.021, // and for the output
+	run: 0.38, // the pause after the command is run
+	gap: 0.2, // between output lines
+	lastWord: 0.4, // before "conception"
+	wait: 0.35, // the caret after "conception", before the stop
+	blink: 2.3 // blinks a second
+};
+
+// The keystrokes: a time for each character of each line, in seconds.
+function keystrokes() {
+	let seed = 20001;
+	const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+	let t = TERM.lead;
+	const typed = (text, base, last = false) => {
+		const times = [];
+		for (let i = 0; i < text.length; i++) {
+			let dt = base * (0.55 + 0.9 * rnd());
+			if (i > 0 && text[i - 1] === ' ') dt += base * 0.9;
+			if (i > 0 && ',.'.includes(text[i - 1])) dt += base * 3.5;
+			if (last && text.slice(i) === 'conception') dt += TERM.lastWord;
+			t += dt;
+			times.push(t);
+		}
+		return times;
+	};
+	const cmd = typed(TERM.cmd, TERM.keyCmd);
+	t += TERM.run;
+	const out = LINES.map((text, i) => {
+		if (i > 0) t += TERM.gap;
+		return typed(text, TERM.keyOut, i === LINES.length - 1);
+	});
+	const stop = t + TERM.wait;
+	return { cmd, out, stop };
+}
+
+function makeTerminal() {
+	const K = keystrokes();
+	const uStop = K.stop / SECONDS;
+	// The beats after the typing, in progress u, hung off the last keystroke.
+	const B = {
+		stop: uStop,
+		swell: [uStop + 0.025, uStop + 0.095],
+		pan: [uStop + 0.04, 0.86],
+		zoom: [uStop + 0.06, 0.93]
+	};
+	let L = null;
+	return {
+		draw(ctx, w, h, u, secs, os) {
+			if (!L || L.w !== w || L.h !== h) L = layoutTerminal(ctx, w, h);
+			terminal(ctx, L, K, B, w, h, u, secs, os);
+		}
+	};
+}
+
+// A keystroke table's count typed by time t, and when the last one landed.
+function typedBy(times, t) {
+	let n = 0;
+	while (n < times.length && times[n] <= t) n++;
+	return n;
+}
+
+function layoutTerminal(ctx, w, h) {
+	ctx.save();
+	ctx.font = TECH(100);
+	const W100 = Math.max(...LINES.map((s) => ctx.measureText(s + '.').width));
+	const fs = Math.min(h * 0.036, (0.78 * w * 100) / W100);
+	const step = fs * 1.8;
+	const x0 = Math.max(40, w * 0.11);
+	// The block: the command, a blank, the three lines; a little above the
+	// middle, so the stop is below it and the zoom pans up as well as across.
+	const top = h / 2 - step * 1.9;
+	const cmd = layLine(ctx, TERM.cmd, TECH, fs, x0, top, 0, 'left');
+	const out = LINES.map((s, i) => layLine(ctx, s, TECH, fs, x0, top + step * (2 + i), 0, 'left'));
+	// The cell: one character's advance; the caret is a block of it.
+	ctx.font = TECH(fs);
+	const cell = ctx.measureText('0').width;
+	// The full stop: where the glyph's ink would be, in the cell after the
+	// last word.
+	const m = ctx.measureText('.');
+	const l3 = out[2];
+	const sx = l3.x0 + l3.xs[l3.text.length];
+	const stop = {
+		x: sx + (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2,
+		y: l3.y - (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2,
+		r: Math.max(1.6, (m.actualBoundingBoxRight + m.actualBoundingBoxLeft) / 2) * 1.1
+	};
+	ctx.restore();
+	return { w, h, fs, step, cell, cmd, out, stop };
+}
+
+function terminal(ctx, L, K, B, w, h, u, secs, os) {
+	const { stop } = L;
+	const t = secs;
+	// The lens, as fullstop's: a log zoom into the stop while it pans home.
+	const Z = ZOOM * zoomCurve(span(u, B.zoom[0], B.zoom[1]));
+	const s = Math.exp(Z);
+	const pan = easeInOutCubic(span(u, B.pan[0], B.pan[1]));
+	const ox = w / 2 + (stop.x - w / 2) * (1 - pan);
+	const oy = h / 2 + (stop.y - h / 2) * (1 - pan);
+	const T = ([x, y]) => [ox + s * (x - stop.x), oy + s * (y - stop.y)];
+
+	// The command: the prompt in the site's gold, the rest in chalk.
+	const nc = typedBy(K.cmd, t);
+	typeLine(ctx, L.cmd, T, s, nc, 1, w, h, (i) => (i < 2 ? PAL.gold : PAL.chalk));
+	// The output.
+	const no = K.out.map((times) => typedBy(times, t));
+	L.out.forEach((ln, i) => typeLine(ctx, ln, T, s, no[i], 0.92, w, h));
+
+	// The caret: a block in the cell after the last thing typed — on the
+	// command until it is run, then on the output's lines in turn — steady
+	// within a keystroke of the last one, blinking on the clock otherwise.
+	// After the last word it waits for the stop, and is it.
+	if (u < B.stop) {
+		let ln = L.cmd;
+		let n = nc;
+		let last = nc > 0 ? K.cmd[nc - 1] : -1;
+		const runAt = K.cmd[K.cmd.length - 1] + TERM.run * 0.5;
+		if (t >= runAt) {
+			let i = 0;
+			while (i < 2 && no[i + 1] > 0) i++;
+			if (no[0] > 0 || t >= runAt) {
+				ln = L.out[i];
+				n = no[i];
+				last = n > 0 ? K.out[i][n - 1] : runAt;
+			}
+		}
+		const steady = t - last < 0.16;
+		const on = steady || (t * TERM.blink) % 1 < 0.58;
+		if (on) {
+			const [X, Y] = T([ln.x0 + ln.xs[n], ln.y]);
+			ctx.save();
+			ctx.globalAlpha = 0.9;
+			ctx.fillStyle = PAL.chalk;
+			ctx.fillRect(X, Y - 0.78 * L.fs * s, L.cell * s, 0.92 * L.fs * s);
+			ctx.restore();
+		}
+	}
+
+	// The full stop: the caret closes to the dot, the dot swells, lights, and
+	// is the orb — a point of light that keeps its size as the lens closes in.
+	if (u >= B.stop) {
+		const [X, Y] = T([stop.x, stop.y]);
+		const close = smooth(span(u, B.stop, B.stop + 0.014));
+		const sw = smooth(span(u, B.swell[0], B.swell[1]));
+		if (close < 1) {
+			const bw = lerp(L.cell, stop.r * 2, close) * s;
+			const bh = lerp(0.92 * L.fs, stop.r * 2, close) * s;
+			const [cx0, cy0] = T([L.out[2].x0 + L.out[2].xs[L.out[2].text.length], L.out[2].y]);
+			const bx = lerp(cx0, X - bw / 2, close);
+			const by = lerp(cy0 - 0.78 * L.fs * s, Y - bh / 2, close);
+			ctx.save();
+			ctx.globalAlpha = 0.9;
+			ctx.fillStyle = PAL.chalk;
+			ctx.fillRect(bx, by, bw, bh);
+			ctx.restore();
+		}
+		const rChalk = stop.r * s * lerp(1, 1.5, sw);
+		disc(ctx, X, Y, rChalk, {
+			fill: PAL.chalk,
+			alpha: 0.95 * close * (1 - smooth(span(sw, 0.35, 0.8)))
+		});
+		const light = smooth(span(sw, 0.1, 0.75));
+		const flare = 0.9 * bump(u, B.swell[1] - 0.01, 0.035);
+		orb(ctx, X, Y, lerp(stop.r * 1.1, ORB_R, smooth(span(sw, 0.3, 1))), os, {
+			alpha: light,
+			flare
+		});
+	}
 }
 
 // ── axiom: a point, a circle, a pencil ───────────────────────────────────────

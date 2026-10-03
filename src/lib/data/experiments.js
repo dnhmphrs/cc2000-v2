@@ -20,7 +20,7 @@ export const BOARD = [
 			['axiom', 'a proof: a point, a circle, the pencil of circles blooming out of it'],
 			['cone', 'a light cone in a spacetime diagram, turned end-on into the tunnel'],
 			['sky', 'the night sky round the pole, star trails tightening into spirals'],
-			['title', 'the board as Lecture 1, with a correction in red chalk']
+			['terminal', 'the card as a terminal: a prompt, the sentence typed, its full stop the orb']
 		]
 	},
 	{
