@@ -105,6 +105,24 @@ export const BOARD = [
 		]
 	},
 	{
+		sketch: 'log-godel',
+		name: 'Einstein meets Gödel',
+		round: 3,
+		what: 'Gödel’s rotating universe: the light cones tip over as you go out, until time closes up.',
+		variants: [
+			[
+				'cones',
+				'the cones tip toward φ; on the circle of light they touch the plane, beyond it they dip'
+			],
+			['loop', 'a worldline out of the event, round a closed timelike curve, back to its own past'],
+			[
+				'chart',
+				'the cones cut by t: ellipses, a parabola on the circle, hyperbolas beyond; every point the centre'
+			],
+			['sentence', 'G ⟺ ¬Prov(⌜G⌝): the sentence that names itself, zoomed into for ever']
+		]
+	},
+	{
 		sketch: 'log-arrival',
 		name: 'The rooms appear',
 		round: 2,
