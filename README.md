@@ -41,7 +41,11 @@ turn, the fall into the rooms — every variant of every beat, and a reel of one
 of each (`docs/explore-03.md`), and the second round on the same board —
 beginnings, the way into spacetime, space closing up round the sphere, the
 rooms appearing, and some play with the clopen geometry
-(`docs/explore-04.md`). `/log` lists every experiment there has been, `/cut` plays
+(`docs/explore-04.md`); and the third round, Einstein meets Gödel — his
+rotating universe where time closes up, the closed universes from inside,
+coordinate charts, more rooms out of the dot, and moving through rooms in
+other geometries (`docs/explore-05.md`). `/log` lists every experiment there
+has been, `/cut` plays
 one of each beat end to end in the run's order, and a small bar in the corner
 of any of them steps to the next.
 

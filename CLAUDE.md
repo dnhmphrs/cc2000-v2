@@ -91,7 +91,7 @@ of v2 is `docs/design-notes.md`.
 
 The NEXT run is being looked for, not built: **`/log`** indexes the blackboard
 sketches (`lab/log-*.js` on the shared kit `lab/log/`, a 2D canvas over the
-page, not the Stage — `docs/explore-03.md`, `docs/explore-04.md`), and
+page, not the Stage — `docs/explore-03.md`, `-04`, `-05`), and
 `/v4?chain=log`, `?chain=clopen` and `?chain=play` play one variant of each,
 and **`/cut`** (`?chain=all`) is THE CUT: everything there is, one variant of
 each beat in the run's order, the variant each beat's `cut` names in the
