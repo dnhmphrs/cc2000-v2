@@ -3,8 +3,10 @@
 // (components/LabBar.svelte) both read this, so a sketch is listed once.
 //
 // BOARD is the blackboard rebuild (docs/explore-03.md, -04, -05), every beat
-// in the order of the run, the round it came in, and every variant of it:
-// [variant, one line]. REELS play sketches end to end (/v4?chain=…). EARLIER
+// in the order of the run, the round it came in, every variant of it
+// ([variant, one line]) and `cut`, the variant it plays in THE CUT — /cut,
+// everything there is, one of each, in the run's order (null: not a slot in
+// the run). REELS play sketches end to end (/v4?chain=…). EARLIER
 // are the rounds before the board: explore 01 and 02, the v4 rough cut and
 // the workshop's own sketches, each a single sketch in the lab. RUNS are the
 // site's two runs.
@@ -12,6 +14,7 @@
 export const BOARD = [
 	{
 		sketch: 'log-dawn',
+		cut: 'terminal',
 		name: 'Beginnings',
 		round: 2,
 		what: 'From nothing to the orb the first question is asked under; every one ends on the orb’s first frame.',
@@ -25,6 +28,7 @@ export const BOARD = [
 	},
 	{
 		sketch: 'log-orb',
+		cut: 'net',
 		name: 'The orb',
 		round: 1,
 		what: 'The questions, with no swimmer: each answer one logarithmic step closer to a light at the centre.',
@@ -36,6 +40,7 @@ export const BOARD = [
 	},
 	{
 		sketch: 'log-sperm',
+		cut: 'fib',
 		name: 'The swimmer',
 		round: 1,
 		what: 'The sperm as a stretch of the golden spiral: the coil its head, the arc its tail.',
@@ -48,6 +53,7 @@ export const BOARD = [
 	},
 	{
 		sketch: 'log-tunnel',
+		cut: 'plane',
 		name: 'The tunnel',
 		round: 1,
 		what: 'Down a tunnel the golden angle makes: a zoom into the pole is a flight down the cylinder.',
@@ -59,6 +65,7 @@ export const BOARD = [
 	},
 	{
 		sketch: 'log-beat',
+		cut: 'invert',
 		name: 'The beat',
 		round: 1,
 		what: 'The moment, as geometry: the swimmer reaches the pole.',
@@ -70,6 +77,7 @@ export const BOARD = [
 	},
 	{
 		sketch: 'log-spacetime',
+		cut: 'penrose',
 		name: 'Into spacetime',
 		round: 2,
 		what: 'From the tunnel, by projective and Möbius maps written as they happen, to spacetime closed up.',
@@ -83,6 +91,7 @@ export const BOARD = [
 	},
 	{
 		sketch: 'log-mobius',
+		cut: 'sphere',
 		name: 'The turn',
 		round: 1,
 		what: 'Out of the flat board into 3D: the net was on a sphere all along.',
@@ -94,6 +103,7 @@ export const BOARD = [
 	},
 	{
 		sketch: 'log-closure',
+		cut: 'projective',
 		name: 'The closure',
 		round: 2,
 		what: 'Zoom out from the sphere and the space round it closes up on itself.',
@@ -106,6 +116,7 @@ export const BOARD = [
 	},
 	{
 		sketch: 'log-godel',
+		cut: 'loop',
 		name: 'Einstein meets Gödel',
 		round: 3,
 		what: 'Gödel’s rotating universe: the light cones tip over as you go out, until time closes up.',
@@ -124,6 +135,7 @@ export const BOARD = [
 	},
 	{
 		sketch: 'log-arrival',
+		cut: 'assemble',
 		name: 'The rooms appear',
 		round: 2,
 		what: 'How the room first comes into being, from a lit point to the room swaying on its depths.',
@@ -137,6 +149,7 @@ export const BOARD = [
 	},
 	{
 		sketch: 'log-fall',
+		cut: 'droste',
 		name: 'The fall',
 		round: 1,
 		what: 'Glass in glass down to the room, and the room’s parallax at the end.',
@@ -148,6 +161,7 @@ export const BOARD = [
 	},
 	{
 		sketch: 'log-clopen',
+		cut: null,
 		name: 'Play',
 		round: 2,
 		what: 'Not a slot in the run: the clopen geometry for its own sake — a background, a loading screen, a beat.',
@@ -162,6 +176,7 @@ export const BOARD = [
 ];
 
 export const REELS = [
+	['/v4?chain=all', 'The cut', 'everything there is, one of each, in the run’s order (/cut)'],
 	['/v4?chain=log', 'The board, first reel', 'one of each of the first six beats'],
 	[
 		'/v4?chain=clopen',

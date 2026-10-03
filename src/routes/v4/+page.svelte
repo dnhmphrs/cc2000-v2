@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import { BOARD } from '$lib/data/experiments';
 
 	// ── v4, the rough cut ────────────────────────────────────────────────────
 	// The new shape of the whole run, as one continuous piece: the five lab
@@ -64,6 +65,11 @@
 	// closure of space round the sphere, and the room appearing. ?chain=play
 	// plays its five films of clopen maths back to back — each opens and ends
 	// on a lit point at the centre, so they chain into one loop.
+	//
+	// ?chain=all (or /cut) is THE CUT: everything there is, one variant of
+	// each beat in the run's order, from data/experiments.js — the variant
+	// each beat's `cut` names — so a beat that lands in the registry is in
+	// the cut.
 	const CHAINS = {
 		v4: [
 			{ key: 'approach', name: 'approach', seconds: 9 },
@@ -104,6 +110,11 @@
 			{ key: 'log-closure', name: 'closure', v: 'projective' },
 			{ key: 'log-arrival', name: 'arrival', v: 'glass' }
 		],
+		all: BOARD.filter((b) => b.cut).map((b) => ({
+			key: b.sketch,
+			name: b.name.toLowerCase(),
+			v: b.cut
+		})),
 		play: [
 			{ key: 'log-clopen', name: 'play', v: 'schottky' },
 			{ key: 'log-clopen', name: 'play', v: 'doyle' },
@@ -113,35 +124,16 @@
 		]
 	};
 	const HOLD = 1.5; // seconds on the last frame before the loop
-	const LOADERS = {
-		approach: () => import('$lib/lab/approach.js'),
-		rooms: () => import('$lib/lab/rooms.js'),
-		impact: () => import('$lib/lab/impact.js'),
-		lattice: () => import('$lib/lab/lattice.js'),
-		cube: () => import('$lib/lab/cube.js'),
-		'about-face': () => import('$lib/lab/about-face.js'),
-		'sky-of-weeks': () => import('$lib/lab/sky-of-weeks.js'),
-		'switch-on': () => import('$lib/lab/switch-on.js'),
-		'the-many': () => import('$lib/lab/the-many.js'),
-		pilot: () => import('$lib/lab/pilot.js'),
-		runout: () => import('$lib/lab/runout.js'),
-		'episode-card': () => import('$lib/lab/episode-card.js'),
-		'red-sun': () => import('$lib/lab/red-sun.js'),
-		silhouette: () => import('$lib/lab/silhouette.js'),
-		'lcl-tunnel': () => import('$lib/lab/lcl-tunnel.js'),
-		'noir-ground': () => import('$lib/lab/noir-ground.js'),
-		strobe: () => import('$lib/lab/strobe.js'),
-		'log-orb': () => import('$lib/lab/log-orb.js'),
-		'log-sperm': () => import('$lib/lab/log-sperm.js'),
-		'log-tunnel': () => import('$lib/lab/log-tunnel.js'),
-		'log-beat': () => import('$lib/lab/log-beat.js'),
-		'log-mobius': () => import('$lib/lab/log-mobius.js'),
-		'log-fall': () => import('$lib/lab/log-fall.js'),
-		'log-dawn': () => import('$lib/lab/log-dawn.js'),
-		'log-spacetime': () => import('$lib/lab/log-spacetime.js'),
-		'log-closure': () => import('$lib/lab/log-closure.js'),
-		'log-arrival': () => import('$lib/lab/log-arrival.js'),
-		'log-clopen': () => import('$lib/lab/log-clopen.js')
+	// Every sketch, by a glob the build fixes; in dev a sketch the glob does not
+	// know (the server here does not see files added since it started) is
+	// fetched by its path, as the lab does.
+	const SKETCHES = import.meta.glob('/src/lib/lab/*.js');
+	const load = (key) => {
+		const path = `/src/lib/lab/${key}.js`;
+		const f =
+			SKETCHES[path] ?? (import.meta.env.DEV ? () => import(/* @vite-ignore */ path) : null);
+		if (!f) throw new Error(`no sketch called ${key} in src/lib/lab`);
+		return f();
 	};
 
 	let canvas;
@@ -160,7 +152,8 @@
 			explore2: 'explore 02 · reel',
 			log: 'explore 03 · the log reel',
 			clopen: 'explore 04 · the clopen reel',
-			play: 'explore 04 · play'
+			play: 'explore 04 · play',
+			all: 'the cut · everything, in the run’s order'
 		}[chain];
 		const picks = (q.get('pick') ?? '').split(',');
 
@@ -183,7 +176,7 @@
 		const { pickVariant } = await import('$lib/lab/log/board.js');
 		const beats = [];
 		for (const [i, b] of BEATS.entries()) {
-			const { default: make } = await LOADERS[b.key]();
+			const { default: make } = await load(b.key);
 			const v = picks[i] || b.v;
 			pickVariant(v);
 			const sketch = await make({ THREE, renderer, at: 0 });
