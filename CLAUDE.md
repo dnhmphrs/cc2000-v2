@@ -94,7 +94,13 @@ sketches (`lab/log-*.js` on the shared kit `lab/log/`, a 2D canvas over the
 page, not the Stage — `docs/explore-03.md`, `docs/explore-04.md`), and
 `/v4?chain=log`, `?chain=clopen` and `?chain=play` play one variant of each. A
 log sketch reads its variant from `?v=`, or from the reel (`pickVariant` round
-its `make()`). The kit is `board.js` (the board, views, strokes, maths type,
+its `make()`). EVERY experiment is listed once, in `data/experiments.js` — the
+board's beats and variants in the run's order, the reels, the rounds before
+the board, the runs — and that list is what `/log` indexes and what the small
+bar in the bottom right of the lab, the reels and the index
+(`components/LabBar.svelte`, mounted from the layout so it sits above the
+board's canvas) steps through; a new sketch or variant goes in that list or it
+is nowhere. The kit is `board.js` (the board, views, strokes, maths type,
 the clock), `space.js` (the lens, keyframed paths, a depth buffer for hidden
 lines, 3D lines), `ink.js` (the orb, lit points, the lecture), `rooms.js` (the
 bedrooms on the board), `plate.js` and `sperm.js`; use it rather than copying

@@ -41,7 +41,8 @@ turn, the fall into the rooms — every variant of every beat, and a reel of one
 of each (`docs/explore-03.md`), and the second round on the same board —
 beginnings, the way into spacetime, space closing up round the sphere, the
 rooms appearing, and some play with the clopen geometry
-(`docs/explore-04.md`).
+(`docs/explore-04.md`). `/log` lists every experiment there has been, and a
+small bar in the corner of any of them steps to the next.
 
 ### v3
 
