@@ -167,6 +167,28 @@ export const BOARD = [
 		]
 	},
 	{
+		sketch: 'log-passage',
+		cut: 'hyperbolic',
+		name: 'Moving through rooms',
+		round: 3,
+		what: 'Many rooms in other geometries, closed and open at once, the lens moving through them to land in the one asked for.',
+		variants: [
+			[
+				'hyperbolic',
+				'the Circle Limit of rooms: hyperbolic golden rectangles, six at every corner, the lens a Möbius translation'
+			],
+			[
+				'torus',
+				'the room glued to itself, T³: its lattice of copies in chalk, the colour moving into the next'
+			],
+			['wormhole', 'two rooms joined by Flamm’s paraboloid, glass to glass through the throat'],
+			[
+				'spiral',
+				'rooms in the golden rectangle’s squares, the lens a quarter turn and φ smaller each room'
+			]
+		]
+	},
+	{
 		sketch: 'log-arrival',
 		cut: 'assemble',
 		name: 'The rooms appear',
