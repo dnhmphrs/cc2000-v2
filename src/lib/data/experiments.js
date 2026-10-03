@@ -161,6 +161,20 @@ export const BOARD = [
 		]
 	},
 	{
+		sketch: 'log-genesis',
+		cut: null,
+		name: 'The room from the dot',
+		round: 3,
+		what: 'Five more generations of the room out of the lit dot, each by a different piece of the board’s maths.',
+		variants: [
+			['seeds', 'a sunflower of seeds at the golden angle, the room at rising resolution'],
+			['squares', 'the Fibonacci squares whirl out of the golden rectangle’s pole'],
+			['lamp', 'the dot is the lamp’s bulb: the room lit by 1/r², the corners last'],
+			['conformal', 'the room squeezed into a disc by Jacobi’s sn, relaxed to the plate'],
+			['ink', 'the swimmer’s tail is a pen: the room’s ink first, then its colour']
+		]
+	},
+	{
 		sketch: 'log-fall',
 		cut: 'droste',
 		name: 'The fall',
