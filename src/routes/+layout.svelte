@@ -2,12 +2,19 @@
 	import './styles.css';
 	import { onMount } from 'svelte';
 	import Version from '$lib/components/Version.svelte';
+	import LabBar from '$lib/components/LabBar.svelte';
+	import { page } from '$app/stores';
 	import { screenSize, aspect } from '$lib/store/store';
 	import { aspectKind, applyChassisVars, chassisCss } from '$lib/config';
 	import { palette, applyCssVars } from '$lib/theme';
 
 	// Keep the UI ink (CSS custom properties) in sync with the active palette.
 	$: applyCssVars($palette);
+
+	// The experiments' bar, on the lab, the reels and the index only — here
+	// beside the run switch rather than in main, whose stacking context would
+	// put it under the blackboard sketches' own canvas.
+	$: onLab = /^\/(lab|v4|log|eva)(\/|$)/.test($page.url.pathname);
 
 	// One place decides what shape of screen this is. Everything that lays out
 	// differently in portrait, landscape or the square middle a tablet lands in
@@ -83,6 +90,9 @@
 	<slot />
 </main>
 <Version />
+{#if onLab}
+	<LabBar />
+{/if}
 
 <style>
 	main {

@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import { BOARD } from '$lib/data/experiments';
 
 	// ── v4, the rough cut ────────────────────────────────────────────────────
 	// The new shape of the whole run, as one continuous piece: the five lab
@@ -47,6 +48,28 @@
 	//
 	// The card is DOM over the canvas and hides itself once it has lifted, so
 	// it goes first.
+	//
+	// ── And the blackboard, the log of everything ────────────────────────────
+	// ?chain=log (linked from /log, the index) plays the six sketches of
+	// docs/explore-03.md — the rebuild drawn as maths on a dark board, one
+	// variant of each — in the order of the run: the orb the questions fly at,
+	// the golden-spiral swimmer, the swim down the golden-angle tunnel, the
+	// beat at its centre, the Möbius zoom out, and the fall into the rooms.
+	// Each beat is its sketch's own length (its info.seconds), and
+	// ?pick=rings,,cylinder names another variant for any beat, in order (a
+	// blank keeps the chain's own). The board is a 2D canvas over the page.
+	//
+	// ?chain=clopen plays the second round's (docs/explore-04.md) in the
+	// run's order, with the first round's orb and tunnel between: a
+	// beginning, the orb, the tunnel, the way into spacetime closed up, the
+	// closure of space round the sphere, and the room appearing. ?chain=play
+	// plays its five films of clopen maths back to back — each opens and ends
+	// on a lit point at the centre, so they chain into one loop.
+	//
+	// ?chain=all (or /cut) is THE CUT: everything there is, one variant of
+	// each beat in the run's order, from data/experiments.js — the variant
+	// each beat's `cut` names — so a beat that lands in the registry is in
+	// the cut.
 	const CHAINS = {
 		v4: [
 			{ key: 'approach', name: 'approach', seconds: 9 },
@@ -70,27 +93,47 @@
 			{ key: 'lcl-tunnel', name: 'lcl-tunnel', seconds: 7 },
 			{ key: 'noir-ground', name: 'noir-ground', seconds: 25 },
 			{ key: 'strobe', name: 'strobe', seconds: 3.6 }
+		],
+		log: [
+			{ key: 'log-orb', name: 'orb', v: 'net' },
+			{ key: 'log-sperm', name: 'swimmer', v: 'fib' },
+			{ key: 'log-tunnel', name: 'tunnel', v: 'plane' },
+			{ key: 'log-beat', name: 'beat', v: 'invert' },
+			{ key: 'log-mobius', name: 'möbius', v: 'sphere' },
+			{ key: 'log-fall', name: 'fall', v: 'droste' }
+		],
+		clopen: [
+			{ key: 'log-dawn', name: 'dawn', v: 'fullstop' },
+			{ key: 'log-orb', name: 'orb', v: 'net' },
+			{ key: 'log-tunnel', name: 'tunnel', v: 'plane' },
+			{ key: 'log-spacetime', name: 'spacetime', v: 'penrose' },
+			{ key: 'log-closure', name: 'closure', v: 'projective' },
+			{ key: 'log-arrival', name: 'arrival', v: 'glass' }
+		],
+		all: BOARD.filter((b) => b.cut).map((b) => ({
+			key: b.sketch,
+			name: b.name.toLowerCase(),
+			v: b.cut
+		})),
+		play: [
+			{ key: 'log-clopen', name: 'play', v: 'schottky' },
+			{ key: 'log-clopen', name: 'play', v: 'doyle' },
+			{ key: 'log-clopen', name: 'play', v: 'apollonian' },
+			{ key: 'log-clopen', name: 'play', v: 'padic' },
+			{ key: 'log-clopen', name: 'play', v: 'ford' }
 		]
 	};
 	const HOLD = 1.5; // seconds on the last frame before the loop
-	const LOADERS = {
-		approach: () => import('$lib/lab/approach.js'),
-		rooms: () => import('$lib/lab/rooms.js'),
-		impact: () => import('$lib/lab/impact.js'),
-		lattice: () => import('$lib/lab/lattice.js'),
-		cube: () => import('$lib/lab/cube.js'),
-		'about-face': () => import('$lib/lab/about-face.js'),
-		'sky-of-weeks': () => import('$lib/lab/sky-of-weeks.js'),
-		'switch-on': () => import('$lib/lab/switch-on.js'),
-		'the-many': () => import('$lib/lab/the-many.js'),
-		pilot: () => import('$lib/lab/pilot.js'),
-		runout: () => import('$lib/lab/runout.js'),
-		'episode-card': () => import('$lib/lab/episode-card.js'),
-		'red-sun': () => import('$lib/lab/red-sun.js'),
-		silhouette: () => import('$lib/lab/silhouette.js'),
-		'lcl-tunnel': () => import('$lib/lab/lcl-tunnel.js'),
-		'noir-ground': () => import('$lib/lab/noir-ground.js'),
-		strobe: () => import('$lib/lab/strobe.js')
+	// Every sketch, by a glob the build fixes; in dev a sketch the glob does not
+	// know (the server here does not see files added since it started) is
+	// fetched by its path, as the lab does.
+	const SKETCHES = import.meta.glob('/src/lib/lab/*.js');
+	const load = (key) => {
+		const path = `/src/lib/lab/${key}.js`;
+		const f =
+			SKETCHES[path] ?? (import.meta.env.DEV ? () => import(/* @vite-ignore */ path) : null);
+		if (!f) throw new Error(`no sketch called ${key} in src/lib/lab`);
+		return f();
 	};
 
 	let canvas;
@@ -103,12 +146,16 @@
 		const forceWebGL = q.get('gl') === '1';
 		const chain = CHAINS[q.get('chain')] ? q.get('chain') : 'v4';
 		const BEATS = CHAINS[chain];
-		const TAG =
-			chain === 'v4'
-				? 'v4 · rough cut'
-				: chain === 'explore'
-					? 'explore 01 · reel'
-					: 'explore 02 · reel';
+		const TAG = {
+			v4: 'v4 · rough cut',
+			explore: 'explore 01 · reel',
+			explore2: 'explore 02 · reel',
+			log: 'explore 03 · the log reel',
+			clopen: 'explore 04 · the clopen reel',
+			play: 'explore 04 · play',
+			all: 'the cut · everything, in the run’s order'
+		}[chain];
+		const picks = (q.get('pick') ?? '').split(',');
 
 		const THREE = await import('three/webgpu');
 		const renderer = new THREE.WebGPURenderer({
@@ -124,12 +171,23 @@
 		renderer.setClearColor(0x000000, 1);
 		const lane = renderer.backend.isWebGPUBackend ? 'webgpu' : 'webgl';
 
-		// Every beat is built up front, pinned at its start.
+		// Every beat is built up front, pinned at its start. A log sketch takes
+		// its variant from the chain (or ?pick=) rather than the page's ?v=.
+		const { pickVariant } = await import('$lib/lab/log/board.js');
 		const beats = [];
-		for (const b of BEATS) {
-			const { default: make } = await LOADERS[b.key]();
+		for (const [i, b] of BEATS.entries()) {
+			const { default: make } = await load(b.key);
+			const v = picks[i] || b.v;
+			pickVariant(v);
 			const sketch = await make({ THREE, renderer, at: 0 });
-			beats.push({ ...b, sketch });
+			pickVariant(null);
+			const seconds = b.seconds ?? sketch.info.seconds;
+			beats.push({
+				...b,
+				seconds,
+				name: v ? `${b.name} · ${sketch.info.variant}` : b.name,
+				sketch
+			});
 		}
 		const total = beats.reduce((s, b) => s + b.seconds, 0);
 		let start = 0;

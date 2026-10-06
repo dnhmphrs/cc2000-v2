@@ -17,6 +17,8 @@
 	let canvas;
 	let status = 'booting';
 
+	const SKETCHES = import.meta.glob('/src/lib/lab/*.js');
+
 	onMount(async () => {
 		const q = new URLSearchParams(location.search);
 		const name = q.get('sketch') ?? 'rooms';
@@ -26,9 +28,16 @@
 		const steps = Number(q.get('steps') ?? 0) || undefined;
 
 		// Both imports are dynamic on purpose: three/webgpu must never be
-		// evaluated during SSR, and each sketch is its own module.
+		// evaluated during SSR, and each sketch is its own module. The sketches
+		// are a glob, which the build fixes; the dev server fixes it when it
+		// first serves this page and does not always see a file added since, so
+		// in dev a sketch the glob does not know is fetched by its path.
 		const THREE = await import('three/webgpu');
-		const mod = await import(`$lib/lab/${name}.js`);
+		const path = `/src/lib/lab/${name}.js`;
+		const load =
+			SKETCHES[path] ?? (import.meta.env.DEV ? () => import(/* @vite-ignore */ path) : null);
+		if (!load) throw new Error(`no sketch called ${name} in src/lib/lab`);
+		const mod = await load();
 		const make = mod.default;
 
 		// A sketch may ask for more of the renderer than the default — the
