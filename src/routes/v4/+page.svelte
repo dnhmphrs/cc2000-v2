@@ -183,7 +183,7 @@
 
 		// Every beat is built up front, pinned at its start. A log sketch takes
 		// its variant from the chain (or ?pick=) rather than the page's ?v=.
-		const { pickVariant } = await import('$lib/lab/log/board.js');
+		const { pickVariant, reelTag } = await import('$lib/lab/log/board.js');
 		const beats = [];
 		for (const [i, b] of BEATS.entries()) {
 			const { default: make } = await load(b.key);
@@ -216,6 +216,8 @@
 			b.sketch.seek(u);
 			active = b;
 			status = `${TAG} · ${b.i + 1}/${beats.length} ${b.name} ${t.toFixed(1)} s · ${lane}`;
+			// The board draws over this page's own tag, so it carries the count.
+			reelTag(at === null ? `← ${b.i + 1}/${beats.length} →` : `${b.i + 1}/${beats.length}`);
 			window.__v4 = {
 				lane,
 				chain,
@@ -246,7 +248,7 @@
 			show(T);
 		};
 		window.addEventListener('keydown', (e) => {
-			if (at !== null || e.altKey || e.ctrlKey || e.metaKey) return;
+			if (at !== null || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
 			if (/^(INPUT|SELECT|TEXTAREA|BUTTON|A)$/.test(e.target?.tagName)) return;
 			if (e.key === 'ArrowRight') step(1);
 			else if (e.key === 'ArrowLeft') step(-1);

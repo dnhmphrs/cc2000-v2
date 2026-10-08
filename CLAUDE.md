@@ -92,12 +92,13 @@ of v2 is `docs/design-notes.md`.
 The NEXT run is being looked for, not built: **`/log`** indexes the blackboard
 sketches (`lab/log-*.js` on the shared kit `lab/log/`, a 2D canvas over the
 page, not the Stage — `docs/explore-03.md`, `-04`, `-05`), and
-`/v4?chain=log`, `?chain=clopen` and `?chain=play` play one variant of each,
-and **`/cut`** (`?chain=all`) is THE CUT: everything there is, EVERY variant
-of every beat in the run's order, the short cut's first in each beat — eleven
-minutes, so ← and → step between beats — so a sketch or a variant that lands
-in the registry is in the cut; `?chain=one` is the short cut, one of each,
-the variant each beat's `cut` names in the registry. A
+`/v4?chain=log` and `?chain=clopen` play one variant of each of a round's
+beats, `?chain=play` the five clopen films as one loop, and **`/cut`**
+(`?chain=all`) is THE CUT: everything there is, EVERY variant of every beat in
+the run's order, the short cut's first in each beat, so a sketch or a variant
+that lands in the registry is in the cut — eleven minutes, and ← and → step
+between beats; `?chain=one` is the short cut, one of each, the variant each
+beat's `cut` names in the registry. A
 log sketch reads its variant from `?v=`, or from the reel (`pickVariant` round
 its `make()`). EVERY experiment is listed once, in `data/experiments.js` — the
 board's beats and variants in the run's order, the reels, the rounds before

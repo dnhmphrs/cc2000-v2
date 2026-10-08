@@ -58,7 +58,8 @@
 	<section>
 		<h2>The reels</h2>
 		<p class="what">
-			One variant of each, end to end, hard cuts between; ?at= pins the reel as a whole.
+			Sketches end to end, hard cuts between — the cut every variant, the rest one of each; ?at=
+			pins the reel as a whole.
 		</p>
 		<ul>
 			{#each REELS as [h, name, line] (h)}
