@@ -79,7 +79,9 @@ the orb's breathing carried across), so any of them can go in front of
 - **`title`** — the board as _Lecture 1_, the date top right, the sentence
   boxed in chalk and _advanced_ corrected to _peaked_ in red chalk; the same
   full-stop zoom. Its date is the clock's, the one thing in the round that is
-  not purely a function of progress (it changes once a day).
+  not purely a function of progress (it changes once a day). Redone in round
+  three as `terminal` (`docs/explore-05.md`): too much a title slide, the
+  lead said, and `title` is no longer in the sketch.
 
 ## 2 · Into spacetime — `log-spacetime` (11–12 s)
 

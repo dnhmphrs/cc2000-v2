@@ -4,9 +4,11 @@
 //
 // BOARD is the blackboard rebuild (docs/explore-03.md, -04, -05), every beat
 // in the order of the run, the round it came in, every variant of it
-// ([variant, one line]) and `cut`, the variant it plays in THE CUT — /cut,
-// everything there is, one of each, in the run's order (null: not a slot in
-// the run). REELS play sketches end to end (/v4?chain=…). EARLIER
+// ([variant, one line]) — THE CUT, /cut, plays every one of them in this
+// order — and `cut`, the variant it plays in the short cut (/v4?chain=one,
+// one of each; null: no pick there, because another sketch holds that
+// slot's pick or it is not a slot in the run) and plays first among its
+// beat's in the cut. REELS play sketches end to end (/v4?chain=…). EARLIER
 // are the rounds before the board: explore 01 and 02, the v4 rough cut and
 // the workshop's own sketches, each a single sketch in the lab. RUNS are the
 // site's two runs.
@@ -245,7 +247,16 @@ export const BOARD = [
 ];
 
 export const REELS = [
-	['/v4?chain=all', 'The cut', 'everything there is, one of each, in the run’s order (/cut)'],
+	[
+		'/v4?chain=all',
+		'The cut',
+		'everything there is, every variant of every beat, in the run’s order (/cut)'
+	],
+	[
+		'/v4?chain=one',
+		'The short cut',
+		'one of each beat, the variant its cut names, in the run’s order'
+	],
 	['/v4?chain=log', 'The board, first reel', 'one of each of the first six beats'],
 	[
 		'/v4?chain=clopen',
