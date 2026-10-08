@@ -18,9 +18,11 @@ round the sketches: **`/log`** now indexes every experiment there has been
 the workshop, the runs — one list, `data/experiments.js`); a small bar in the
 bottom right of the lab, the reels and the index steps to the previous and
 next experiment and holds a list of all of them; and **`/cut`** plays
-everything there is, one variant of each beat in the run's order, on one
-page — fourteen beats, 143 s today, and a beat that lands in the
-registry is in the cut.
+everything there is, every variant of every beat in the run's order, on one
+page — 65 beats, eleven minutes, ← and → stepping between them — and a sketch
+or a variant that lands in the registry is in the cut. (For a day it played
+one of each, fourteen beats in 143 s; the lead looked and most of this round
+was not in it. That reel is still there as the short cut, `/v4?chain=one`.)
 
 ## The title, as a terminal
 
@@ -50,7 +52,7 @@ against the metric in every variant.
   toward φ as r grows, touching the plane on the circle, dipping under it
   beyond — and a bead running round a closed timelike curve. Best at 0.3,
   0.6, 0.7.
-- **`loop`** (the cut's) — the swimmer's worldline climbs out of the lit
+- **`loop`** (the short cut's) — the swimmer's worldline climbs out of the lit
   event, spirals out past the circle, turns down in t and comes round to
   arrive at the event from its own future, threading the cones it leaves
   behind: a worldline that meets its own past, timelike and future-pointing
@@ -73,7 +75,7 @@ seen from inside: each opens on a chart of itself drawn in ordinary space
 and the lens flies into the chart's centre, where the drawing becomes the
 honest first-person view.
 
-- **`torus`** (the cut's) — T³: a cube with opposite faces glued, and from
+- **`torus`** (the short cut's) — T³: a cube with opposite faces glued, and from
   inside a lattice of the same room in every direction, the swimmer seen
   again and again; straight ahead, yourself from behind. Best at 0.7, 0.9.
 - **`dodeca`** — Poincaré's dodecahedral space, S³/2I, built from the
@@ -92,7 +94,7 @@ honest first-person view.
 A space is covered by charts, flat maps of pieces of it; closed in one
 chart, open in the next.
 
-- **`mercator`** (the cut's) — the sphere with the gold loxodrome projected
+- **`mercator`** (the short cut's) — the sphere with the gold loxodrome projected
   onto the cylinder and unrolled into Mercator's chart, which is log z of
   the stereographic plane: the graticule a square grid, every loxodrome a
   straight line the swimmer races up, through the seam and off the top. The
@@ -145,7 +147,7 @@ Many rooms in other geometries, each closed and open at once, the lens
 moving through them to land in the one asked for. All four land exactly as
 the fall lands.
 
-- **`hyperbolic`** (the cut's) — the Circle Limit of rooms: the Poincaré disc
+- **`hyperbolic`** (the short cut's) — the Circle Limit of rooms: the Poincaré disc
   tiled by hyperbolic golden rectangles (every angle 60°, six at a corner,
   sides in the golden ratio), a room drawn into every curved tile through
   the Klein model, the lens a Möbius translation along a geodesic through
@@ -167,11 +169,13 @@ the fall lands.
 
 ## The cut
 
-`/cut` is the run as it stands, one variant of each beat, in order: the
-terminal, the orb, the Fibonacci swimmer, the tunnel, the beat, the Penrose
-diamond, the sphere, ℝP³, Gödel's loop, the 3-torus, Mercator's chart,
-the Circle Limit of rooms, the room assembled out of the dot, the fall. It is too long to be
-the run — the run wants three transitions, not fourteen beats — but it is
+`/cut` is everything, in order: every variant of every beat, the short cut's
+first in each — 65 beats, eleven minutes, ← and → to step between them. The
+short cut, `/v4?chain=one`, is one of each: the terminal, the orb, the
+Fibonacci swimmer, the tunnel, the beat, the Penrose diamond, the sphere, ℝP³,
+Gödel's loop, the 3-torus, Mercator's chart, the Circle Limit of rooms, the
+room assembled out of the dot, the fall — 143 s. Either is too long to be the
+run — the run wants three transitions, not fourteen beats — but the cut is
 every candidate in its place, on one page, to pick from.
 
 ## Not looked at yet

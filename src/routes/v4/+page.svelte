@@ -66,10 +66,14 @@
 	// plays its five films of clopen maths back to back — each opens and ends
 	// on a lit point at the centre, so they chain into one loop.
 	//
-	// ?chain=all (or /cut) is THE CUT: everything there is, one variant of
-	// each beat in the run's order, from data/experiments.js — the variant
-	// each beat's `cut` names — so a beat that lands in the registry is in
-	// the cut.
+	// ?chain=all (or /cut) is THE CUT: everything there is, EVERY variant of
+	// every beat in the run's order, from data/experiments.js, the short cut's
+	// variant first in each beat — so a sketch or a variant that lands in the
+	// registry is in the cut. It is eleven minutes, so ← and → step between
+	// beats (← to the start of this one when more than a second in, as a
+	// player does; a pinned reel is a frame and does not step). ?chain=one is
+	// the short cut: one of each beat, the variant its `cut` names, in the
+	// same order.
 	const CHAINS = {
 		v4: [
 			{ key: 'approach', name: 'approach', seconds: 9 },
@@ -110,7 +114,12 @@
 			{ key: 'log-closure', name: 'closure', v: 'projective' },
 			{ key: 'log-arrival', name: 'arrival', v: 'glass' }
 		],
-		all: BOARD.filter((b) => b.cut).map((b) => ({
+		all: BOARD.flatMap((b) => {
+			const vs = b.variants.map(([v]) => v);
+			const order = b.cut ? [b.cut, ...vs.filter((v) => v !== b.cut)] : vs;
+			return order.map((v) => ({ key: b.sketch, name: b.name.toLowerCase(), v }));
+		}),
+		one: BOARD.filter((b) => b.cut).map((b) => ({
 			key: b.sketch,
 			name: b.name.toLowerCase(),
 			v: b.cut
@@ -153,7 +162,8 @@
 			log: 'explore 03 · the log reel',
 			clopen: 'explore 04 · the clopen reel',
 			play: 'explore 04 · play',
-			all: 'the cut · everything, in the run’s order'
+			all: 'the cut · everything · ← → step',
+			one: 'the short cut · one of each'
 		}[chain];
 		const picks = (q.get('pick') ?? '').split(',');
 
@@ -191,7 +201,8 @@
 		}
 		const total = beats.reduce((s, b) => s + b.seconds, 0);
 		let start = 0;
-		for (const b of beats) {
+		for (const [i, b] of beats.entries()) {
+			b.i = i;
 			b.start = start;
 			start += b.seconds;
 		}
@@ -204,12 +215,14 @@
 			const u = Math.min(1, (t - b.start) / b.seconds);
 			b.sketch.seek(u);
 			active = b;
-			status = `${TAG} · ${b.name} ${t.toFixed(1)} s · ${lane}`;
+			status = `${TAG} · ${b.i + 1}/${beats.length} ${b.name} ${t.toFixed(1)} s · ${lane}`;
 			window.__v4 = {
 				lane,
 				chain,
 				at,
 				beat: b.name,
+				i: b.i,
+				n: beats.length,
 				u: Number(u.toFixed(4)),
 				t: Number(t.toFixed(3)),
 				total
@@ -224,6 +237,22 @@
 
 		let T = at !== null ? at * total : 0;
 		show(T);
+		// ← and → step between beats (← more than a second into a beat goes to
+		// its start, as a player does; off either end it wraps). A pinned reel is
+		// a frame and does not step, and the bar's own controls keep their keys.
+		const step = (d) => {
+			const i = d < 0 && T - active.start > 1 ? active.i : active.i + d;
+			T = beats[(i + beats.length) % beats.length].start;
+			show(T);
+		};
+		window.addEventListener('keydown', (e) => {
+			if (at !== null || e.altKey || e.ctrlKey || e.metaKey) return;
+			if (/^(INPUT|SELECT|TEXTAREA|BUTTON|A)$/.test(e.target?.tagName)) return;
+			if (e.key === 'ArrowRight') step(1);
+			else if (e.key === 'ArrowLeft') step(-1);
+			else return;
+			e.preventDefault();
+		});
 		let last = performance.now();
 		renderer.setAnimationLoop(() => {
 			const now = performance.now();

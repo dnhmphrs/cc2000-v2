@@ -44,10 +44,10 @@ rooms appearing, and some play with the clopen geometry
 (`docs/explore-04.md`); and the third round, Einstein meets Gödel — his
 rotating universe where time closes up, the closed universes from inside,
 coordinate charts, more rooms out of the dot, and moving through rooms in
-other geometries (`docs/explore-05.md`). `/log` lists every experiment there
-has been, `/cut` plays
-one of each beat end to end in the run's order, and a small bar in the corner
-of any of them steps to the next.
+other geometries (`docs/explore-05.md`). `/log` lists every experiment there has been, `/cut`
+plays every variant of every beat end to end in the run's order (eleven
+minutes; ← and → step between beats, and `/v4?chain=one` is the short cut,
+one of each), and a small bar in the corner of any of them steps to the next.
 
 ### v3
 
