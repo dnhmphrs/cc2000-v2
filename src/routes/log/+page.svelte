@@ -1,6 +1,6 @@
 <script>
 	import { resolve } from '$app/paths';
-	import { BOARD, REELS, EARLIER, RUNS } from '$lib/data/experiments';
+	import { BOARD, FLOWS, REELS, EARLIER, RUNS } from '$lib/data/experiments';
 
 	// ── /log — every experiment, indexed ─────────────────────────────────────
 	// The list is data/experiments.js, which the small bar on the lab and the
@@ -32,6 +32,26 @@
 			through the lot.
 		</p>
 	</header>
+
+	<section class="flows">
+		<h2>The v4 flows</h2>
+		<p class="what">
+			Whole runs on the board, each a different answer to the same brief — the terminal, the
+			questions on the way to the point, the flash, the arithmetic geometry, and the rooms out of it
+			— made to mix and match from, not to judge.
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+			<a href={href('/v4?chain=flows')} data-sveltekit-reload>Play them end to end</a>.
+		</p>
+		<ul>
+			{#each FLOWS as f (f.sketch)}
+				<li>
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+					<a href={lab(f.sketch)} data-sveltekit-reload>{f.sketch}</a>
+					<span>{f.name.toLowerCase()} — {f.what}</span>
+				</li>
+			{/each}
+		</ul>
+	</section>
 
 	<ol class="beats">
 		{#each BOARD as beat, i (beat.sketch)}
@@ -199,6 +219,11 @@
 		max-width: 46rem;
 		padding-top: 2rem;
 		border-top: 1px solid rgba(236, 230, 218, 0.12);
+	}
+	section.flows {
+		margin-top: 3rem;
+		padding-top: 0;
+		border-top: none;
 	}
 	ul {
 		list-style: none;

@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { BOARD } from '$lib/data/experiments';
+	import { BOARD, FLOWS } from '$lib/data/experiments';
 
 	// ── v4, the rough cut ────────────────────────────────────────────────────
 	// The new shape of the whole run, as one continuous piece: the five lab
@@ -66,6 +66,10 @@
 	// plays its five films of clopen maths back to back — each opens and ends
 	// on a lit point at the centre, so they chain into one loop.
 	//
+	// ?chain=flows (or /flows) plays the v4 FLOWS — whole runs on the board,
+	// one answer each to the same brief (data/experiments.js FLOWS) — end to
+	// end, to mix and match from.
+	//
 	// ?chain=all (or /cut) is THE CUT: everything there is, EVERY variant of
 	// every beat in the run's order, from data/experiments.js, the short cut's
 	// variant first in each beat — so a sketch or a variant that lands in the
@@ -114,6 +118,7 @@
 			{ key: 'log-closure', name: 'closure', v: 'projective' },
 			{ key: 'log-arrival', name: 'arrival', v: 'glass' }
 		],
+		flows: FLOWS.map((f) => ({ key: f.sketch, name: f.name.toLowerCase() })),
 		all: BOARD.flatMap((b) => {
 			const vs = b.variants.map(([v]) => v);
 			const order = b.cut ? [b.cut, ...vs.filter((v) => v !== b.cut)] : vs;
@@ -162,6 +167,7 @@
 			log: 'explore 03 · the log reel',
 			clopen: 'explore 04 · the clopen reel',
 			play: 'explore 04 · play',
+			flows: 'the v4 flows · ← → step',
 			all: 'the cut · everything · ← → step',
 			one: 'the short cut · one of each'
 		}[chain];

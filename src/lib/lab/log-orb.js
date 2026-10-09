@@ -67,8 +67,9 @@ import { drawPlate } from './log/plate.js';
 const SECONDS = 10;
 
 // The answers, as the site would take them.
-const BIRTH = { q: 'when were you born?', key: 't_{0} = ', val: '14 · 02 · 1987' };
-const SPICE = { q: 'name a spice', key: 'σ = ', val: 'saffron' };
+// Exported for the flows (lab/flow-*.js), with drawPrompt.
+export const BIRTH = { q: 'when were you born?', key: 't_{0} = ', val: '14 · 02 · 1987' };
+export const SPICE = { q: 'name a spice', key: 'σ = ', val: 'saffron' };
 
 // The beats, in progress u.
 const T = {
@@ -209,7 +210,7 @@ function strokeFade(ctx, P, Rpx, fade, opts, chunk = 6) {
 // written where it was.
 const fontOf = (size) => `italic 400 ${size}px ${MATH_FONT}`;
 
-function drawPrompt(ctx, view, rest, h, P, { q, a, enter, alpha, secs }) {
+export function drawPrompt(ctx, view, rest, h, P, { q, a, enter, alpha, secs }) {
 	if (alpha <= 0.01 || q <= 0) return;
 	const k = view.scale / rest.scale;
 	const [px, py] = view.to(rest.from([rest.cx, rest.cy + 0.3 * h]));

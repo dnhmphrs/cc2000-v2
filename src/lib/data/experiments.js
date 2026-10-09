@@ -246,7 +246,50 @@ export const BOARD = [
 	}
 ];
 
+// The v4 FLOWS: whole runs on the board, each a different answer to the
+// same brief (docs/explore-06.md) — the terminal, the questions on the way
+// to the point, the flash, the arithmetic geometry, and the rooms out of it —
+// built to be mixed and matched, not judged. /flows plays them end to end.
+export const FLOWS = [
+	{
+		sketch: 'flow-record',
+		name: 'The record',
+		what: 'the point is a record’s spindle hole: the grooves come up round it, the needle drops at the flash, and the hole opens onto the rooms'
+	},
+	{
+		sketch: 'flow-torus',
+		name: 'The torus',
+		what: 'the questions draw a net on the orb, in ink, indexed by the year and the spice; the net lifts into the torus, and a cell of it is the room'
+	},
+	{
+		sketch: 'flow-sphere',
+		name: 'The sphere',
+		what: 'Garrett’s: a golden sphere in the centre, one transition to lines drawn on it, then the rooms'
+	},
+	{
+		sketch: 'flow-ink',
+		name: 'Ink',
+		what: 'the simplest: the orb, the questions, the flash, and the room drawn in ink out of the point'
+	},
+	{
+		sketch: 'flow-chalk',
+		name: 'Chalk',
+		what: 'the fall through chalk rooms, a black and white lattice behind to anchor it'
+	},
+	{
+		sketch: 'flow-dodeca',
+		name: 'The dodecahedral space',
+		what: 'a cell built round us, every face a room, into the centre one'
+	},
+	{
+		sketch: 'flow-swim',
+		name: 'The swim',
+		what: 'the first idea, for comparison: the helix swimmer in view from the start, swimming at the point; the questions; the torus; the rooms'
+	}
+];
+
 export const REELS = [
+	['/v4?chain=flows', 'The v4 flows', 'seven whole runs on the board, end to end (/flows)'],
 	[
 		'/v4?chain=all',
 		'The cut',
@@ -330,6 +373,13 @@ export const RUNS = [
 // board sketch, the reels, then the earlier sketches. { key, label, href }.
 export function stops() {
 	const out = [];
+	for (const f of FLOWS)
+		out.push({
+			key: `${f.sketch}:`,
+			group: 'The v4 flows',
+			label: f.name.toLowerCase(),
+			href: `/lab?sketch=${f.sketch}`
+		});
 	for (const b of BOARD)
 		for (const [v] of b.variants)
 			out.push({
