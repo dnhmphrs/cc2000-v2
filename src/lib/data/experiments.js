@@ -100,7 +100,21 @@ export const BOARD = [
 		variants: [
 			['sphere', 'the net lifted onto the Riemann sphere, the lens orbiting'],
 			['torus', 'the cylinder glued by a zoom into a torus'],
-			['flip', 'Möbius maps one after another, written as they happen']
+			['flip', 'Möbius maps one after another, written as they happen'],
+			[
+				'cat',
+				'Arnold’s cat map on the torus of rooms: the room stretched and folded, and back after finitely many turns'
+			],
+			['twist', 'Dehn twists: the lattice sheared by SL₂(ℤ), the torus reshaped, the net re-tiled'],
+			[
+				'weierstrass',
+				'℘: the torus folded two to one onto the sphere, branched at the four half-periods'
+			],
+			[
+				'hopf',
+				'the Clifford torus in S³, a union of Hopf circles, projected: nested tori round the axis'
+			],
+			['knot', 'a (p, q) torus knot: a straight line on the flat torus, wound on the torus in 3D']
 		]
 	},
 	{
@@ -145,7 +159,17 @@ export const BOARD = [
 			['torus', 'T³: a cube whose faces are glued; from inside, the same room through every wall'],
 			['dodeca', 'Poincaré’s dodecahedral space: opposite faces glued with a tenth of a turn'],
 			['mirror', 'a Klein bottle: the swimmer comes round and back as its own mirror image'],
-			['sphere', 'Einstein’s S³: what recedes past the equator grows again, and fills the sky']
+			['sphere', 'Einstein’s S³: what recedes past the equator grows again, and fills the sky'],
+			[
+				'seifert',
+				'Seifert–Weber space: the hyperbolic dodecahedron, faces glued with three tenths of a turn, its neighbours shrinking away'
+			],
+			['octa', 'the octahedral space S³/2O: a truncated cube, the view from inside'],
+			[
+				'quaternion',
+				'the quaternion space S³/Q₈: a cube whose opposite faces are glued with a quarter turn'
+			],
+			['lens', 'a lens space L(5, 1): the lens cell, its copies spiralling round the axis']
 		]
 	},
 	{
