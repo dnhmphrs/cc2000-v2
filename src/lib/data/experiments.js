@@ -219,6 +219,23 @@ export const BOARD = [
 		]
 	},
 	{
+		sketch: 'log-appear',
+		cut: null,
+		name: 'The rooms, from the geometry',
+		round: 4,
+		what: 'More ink sketches of how the rooms might come out of the geometry itself: a cell of the lattice, the torus folded, the nodes of the Kummer surface.',
+		variants: [
+			[
+				'cell',
+				'the period lattice’s fundamental cell is the room, and every translate the same room'
+			],
+			['fold', 'the torus of rooms folded by x ↦ −x: each room meets its mirror image at the fold'],
+			['nodes', 'the Kummer surface’s sixteen nodes are sixteen rooms, the lens into one'],
+			['etching', 'the net’s lines bend into the room’s lines: the geometry is the room’s ink'],
+			['trope', 'a trope’s conic is the monitor’s glass, and the room comes up round it']
+		]
+	},
+	{
 		sketch: 'log-fall',
 		cut: 'droste',
 		name: 'The fall',
@@ -242,6 +259,56 @@ export const BOARD = [
 			['apollonian', 'the integral gasket, turned inside out into Coxeter’s spiral'],
 			['padic', 'the 2-adic integers: every ball clopen, a birthday as a path'],
 			['ford', 'the Ford circles, zooming into 1/φ, the worst-approximable number']
+		]
+	},
+	{
+		sketch: 'log-tame',
+		cut: null,
+		name: 'Tame geometry',
+		round: 4,
+		what: 'One-offs on o-minimality: geometry with no pathology — finitely many pieces at every scale, and the few rational points a transcendental curve can hold.',
+		variants: [
+			[
+				'cells',
+				'a definable set cut into finitely many cells, drawn one by one; the swimmer’s path crosses finitely many'
+			],
+			[
+				'height',
+				'Pila–Wilkie: the rational points of height ≤ H densify, and only a few land on the curve'
+			],
+			[
+				'exp',
+				'the exponential field: the plane seen through exp and log, the lattice wrapped onto the torus'
+			],
+			[
+				'special',
+				'André–Oort: the modular curve’s fundamental domain, its special points lit, a curve through them'
+			]
+		]
+	},
+	{
+		sketch: 'log-abelian',
+		cut: null,
+		name: 'Abelian varieties',
+		round: 4,
+		what: 'One-offs on complex tori and the Kummer surface: the period lattice, theta, and an abelian surface folded by −1 into a quartic with sixteen nodes.',
+		variants: [
+			[
+				'lattice',
+				'the period lattice Λ in ℂ, its fundamental parallelogram folded into the torus ℂ/Λ'
+			],
+			[
+				'theta',
+				'the theta function on the torus: its level lines in ink, its zero moving over the parallelogram'
+			],
+			[
+				'kummer',
+				'the Kummer quartic turning in ink: sixteen nodes, sixteen tropes, each plane touching along a conic'
+			],
+			[
+				'sixteen',
+				'the 16₆ configuration: every node on six tropes, every trope through six nodes — the half-periods'
+			]
 		]
 	}
 ];
