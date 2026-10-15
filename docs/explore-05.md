@@ -19,7 +19,7 @@ the workshop, the runs — one list, `data/experiments.js`); a small bar in the
 bottom right of the lab, the reels and the index steps to the previous and
 next experiment and holds a list of all of them; and **`/cut`** plays
 everything there is, every variant of every beat in the run's order, on one
-page — 65 beats, eleven minutes, ← and → stepping between them — and a sketch
+page — 65 beats, eleven minutes then (87 and fifteen after the fourth round), ← and → stepping between them — and a sketch
 or a variant that lands in the registry is in the cut. (For a day it played
 one of each, fourteen beats in 143 s; the lead looked and most of this round
 was not in it. That reel is still there as the short cut, `/v4?chain=one`.)

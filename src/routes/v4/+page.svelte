@@ -73,7 +73,7 @@
 	// ?chain=all (or /cut) is THE CUT: everything there is, EVERY variant of
 	// every beat in the run's order, from data/experiments.js, the short cut's
 	// variant first in each beat — so a sketch or a variant that lands in the
-	// registry is in the cut. It is eleven minutes, so ← and → step between
+	// registry is in the cut. It is long, so ← and → step between
 	// beats (← to the start of this one when more than a second in, as a
 	// player does; a pinned reel is a frame and does not step). ?chain=one is
 	// the short cut: one of each beat, the variant its `cut` names, in the
