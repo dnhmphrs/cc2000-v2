@@ -44,7 +44,11 @@ rooms appearing, and some play with the clopen geometry
 (`docs/explore-04.md`); and the third round, Einstein meets Gödel — his
 rotating universe where time closes up, the closed universes from inside,
 coordinate charts, more rooms out of the dot, and moving through rooms in
-other geometries (`docs/explore-05.md`). `/log` lists every experiment there has been, `/cut`
+other geometries (`docs/explore-05.md`); and the fourth, the v4 flows — whole
+runs on the board, each a different answer to the same brief, at **`/flows`**
+— with one-offs on tame geometry, abelian varieties and the Kummer surface,
+more rooms out of the geometry, the other spherical space forms from inside
+and maps on the torus (`docs/explore-06.md`). `/log` lists every experiment there has been, `/cut`
 plays every variant of every beat end to end in the run's order (eleven
 minutes; ← and → step between beats, and `/v4?chain=one` is the short cut,
 one of each), and a small bar in the corner of any of them steps to the next.
