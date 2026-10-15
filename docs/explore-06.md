@@ -200,6 +200,48 @@ no text, no swimmer; many rooms are draws of one chalk composite.
   nodes; the conic, in gold, contracts onto the monitor's glass while the room
   comes up round it. Best at 0.3, 0.7, 0.85.
 
+### `log-stage` — the stage: the 2D room stood up as flats (12–18 s)
+
+The lead's reel: a flat drawing of a room modelled as planes in 3D, in flat
+colours with thin construction lines on a blue ground, and the lens looping
+round it in extreme perspective. Here it is the site's own room — the six
+layers stood up in 3D exactly where the site keeps them, the wall three
+units back, between a plank floor and a ceiling slab — drawn on the lab's
+three.js renderer, since the flats want real perspective. From the one eye
+point, far off on the axis with a long lens, it is the drawing; from
+anywhere else it is a stage set, and the lines of sight from the eye
+through every flat's corners, and the edges run out long, show the
+projective construction. Every variant is a loop that leaves the eye point
+and comes home to it: the first and last frames are the same drawing, to
+the pixel.
+
+- **`orbit`** — a dolly zoom from the drawing into the room (the long lens
+  becomes a wide one close in, the frame held), a loop round the set looking
+  up into it over the floor's edge and down into it over the ceiling's, and
+  the dolly zoom back out. Best at 0.25, 0.4, 0.55, 0.7.
+- **`swing`** — the reel's own shots: low and to one side looking up, the
+  ceiling a huge triangle; high and to the other looking down; the lens
+  rolled, wide. Best at 0.25, 0.4, 0.55.
+- **`walk`** — in through the frame past the bed, turning to look across at
+  the desk, the screen, the clock and the ceiling overhead, and back out.
+  Best at 0.4, 0.5, 0.6.
+- **`explode`** — the flats slide along their lines of sight from the eye,
+  each on its own breath, while the lens circles near the eye: the room pulls
+  apart and together and the drawing from the eye never changes. Best at
+  0.3, 0.45, 0.6.
+- **`shuffle`** — three different sets, each a random deal of depths, each
+  the same drawing from the eye: the lens loops round one, comes home, where
+  they are indistinguishable, and the next is there. Best at 0.17, 0.5,
+  0.83.
+
+The projective fact under the last two: sliding a flat along its lines of
+sight from the eye, further back and larger or nearer and smaller, leaves
+the drawing from the eye unchanged — so long as the flats keep their order
+in depth, since where two overlap the nearer covers the farther. The deals
+and the breaths keep the site's order, and the home frames agree to under
+a fifth of a level per pixel, the rest being the alpha edges of flats drawn
+at different sizes.
+
 ### `log-tame` — tame geometry (11 s each)
 
 O-minimality: geometry with no pathology, finitely many pieces at every

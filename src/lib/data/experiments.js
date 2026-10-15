@@ -229,6 +229,35 @@ export const BOARD = [
 		]
 	},
 	{
+		sketch: 'log-stage',
+		cut: null,
+		name: 'The stage',
+		round: 4,
+		what: 'The room’s layers stood up as flats in 3D between a plank floor and a ceiling slab, a perspective study on blue: from the eye it is the drawing, from anywhere else a set with its lines of sight; every variant loops away and home.',
+		variants: [
+			[
+				'orbit',
+				'a dolly zoom from the drawing into the room, a loop round the set, and back out to the drawing'
+			],
+			[
+				'swing',
+				'the study’s own shots: low looking up with the floor filling the frame, high looking down over the ceiling, the lens rolled'
+			],
+			[
+				'walk',
+				'into the room past the bed, looking round at the desk, the screen, the clock and the ceiling, and back out'
+			],
+			[
+				'explode',
+				'the flats slide along their lines of sight from the eye while the lens circles it: the drawing from the eye never changes'
+			],
+			[
+				'shuffle',
+				'three different sets, each a random deal of depths, each the same drawing from the eye'
+			]
+		]
+	},
+	{
 		sketch: 'log-genesis',
 		cut: null,
 		name: 'The room from the dot',
