@@ -341,7 +341,7 @@ through each window the room is turned by the gluing.
 minutes; ← and → step between them; `/lab?sketch=flow-record&at=0.6` pins any
 frame of any of them. `/log` opens on them, and the bar in the corner steps
 through them first. The one-offs and the new variants are on the board with
-the rest, so `/cut` plays them too: 87 beats now, fifteen minutes.
+the rest, so `/cut` plays them too: 92 beats now, sixteen minutes.
 
 ## Not looked at yet
 
