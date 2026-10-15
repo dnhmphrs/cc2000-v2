@@ -3,7 +3,6 @@ import {
 	clearBoard,
 	makeView,
 	PAL,
-	MATH_FONT,
 	TAU,
 	PHI,
 	span,
@@ -545,64 +544,10 @@ function scene(ctx, w, h, t, S, dpr) {
 }
 
 // A prompt as log-orb draws it — the question, the blank, the answer typed,
-// the enter line, the cursor — at scale k (1 at rest; the step grows it and
-// slides it out), on a wiped patch of board. The kit wipes its patch through
-// ctx.filter = blur(), which headless is a software blur of 30–60 ms a frame,
-// so the patch is drawn here first, the same size and place, feathered in
-// eight rings (coverage on a smooth ramp, so no ring shows an edge), and
-// the kit's prompt is drawn through a view of the context that drops the
-// filter and that one fill.
+// the enter line, the cursor, on its wiped patch — at scale k (1 at rest; the
+// step grows it and slides it out).
 function prompt(ctx, w, h, k, P, o) {
-	const { q, alpha } = o;
-	if (alpha <= 0.01 || q <= 0) return;
-	const px = w / 2;
-	const py = h / 2 + 0.3 * h * k;
-	if (py - 60 * k > h + 40) return;
-	ctx.save();
-	ctx.font = `italic 400 ${18 * k}px ${MATH_FONT}`;
-	const Wq = ctx.measureText(P.q).width;
-	ctx.font = `italic 400 ${30 * k}px ${MATH_FONT}`;
-	const Wv = ctx.measureText(P.val).width;
-	ctx.fillStyle = PAL.ground;
-	const W = Math.max(Wq, Wv) + 90 * k;
-	const H = 136 * k;
-	const A = Math.min(0.97, alpha * smooth(q * 3));
-	const n = 8;
-	const F = 22 * k;
-	let cov = 0;
-	for (let i = 1; i <= n; i++) {
-		const c = A * smooth(i / n);
-		ctx.globalAlpha = (c - cov) / (1 - cov);
-		cov = c;
-		const e = F * (1 - i / n);
-		ctx.beginPath();
-		ctx.roundRect(px - W / 2 - e, py - H / 2 - e, W + 2 * e, H + 2 * e, 26 * k + e);
-		ctx.fill();
-	}
-	ctx.restore();
-	drawPrompt(plain(ctx), makeView({ w, h, scale: k }), makeView({ w, h, scale: 1 }), h, P, o);
-}
-
-// The context without its filter and without fill(): what drawPrompt draws
-// besides its patch (type, the lines, the cursor) goes through untouched.
-const PLAIN = new WeakMap();
-function plain(ctx) {
-	let p = PLAIN.get(ctx);
-	if (!p) {
-		p = new Proxy(ctx, {
-			get(o, key) {
-				if (key === 'fill') return () => {};
-				const v = o[key];
-				return typeof v === 'function' ? v.bind(o) : v;
-			},
-			set(o, key, v) {
-				if (key !== 'filter') o[key] = v;
-				return true;
-			}
-		});
-		PLAIN.set(ctx, p);
-	}
-	return p;
+	drawPrompt(ctx, makeView({ w, h, scale: k }), makeView({ w, h, scale: 1 }), h, P, o);
 }
 
 function pentPath(ctx, Q) {

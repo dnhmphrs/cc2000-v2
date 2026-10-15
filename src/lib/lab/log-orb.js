@@ -210,6 +210,28 @@ function strokeFade(ctx, P, Rpx, fade, opts, chunk = 6) {
 // written where it was.
 const fontOf = (size) => `italic 400 ${size}px ${MATH_FONT}`;
 
+// A rounded rect of board with a feathered edge, about as soft as a Gaussian
+// blur of σ = `soft`: N nested fills from 1.6σ outside the rect to 1.6σ
+// inside, each at the alpha that makes N of them stack to `a` in the middle.
+const WIPE_N = 8;
+function wipe(ctx, cx, cy, W, H, r, soft, a) {
+	if (a <= 0) return;
+	const step = 1 - Math.pow(1 - Math.min(a, 0.999), 1 / WIPE_N);
+	ctx.save();
+	ctx.fillStyle = PAL.ground;
+	ctx.globalAlpha = step;
+	for (let i = 0; i < WIPE_N; i++) {
+		const d = soft * 1.6 * (1 - (2 * i) / (WIPE_N - 1));
+		const w = W + 2 * d;
+		const h = H + 2 * d;
+		if (w <= 0 || h <= 0) continue;
+		ctx.beginPath();
+		ctx.roundRect(cx - w / 2, cy - h / 2, w, h, Math.max(0, r + d));
+		ctx.fill();
+	}
+	ctx.restore();
+}
+
 export function drawPrompt(ctx, view, rest, h, P, { q, a, enter, alpha, secs }) {
 	if (alpha <= 0.01 || q <= 0) return;
 	const k = view.scale / rest.scale;
@@ -226,15 +248,12 @@ export function drawPrompt(ctx, view, rest, h, P, { q, a, enter, alpha, secs }) 
 	const Wk = math(ctx, P.key, 0, -999, { size: as, alpha: 0 });
 	const W = Math.max(Wq, Wk + Wv) + 90 * k;
 	const H = 136 * k;
-	// The wiped patch: the board, cleaner, with a soft edge.
-	ctx.save();
-	ctx.globalAlpha = alpha * smooth(q * 3);
-	ctx.fillStyle = PAL.ground;
-	ctx.filter = `blur(${Math.round(16 * k)}px)`;
-	ctx.beginPath();
-	ctx.roundRect(px - W / 2, py - H / 2, W, H, 26 * k);
-	ctx.fill();
-	ctx.restore();
+	// The wiped patch: the board, cleaner, with a soft edge. The edge is
+	// feathered by hand — nested rounded rects, each a little smaller, stacked
+	// so their cover ramps from nothing outside to the patch's alpha inside —
+	// rather than by ctx.filter blur, which a software raster pays 20–40 ms a
+	// frame for at this size.
+	wipe(ctx, px, py, W, H, 26 * k, 16 * k, alpha * smooth(q * 3));
 	// The question, written on.
 	math(ctx, P.q, px, py - 26 * k, { size: qs, upto: q, alpha: 0.7 * alpha, align: 'center' });
 	// The coordinate's name, then the answer typed into its blank.
