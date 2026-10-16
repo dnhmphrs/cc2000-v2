@@ -26,6 +26,7 @@ import { loadRooms, drawRoom, pick, mips, DECADES, LAYERS } from './log/rooms.js
 import { drawHelix } from './log/helix.js';
 import { makeTerminal, ORB_R } from './log-dawn.js';
 import { drawPrompt, BIRTH, SPICE } from './log-orb.js';
+import { makeFlowRoom, perspScale } from './solid/flowroom.js';
 
 // ── Flow: flow-dodeca — the dodecahedral space ──────────────────────────────
 // A whole run on the board, in Poincaré's dodecahedral space: one cell,
@@ -57,11 +58,21 @@ import { drawPrompt, BIRTH, SPICE } from './log-orb.js';
 //            (18.8–21.1).
 //   22.8–28.2 into the centre face's room: the lens flies at the pane ahead,
 //            the walls' panes sweep out past the frame, the room grows to the
-//            landing size; the lens tilts a touch to settle the plate.
-//   27.4–31.4 colour floods in, layer by layer from the wall to the bed; the
-//            chalk edges dissolve; the monitor's glass lights as the wall
-//            takes its colour; the sway begins.
-//   31.4–38  the room, held, swaying on its depths (drawRoom's parallax).
+//            landing size; the lens tilts a touch to settle the plate; over
+//            the last second the pane's layers shrink into their depths.
+//   28.2–34.4 THE ROOM, SOLID, IN INK: the pane is handed to the solid room
+//            (lab/solid, drawn as a sketch: the board's dark, chalk lines,
+//            no colour), which opens on the same picture; the lens dollies
+//            in, the chalk layers dissolving into the hidden-line model, and
+//            walks in: over the bed's foot, up at the ceiling, round to the
+//            desk, up the wall to the clock and the posters. Six seconds.
+//            The lead: the final 2D image is not settled, so until it is the
+//            room is this sketch.
+//
+//   ?end=flat  the ending before: 27.4–31.4 colour floods in, layer by layer
+//            from the wall to the bed, the chalk edges dissolve, the monitor's
+//            glass lights, the sway begins; 31.4–38 the room, held, swaying
+//            on its depths (drawRoom's parallax).
 //
 // Two beats between the last answer and the room: the flash with the cell
 // built round us, and the flight into the pane. No record in this angle.
@@ -79,7 +90,8 @@ import { drawPrompt, BIRTH, SPICE } from './log-orb.js';
 // parallax. Lines are batched by width and alpha; the frame stays well
 // under the budget. ?decade=50s|60s|90s|10s picks the room.
 
-const SECONDS = 38;
+const SECONDS_FLAT = 38;
+const SECONDS_SOLID = 34.4;
 const FOV = 58;
 // The lens along the axis: at rest, after step one, at the orb's window
 // (the flash), drifted into the cell; the landing is set by the frame.
@@ -110,6 +122,16 @@ const B = {
 	edgesOut: [27.0, 30.0],
 	glass: [27.6, 29.8]
 };
+// The solid ending: the pane's layers into their depths, the handover (the
+// board fading off the ink room, which shows the same picture), the dolly
+// zoom with the chalk dissolving, the walk in, the end.
+const R = {
+	morph: [27.2, 28.2],
+	hand: [28.2, 28.6],
+	dolly: [28.6, 29.8],
+	fade: [28.8, 29.8],
+	walk: [29.8, 33.8]
+};
 // Colour, layer by layer, from the wall to the bed.
 const FLOOD = {
 	bg: [27.4, 29.0],
@@ -125,23 +147,57 @@ const Q2 = { ...SPICE, key: '' };
 const pace = (u, k = 3) => (Math.cosh(k * clamp01(u)) - 1) / (Math.cosh(k) - 1);
 const bump = (t, t0, wd) => Math.exp(-(((t - t0) / wd) ** 2));
 
-export default async function make({ at }) {
+export default async function make({ THREE, renderer, at }) {
 	const b = getBoard();
-	const time = clock(SECONDS, at);
 	const q = new URLSearchParams(location.search);
+	const solid = q.get('end') !== 'flat' && !!renderer;
+	const SECONDS = solid ? SECONDS_SOLID : SECONDS_FLAT;
+	const time = clock(SECONDS, at);
 	const decade = DECADES.includes(q.get('decade')) ? q.get('decade') : '90s';
 	const art = await loadRooms({ decades: [decade], chalk: true });
 	const term = makeTerminal(0.8, { cmd: false });
 	const cell = buildCell();
 	const flat = chalkComposite(art, decade);
-	const S = { cell, art, decade, flat, term, ...layout(cell) };
+	const room3d = solid ? await makeFlowRoom({ THREE, renderer, decade, art }) : null;
+	const S = { cell, art, decade, flat, term, solid, ...layout(cell) };
 
 	function render() {
-		clearBoard(b);
 		const { ctx, w, h } = b;
 		const t = time.t;
-		if (t < 10) term.draw(ctx, w, h, t / 10, t, t - 10);
-		else scene(ctx, w, h, t, S, b.dpr);
+		// The solid room, under the board, from the handover on: the lens on
+		// the pane's own place and size, then the dolly and the walk.
+		const in3d = solid && t >= R.hand[0];
+		if (in3d) {
+			const pane = landing(w, h, cell);
+			room3d.render({
+				w,
+				h,
+				...pane,
+				dolly: span(t, ...R.dolly),
+				walk: span(t, ...R.walk),
+				flatsA: 1 - smooth(span(t, ...R.fade))
+			});
+		}
+		// The board: the whole picture until the handover, fading off the
+		// ink room over it, then clear but for the tag.
+		const off = in3d ? smooth(span(t, ...R.hand)) : 0;
+		if (off < 1) {
+			clearBoard(b);
+			if (t < 10) term.draw(ctx, w, h, t / 10, t, t - 10);
+			else scene(ctx, w, h, t, S, b.dpr);
+			if (off > 0) {
+				ctx.save();
+				ctx.globalCompositeOperation = 'destination-out';
+				ctx.fillStyle = `rgba(0,0,0,${off})`;
+				ctx.fillRect(0, 0, w, h);
+				ctx.restore();
+			}
+		} else {
+			ctx.save();
+			ctx.setTransform(1, 0, 0, 1, 0, 0);
+			ctx.clearRect(0, 0, b.canvas.width, b.canvas.height);
+			ctx.restore();
+		}
 		tag(ctx, w, h, 'flow-dodeca');
 	}
 
@@ -385,9 +441,25 @@ function lensZ(t, zLand) {
 	return zLand;
 }
 
+// The pane ahead once landed: its centre and height on the page, from the
+// same lens and tilt scene() lands with.
+function landing(w, h, cell) {
+	const { front, plate } = cell;
+	const pxu = pxPerUnit(h, FOV);
+	const L = Math.min(0.62 * h, (0.74 * w) / PHI);
+	const zLand = 1 - (plate.H * pxu) / L;
+	const tilt = (0.035 * h) / pxu;
+	const cam = camera3({ pos: [0, 0, zLand], target: [0, tilt, zLand + 1], fov: FOV, w, h });
+	const C = add3(front.n, mul3(front.up, plate.yc));
+	const P = cam.project(C);
+	const Pu = cam.project(add3(C, mul3(front.up, 0.05)));
+	const height = (Math.hypot(Pu[0] - P[0], Pu[1] - P[1]) / 0.05) * plate.H;
+	return { cx: P[0], cy: P[1], height };
+}
+
 // ── The scene, from the orb's first frame on ─────────────────────────────────
 function scene(ctx, w, h, t, S, dpr) {
-	const { cell, art, decade, flat, chain, near } = S;
+	const { cell, art, decade, flat, chain, near, solid } = S;
 	const { faces, verts, front, swim, plate } = cell;
 	const pxu = pxPerUnit(h, FOV);
 	// The landing: the plate ahead at the landing's height (log-genesis's),
@@ -486,14 +558,15 @@ function scene(ctx, w, h, t, S, dpr) {
 		const P = cam.project(C);
 		const Pu = cam.project(add3(C, mul3(front.up, 0.05)));
 		const height = (Math.hypot(Pu[0] - P[0], Pu[1] - P[1]) / 0.05) * plate.H;
-		const amp = smooth(span(t, ...B.flood));
+		const amp = solid ? 0 : smooth(span(t, ...B.flood));
 		const A = 0.116 * (height / 2) * amp;
 		const par = [A * Math.sin(1.1 * t - 0.4), -0.45 * A * Math.sin(1.7 * t + 0.6)];
 		const colour = {};
 		const chalk = {};
 		for (const k of Object.keys(FLOOD)) {
-			colour[k] = smooth(span(t, ...FLOOD[k])) * front.in;
-			chalk[k] = (1 - smooth(span(t, ...FLOOD[k]))) * front.in;
+			const f = solid ? 0 : smooth(span(t, ...FLOOD[k]));
+			colour[k] = f * front.in;
+			chalk[k] = (1 - f) * front.in;
 		}
 		frontRoom(ctx, art, decade, {
 			cx: P[0],
@@ -503,7 +576,11 @@ function scene(ctx, w, h, t, S, dpr) {
 			colour,
 			chalk,
 			back: front.in,
-			glassA: smooth(span(t, ...B.glass))
+			glassA: solid ? 0 : smooth(span(t, ...B.glass)),
+			// Landing on the solid room: the layers shrink into their depths,
+			// so the pane is the ink room's own elevation when it takes over.
+			persp: solid ? smooth(span(t, ...R.morph)) : 0,
+			h
 		});
 	}
 
@@ -588,16 +665,23 @@ function pane(ctx, cam, F, verts, flat, plate, alpha, dpr) {
 // The pane ahead: the kit's room, layer by layer, chalk and colour at their
 // own alphas, the glass filled with board (not wall) and lit, the parallax
 // `par` slid per unit of depth.
-function frontRoom(ctx, art, decade, { cx, cy, height, par, colour, chalk, back, glassA }) {
+function frontRoom(
+	ctx,
+	art,
+	decade,
+	{ cx, cy, height, par, colour, chalk, back, glassA, persp = 0, h = 0 }
+) {
 	const W = height * PHI;
 	ctx.save();
 	ctx.globalAlpha = back;
 	ctx.fillStyle = PAL.ground;
 	ctx.fillRect(cx - W / 2, cy - height / 2, W, height);
 	ctx.restore();
-	const V = { cx, cy, height, parallax: par };
 	for (const cfg of LAYERS) {
 		const key = cfg.key;
+		// Each layer at its own depth's scale about the plate's centre, by `persp`.
+		const hk = persp > 0 ? height * lerp(1, perspScale(cfg.depth, h, height), persp) : height;
+		const V = { cx, cy, height: hk, parallax: par };
 		if (key === 'screen') {
 			const G = drawRoom(ctx, art, decade, { ...V, layers: ['screen'], alpha: 0 });
 			if (G) glassLit(ctx, G, glassA, back);

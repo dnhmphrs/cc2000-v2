@@ -98,6 +98,15 @@ flow's own geometry, the swimmer hidden until the flash, one to three beats
 from the last answer to the room), listed in the registry's `FLOWS`, to mix
 and match from; they share the kit's `helix.js` (the swimmer as a helix turning
 on its own axis), `log-dawn.js makeTerminal` and `log-orb.js drawPrompt`.
+`flow-dodeca` lands in the SOLID room — the 90s room rebuilt in 3D
+(`lab/solid/`, the sketch `log-solid`, seven loops round it on the blue),
+drawn as a SKETCH (`solid/parts.js`'s ink mode, `?ink=1`: the board's dark,
+chalk lines, no colour) and handed the flow's chalk pane without a seam by
+`solid/flowroom.js`, the lens walking in for six seconds — the lead's call,
+until the final 2D image is settled; `?end=flat` is the colour flood and the
+sway that were there before. A flow that wants the room this way renders
+three.js under the board (the reel and the lab both hand `make()` a
+`renderer`) and clears the board over it.
 `/v4?chain=log` and `?chain=clopen` play one variant of each of a round's
 beats, `?chain=play` the five clopen films as one loop, and **`/cut`**
 (`?chain=all`) is THE CUT: everything there is, EVERY variant of every beat in

@@ -4,18 +4,51 @@
 // desk and the bed stepping forward, each a textured quad. From the eye point
 // with the long lens they are the drawing; a loop fades them out as it leaves
 // the eye and the solids take over, and fades them back as it comes home.
+//
+// With `art` (the rooms kit's loadRooms with chalk: true) the flats are the
+// CHALK drawing instead — the board's ink copies of the layers, on a backing
+// of the board's ground behind the wall — the picture a flow's pane shows, so
+// a flow can hand its pane to the ink room without a seam.
 
 import { LAYERS, placement, elementUrl } from '$lib/data/roomElements';
 
-export async function build(K, decade = '90s') {
-	const { THREE, tex, W, H, DEPTH } = K;
+export async function build(K, decade = '90s', { art = null } = {}) {
+	const { THREE, tex, W, H, DEPTH, PAL } = K;
 	const g = new THREE.Group();
 	g.name = 'flats';
 	const unit = new THREE.PlaneGeometry(1, 1);
 	const mats = [];
+	if (art) {
+		// The ground behind the chalk, as the pane has it.
+		const back = new THREE.Mesh(
+			unit,
+			new THREE.MeshBasicMaterial({
+				color: PAL.board,
+				transparent: true,
+				depthTest: false,
+				depthWrite: false
+			})
+		);
+		// At the frame plane, so from the eye it is the pane's whole plate.
+		back.position.set(0, 0, 0);
+		back.scale.set(W, H, 1);
+		back.renderOrder = 99;
+		mats.push(back.material);
+		g.add(back);
+	}
 	await Promise.all(
 		LAYERS.map(async (cfg) => {
-			const t = await tex(elementUrl(decade, cfg.key));
+			let t;
+			if (art) {
+				const a = art[decade][cfg.key];
+				if (!a || !a.chalk) return;
+				t = new THREE.CanvasTexture(a.chalk[0]);
+				t.colorSpace = THREE.SRGBColorSpace;
+				t.generateMipmaps = true;
+				t.minFilter = THREE.LinearMipmapLinearFilter;
+				t.magFilter = THREE.LinearFilter;
+				t.anisotropy = 4;
+			} else t = await tex(elementUrl(decade, cfg.key));
 			const aspect = t.image.width / t.image.height;
 			const pos = placement(cfg, decade, false);
 			let w, h;
@@ -54,7 +87,7 @@ export async function build(K, decade = '90s') {
 			g.add(mesh);
 		})
 	);
-	// Painter's order: the wall first, the bed last.
+	// Painter's order: the backing, the wall first, the bed last.
 	g.children.sort((a, b) => a.position.z - b.position.z);
 	const setOpacity = (a) => {
 		g.visible = a > 0.001;

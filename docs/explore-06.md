@@ -135,7 +135,7 @@ the room; the lens lands in the answer's room, the colour flooding in bed
 first and wall last, the glass lit, the room swaying, the lattice faint
 round it. Best at 0.4, 0.55, 0.6, 0.75, 0.9.
 
-### `flow-dodeca` — the dodecahedral space (38 s)
+### `flow-dodeca` — the dodecahedral space (34 s)
 
 The lens is inside the space from the start, looking down a straight chain
 of dodecahedral cells glued face to face, each the last turned a tenth, so
@@ -147,11 +147,19 @@ passes through the orb's window; then two beats: the cell goes bold round us
 with the answer's bedroom in chalk through every face (the largest golden
 rectangle in each pentagon, eleven small draws of one chalk composite), and
 the flight into the centre pane, which is the room itself, growing to the
-landing size while the walls pass; the colour floods in, the chalk edges
-dissolve, the glass lights, the room sways. The swimmer once, at the flash,
-swimming off down the line of sight through a pane. No grooves. The chain
-is Euclidean, the local picture, not the S³ chart. Best at 0.35, 0.5, 0.6,
-0.7.
+landing size while the walls pass, its layers shrinking into their depths
+over the last second; and then THE ROOM, SOLID, IN INK: at the landing the
+pane is handed to the solid room (`lab/solid`, drawn as a sketch — the
+board's dark, chalk lines, no colour; `solid/flowroom.js`), which opens on
+the same picture, so there is no seam to see; the lens dollies in, the chalk
+layers dissolving into the hidden-line model, and walks in — over the bed's
+foot, up at the orange ceiling (grey here), round to the desk, the tower
+close, up the wall to the clock and the posters — six seconds, the lead's
+"closer to 5 or 6", and the flow ends there. `?end=flat` is the ending
+before: the colour floods in, the chalk edges dissolve, the glass lights,
+the room sways (38 s). The swimmer once, at the flash, swimming off down the
+line of sight through a pane. No grooves. The chain is Euclidean, the local
+picture, not the S³ chart. Best at 0.35, 0.5, 0.6, 0.82, 0.87, 0.92, 0.98.
 
 ### `flow-swim` — the swim, for comparison (43 s)
 
@@ -302,6 +310,21 @@ carrying its name, its home and where it goes when the room explodes — and
 lamp, computer, bed, wall}.js`, the loops `lab/solid/loop-*.js`, picked up
 by the sketch by a glob: a new loop file is a new variant. `?part=desk`
 shows one object alone on a turntable.
+
+**The ink room.** The lead, on where it goes next: _"get it into one of the
+log demos. ideally closer to 5 or 6 … likely moving to that sketch
+black/white graphic style until settling on the final 2d image."_ So the kit
+has an INK mode (`kit(THREE, { ink: true })`, `?ink=1` on the sketch): every
+face the board's dark ground, a whisper lighter toward the light so the
+volumes read, no colour, no textures, the edge lines and the construction
+lines in chalk — a hidden-line drawing of the model in the board's own look,
+and the `draw` loop's flats become the rooms kit's chalk copies on a backing
+of ground. `solid/flowroom.js` is that room for a flow: it opens on the flow's
+own chalk pane (the same layers, at the pane's place and size on the page),
+dollies in with the chalk dissolving into the model, and walks the lens in —
+over the bed's foot, up at the ceiling, round to the desk, up the wall to the
+clock and the posters — in six seconds. `flow-dodeca` lands in it (its
+section above); any flow that flies at the room's pane can.
 
 ### `log-tame` — tame geometry (11 s each)
 

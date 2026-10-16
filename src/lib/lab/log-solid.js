@@ -32,6 +32,12 @@
 //
 //   ?part=desk|lamp|computer|bed|wall|room   that object alone on a slow
 //                                            turntable, to look at it
+//   ?ink=1                                   the room as a SKETCH: the board's
+//                                            dark, chalk lines, no colour and
+//                                            no textures (parts.js's ink
+//                                            mode), the drawing's flats in
+//                                            chalk — the look the flows take
+//                                            it in
 //   ?at=0.42                                 pins a frame; every frame is a
 //                                            pure function of progress
 //
@@ -47,6 +53,7 @@ import { build as buildComputer } from './solid/computer.js';
 import { build as buildBed } from './solid/bed.js';
 import { build as buildWall } from './solid/wall.js';
 import { build as buildFlats } from './solid/flats.js';
+import { loadRooms } from './log/rooms.js';
 
 // Every loop file registers here: its name, its length, its pose and (if it
 // has one) its act. A loop file exports `seconds`, `pose(u, api)` and
@@ -70,15 +77,16 @@ export default async function make({ THREE, renderer, at }) {
 	const v = variant(names);
 	const q = new URLSearchParams(location.search);
 	const only = q.get('part');
+	const ink = q.get('ink') === '1';
 	const loop = loops[v];
 	const seconds = only ? 12 : loop ? loop.seconds : 12;
 	const time = clock(seconds, at);
 	const b = getBoard();
-	const K = kit(THREE);
+	const K = kit(THREE, { ink });
 
 	// ── The room ─────────────────────────────────────────────────────────────
 	const scene = new THREE.Scene();
-	scene.background = new THREE.Color(PAL.ground);
+	scene.background = new THREE.Color(ink ? PAL.board : PAL.ground);
 	const room = new THREE.Group();
 	scene.add(room);
 	const builders = {
@@ -105,8 +113,11 @@ export default async function make({ THREE, renderer, at }) {
 		if (o.userData.part) parts[o.userData.part.name] = o;
 	});
 
-	// The drawing's flats, for a loop that fades between the two.
-	const flats = await buildFlats(K);
+	// The drawing's flats, for a loop that fades between the two — in chalk
+	// when the room is a sketch.
+	const flats = await buildFlats(K, '90s', {
+		art: ink ? await loadRooms({ decades: ['90s'], chalk: true }) : null
+	});
 	scene.add(flats.group);
 
 	// ── The lens ─────────────────────────────────────────────────────────────
@@ -245,11 +256,11 @@ export default async function make({ THREE, renderer, at }) {
 		ctx.clearRect(0, 0, b.canvas.width, b.canvas.height);
 		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 		sheet(ctx, w, h);
-		tag(ctx, w, h, `log-solid · ${only ? 'part ' + only : v}`);
+		tag(ctx, w, h, `log-solid · ${only ? 'part ' + only : v}${ink ? ' · ink' : ''}`);
 	}
 
 	return {
-		info: { seconds, variant: v, part: only || null },
+		info: { seconds, variant: v, part: only || null, ink },
 		seek: (x) => time.seek(x),
 		update: (dt) => time.step(dt),
 		render,

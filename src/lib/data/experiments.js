@@ -262,7 +262,7 @@ export const BOARD = [
 		cut: null,
 		name: 'The solid',
 		round: 4,
-		what: 'The 2D room rebuilt as a 3D room: every object modelled solid — the desk and its drawers, the anglepoise, the CRT, keyboard and tower, the bed under its blanket, the clock and the posters — between a plank floor and an orange ceiling on the blue, flat colours shaded by gradients, white edges, construction lines run out long; from the eye it lines up with the drawing, and every variant loops away and home.',
+		what: 'The 2D room rebuilt as a 3D room: every object modelled solid — the desk and its drawers, the anglepoise, the CRT, keyboard and tower, the bed under its blanket, the clock and the posters — between a plank floor and an orange ceiling on the blue, flat colours shaded by gradients, white edges, construction lines run out long; from the eye it lines up with the drawing, and every variant loops away and home. ?ink=1 draws it as a sketch: the board’s dark, chalk lines, no colour — the look the dodeca flow lands in.',
 		variants: [
 			[
 				'orbit',
@@ -433,7 +433,7 @@ export const FLOWS = [
 	{
 		sketch: 'flow-dodeca',
 		name: 'The dodecahedral space',
-		what: 'a cell built round us, every face a room, into the centre one'
+		what: 'a cell built round us, every face a room, into the centre one — which is the solid room drawn as a sketch: the pane handed to the ink model, the lens walking in for six seconds (?end=flat for the colour flood and the sway)'
 	},
 	{
 		sketch: 'flow-swim',

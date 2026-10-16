@@ -16,6 +16,11 @@
 //
 //   kit(THREE) → { box, cyl, cone, tube, wedge, plane, picture, solid, paint,
 //                  edges, rays, part, group, tex, crop, lineMat, PAL, LAYOUT }
+//   kit(THREE, { ink: true }) is the same room drawn as a SKETCH: the
+//   blackboard's own look — every face the board's dark ground, a whisper
+//   lighter toward the light so the volumes read, no colour, no textures,
+//   the edge lines and the construction lines in chalk — a hidden-line
+//   drawing of the model, for the flows, until the final 2D image is settled.
 
 import { PHI } from '../log/board.js';
 
@@ -28,6 +33,9 @@ export const SX = W / 2 + 0.35; // the slabs run a little wider than the frame
 export const PAL = {
 	ground: 0x1f4fd0, // the blue the room stands on
 	line: 0xffffff,
+	board: 0x151515, // the blackboard's ground (board.js PAL.ground), for the ink room
+	face: 0x1b1b1b, // a face of the ink room, before the light's whisper
+	chalk: 0xece6da, // the chalk the ink room is drawn in (board.js PAL.chalk)
 	wall: 0xd8c894,
 	wallDark: 0xb9a062,
 	floor: 0xc9a86a,
@@ -109,8 +117,9 @@ export const LAYOUT = {
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
 const lerp = (a, b, t) => a + (b - a) * t;
 
-export function kit(THREE) {
+export function kit(THREE, { ink = false } = {}) {
 	const col = (c) => (c instanceof THREE.Color ? c : new THREE.Color(c));
+	const FACE = col(PAL.face);
 	// The light the tint comes from: high, a little left, in front.
 	const L = new THREE.Vector3(-0.4, 0.85, 0.55).normalize();
 	const loader = new THREE.TextureLoader();
@@ -143,7 +152,12 @@ export function kit(THREE) {
 				g = lerp(cb.g, ct.g, t);
 				b = lerp(cb.b, ct.b, t);
 			}
-			const k = 1 - tint * (1 - (n.dot(L) + 1) / 2);
+			let k = 1 - tint * (1 - (n.dot(L) + 1) / 2);
+			if (ink) {
+				// The sketch: every face the board's dark, lighter toward the light.
+				({ r, g, b } = FACE);
+				k = 0.8 + 0.5 * ((n.dot(L) + 1) / 2);
+			}
 			out[3 * i] = r * k;
 			out[3 * i + 1] = g * k;
 			out[3 * i + 2] = b * k;
@@ -155,7 +169,7 @@ export function kit(THREE) {
 	const mat = (o = {}) =>
 		new THREE.MeshBasicMaterial({
 			vertexColors: true,
-			map: o.map ?? null,
+			map: ink ? null : (o.map ?? null),
 			transparent: (o.opacity ?? 1) < 1 || !!o.transparent,
 			opacity: o.opacity ?? 1,
 			side: o.side ?? THREE.FrontSide,
@@ -167,9 +181,9 @@ export function kit(THREE) {
 
 	function lineMat(opacity, depth = true) {
 		return new THREE.LineBasicMaterial({
-			color: PAL.line,
+			color: ink ? PAL.chalk : PAL.line,
 			transparent: true,
-			opacity,
+			opacity: ink ? Math.min(0.92, opacity * (depth ? 1.4 : 0.9)) : opacity,
 			depthTest: depth,
 			depthWrite: false
 		});
@@ -344,6 +358,7 @@ export function kit(THREE) {
 
 	return {
 		THREE,
+		ink,
 		PAL,
 		LAYOUT,
 		W,
