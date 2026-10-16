@@ -242,6 +242,67 @@ and the breaths keep the site's order, and the home frames agree to under
 a fifth of a level per pixel, the rest being the alpha edges of flats drawn
 at different sizes.
 
+### `log-solid` — the solid: the 2D room rebuilt as a 3D room (12–18 s)
+
+The lead, on the stage: _"that is still 2.5d. i mean full 3d rebuild of all
+objects into an actual room. like what i shared. go wild."_ So here the
+drawing's room is REBUILT: every object in it modelled solid, in the look of
+the reel — flat colours with soft gradients on the faces, a white edge line
+on every part, construction lines run out long through the whole room, drawn
+over everything, the lot standing on the blue between a plank floor and a
+thick ceiling slab, orange underneath, with the back wall the posters hang
+on and no other walls. The desk is a long top on two drawer pedestals, their
+scooped pulls recessed; the lamp an anglepoise in the drawing's red, its
+bell open on a pale bulb; the computer a CRT with a square bezel, a tube
+tapering behind it and a plinth under, a keyboard with its keys, a tower
+with the drawing's bays and its round button, a mouse on a cable; the bed a
+valance, a mattress, a blanket draped over it with its folds and a wavy hem,
+a pillow at the head, the magazine lying on it; the wall's clock a red drum
+with a pale face and hands at four, the Rad poster and the pink and red-sun
+posters taped on, their faces cropped from the drawing's own PNGs. There are
+no lights: the shading is baked into the colours. Everything stands in room
+units at the place the drawing puts it, read off the composite from its eye
+point, so from the eye with the long lens the model lines up with the
+drawing; every variant is a loop that leaves that elevation and comes home
+to it.
+
+- **`orbit`** — out of the elevation on a dolly zoom and once round the
+  room: under the floor's level looking up through the open front at the
+  orange underside, round the side, over the ceiling looking down over its
+  front edge into the room, and home.
+- **`swing`** — the reel's low rolled corner shots: under the floor at the
+  bed's corner, the blanket huge and near, the floor slab's edge diagonal
+  across the frame; over the ceiling's far corner looking down, rolled the
+  other way; the roll swinging with the path and 0 at home.
+- **`inside`** — in through the open front over the bed's foot, up at the
+  orange ceiling, round to the desk, the monitor and the lamp close, up the
+  wall to the clock and the posters, the corner view, and out again.
+- **`sheet`** — the drawing set, long-lensed throughout: `02 PERSPECTIVE
+VIEW` at the eye, straight up to the plan with the ceiling lifted away,
+  `01 PLAN VIEW` at rest, round and down to the side for `03 SECTION VIEW`,
+  the slabs edge-on, and the sweep back round the front to the eye.
+- **`explode`** — the exploded diagram: every part drifts out along its own
+  construction — the ceiling up, the floor down, the wall back, drawers out,
+  the tube back, the blanket and pillow up off the bed, posters off the
+  wall — while the lines stay where the parts were, the lens arcing over,
+  and everything comes home.
+- **`draw`** — the drawing stands up: at the eye the flat layers are over
+  the model and ARE the picture; as the lens leaves on the dolly zoom they
+  dissolve into the solids, and as it comes home they come back, so the last
+  frame is the drawing again.
+- **`turn`** — the model shot: the room turns once on the blue under a low
+  wide lens.
+
+The kit is `lab/solid/parts.js` — `kit(THREE)` gives painted boxes,
+cylinders, cones, rods and wedges (the gradient and a tint by one light
+baked into vertex colours), the edge lines, the construction rays, the
+textures and their crops, and `part(obj, name, explode)`, every part
+carrying its name, its home and where it goes when the room explodes — and
+`LAYOUT`, where everything stands. The models are `lab/solid/{room, desk,
+lamp, computer, bed, wall}.js`, the loops `lab/solid/loop-*.js`, picked up
+by the sketch by a glob: a new loop file is a new variant. `?part=desk`
+shows one object alone on a turntable.
+
 ### `log-tame` — tame geometry (11 s each)
 
 O-minimality: geometry with no pathology, finitely many pieces at every
@@ -341,7 +402,7 @@ through each window the room is turned by the gluing.
 minutes; ← and → step between them; `/lab?sketch=flow-record&at=0.6` pins any
 frame of any of them. `/log` opens on them, and the bar in the corner steps
 through them first. The one-offs and the new variants are on the board with
-the rest, so `/cut` plays them too: 92 beats now, sixteen minutes.
+the rest, so `/cut` plays them too: 99 beats now, eighteen minutes.
 
 ## Not looked at yet
 

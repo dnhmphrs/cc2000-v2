@@ -258,6 +258,40 @@ export const BOARD = [
 		]
 	},
 	{
+		sketch: 'log-solid',
+		cut: null,
+		name: 'The solid',
+		round: 4,
+		what: 'The 2D room rebuilt as a 3D room: every object modelled solid — the desk and its drawers, the anglepoise, the CRT, keyboard and tower, the bed under its blanket, the clock and the posters — between a plank floor and an orange ceiling on the blue, flat colours shaded by gradients, white edges, construction lines run out long; from the eye it lines up with the drawing, and every variant loops away and home.',
+		variants: [
+			[
+				'orbit',
+				'out of the elevation on a dolly zoom and once round the room: under the floor looking up, round the side, over the ceiling looking down, and home'
+			],
+			[
+				'swing',
+				'the study’s low rolled corner shots: under the floor at one corner, the bed huge and near, over the ceiling’s corner at the other, the lens rolled with the swing'
+			],
+			[
+				'inside',
+				'in through the open front and up at the orange ceiling, round to the desk, the monitor and the lamp, up the wall to the clock and the posters, and out'
+			],
+			[
+				'sheet',
+				'the drawing set: the perspective view, straight up to the plan with the ceiling lifted away, round to the section, each captioned, and back'
+			],
+			[
+				'explode',
+				'the exploded diagram: every part drifts out along its own construction lines, which stay, and comes home while the lens arcs over'
+			],
+			[
+				'draw',
+				'the drawing stands up: the flat layers dissolve into the solids as the lens leaves the eye, and come back as it returns'
+			],
+			['turn', 'the model shot: the room turns once on the blue under a low wide lens']
+		]
+	},
+	{
 		sketch: 'log-genesis',
 		cut: null,
 		name: 'The room from the dot',

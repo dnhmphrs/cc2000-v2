@@ -102,7 +102,7 @@ on its own axis), `log-dawn.js makeTerminal` and `log-orb.js drawPrompt`.
 beats, `?chain=play` the five clopen films as one loop, and **`/cut`**
 (`?chain=all`) is THE CUT: everything there is, EVERY variant of every beat in
 the run's order, the short cut's first in each beat, so a sketch or a variant
-that lands in the registry is in the cut — sixteen minutes, and ← and → step
+that lands in the registry is in the cut — eighteen minutes, and ← and → step
 between beats; `?chain=one` is the short cut, one of each, the variant each
 beat's `cut` names in the registry. A
 log sketch reads its variant from `?v=`, or from the reel (`pickVariant` round
