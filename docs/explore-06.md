@@ -135,7 +135,7 @@ the room; the lens lands in the answer's room, the colour flooding in bed
 first and wall last, the glass lit, the room swaying, the lattice faint
 round it. Best at 0.4, 0.55, 0.6, 0.75, 0.9.
 
-### `flow-dodeca` — the dodecahedral space (34 s)
+### `flow-dodeca` — the dodecahedral space (38 s)
 
 The lens is inside the space from the start, looking down a straight chain
 of dodecahedral cells glued face to face, each the last turned a tenth, so
@@ -147,19 +147,16 @@ passes through the orb's window; then two beats: the cell goes bold round us
 with the answer's bedroom in chalk through every face (the largest golden
 rectangle in each pentagon, eleven small draws of one chalk composite), and
 the flight into the centre pane, which is the room itself, growing to the
-landing size while the walls pass, its layers shrinking into their depths
-over the last second; and then THE ROOM, SOLID, IN INK: at the landing the
+landing size while the walls pass; the colour floods in, the chalk edges
+dissolve, the glass lights, the room sways. The swimmer once, at the flash,
+swimming off down the line of sight through a pane. No grooves. The chain
+is Euclidean, the local picture, not the S³ chart. Best at 0.35, 0.5, 0.6,
+0.7. `?end=solid` is an exploration kept, not the ending: at the landing the
 pane is handed to the solid room (`lab/solid`, drawn as a sketch — the
 board's dark, chalk lines, no colour; `solid/flowroom.js`), which opens on
-the same picture, so there is no seam to see; the lens dollies in, the chalk
-layers dissolving into the hidden-line model, and walks in — over the bed's
-foot, up at the orange ceiling (grey here), round to the desk, the tower
-close, up the wall to the clock and the posters — six seconds, the lead's
-"closer to 5 or 6", and the flow ends there. `?end=flat` is the ending
-before: the colour floods in, the chalk edges dissolve, the glass lights,
-the room sways (38 s). The swimmer once, at the flash, swimming off down the
-line of sight through a pane. No grooves. The chain is Euclidean, the local
-picture, not the S³ chart. Best at 0.35, 0.5, 0.6, 0.82, 0.87, 0.92, 0.98.
+the same picture, the lens dollies in, the chalk layers dissolve into the
+hidden-line model, and it walks in for six seconds (34 s in all). The lead
+looked and is sticking to the 2D rooms.
 
 ### `flow-swim` — the swim, for comparison (43 s)
 
@@ -323,8 +320,10 @@ of ground. `solid/flowroom.js` is that room for a flow: it opens on the flow's
 own chalk pane (the same layers, at the pane's place and size on the page),
 dollies in with the chalk dissolving into the model, and walks the lens in —
 over the bed's foot, up at the ceiling, round to the desk, up the wall to the
-clock and the posters — in six seconds. `flow-dodeca` lands in it (its
-section above); any flow that flies at the room's pane can.
+clock and the posters — in six seconds. `flow-dodeca` can land in it
+(`?end=solid`; its section above); any flow that flies at the room's pane
+can. The lead looked and is sticking to the 2D rooms, so the solid and its
+ink stay an exploration in the lab and the cut.
 
 ### `log-tame` — tame geometry (11 s each)
 

@@ -58,21 +58,21 @@ import { makeFlowRoom, perspScale } from './solid/flowroom.js';
 //            (18.8–21.1).
 //   22.8–28.2 into the centre face's room: the lens flies at the pane ahead,
 //            the walls' panes sweep out past the frame, the room grows to the
-//            landing size; the lens tilts a touch to settle the plate; over
-//            the last second the pane's layers shrink into their depths.
-//   28.2–34.4 THE ROOM, SOLID, IN INK: the pane is handed to the solid room
-//            (lab/solid, drawn as a sketch: the board's dark, chalk lines,
-//            no colour), which opens on the same picture; the lens dollies
-//            in, the chalk layers dissolving into the hidden-line model, and
-//            walks in: over the bed's foot, up at the ceiling, round to the
-//            desk, up the wall to the clock and the posters. Six seconds.
-//            The lead: the final 2D image is not settled, so until it is the
-//            room is this sketch.
+//            landing size; the lens tilts a touch to settle the plate.
+//   27.4–31.4 colour floods in, layer by layer from the wall to the bed; the
+//            chalk edges dissolve; the monitor's glass lights as the wall
+//            takes its colour; the sway begins.
+//   31.4–38  the room, held, swaying on its depths (drawRoom's parallax).
 //
-//   ?end=flat  the ending before: 27.4–31.4 colour floods in, layer by layer
-//            from the wall to the bed, the chalk edges dissolve, the monitor's
-//            glass lights, the sway begins; 31.4–38 the room, held, swaying
-//            on its depths (drawRoom's parallax).
+//   ?end=solid  an exploration kept: the room SOLID, IN INK. Over the last
+//            second of the dive the pane's layers shrink into their depths,
+//            then (28.2–34.4) the pane is handed to the solid room (lab/solid,
+//            drawn as a sketch: the board's dark, chalk lines, no colour),
+//            which opens on the same picture; the lens dollies in, the chalk
+//            layers dissolving into the hidden-line model, and walks in: over
+//            the bed's foot, up at the ceiling, round to the desk, up the wall
+//            to the clock and the posters; six seconds. The lead looked and
+//            is sticking to the 2D rooms, so this is not the ending.
 //
 // Two beats between the last answer and the room: the flash with the cell
 // built round us, and the flight into the pane. No record in this angle.
@@ -150,7 +150,7 @@ const bump = (t, t0, wd) => Math.exp(-(((t - t0) / wd) ** 2));
 export default async function make({ THREE, renderer, at }) {
 	const b = getBoard();
 	const q = new URLSearchParams(location.search);
-	const solid = q.get('end') !== 'flat' && !!renderer;
+	const solid = q.get('end') === 'solid' && !!renderer;
 	const SECONDS = solid ? SECONDS_SOLID : SECONDS_FLAT;
 	const time = clock(SECONDS, at);
 	const decade = DECADES.includes(q.get('decade')) ? q.get('decade') : '90s';
