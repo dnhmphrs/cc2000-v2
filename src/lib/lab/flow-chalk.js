@@ -2,7 +2,6 @@ import {
 	getBoard,
 	clearBoard,
 	makeView,
-	stroke,
 	disc,
 	PAL,
 	TAU,
@@ -11,18 +10,15 @@ import {
 	span,
 	smooth,
 	lerp,
-	clamp01,
 	easeInOutCubic,
 	clock,
-	norm,
-	sub3,
 	tag
 } from './log/board.js';
-import { drawOrb, glow, impact } from './log/ink.js';
+import { drawOrb, impact } from './log/ink.js';
 import { makeTerminal, ORB_R } from './log-dawn.js';
 import { drawPrompt, BIRTH, SPICE } from './log-orb.js';
-import { PLATE, DECADES, loadRooms, roomOf, drawImageAt } from './log/rooms.js';
-import { drawHelix } from './log/helix.js';
+import { DECADES, loadRooms } from './log/rooms.js';
+import { makeFall, orderOf } from './log/fall.js';
 
 // ── Flow: flow-chalk — THE CHALK FALL ────────────────────────────────────────
 // One run of the site on the board, in chalk. The terminal types the card and
@@ -42,6 +38,13 @@ import { drawHelix } from './log/helix.js';
 // answer's room, which floods with colour, bed first and wall last, and sways
 // on its depths with its glass lit. The helix swimmer leads the fall through
 // the first glass or two, then outswims the lens into the dark.
+//
+// The fall is the kit's (log/fall.js makeFall — the nest of plates, the lens,
+// the swimmer, the landing, the flood, the held room), handed this flow's
+// lattice as its background and this flow's zoom, so the plates and the
+// lattice stay one zoom. `?colour=along` is a look at the kit's other
+// colouring — each room deeper carrying more colour, the answer's in full —
+// off here: this flow's colour floods at the landing.
 //
 // Beats, in seconds:
 //    0 – 10    the terminal (log-dawn's, no command line), ending on the orb
@@ -83,7 +86,6 @@ const B = {
 };
 const CREEP = 0.03; // e-folds a second, so the lens is always flying
 const DIVE = 0.45; // e-folds over the dive
-const CROSSINGS = 5; // glasses fallen through: six rooms, the answer's last
 
 // ── The lattice ──────────────────────────────────────────────────────────────
 // Log-phyllotaxis, as log-tunnel has it: seed n at angle n·α (α the golden
@@ -101,16 +103,10 @@ const LN_STEP = STEP * LC;
 const KAPPA = slope(STEP); // the turn per e-fold along the 34-spiral
 const LAT = { r0: 0.22, alpha: 0.6, net: [13, 8] };
 
-// ── The nest ─────────────────────────────────────────────────────────────────
-const FOV = 34;
-const FIT = 0.9; // how much of its glass the next plate fills, at rest
-const MARGIN = 1.35; // how far past the parent's glass the lens is, at rest
-const NEARZ = 0.015; // planes nearer than this (in the lens's units) are passed
-const ZETA0 = -0.55; // where the fall starts: this far before the first plate
-
 export default async function make({ at }) {
 	const q = new URLSearchParams(location.search);
 	const decade = DECADES.includes(q.get('decade')) ? q.get('decade') : '90s';
+	const colourAlong = q.get('colour') === 'along';
 	const b = getBoard();
 	const time = clock(SECONDS, at);
 	const term = makeTerminal(0.8, { cmd: false });
@@ -118,10 +114,12 @@ export default async function make({ at }) {
 	tag(b.ctx, b.w, b.h, 'flow-chalk · loading the rooms');
 	const t0 = performance.now();
 	const art = await loadRooms({ chalk: true });
-	const others = DECADES.filter((d) => d !== decade);
-	const order = [];
-	for (let i = 0; i < CROSSINGS; i++) order.push(others[i % others.length]);
-	order.push(decade);
+	const order = orderOf(decade);
+	const fall = makeFall({
+		art,
+		order,
+		beats: { fall: B.fall, land: B.land, colour: B.colour, swim: B.swim }
+	});
 	const info = {
 		seconds: SECONDS,
 		decade,
@@ -132,7 +130,7 @@ export default async function make({ at }) {
 	const Q1 = { ...BIRTH, key: '' };
 	const Q2 = { ...SPICE, key: '' };
 
-	let geo = null;
+	let nest = null;
 	let fl = null;
 
 	function render() {
@@ -144,13 +142,13 @@ export default async function make({ at }) {
 			tag(ctx, w, h, 'flow-chalk');
 			return;
 		}
-		if (!geo || geo.w !== w || geo.h !== h) {
-			geo = makeNest(w, h, order, art);
-			fl = makeFlight(geo);
-			info.lambda = geo.levels.slice(0, geo.L).map((l) => Number((1 / l.X).toFixed(2)));
-			info.efolds = Number(geo.TOTAL.toFixed(2));
+		if (!nest || nest.w !== w || nest.h !== h) {
+			nest = fall.geometry(w, h);
+			fl = makeFlight(nest);
+			info.lambda = nest.levels.slice(0, nest.L).map((l) => Number((1 / l.X).toFixed(2)));
+			info.efolds = Number(nest.TOTAL.toFixed(2));
 		}
-		const { tau, zeta } = fl.at(t);
+		const tau = fl.at(t);
 		const viewAt = (tt) => makeView({ w, h, scale: LAT.r0 * h * Math.exp(tt), rot: KAPPA * tt });
 
 		if (t < B.flash) {
@@ -176,10 +174,14 @@ export default async function make({ at }) {
 			});
 			fillLight(ctx, cx, cy, w, h, t);
 		} else {
-			// The fall: the lens in the nest, the lattice at its vanishing point.
-			const cam = lensAt(geo, zeta, t, w, h);
-			drawLattice(ctx, cam.ox, cam.oy, w, h, tau, 1, LAT.alpha * lerp(1, 0.7, cam.land));
-			fall(ctx, b, geo, art, cam, t, fl);
+			// The fall: the lens in the nest, the lattice at its vanishing point —
+			// the kit's fall, this flow's lattice streaming under it at its zoom.
+			const cam = fall.draw(ctx, w, h, t, {
+				background: (ctx, cam, zoom, alpha) =>
+					drawLattice(ctx, cam.ox, cam.oy, w, h, tau, 1, LAT.alpha * alpha),
+				colourAlong,
+				dust: b.dust
+			});
 			fillLight(ctx, cam.ox, cam.oy, w, h, t);
 			impact(ctx, w, h, cam.ox, cam.oy, 0.4 * h, (t - B.flash) / 10, 0, 1, true);
 		}
@@ -199,26 +201,9 @@ export default async function make({ at }) {
 // τ(t): how many e-folds the lens has flown by t, continuous in value and in
 // rate through the flash. Before the dive: a creep plus one eased step of
 // ln 2.48 per answer. The dive: a Hermite from the creep's rate to the rate
-// the fall starts at. The fall: the nest's e-folds (from ζ₀ to the last
-// plate) at a pace that gathers and lands — speed ∝ (c + x)³ (1 − x)² — and
-// ζ is read back off the e-folds, so the rooms and the lattice are ONE zoom.
-function makeFlight(geo) {
-	const n = 512;
-	const c = 0.35;
-	const T = [0];
-	let acc = 0;
-	for (let i = 1; i <= n; i++) {
-		const x = (i - 0.5) / n;
-		acc += Math.pow(c + x, 3) * (1 - x) * (1 - x);
-		T.push(acc);
-	}
-	const E = (x) => {
-		const f = clamp01(x) * n;
-		const i = Math.min(n - 1, Math.floor(f));
-		return lerp(T[i], T[i + 1], f - i) / acc;
-	};
-	const D = B.fall[1] - B.fall[0];
-	const rate0 = (geo.TOTAL * (Math.pow(c, 3) / (acc / n))) / D;
+// the fall starts at (the nest's rate0). The fall: the nest's own e-folds,
+// at its pace, on top — so the rooms and the lattice are ONE zoom.
+function makeFlight(nest) {
 	const tauQ = (t) =>
 		CREEP * (t - B.term) +
 		LN_STEP *
@@ -227,21 +212,19 @@ function makeFlight(geo) {
 	const Dd = B.dive[1] - B.dive[0];
 	const p1 = p0 + DIVE;
 	const at = (t) => {
-		if (t <= B.dive[0]) return { tau: tauQ(t), zeta: ZETA0, x: 0 };
+		if (t <= B.dive[0]) return tauQ(t);
 		if (t < B.dive[1]) {
 			const s = (t - B.dive[0]) / Dd;
 			const s2 = s * s;
 			const s3 = s2 * s;
-			const tau =
+			return (
 				(2 * s3 - 3 * s2 + 1) * p0 +
 				(s3 - 2 * s2 + s) * CREEP * Dd +
 				(-2 * s3 + 3 * s2) * p1 +
-				(s3 - s2) * rate0 * Dd;
-			return { tau, zeta: ZETA0, x: 0 };
+				(s3 - s2) * nest.rate0 * Dd
+			);
 		}
-		const x = clamp01((t - B.fall[0]) / D);
-		const tf = geo.TOTAL * E(x);
-		return { tau: p1 + tf, zeta: geo.zetaOf(tf), x };
+		return p1 + nest.efolds(t);
 	};
 	return { at, tauQ };
 }
@@ -385,357 +368,5 @@ function fillLight(ctx, x, y, w, h, t) {
 	ctx.beginPath();
 	ctx.arc(x, y, R, 0, TAU);
 	ctx.fill();
-	ctx.restore();
-}
-
-// ── The nest ─────────────────────────────────────────────────────────────────
-// The Droste nest of log-fall: level k is room k under the similarity
-// x ↦ O_k + s_k·x (z scaled too), its child hanging `gap` behind its glass,
-// scaled by X = 1/λ, letterboxed in the glass (FIT) and set so far behind it
-// that the lens at rest has passed it (MARGIN). pose(ζ) is the lens at level
-// ζ: at an integer it sits d₀ in front of that plate, square on its glass.
-function makeNest(w, h, order, art) {
-	const F = h / 2 / Math.tan((FOV * Math.PI) / 360);
-	const plate = Math.min(0.62 * h, (0.74 * w) / PHI);
-	const d0 = (F * PLATE.H) / plate;
-	const rooms = {};
-	const room = (d) => (rooms[d] ??= roomOf(d, art, d0));
-	const L = order.length - 1;
-	const levels = [];
-	let O = [0, 0, 0];
-	let s = 1;
-	for (let k = 0; k <= L; k++) {
-		const r = room(order[k]);
-		const lv = { ...r, k, O: O.slice(), s };
-		levels.push(lv);
-		if (k === L) break;
-		const G = r.glass;
-		const Gc = room(order[k + 1]).glass;
-		const Dg = d0 - G.z;
-		const fh = FIT * Math.min(G.h, G.w / PHI);
-		const kap = (MARGIN * d0 * fh) / (PLATE.H * Dg);
-		const gap = (kap * Dg) / (1 - kap);
-		const X = (fh * (Dg + gap)) / (PLATE.H * Dg);
-		lv.X = X;
-		lv.gap = gap;
-		const g = [G.x - Gc.x * X, G.y - Gc.y * X, G.z - gap];
-		O = [O[0] + s * g[0], O[1] + s * g[1], O[2] + s * g[2]];
-		s *= X;
-	}
-	const pose = (zeta) => {
-		let k;
-		let loc;
-		let sc;
-		if (zeta < 0) {
-			k = 0;
-			sc = Math.pow(levels[0].X, zeta);
-			loc = [levels[0].glass.x, levels[0].glass.y, d0 * sc];
-		} else if (zeta >= L) {
-			k = L;
-			sc = 1;
-			loc = [levels[L].glass.x, levels[L].glass.y, d0];
-		} else {
-			k = Math.floor(zeta);
-			const lv = levels[k];
-			const zp = (lv.glass.z - lv.gap) / (1 - lv.X);
-			sc = Math.pow(lv.X, zeta - k);
-			loc = [lv.glass.x, lv.glass.y, zp + sc * (d0 - zp)];
-		}
-		const lv = levels[k];
-		return {
-			x: lv.O[0] + lv.s * loc[0],
-			y: lv.O[1] + lv.s * loc[1],
-			z: lv.O[2] + lv.s * loc[2],
-			s: lv.s * sc
-		};
-	};
-	// The e-folds of zoom from ζ₀ to ζ, and ζ from them: the crossings are
-	// zooms of different sizes, and the fall runs at one pace in e-folds.
-	const logs = levels.map((l) => (l.X ? -Math.log(l.X) : 1));
-	const efolds = (zeta) => {
-		if (zeta < 0) return zeta * logs[0];
-		let e = 0;
-		for (let k = 0; k < L; k++) {
-			if (zeta < k + 1) return e + (zeta - k) * logs[k];
-			e += logs[k];
-		}
-		return e;
-	};
-	const E0 = efolds(ZETA0);
-	const TOTAL = efolds(L) - E0;
-	const zetaOf = (tf) => {
-		let lam = tf + E0;
-		if (lam < 0) return lam / logs[0];
-		for (let k = 0; k < L; k++) {
-			if (lam < logs[k]) return k + lam / logs[k];
-			lam -= logs[k];
-		}
-		return L;
-	};
-	return { w, h, F, d0, plate, L, levels, pose, TOTAL, zetaOf };
-}
-
-// The lens: the nest's pose, slid from the last glass to the plate's centre
-// as it lands, and swaying — with the screen shifted so that the plane d₀
-// ahead holds still: on the landed plate the frame holds and the room drifts
-// behind it by depth, the back wall most, the bed least.
-function lensAt(geo, zeta, t, w, h) {
-	const cam = geo.pose(zeta);
-	const last = geo.levels[geo.L];
-	const land = smooth(span(t, B.land[0], B.land[1]));
-	cam.x -= last.s * last.glass.x * land;
-	cam.y -= last.s * last.glass.y * land;
-	const A = lerp(
-		lerp(0, 0.05, span(t, B.flash, B.flash + 2)),
-		0.3,
-		smooth(span(t, B.land[0], B.land[1] + 0.5))
-	);
-	const ex = A * Math.sin(1.1 * t - 0.4);
-	const ey = A * 0.45 * Math.sin(1.7 * t + 0.6);
-	cam.x += cam.s * ex;
-	cam.y += cam.s * ey;
-	cam.ox = w / 2 + (geo.F * ex) / geo.d0;
-	cam.oy = h / 2 - (geo.F * ey) / geo.d0;
-	cam.land = land;
-	return cam;
-}
-
-// ── The fall, drawn ──────────────────────────────────────────────────────────
-// Every layer is a plane parallel to the lens, so its picture is the drawing
-// under one similarity (m px to the plate unit, its origin on screen); a
-// level is its plate's frame, the board inside it with a hole where the glass
-// is (the lattice shows through, and the next level hangs in it), its back
-// layers, the next level in the glass, then the monitor, desk and bed over
-// that. The rooms are chalk; only the last floods with colour as the lens
-// lands. Every glass the lens has passed is dropped.
-function fall(ctx, b, geo, art, cam, t, fl) {
-	const { w, h } = b;
-	const { F, L, levels } = geo;
-	const project = (x, y, z) => {
-		const d = cam.z - z;
-		return [cam.ox + (F * (x - cam.x)) / d, cam.oy - (F * (y - cam.y)) / d, d];
-	};
-	const plane = (lv, z) => {
-		const wz = lv.O[2] + lv.s * z;
-		const dw = cam.z - wz;
-		if (dw <= NEARZ * cam.s) return null;
-		const m = (F * lv.s) / dw;
-		const [e, f] = project(lv.O[0], lv.O[1], wz);
-		return { m, e, f };
-	};
-	const at = (T, x, y) => [T.e + T.m * x, T.f - T.m * y];
-	const boxOf = (T, x, y, rw, rh) => {
-		const [x0, y0] = at(T, x - rw / 2, y + rh / 2);
-		return [x0, y0, x0 + rw * T.m, y0 + rh * T.m];
-	};
-	const meet = (A, C) => [
-		Math.max(A[0], C[0]),
-		Math.max(A[1], C[1]),
-		Math.min(A[2], C[2]),
-		Math.min(A[3], C[3])
-	];
-	const empty = (X) => X[2] <= X[0] || X[3] <= X[1];
-	const pathBox = (X) => ctx.rect(X[0], X[1], X[2] - X[0], X[3] - X[1]);
-	const clipBox = (X) => {
-		ctx.beginPath();
-		pathBox(X);
-		ctx.clip();
-	};
-	const corners = (X) => [
-		[X[0], X[1]],
-		[X[2], X[1]],
-		[X[2], X[3]],
-		[X[0], X[3]],
-		[X[0], X[1]]
-	];
-	const board = (X) => {
-		ctx.fillStyle = PAL.ground;
-		ctx.fillRect(X[0], X[1], X[2] - X[0], X[3] - X[1]);
-		if (b.dust) {
-			ctx.fillStyle = b.dust;
-			ctx.fillRect(X[0], X[1], X[2] - X[0], X[3] - X[1]);
-		}
-	};
-
-	// How far a room is coloured in: only the last, as the lens lands — the
-	// bed first and the wall last.
-	const colour = span(t, B.colour[0], B.colour[1]);
-	const paintOf = (k, depth) => {
-		if (k !== L) return 0;
-		const from = depth * 0.55;
-		return smooth(span(colour, from, from + 0.45));
-	};
-
-	// One layer: its chalk copy, with the colour under it as it floods; the
-	// wall mirror-tiled so the lens off its axis never sees past its edge.
-	const layer = (lv, key, k, box) => {
-		const l = lv.lay[key];
-		const a = art[lv.decade]?.[key];
-		if (!l || !a) return;
-		const T = plane(lv, l.z);
-		if (!T) return;
-		const p = paintOf(k, l.depth);
-		const tiles = key === 'bg' ? 1 : 0;
-		for (let j = -tiles; j <= tiles; j++)
-			for (let i = -tiles; i <= tiles; i++) {
-				const x = l.x + i * l.w;
-				const y = l.y + j * l.h;
-				const R = boxOf(T, x, y, l.w, l.h);
-				if (empty(meet(R, box))) continue;
-				const [px, py] = at(T, x, y);
-				const sw = l.w * T.m;
-				const sh = l.h * T.m;
-				const flipX = i % 2 !== 0;
-				const flipY = j % 2 !== 0;
-				ctx.save();
-				if (flipY) {
-					ctx.translate(px, py);
-					ctx.scale(1, -1);
-					ctx.translate(-px, -py);
-				}
-				if (p > 0.002) drawImageAt(ctx, a.mips, px, py, sw, sh, { alpha: p, flipX });
-				if (a.chalk && p < 0.998)
-					drawImageAt(ctx, a.chalk, px, py, sw, sh, { alpha: 0.95 * (1 - p), flipX });
-				ctx.restore();
-			}
-		// The layer's own rectangle, dashed in: the drawing's construction.
-		if (p < 1 && key !== 'bg' && l.w * T.m > 14) {
-			stroke(ctx, corners(boxOf(T, l.x, l.y, l.w, l.h)), {
-				color: PAL.chalk,
-				width: 0.9,
-				alpha: 0.32 * (1 - p),
-				dash: [4, 5]
-			});
-		}
-	};
-
-	const glassAt = [];
-	const lit = smooth(span(t, B.land[0] + 0.6, B.land[1] + 0.3));
-
-	const drawLevel = (k, box) => {
-		const lv = levels[k];
-		const T0 = plane(lv, 0);
-		const frame = T0 ? meet(box, boxOf(T0, 0, 0, PLATE.W, PLATE.H)) : box;
-		if (empty(frame)) return;
-		const Tg = lv.glass ? plane(lv, lv.glass.z) : null;
-		const G = Tg ? boxOf(Tg, lv.glass.x, lv.glass.y, lv.glass.w, lv.glass.h) : null;
-		const gb = G ? meet(frame, G) : null;
-		const hole = gb && !empty(gb);
-		if (hole) glassAt[k] = { box: gb, z: lv.O[2] + lv.s * lv.glass.z };
-		ctx.save();
-		clipBox(frame);
-		// The board inside the frame — but not in the glass, where the tunnel
-		// shows through — and the back layers on it.
-		ctx.save();
-		if (hole) {
-			ctx.beginPath();
-			pathBox(frame);
-			pathBox(gb);
-			ctx.clip('evenodd');
-		}
-		board(frame);
-		layer(lv, 'bg', k, frame);
-		layer(lv, 'poster', k, frame);
-		layer(lv, 'clock', k, frame);
-		ctx.restore();
-		// In the glass: the next plate, or, at the last, the light on.
-		if (hole) {
-			ctx.save();
-			clipBox(gb);
-			if (k < L && gb[2] - gb[0] > 2) drawLevel(k + 1, gb);
-			else if (k === L) litGlass(ctx, gb, lit);
-			ctx.restore();
-		}
-		layer(lv, 'screen', k, frame);
-		layer(lv, 'desk', k, frame);
-		layer(lv, 'bed', k, frame);
-		if (G) stroke(ctx, corners(G), { color: PAL.chalk, width: 1.2, alpha: 0.55 });
-		ctx.restore();
-		if (T0)
-			stroke(ctx, corners(boxOf(T0, 0, 0, PLATE.W, PLATE.H)), {
-				color: PAL.chalk,
-				width: 1.8,
-				alpha: 0.9
-			});
-	};
-
-	// Which level the lens is in: every glass it has passed is dropped.
-	let base = 0;
-	for (let k = 0; k < L; k++) {
-		const lv = levels[k];
-		if (cam.z <= lv.O[2] + lv.s * lv.glass.z + NEARZ * cam.s) base = k + 1;
-		else break;
-	}
-	drawLevel(base, [0, 0, w, h]);
-	swimmer(ctx, geo, cam, project, t, glassAt, base, fl);
-}
-
-// The last glass, lit: the board in it, and a soft warm light on, the way a
-// monitor is lit from inside.
-function litGlass(ctx, gb, a) {
-	if (a <= 0.003) return;
-	const gw = gb[2] - gb[0];
-	const gh = gb[3] - gb[1];
-	const gx = (gb[0] + gb[2]) / 2;
-	const gy = (gb[1] + gb[3]) / 2;
-	ctx.save();
-	ctx.globalAlpha = a;
-	ctx.fillStyle = PAL.ground;
-	ctx.fillRect(gb[0], gb[1], gw, gh);
-	ctx.globalAlpha = 0.12 * a;
-	ctx.fillStyle = '#fff6e0';
-	ctx.fillRect(gb[0], gb[1], gw, gh);
-	ctx.restore();
-	glow(ctx, gx, gy, 0.8 * Math.max(gw, gh), [255, 238, 205], 0.6 * a);
-}
-
-// ── The swimmer ──────────────────────────────────────────────────────────────
-// The helix, out of the flash: near the lens and off to the right of the axis
-// at first, swimming in toward it and on down the glasses ahead of the lens —
-// its axis its own motion, turning on it on the clock — until it pulls away
-// through the first glass or two and is gone into the dark, well before the
-// room. Drawn through the deepest glass it has passed.
-function swimmer(ctx, geo, cam, project, t, glassAt, base, fl) {
-	const v = span(t, B.swim[0], B.swim[1]);
-	if (v <= 0 || v >= 1) return;
-	const body = smooth(span(v, 0, 0.2));
-	const alpha = 1 - smooth(span(v, 0.74, 1));
-	const place = (tt) => {
-		const vv = span(tt, B.swim[0], B.swim[1]);
-		const z = fl.at(tt).zeta;
-		const away = smooth(span(vv, 0.2, 1));
-		const off = 1 - smooth(span(vv, 0.1, 0.65));
-		const P = geo.pose(z + lerp(0.3, 3, away * away));
-		const c = geo.pose(z);
-		return [P.x + c.s * 0.55 * off, P.y - c.s * 0.22 * off, P.z];
-	};
-	const at = place(t);
-	const axis = norm(sub3(place(t + 0.06), place(t - 0.06)));
-	const away = smooth(span(v, 0.2, 1));
-	const size = 0.03 * geo.d0 * cam.s * lerp(1, 0.5, away);
-	const dist = cam.z - at[2];
-	if (dist <= 0) return;
-	const headPx = (geo.F * size) / dist;
-	if (headPx < 1.2) return;
-	const pose = { at, axis, spin: t * 2.6 * Math.PI, size };
-	const cam3 = { project: (p) => project(p[0], p[1], p[2]), pos: [cam.x, cam.y, cam.z] };
-	ctx.save();
-	for (let k = glassAt.length - 1; k >= base; k--) {
-		const g = glassAt[k];
-		if (g && at[2] < g.z) {
-			ctx.beginPath();
-			ctx.rect(g.box[0], g.box[1], g.box[2] - g.box[0], g.box[3] - g.box[1]);
-			ctx.clip();
-			break;
-		}
-	}
-	drawHelix(ctx, cam3, pose, {
-		body,
-		alpha,
-		color: PAL.chalk,
-		width: Math.max(0.8, Math.min(3, headPx * 0.05)),
-		core: 0.9,
-		glow: 0.5
-	});
 	ctx.restore();
 }
