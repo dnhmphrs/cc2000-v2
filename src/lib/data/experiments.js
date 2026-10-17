@@ -4,9 +4,11 @@
 //
 // BOARD is the blackboard rebuild (docs/explore-03.md, -04, -05), every beat
 // in the order of the run, the round it came in, every variant of it
-// ([variant, one line]) and `cut`, the variant it plays in THE CUT — /cut,
-// everything there is, one of each, in the run's order (null: not a slot in
-// the run). REELS play sketches end to end (/v4?chain=…). EARLIER
+// ([variant, one line]) — THE CUT, /cut, plays every one of them in this
+// order — and `cut`, the variant it plays in the short cut (/v4?chain=one,
+// one of each; null: no pick there, because another sketch holds that
+// slot's pick or it is not a slot in the run) and plays first among its
+// beat's in the cut. REELS play sketches end to end (/v4?chain=…). EARLIER
 // are the rounds before the board: explore 01 and 02, the v4 rough cut and
 // the workshop's own sketches, each a single sketch in the lab. RUNS are the
 // site's two runs.
@@ -98,7 +100,21 @@ export const BOARD = [
 		variants: [
 			['sphere', 'the net lifted onto the Riemann sphere, the lens orbiting'],
 			['torus', 'the cylinder glued by a zoom into a torus'],
-			['flip', 'Möbius maps one after another, written as they happen']
+			['flip', 'Möbius maps one after another, written as they happen'],
+			[
+				'cat',
+				'Arnold’s cat map on the torus of rooms: the room stretched and folded, and back after finitely many turns'
+			],
+			['twist', 'Dehn twists: the lattice sheared by SL₂(ℤ), the torus reshaped, the net re-tiled'],
+			[
+				'weierstrass',
+				'℘: the torus folded two to one onto the sphere, branched at the four half-periods'
+			],
+			[
+				'hopf',
+				'the Clifford torus in S³, a union of Hopf circles, projected: nested tori round the axis'
+			],
+			['knot', 'a (p, q) torus knot: a straight line on the flat torus, wound on the torus in 3D']
 		]
 	},
 	{
@@ -143,7 +159,17 @@ export const BOARD = [
 			['torus', 'T³: a cube whose faces are glued; from inside, the same room through every wall'],
 			['dodeca', 'Poincaré’s dodecahedral space: opposite faces glued with a tenth of a turn'],
 			['mirror', 'a Klein bottle: the swimmer comes round and back as its own mirror image'],
-			['sphere', 'Einstein’s S³: what recedes past the equator grows again, and fills the sky']
+			['sphere', 'Einstein’s S³: what recedes past the equator grows again, and fills the sky'],
+			[
+				'seifert',
+				'Seifert–Weber space: the hyperbolic dodecahedron, faces glued with three tenths of a turn, its neighbours shrinking away'
+			],
+			['octa', 'the octahedral space S³/2O: a truncated cube, the view from inside'],
+			[
+				'quaternion',
+				'the quaternion space S³/Q₈: a cube whose opposite faces are glued with a quarter turn'
+			],
+			['lens', 'a lens space L(5, 1): the lens cell, its copies spiralling round the axis']
 		]
 	},
 	{
@@ -203,6 +229,69 @@ export const BOARD = [
 		]
 	},
 	{
+		sketch: 'log-stage',
+		cut: null,
+		name: 'The stage',
+		round: 4,
+		what: 'The room’s layers stood up as flats in 3D between a plank floor and a ceiling slab, a perspective study on blue: from the eye it is the drawing, from anywhere else a set with its lines of sight; every variant loops away and home.',
+		variants: [
+			[
+				'orbit',
+				'a dolly zoom from the drawing into the room, a loop round the set, and back out to the drawing'
+			],
+			[
+				'swing',
+				'the study’s own shots: low looking up with the floor filling the frame, high looking down over the ceiling, the lens rolled'
+			],
+			[
+				'walk',
+				'into the room past the bed, looking round at the desk, the screen, the clock and the ceiling, and back out'
+			],
+			[
+				'explode',
+				'the flats slide along their lines of sight from the eye while the lens circles it: the drawing from the eye never changes'
+			],
+			[
+				'shuffle',
+				'three different sets, each a random deal of depths, each the same drawing from the eye'
+			]
+		]
+	},
+	{
+		sketch: 'log-solid',
+		cut: null,
+		name: 'The solid',
+		round: 4,
+		what: 'The 2D room rebuilt as a 3D room: every object modelled solid — the desk and its drawers, the anglepoise, the CRT, keyboard and tower, the bed under its blanket, the clock and the posters — between a plank floor and an orange ceiling on the blue, flat colours shaded by gradients, white edges, construction lines run out long; from the eye it lines up with the drawing, and every variant loops away and home. ?ink=1 draws it as a sketch: the board’s dark, chalk lines, no colour (flow-dodeca lands in it with ?end=solid). An exploration: the rooms stay 2D.',
+		variants: [
+			[
+				'orbit',
+				'out of the elevation on a dolly zoom and once round the room: under the floor looking up, round the side, over the ceiling looking down, and home'
+			],
+			[
+				'swing',
+				'the study’s low rolled corner shots: under the floor at one corner, the bed huge and near, over the ceiling’s corner at the other, the lens rolled with the swing'
+			],
+			[
+				'inside',
+				'in through the open front and up at the orange ceiling, round to the desk, the monitor and the lamp, up the wall to the clock and the posters, and out'
+			],
+			[
+				'sheet',
+				'the drawing set: the perspective view, straight up to the plan with the ceiling lifted away, round to the section, each captioned, and back'
+			],
+			[
+				'explode',
+				'the exploded diagram: every part drifts out along its own construction lines, which stay, and comes home while the lens arcs over'
+			],
+			[
+				'draw',
+				'the drawing stands up: the flat layers dissolve into the solids as the lens leaves the eye, and come back as it returns'
+			],
+			['turn', 'the model shot: the room turns once on the blue under a low wide lens']
+		]
+	},
+	{
 		sketch: 'log-genesis',
 		cut: null,
 		name: 'The room from the dot',
@@ -214,6 +303,23 @@ export const BOARD = [
 			['lamp', 'the dot is the lamp’s bulb: the room lit by 1/r², the corners last'],
 			['conformal', 'the room squeezed into a disc by Jacobi’s sn, relaxed to the plate'],
 			['ink', 'the swimmer’s tail is a pen: the room’s ink first, then its colour']
+		]
+	},
+	{
+		sketch: 'log-appear',
+		cut: null,
+		name: 'The rooms, from the geometry',
+		round: 4,
+		what: 'More ink sketches of how the rooms might come out of the geometry itself: a cell of the lattice, the torus folded, the nodes of the Kummer surface.',
+		variants: [
+			[
+				'cell',
+				'the period lattice’s fundamental cell is the room, and every translate the same room'
+			],
+			['fold', 'the torus of rooms folded by x ↦ −x: each room meets its mirror image at the fold'],
+			['nodes', 'the Kummer surface’s sixteen nodes are sixteen rooms, the lens into one'],
+			['etching', 'the net’s lines bend into the room’s lines: the geometry is the room’s ink'],
+			['trope', 'a trope’s conic is the monitor’s glass, and the room comes up round it']
 		]
 	},
 	{
@@ -241,11 +347,113 @@ export const BOARD = [
 			['padic', 'the 2-adic integers: every ball clopen, a birthday as a path'],
 			['ford', 'the Ford circles, zooming into 1/φ, the worst-approximable number']
 		]
+	},
+	{
+		sketch: 'log-tame',
+		cut: null,
+		name: 'Tame geometry',
+		round: 4,
+		what: 'One-offs on o-minimality: geometry with no pathology — finitely many pieces at every scale, and the few rational points a transcendental curve can hold.',
+		variants: [
+			[
+				'cells',
+				'a definable set cut into finitely many cells, drawn one by one; the swimmer’s path crosses finitely many'
+			],
+			[
+				'height',
+				'Pila–Wilkie: the rational points of height ≤ H densify, and only a few land on the curve'
+			],
+			[
+				'exp',
+				'the exponential field: the plane seen through exp and log, the lattice wrapped onto the torus'
+			],
+			[
+				'special',
+				'André–Oort: the modular curve’s fundamental domain, its special points lit, a curve through them'
+			]
+		]
+	},
+	{
+		sketch: 'log-abelian',
+		cut: null,
+		name: 'Abelian varieties',
+		round: 4,
+		what: 'One-offs on complex tori and the Kummer surface: the period lattice, theta, and an abelian surface folded by −1 into a quartic with sixteen nodes.',
+		variants: [
+			[
+				'lattice',
+				'the period lattice Λ in ℂ, its fundamental parallelogram folded into the torus ℂ/Λ'
+			],
+			[
+				'theta',
+				'the theta function on the torus: its level lines in ink, its zero moving over the parallelogram'
+			],
+			[
+				'kummer',
+				'the Kummer quartic turning in ink: sixteen nodes, sixteen tropes, each plane touching along a conic'
+			],
+			[
+				'sixteen',
+				'the 16₆ configuration: every node on six tropes, every trope through six nodes — the half-periods'
+			]
+		]
+	}
+];
+
+// The v4 FLOWS: whole runs on the board, each a different answer to the
+// same brief (docs/explore-06.md) — the terminal, the questions on the way
+// to the point, the flash, the arithmetic geometry, and the rooms out of it —
+// built to be mixed and matched, not judged. /flows plays them end to end.
+export const FLOWS = [
+	{
+		sketch: 'flow-record',
+		name: 'The record',
+		what: 'the point is a record’s spindle hole: the grooves come up round it, the needle drops at the flash, and the hole opens onto the rooms'
+	},
+	{
+		sketch: 'flow-torus',
+		name: 'The torus',
+		what: 'the questions draw a net on the orb, in ink, indexed by the year and the spice; the net lifts into the torus, and a cell of it is the room'
+	},
+	{
+		sketch: 'flow-sphere',
+		name: 'The sphere',
+		what: 'Garrett’s: a golden sphere in the centre, one transition to lines drawn on it, then the rooms'
+	},
+	{
+		sketch: 'flow-ink',
+		name: 'Ink',
+		what: 'the simplest: the orb, the questions, the flash, and the room drawn in ink out of the point'
+	},
+	{
+		sketch: 'flow-chalk',
+		name: 'Chalk',
+		what: 'the fall through chalk rooms, a black and white lattice behind to anchor it'
+	},
+	{
+		sketch: 'flow-dodeca',
+		name: 'The dodecahedral space',
+		what: 'a cell built round us, every face a room, into the centre one (?end=solid for an exploration: the pane handed to the solid room drawn as a sketch, the lens walking in)'
+	},
+	{
+		sketch: 'flow-swim',
+		name: 'The swim',
+		what: 'the first idea, for comparison: the helix swimmer in view from the start, swimming at the point; the questions; the torus; the rooms'
 	}
 ];
 
 export const REELS = [
-	['/v4?chain=all', 'The cut', 'everything there is, one of each, in the run’s order (/cut)'],
+	['/v4?chain=flows', 'The v4 flows', 'seven whole runs on the board, end to end (/flows)'],
+	[
+		'/v4?chain=all',
+		'The cut',
+		'everything there is, every variant of every beat, in the run’s order (/cut)'
+	],
+	[
+		'/v4?chain=one',
+		'The short cut',
+		'one of each beat, the variant its cut names, in the run’s order'
+	],
 	['/v4?chain=log', 'The board, first reel', 'one of each of the first six beats'],
 	[
 		'/v4?chain=clopen',
@@ -319,6 +527,13 @@ export const RUNS = [
 // board sketch, the reels, then the earlier sketches. { key, label, href }.
 export function stops() {
 	const out = [];
+	for (const f of FLOWS)
+		out.push({
+			key: `${f.sketch}:`,
+			group: 'The v4 flows',
+			label: f.name.toLowerCase(),
+			href: `/lab?sketch=${f.sketch}`
+		});
 	for (const b of BOARD)
 		for (const [v] of b.variants)
 			out.push({

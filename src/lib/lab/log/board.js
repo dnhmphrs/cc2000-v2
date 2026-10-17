@@ -464,12 +464,19 @@ export function note(ctx, w, h, R, lines, { color = PAL.chalk, size = null } = {
 	}
 }
 
-// The sketch's name, small, bottom left.
+// The sketch's name, small, bottom left — and, in a reel, the reel's own
+// line before it (routes/v4 sets it as the beats change: the beat's count,
+// and the keys that step them). The board sits over the page, so the reel's
+// DOM tag is under it; this is the corner a viewer of the cut can see.
+let REEL = '';
+export function reelTag(s) {
+	REEL = s ?? '';
+}
 export function tag(ctx, w, h, s) {
 	ctx.save();
 	ctx.font = `11px ${TECH_FONT}`;
 	ctx.fillStyle = 'rgba(236, 230, 218, 0.4)';
 	ctx.textBaseline = 'alphabetic';
-	ctx.fillText(s, 14, h - 12);
+	ctx.fillText(REEL ? `${REEL}   ${s}` : s, 14, h - 12);
 	ctx.restore();
 }

@@ -114,7 +114,7 @@ import { orbit, line3, circle3, label3 } from './log/space.js';
 // own (the last frame is then log-orb's at the question, u ≈ 0.13).
 
 const SECONDS = 10;
-const ORB_R = 6; // the orb log-orb (net) opens on: 6 px at the centre
+export const ORB_R = 6; // the orb log-orb (net) opens on: 6 px at the centre
 
 export default async function make({ at }) {
 	const v = variant(['fullstop', 'axiom', 'cone', 'sky', 'terminal']);
@@ -590,8 +590,10 @@ const TERM = {
 	blink: 2.3 // blinks a second
 };
 
-// The keystrokes: a time for each character of each line, in seconds.
-function keystrokes() {
+// The keystrokes: a time for each character of each line, in seconds. With
+// no command (the flows' opening: clean, technical, primordial — a caret, the
+// sentence, the stop) the output starts after the lead.
+function keystrokes(withCmd = true) {
 	let seed = 20001;
 	const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
 	let t = TERM.lead;
@@ -607,8 +609,8 @@ function keystrokes() {
 		}
 		return times;
 	};
-	const cmd = typed(TERM.cmd, TERM.keyCmd);
-	t += TERM.run;
+	const cmd = withCmd ? typed(TERM.cmd, TERM.keyCmd) : [];
+	if (withCmd) t += TERM.run;
 	const out = LINES.map((text, i) => {
 		if (i > 0) t += TERM.gap;
 		return typed(text, TERM.keyOut, i === LINES.length - 1);
@@ -617,8 +619,12 @@ function keystrokes() {
 	return { cmd, out, stop };
 }
 
-function makeTerminal() {
-	const K = keystrokes();
+// Exported for the flows (lab/flow-*.js): the terminal as the run's opening,
+// `scale` the type's size (1 is the card's own), drawn with
+// draw(ctx, w, h, u, secs, os) for u = secs / 10 over its ten seconds and
+// os = secs − 10, ending on the orb's first frame (6 px, centred).
+export function makeTerminal(scale = 1, { cmd = true } = {}) {
+	const K = keystrokes(cmd);
 	const uStop = K.stop / SECONDS;
 	// The beats after the typing, in progress u, hung off the last keystroke.
 	const B = {
@@ -630,7 +636,7 @@ function makeTerminal() {
 	let L = null;
 	return {
 		draw(ctx, w, h, u, secs, os) {
-			if (!L || L.w !== w || L.h !== h) L = layoutTerminal(ctx, w, h);
+			if (!L || L.w !== w || L.h !== h) L = layoutTerminal(ctx, w, h, scale, cmd);
 			terminal(ctx, L, K, B, w, h, u, secs, os);
 		}
 	};
@@ -643,18 +649,21 @@ function typedBy(times, t) {
 	return n;
 }
 
-function layoutTerminal(ctx, w, h) {
+function layoutTerminal(ctx, w, h, scale = 1, withCmd = true) {
 	ctx.save();
 	ctx.font = TECH(100);
 	const W100 = Math.max(...LINES.map((s) => ctx.measureText(s + '.').width));
-	const fs = Math.min(h * 0.036, (0.78 * w * 100) / W100);
+	const fs = Math.min(h * 0.036, (0.78 * w * 100) / W100) * scale;
 	const step = fs * 1.8;
 	const x0 = Math.max(40, w * 0.11);
 	// The block: the command, a blank, the three lines; a little above the
 	// middle, so the stop is below it and the zoom pans up as well as across.
-	const top = h / 2 - step * 1.9;
-	const cmd = layLine(ctx, TERM.cmd, TECH, fs, x0, top, 0, 'left');
-	const out = LINES.map((s, i) => layLine(ctx, s, TECH, fs, x0, top + step * (2 + i), 0, 'left'));
+	const rows = withCmd ? 2 : 0;
+	const top = h / 2 - step * (withCmd ? 1.9 : 0.9);
+	const cmd = layLine(ctx, withCmd ? TERM.cmd : '', TECH, fs, x0, top, 0, 'left');
+	const out = LINES.map((s, i) =>
+		layLine(ctx, s, TECH, fs, x0, top + step * (rows + i), 0, 'left')
+	);
 	// The cell: one character's advance; the caret is a block of it.
 	ctx.font = TECH(fs);
 	const cell = ctx.measureText('0').width;
@@ -698,7 +707,7 @@ function terminal(ctx, L, K, B, w, h, u, secs, os) {
 		let ln = L.cmd;
 		let n = nc;
 		let last = nc > 0 ? K.cmd[nc - 1] : -1;
-		const runAt = K.cmd[K.cmd.length - 1] + TERM.run * 0.5;
+		const runAt = K.cmd.length ? K.cmd[K.cmd.length - 1] + TERM.run * 0.5 : 0;
 		if (t >= runAt) {
 			let i = 0;
 			while (i < 2 && no[i + 1] > 0) i++;
