@@ -1,4 +1,44 @@
-# Exploration 07: the fold — flow-kummer
+# Exploration 07: conception — flow-conception
+
+**`flow-conception`** (`/lab?sketch=flow-conception`, and on `/flows` after
+the dodecahedral space) is the run the lead steered to after looking at the
+fold below: _"that initial title page is clean. the date and spicy slider
+look clean. but let me actually enter/interact manually. then … yes to
+wrapping the cell into the tube. but instead of going to torus, have the
+tube form into a sperm. then have it start swimming … through the
+ink/scene/fall (closer to the original chalk through the rooms). and then end
+with the sperm splashing onto the screen of the final room."_ And: the rooms
+stay 2D, and one run, not a menu.
+
+The run, 42 s: the terminal types the card; its full stop lights and stays as
+the origin while the terminal's own cells come up as a lattice (no zoom into
+the dot); "when were you born?" is a date field on a lattice row and "how
+spicy?" a 1–10 slider whose stops are lattice points, the second family
+leaning under the handle — **answered by hand in the lab** (type the eight
+digits, Backspace, Enter; drag the handle or ← → or a digit, Enter; the run
+waits at each); the cell rolls into a tube (`log/kummer.js`'s roll); the tube
+gathers into a head and draws out a tail — the swimmer (`helix.js`), its head
+lit — turns on its axis, faster the spicier, and swims off as the lens comes
+round behind it; out of the dark the first chalk room comes up and the
+swimmer leads the lens down through the rooms, glass after glass
+(`log/fall.js`, flow-chalk's fall as it was: no background, the colour
+flooding at the landing); as the lens lands in the answer's room the swimmer
+swims on into its monitor and SPLASHES on the screen, gold, the glass lit.
+The year picks the room (before 1960 the 1950s, before 1980 the 1960s, before
+2005 the 1990s, then the 2010s); the spice leans the lattice and sets the
+tail's turn. Pinned (`?at=`), in a reel, or with `?demo=1` the hand is
+scripted (14 · 02 · 1987, spice 7), so every frame is a pure function of
+progress. The beat table is in the file's header.
+
+What is exact: the lattice from the answers, the cell's gluing as it rolls,
+the fall's similarities. A picture: the tube becoming the swimmer, the
+swim, the splash.
+
+---
+
+## Before: the fold (flow-kummer, retired)
+
+### The fold — flow-kummer
 
 The fifth round on the blackboard, and the first toward one run rather than
 a menu of them: **`flow-kummer`**, on `/flows` after the dodecahedral space,

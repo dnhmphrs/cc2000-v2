@@ -1,6 +1,6 @@
 // ── Entry: the data entry, on the lattice ────────────────────────────────────
 // The two answers the site takes — a birthday, and how spicy on a slider of 1
-// to 10 — as FIELDS ON THE LATTICE the flow-kummer run forms from them: clean,
+// to 10 — as FIELDS ON THE LATTICE the flow-conception run forms from them: clean,
 // technical, primordial. No key names, no formulas, nothing written but the
 // question, the answer and the slider's two end marks. The question is
 // log-orb's prompt (the italic serif on a wiped patch of board, so it reads

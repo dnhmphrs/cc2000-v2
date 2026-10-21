@@ -33,7 +33,7 @@ export const BOARD = [
 		cut: null,
 		name: 'The data entry',
 		round: 5,
-		what: 'The two answers taken as fields ON the lattice they form (flow-kummer’s): the date typed into cells standing on a row, which its Enter makes the real axis; a 1–10 slider whose ten stops are ten lattice points and whose handle leans the second period live.',
+		what: 'The two answers taken as fields ON the lattice they form (flow-conception’s): the date typed into cells standing on a row, which its Enter makes the real axis; a 1–10 slider whose ten stops are ten lattice points and whose handle leans the second period live.',
 		variants: [
 			[
 				'lattice',
@@ -466,9 +466,9 @@ export const FLOWS = [
 		what: 'a cell built round us, every face a room, into the centre one (?end=solid for an exploration: the pane handed to the solid room drawn as a sketch, the lens walking in)'
 	},
 	{
-		sketch: 'flow-kummer',
-		name: 'The fold',
-		what: 'the terminal’s lines are a lattice the data entry forms; it folds into the torus and the torus in half, the lens into a fixed point’s cone, and the chalk fall drops down it with the structure streaming behind and colour arriving as you fall'
+		sketch: 'flow-conception',
+		name: 'Conception',
+		what: 'the terminal’s lines are a lattice the answers form, typed and dragged by hand in the lab; its cell rolls into a tube, the tube becomes the swimmer, and it swims down through the chalk rooms into the last room’s screen, where it splashes'
 	},
 	{
 		sketch: 'flow-swim',

@@ -114,7 +114,9 @@ export function makeFall({ art, order, beats, fov, fit, margin, nearZ, zeta0, pa
 		const cam = lensAt(g, g.zetaAt(t), t, w, h, beats);
 		if (background) background(ctx, cam, g.efolds(t), lerp(1, 0.7, cam.land));
 		const d = dust === undefined ? getBoard().dust : dust;
-		drawFall(ctx, w, h, d, g, art, cam, t, beats, K, colourAlong, bake);
+		const glassAt = drawFall(ctx, w, h, d, g, art, cam, t, beats, K, colourAlong, bake);
+		// The last room's glass on screen ([x0, y0, x1, y1]), once it shows.
+		cam.glass = glassAt[g.L] ? glassAt[g.L].box : null;
 		return cam;
 	};
 	return { order, beats, geometry, draw };
@@ -444,6 +446,7 @@ function drawFall(ctx, w, h, dust, geo, art, cam, t, B, K, colourAlong, bake) {
 	}
 	drawLevel(base, [0, 0, w, h]);
 	swimmer(ctx, geo, cam, project, t, glassAt, base, B);
+	return glassAt;
 }
 
 // The last glass, lit: the board in it, and a soft warm light on, the way a

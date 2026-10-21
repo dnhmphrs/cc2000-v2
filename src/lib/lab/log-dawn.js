@@ -627,7 +627,7 @@ function keystrokes(withCmd = true) {
 // layout for a board — `fs` the type's size, `step` the line pitch, `cell` a
 // character's advance, `out` the lines, `stop` the full stop's spot and
 // radius — for a flow that takes the picture over from the stop rather than
-// zooming into it (flow-kummer: the lines are the rows of its lattice).
+// zooming into it (flow-conception: the lines are the rows of its lattice).
 export function makeTerminal(scale = 1, { cmd = true } = {}) {
 	const K = keystrokes(cmd);
 	const uStop = K.stop / SECONDS;

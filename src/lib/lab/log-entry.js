@@ -17,7 +17,7 @@ import { lit } from './log/ink.js';
 import { makeEntry, HAND } from './log/entry.js';
 
 // ── Sketch: log-entry — the data entry, on the lattice ───────────────────────
-// One beat of flow-kummer's run on its own: the two answers taken as fields
+// One beat of flow-conception's run on its own: the two answers taken as fields
 // ON the lattice (log/entry.js), the structure answering the data. A faint
 // square grid — the terminal's cells, as the flow leaves them — with the
 // origin lit at its centre, the full stop. "when were you born?" is asked
