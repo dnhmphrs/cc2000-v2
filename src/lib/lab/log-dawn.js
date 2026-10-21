@@ -622,7 +622,12 @@ function keystrokes(withCmd = true) {
 // Exported for the flows (lab/flow-*.js): the terminal as the run's opening,
 // `scale` the type's size (1 is the card's own), drawn with
 // draw(ctx, w, h, u, secs, os) for u = secs / 10 over its ten seconds and
-// os = secs − 10, ending on the orb's first frame (6 px, centred).
+// os = secs − 10, ending on the orb's first frame (6 px, centred). `stop` is
+// the second the full stop lands, and layout(ctx, w, h) the terminal's
+// layout for a board — `fs` the type's size, `step` the line pitch, `cell` a
+// character's advance, `out` the lines, `stop` the full stop's spot and
+// radius — for a flow that takes the picture over from the stop rather than
+// zooming into it (flow-kummer: the lines are the rows of its lattice).
 export function makeTerminal(scale = 1, { cmd = true } = {}) {
 	const K = keystrokes(cmd);
 	const uStop = K.stop / SECONDS;
@@ -634,10 +639,16 @@ export function makeTerminal(scale = 1, { cmd = true } = {}) {
 		zoom: [uStop + 0.06, 0.93]
 	};
 	let L = null;
+	const layout = (ctx, w, h) => {
+		if (!L || L.w !== w || L.h !== h) L = layoutTerminal(ctx, w, h, scale, cmd);
+		return L;
+	};
 	return {
+		stop: K.stop,
+		beats: B,
+		layout,
 		draw(ctx, w, h, u, secs, os) {
-			if (!L || L.w !== w || L.h !== h) L = layoutTerminal(ctx, w, h, scale, cmd);
-			terminal(ctx, L, K, B, w, h, u, secs, os);
+			terminal(ctx, layout(ctx, w, h), K, B, w, h, u, secs, os);
 		}
 	};
 }

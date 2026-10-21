@@ -218,6 +218,43 @@ export function cone(N, axis, { size = 1, D = Infinity, half = CONE.half, o = CO
 	return { rings, spokes, axis: ax, e1, e2, far };
 }
 
+// The cone, drawn: its rings and generatrices through a lens at distance D
+// from the apex on the axis, faint far off and fading as they pass the lens.
+// Every width, fade and cut is RELATIVE to D (the line widths' reference
+// depth, the near plane at 0.02 D, the fades on s / D), so the picture is
+// the same at any D — a flight in never runs out, and a flow's fall can go
+// on down the tunnel at its own zoom (flow-kummer's does, with `floor` the
+// smallest ring as a fraction of D in place of CONE.floor's absolute one).
+// `size` grows the cone's mouth, `grow` its ink. (The structure's own draw
+// calls this; before it was lifted out, the near plane was space.js's
+// absolute NEAR = 0.05, which culled every ring in the last fifth of a
+// second of the dive, and the widths' reference stopped at 0.02.)
+export function drawCone(
+	ctx,
+	cam,
+	N,
+	dir,
+	{ D, w = 1e9, h = 1e9, size = 1, grow = 1, alpha = 1, floor = null } = {}
+) {
+	if (grow * alpha <= 0.01 || !(D > 0)) return;
+	const o = floor ? { ...CONE, floor: Math.min(CONE.floor, (floor * D) / CONE.mouth) } : CONE;
+	const Cn = cone(N, dir, { size, D: D * 0.98, o });
+	const ink = makeInk();
+	const Oc = { ref: D, w, h, nearZ: Math.min(NEAR, 0.02 * D) };
+	const vis = (s) => (1 - smooth(span(s / D, 0.5, 0.95))) * smooth(span(s / D, 0.004, 0.03));
+	for (const { s, pts } of Cn.rings) {
+		const al = 0.55 * grow * vis(s) * alpha;
+		if (al > 0.012) poly3(ink, cam, null, pts, al, 1.1, Oc);
+	}
+	for (const pts of Cn.spokes)
+		for (let i = 1; i < pts.length; i++) {
+			const s = Math.hypot(...sub3(pts[i], N));
+			const al = 0.4 * grow * vis(s) * alpha;
+			if (al > 0.012) seg3(ink, cam, null, pts[i - 1], pts[i], al, 1, Oc);
+		}
+	ink.flush(ctx);
+}
+
 // ── The beat's parameters ────────────────────────────────────────────────────
 // Where each stage sits in the structure beat's own progress u, 0…1.
 export const STAGE = {
@@ -450,17 +487,26 @@ function seg3(
 	b,
 	alpha,
 	width,
-	{ ref = 1, color = PAL.chalk, tear = 0, slack = 0, w = 1e9, h = 1e9, near = null } = {}
+	{
+		ref = 1,
+		color = PAL.chalk,
+		tear = 0,
+		slack = 0,
+		w = 1e9,
+		h = 1e9,
+		near = null,
+		nearZ = NEAR
+	} = {}
 ) {
 	if (alpha < 0.012) return;
 	if (tear > 0 && Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) > tear) return;
 	let qa = cam.project(a);
 	let qb = cam.project(b);
-	if (qa[2] <= NEAR && qb[2] <= NEAR) return;
-	if (qa[2] <= NEAR || qb[2] <= NEAR) {
-		const t = (qa[2] - NEAR) / (qa[2] - qb[2]);
+	if (qa[2] <= nearZ && qb[2] <= nearZ) return;
+	if (qa[2] <= nearZ || qb[2] <= nearZ) {
+		const t = (qa[2] - nearZ) / (qa[2] - qb[2]);
 		const c = cam.project(lerp3(a, b, t));
-		if (qa[2] <= NEAR) qa = c;
+		if (qa[2] <= nearZ) qa = c;
 		else qb = c;
 	}
 	const m = 40;
@@ -761,21 +807,7 @@ export function makeStructure({
 		// faint far off, fading as they pass the lens.
 		if (cn > 0.01) {
 			const D = cam.dist ?? Math.hypot(...sub3(cam.pos, G.N));
-			const Cn = cone(G.N, G.dir, { size: cn, D: D * 0.98 });
-			const Oc = { ref: Math.max(D, 0.02), w, h };
-			const vis = (s) => (1 - smooth(span(s / D, 0.5, 0.95))) * smooth(span(s / D, 0.004, 0.03));
-			const grow = smooth(span(cn, 0, 1));
-			for (const { s, pts } of Cn.rings) {
-				const al = 0.55 * grow * vis(s) * alpha;
-				if (al > 0.012) poly3(ink, cam, null, pts, al, 1.1, Oc);
-			}
-			for (const pts of Cn.spokes)
-				for (let i = 1; i < pts.length; i++) {
-					const s = Math.hypot(...sub3(pts[i], G.N));
-					const al = 0.4 * grow * vis(s) * alpha;
-					if (al > 0.012) seg3(ink, cam, null, pts[i - 1], pts[i], al, 1, Oc);
-				}
-			ink.flush(ctx);
+			drawCone(ctx, cam, G.N, G.dir, { D, w, h, size: cn, grow: smooth(span(cn, 0, 1)), alpha });
 		}
 
 		// The points: the lattice's, the cell's corners (all the origin), the

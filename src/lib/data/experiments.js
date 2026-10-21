@@ -29,6 +29,36 @@ export const BOARD = [
 		]
 	},
 	{
+		sketch: 'log-entry',
+		cut: null,
+		name: 'The data entry',
+		round: 5,
+		what: 'The two answers taken as fields ON the lattice they form (flow-kummer’s): the date typed into cells standing on a row, which its Enter makes the real axis; a 1–10 slider whose ten stops are ten lattice points and whose handle leans the second period live.',
+		variants: [
+			[
+				'lattice',
+				'the date in ten cells, Enter writing the rows out; the handle dragged from 1 to 7, the second family leaning with it, the cell drawn round the origin with its gluings'
+			]
+		]
+	},
+	{
+		sketch: 'log-kummer',
+		cut: null,
+		name: 'The structure',
+		round: 5,
+		what: 'Conception as the fixed point of a fold: the lattice rolled and bent into the torus, the torus half-turned about its skewer (z ↦ −z) with its four fixed points lit, folded onto itself, and the lens into the origin’s node — a cone, a tunnel.',
+		variants: [
+			[
+				'pillow',
+				'the quotient: the lid swung down, the rims pinched to the skewer, the pillowcase with its four cone points; the dive into the origin’s'
+			],
+			[
+				'quartic',
+				'the same to the turn, then Kummer’s quartic with its sixteen nodes in the torus’s stead, the dive into the one furthest along the skewer'
+			]
+		]
+	},
+	{
 		sketch: 'log-orb',
 		cut: 'net',
 		name: 'The orb',
@@ -434,6 +464,11 @@ export const FLOWS = [
 		sketch: 'flow-dodeca',
 		name: 'The dodecahedral space',
 		what: 'a cell built round us, every face a room, into the centre one (?end=solid for an exploration: the pane handed to the solid room drawn as a sketch, the lens walking in)'
+	},
+	{
+		sketch: 'flow-kummer',
+		name: 'The fold',
+		what: 'the terminal’s lines are a lattice the data entry forms; it folds into the torus and the torus in half, the lens into a fixed point’s cone, and the chalk fall drops down it with the structure streaming behind and colour arriving as you fall'
 	},
 	{
 		sketch: 'flow-swim',
