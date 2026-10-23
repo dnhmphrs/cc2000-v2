@@ -642,7 +642,7 @@ export function makeTerminal(scale = 1, { cmd = true, align = 'left' } = {}) {
 	};
 	let L = null;
 	const layout = (ctx, w, h) => {
-		if (!L || L.w !== w || L.h !== h) L = layoutTerminal(ctx, w, h, scale, cmd, align);
+		if (!L || L.w !== w || L.h !== h) L = layoutTerminal(ctx, w, h, scale, cmd, align, K);
 		return L;
 	};
 	return {
@@ -664,23 +664,70 @@ function typedBy(times, t) {
 
 // `align` 'left' sets the block at the margin; 'center' sets every line centred
 // on the board from the first keystroke (the full stop's width counted in the
-// last line's), so the card types where it will stay.
-function layoutTerminal(ctx, w, h, scale = 1, withCmd = true, align = 'left') {
+// last line's), so the card types where it will stay. Centred, on a board too
+// narrow for the three lines at a readable size (a phone held upright), the
+// sentence is RE-WRAPPED into as many lines as it needs at that size, typed
+// with the same keystrokes (L.times, the wrapped lines' times, replaces K.out).
+function layoutTerminal(ctx, w, h, scale = 1, withCmd = true, align = 'left', K = null) {
 	ctx.save();
 	ctx.font = TECH(100);
 	const W100 = Math.max(...LINES.map((s) => ctx.measureText(s + '.').width));
-	const fs = Math.min(h * 0.036, (0.78 * w * 100) / W100) * scale;
+	let fs = Math.min(h * 0.036, (0.78 * w * 100) / W100) * scale;
+	// Centred and narrow: the size the board's width allows a shorter line.
+	const fsWrap = Math.min(h * 0.036, w * 0.042) * scale;
+	const wrap = align === 'center' && !withCmd && K && fs < 0.8 * fsWrap;
+	let texts = LINES;
+	let times = null;
+	if (wrap) {
+		fs = fsWrap;
+		ctx.font = TECH(fs);
+		// The sentence's characters and when each is typed; a line break is a
+		// space, typed with the character after it.
+		const chars = [];
+		const at = [];
+		LINES.forEach((line, i) => {
+			if (i > 0) {
+				chars.push(' ');
+				at.push(K.out[i][0]);
+			}
+			for (let j = 0; j < line.length; j++) {
+				chars.push(line[j]);
+				at.push(K.out[i][j]);
+			}
+		});
+		const all = chars.join('');
+		const maxW = 0.88 * w;
+		texts = [];
+		times = [];
+		let start = 0;
+		while (start < all.length) {
+			let end = all.length;
+			const fits = (e) =>
+				ctx.measureText(all.slice(start, e) + (e === all.length ? '.' : '')).width <= maxW;
+			if (!fits(end)) {
+				end = all.lastIndexOf(' ', end - 1);
+				while (end > start && !fits(end)) end = all.lastIndexOf(' ', end - 1);
+				if (end <= start)
+					end = Math.min(all.length, start + Math.max(1, Math.floor(maxW / (0.6 * fs))));
+			}
+			texts.push(all.slice(start, end));
+			times.push(at.slice(start, end));
+			start = end;
+			while (all[start] === ' ') start++;
+		}
+	}
 	const step = fs * 1.8;
 	const x0 = Math.max(40, w * 0.11);
 	// The block: the command, a blank, the three lines; a little above the
 	// middle, so the stop is below it and the zoom pans up as well as across.
 	const rows = withCmd ? 2 : 0;
-	const top = h / 2 - step * (withCmd ? 1.9 : 0.9);
+	const top = withCmd ? h / 2 - step * 1.9 : h / 2 + 0.1 * step - (step * (texts.length - 1)) / 2;
 	const cmd = layLine(ctx, withCmd ? TERM.cmd : '', TECH, fs, x0, top, 0, 'left');
-	const out = LINES.map((s, i) => {
+	const last = texts.length - 1;
+	const out = texts.map((s, i) => {
 		if (align !== 'center')
 			return layLine(ctx, s, TECH, fs, x0, top + step * (rows + i), 0, 'left');
-		const ln = layLine(ctx, i === 2 ? s + '.' : s, TECH, fs, w / 2, top + step * (rows + i), 0);
+		const ln = layLine(ctx, i === last ? s + '.' : s, TECH, fs, w / 2, top + step * (rows + i), 0);
 		ln.text = s; // the stop is the caret's to make
 		return ln;
 	});
@@ -690,7 +737,7 @@ function layoutTerminal(ctx, w, h, scale = 1, withCmd = true, align = 'left') {
 	// The full stop: where the glyph's ink would be, in the cell after the
 	// last word.
 	const m = ctx.measureText('.');
-	const l3 = out[2];
+	const l3 = out[out.length - 1];
 	const sx = l3.x0 + l3.xs[l3.text.length];
 	const stop = {
 		x: sx + (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2,
@@ -698,7 +745,7 @@ function layoutTerminal(ctx, w, h, scale = 1, withCmd = true, align = 'left') {
 		r: Math.max(1.6, (m.actualBoundingBoxRight + m.actualBoundingBoxLeft) / 2) * 1.1
 	};
 	ctx.restore();
-	return { w, h, fs, step, cell, cmd, out, stop };
+	return { w, h, fs, step, cell, cmd, out, stop, times };
 }
 
 function terminal(ctx, L, K, B, w, h, u, secs, os) {
@@ -716,7 +763,8 @@ function terminal(ctx, L, K, B, w, h, u, secs, os) {
 	const nc = typedBy(K.cmd, t);
 	typeLine(ctx, L.cmd, T, s, nc, 1, w, h, (i) => (i < 2 ? PAL.gold : PAL.chalk));
 	// The output.
-	const no = K.out.map((times) => typedBy(times, t));
+	const outT = L.times ?? K.out;
+	const no = outT.map((times) => typedBy(times, t));
 	L.out.forEach((ln, i) => typeLine(ctx, ln, T, s, no[i], 0.92, w, h));
 
 	// The caret: a block in the cell after the last thing typed — on the
@@ -730,11 +778,11 @@ function terminal(ctx, L, K, B, w, h, u, secs, os) {
 		const runAt = K.cmd.length ? K.cmd[K.cmd.length - 1] + TERM.run * 0.5 : 0;
 		if (t >= runAt) {
 			let i = 0;
-			while (i < 2 && no[i + 1] > 0) i++;
+			while (i < L.out.length - 1 && no[i + 1] > 0) i++;
 			if (no[0] > 0 || t >= runAt) {
 				ln = L.out[i];
 				n = no[i];
-				last = n > 0 ? K.out[i][n - 1] : runAt;
+				last = n > 0 ? outT[i][n - 1] : runAt;
 			}
 		}
 		const steady = t - last < 0.16;
@@ -758,7 +806,8 @@ function terminal(ctx, L, K, B, w, h, u, secs, os) {
 		if (close < 1) {
 			const bw = lerp(L.cell, stop.r * 2, close) * s;
 			const bh = lerp(0.92 * L.fs, stop.r * 2, close) * s;
-			const [cx0, cy0] = T([L.out[2].x0 + L.out[2].xs[L.out[2].text.length], L.out[2].y]);
+			const lz = L.out[L.out.length - 1];
+			const [cx0, cy0] = T([lz.x0 + lz.xs[lz.text.length], lz.y]);
 			const bx = lerp(cx0, X - bw / 2, close);
 			const by = lerp(cy0 - 0.78 * L.fs * s, Y - bh / 2, close);
 			ctx.save();
