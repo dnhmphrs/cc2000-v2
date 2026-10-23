@@ -405,15 +405,19 @@ export async function make({ board, answers, live }) {
 		}
 	}
 
-	// The title, frozen, panned, its lines going to a ghost top first; the
-	// stop is left out of it and drawn on its own, whole.
+	// The title, frozen, panned, its lines going to a ghost top first, then
+	// gone while the date is asked (the figure is hung from the stop, so it
+	// would be drawn over the sentence); the stop is left out of it and drawn
+	// on its own, whole.
 	function title(ctx, g, t, dx, dy, out) {
 		const { L, stop, w, h } = g;
 		const img = frozenFrame(w, h);
 		const ys = L.out.map((ln) => ln.y - 0.3 * L.fs);
 		const cut = [-1e4, (ys[0] + ys[1]) / 2, (ys[1] + ys[2]) / 2, 1e4];
+		const gone = 1 - smooth(span(t, Q1, W1));
 		for (let i = 0; i < 3; i++) {
-			const a = out * lerp(1, 0.18, smooth(span(t, B.ghost + 0.3 * i, B.ghost + 0.7 + 0.3 * i)));
+			const a =
+				out * gone * lerp(1, 0.18, smooth(span(t, B.ghost + 0.3 * i, B.ghost + 0.7 + 0.3 * i)));
 			if (a <= 0.004) continue;
 			ctx.save();
 			ctx.beginPath();

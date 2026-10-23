@@ -94,14 +94,20 @@ board, except `three`, which is a shaded mesh on the lab's three.js renderer.
   cloud). Their must and should fixes are in. The other seven intros and ten
   swimmers were only looked at here, on contact sheets, and never had a second
   pair of eyes.
-- **Known rough edges.**
-  - `contours` lets the swimmer leave the frame for about a second at 0.5,
-    while the lens rises to the plan of the complex plane.
-  - `epicycle`'s curve is drawn over the dimmed title.
-  - `spiral`'s "now" is fixed at 21 · 10 · 2026, so pinned frames match on
-    any day.
-  - Several intros' builders used the mask letters `DD.MM.YYYY` as the format
-    hint; the site's face is caps-only.
+- **Rough edges, fixed after a first look** (v0.8.1).
+  - `contours` lost its swimmer off a corner for about a second at 0.5, as
+    the lens rose to the plan of the complex plane. The aim now leaves the
+    swimmer only as fast as the lens backs off.
+  - `epicycle` drew its figure over the dimmed title. The title now fades out
+    while the date is asked, leaving the full stop as the figure's pivot.
+  - `spiral` measured every birthday from a fixed "now" (21 · 10 · 2026). A
+    person answering now gets today; pinned frames keep the fixed day, so
+    they are the same picture whenever they are shot.
+- **Left as it is.**
+  - `three` runs at 300–800 ms a frame on this sandbox's software GPU, about
+    the same as `log-solid` there.
+  - Several intros show `DD.MM.YYYY` as the field's mask, because the site's
+    face has capitals only.
 - **Not built.** The fan-out also picked three swimmers that were never built
   because the agents hit the account's usage limit:
   - `heighten`: drawn only where a moving light strikes it, chalk

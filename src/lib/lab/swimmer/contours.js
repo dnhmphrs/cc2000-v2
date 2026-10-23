@@ -943,7 +943,15 @@ export async function make() {
 		let P = mixPose(A, B, smooth(span(u, 0.165, 0.31)));
 		P = mixPose(P, B2, smooth(span(u, 0.3, 0.385)));
 		P = mixPose(P, B3, smooth(span(u, 0.39, 0.445)));
-		P = mixPose(P, C, smooth(span(u, 0.45, 0.535)));
+		// Up to the plan: the aim leaves the swimmer only as fast as the lens
+		// backs off (its share of the distance gained), so the swimmer stays
+		// in frame on the way up instead of sliding off a corner.
+		const kC = smooth(span(u, 0.45, 0.535));
+		if (kC > 0 && kC < 1) {
+			const dC = P.dist * Math.pow(C.dist / P.dist, kC);
+			const tW = (dC - P.dist) / (C.dist - P.dist);
+			P = mixPose(P, { ...C, T: lerp3(P.T, C.T, tW / kC) }, kC);
+		} else P = mixPose(P, C, kC);
 		P = mixPose(P, E, smooth(span(u, 0.575, 0.675)));
 		P = mixPose(P, D, smooth(span(u, 0.675, 0.8)));
 		return camOf(P, w, h);

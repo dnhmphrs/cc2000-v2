@@ -38,8 +38,9 @@
 // Every frame is a function of t and the hand: the marker's run is a sum of
 // eased steps, one per keystroke, at the keystroke's time — the script's,
 // found once by sampling its hand, or, live, the real second each key came
-// (a cache of when the typed digits changed). "Now" is fixed (21 · 10 ·
-// 2026), so a pinned frame is the same frame on any day.
+// (a cache of when the typed digits changed). "Now" is today when a person
+// is answering, and fixed (21 · 10 · 2026) otherwise, so a pinned frame is
+// the same frame on any day.
 
 import { PAL, TAU, TECH_FONT, stroke, disc, span, smooth, lerp, clamp01 } from '../log/board.js';
 import { glow } from '../log/ink.js';
@@ -72,16 +73,19 @@ const T = {
 };
 
 // ── Time ─────────────────────────────────────────────────────────────────────
-const NOW = [2026, 10, 21];
+// Now: today when a person is answering; a fixed day otherwise, so a pinned
+// frame is the same picture whenever it is shot (setNow, at make()).
+const FIXED_NOW = [2026, 10, 21];
+let NOW = FIXED_NOW;
 const DAY = 86400000;
 const yearLen = (Y) => (Date.UTC(Y + 1, 0, 1) - Date.UTC(Y, 0, 1)) / DAY;
 const monthLen = (Y, M) => new Date(Date.UTC(Y, M, 0)).getUTCDate();
 // A day, as a fractional year (its middle).
 const frac = (Y, M, D) =>
 	Y + ((Date.UTC(Y, M - 1, D) - Date.UTC(Y, 0, 1)) / DAY + 0.5) / yearLen(Y);
-const NOW_T = frac(...NOW);
-const AGO_END = NOW_T - 1900; // the spiral's outer end, in years ago
-const L_END = Math.log(AGO_END);
+let NOW_T = frac(...NOW);
+let AGO_END = NOW_T - 1900; // the spiral's outer end, in years ago
+let L_END = Math.log(AGO_END);
 const L_FLOOR = Math.log(0.25 / 365); // six hours ago: inside the light
 const lnAgo = (tt) => Math.log(Math.max(NOW_T - tt, Math.exp(L_FLOOR)));
 
@@ -90,6 +94,14 @@ const lnAgo = (tt) => Math.log(Math.max(NOW_T - tt, Math.exp(L_FLOOR)));
 // if there is none. Eight digits are the date itself (its day held to its
 // month's length).
 const MEMO = new Map();
+function setNow(live) {
+	const d = new Date();
+	NOW = live ? [d.getFullYear(), d.getMonth() + 1, d.getDate()] : FIXED_NOW;
+	NOW_T = frac(...NOW);
+	AGO_END = NOW_T - 1900;
+	L_END = Math.log(AGO_END);
+	MEMO.clear();
+}
 function dateOf(typed) {
 	if (MEMO.has(typed)) return MEMO.get(typed);
 	let out = null;
@@ -168,6 +180,7 @@ const TECH = (s) => `400 ${s}px ${TECH_FONT}`;
 const GOLD = [245, 193, 80];
 
 export async function make({ board, answers, live }) {
+	setNow(live);
 	try {
 		await document.fonts.load(`400 24px ${TECH_FONT}`);
 	} catch {
