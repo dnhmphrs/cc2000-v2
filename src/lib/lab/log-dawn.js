@@ -628,7 +628,9 @@ function keystrokes(withCmd = true) {
 // character's advance, `out` the lines, `stop` the full stop's spot and
 // radius — for a flow that takes the picture over from the stop rather than
 // zooming into it (flow-conception: the lines are the rows of its lattice).
-export function makeTerminal(scale = 1, { cmd = true } = {}) {
+// `align: 'center'` types every line centred where it stays (the epicycle
+// intro and the flows after it).
+export function makeTerminal(scale = 1, { cmd = true, align = 'left' } = {}) {
 	const K = keystrokes(cmd);
 	const uStop = K.stop / SECONDS;
 	// The beats after the typing, in progress u, hung off the last keystroke.
@@ -640,7 +642,7 @@ export function makeTerminal(scale = 1, { cmd = true } = {}) {
 	};
 	let L = null;
 	const layout = (ctx, w, h) => {
-		if (!L || L.w !== w || L.h !== h) L = layoutTerminal(ctx, w, h, scale, cmd);
+		if (!L || L.w !== w || L.h !== h) L = layoutTerminal(ctx, w, h, scale, cmd, align);
 		return L;
 	};
 	return {
@@ -660,7 +662,10 @@ function typedBy(times, t) {
 	return n;
 }
 
-function layoutTerminal(ctx, w, h, scale = 1, withCmd = true) {
+// `align` 'left' sets the block at the margin; 'center' sets every line centred
+// on the board from the first keystroke (the full stop's width counted in the
+// last line's), so the card types where it will stay.
+function layoutTerminal(ctx, w, h, scale = 1, withCmd = true, align = 'left') {
 	ctx.save();
 	ctx.font = TECH(100);
 	const W100 = Math.max(...LINES.map((s) => ctx.measureText(s + '.').width));
@@ -672,9 +677,13 @@ function layoutTerminal(ctx, w, h, scale = 1, withCmd = true) {
 	const rows = withCmd ? 2 : 0;
 	const top = h / 2 - step * (withCmd ? 1.9 : 0.9);
 	const cmd = layLine(ctx, withCmd ? TERM.cmd : '', TECH, fs, x0, top, 0, 'left');
-	const out = LINES.map((s, i) =>
-		layLine(ctx, s, TECH, fs, x0, top + step * (rows + i), 0, 'left')
-	);
+	const out = LINES.map((s, i) => {
+		if (align !== 'center')
+			return layLine(ctx, s, TECH, fs, x0, top + step * (rows + i), 0, 'left');
+		const ln = layLine(ctx, i === 2 ? s + '.' : s, TECH, fs, w / 2, top + step * (rows + i), 0);
+		ln.text = s; // the stop is the caret's to make
+		return ln;
+	});
 	// The cell: one character's advance; the caret is a block of it.
 	ctx.font = TECH(fs);
 	const cell = ctx.measureText('0').width;

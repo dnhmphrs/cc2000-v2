@@ -1,8 +1,9 @@
 // ── log-intro · epicycle — the date as one closed curve, a chain of circles ─
-// The terminal types the card (log-dawn's, no command) and FREEZES at its
-// full stop — never zoomed. The frozen frame slides (a pan, never a scale)
-// until the stop sits at (0.5w, 0.37h), and its lines fade to a ghost, top
-// line first. The stop stays a full chalk dot: the pivot of everything after.
+// The terminal types the card (log-dawn's, no command), every line CENTRED
+// where it stays, and FREEZES at its full stop — never zoomed, never moved.
+// Its lines fade out, top first, and are gone before the first question; only
+// then does the stop, left alone, glide to (0.5w, 0.37h). It stays a full
+// chalk dot: the pivot of everything after.
 //
 // "when were you born?" is typed under it in the terminal's face, with the
 // field dd.mm.yyyy under that, the mask dim and the terminal's block caret
@@ -35,8 +36,8 @@
 //
 // Beats (seconds; 21 s; at = t / 21):
 //    0    – 5.14  the terminal types the card; frozen at its stop + 0.2
-//    5.3  – 6.6   the frozen frame pans the stop to (0.5w, 0.37h); the lines
-//                 go to a ghost, top first
+//    5.4  – 6.4   the lines fade out where they are, top first
+//    6.2  – 6.8   the stop, alone, glides to (0.5w, 0.37h)
 //    6.8          "when were you born?" (q1, at 0.324); the field
 //    7.6          the wait (wait1, at 0.362); scripted digits from here
 //    9.8          Enter (e1, at 0.467); the gold trace 9.8 – 11.0
@@ -59,7 +60,7 @@ import { makeTerminal } from '../log-dawn.js';
 import { script } from '../log/entry.js';
 
 // ── The beats ────────────────────────────────────────────────────────────────
-const TERM = makeTerminal(0.8, { cmd: false });
+const TERM = makeTerminal(0.8, { cmd: false, align: 'center' });
 const FREEZE = TERM.stop + 0.2; // the frame the title is held at (≈ 5.14)
 const Q1 = 6.8;
 const W1 = 7.6;
@@ -69,8 +70,8 @@ const W2 = 12.4;
 const E2 = 14.4;
 
 const B = {
-	pan: [5.3, 6.6],
-	ghost: 5.3, // line i fades over [5.3 + 0.3 i, 6.0 + 0.3 i]
+	pan: [6.2, 6.8], // the stop, alone, to the pivot
+	gone: 5.4, // line i fades out over [5.4 + 0.25 i, 5.9 + 0.25 i]
 	field: [Q1 + 0.25, Q1 + 0.7],
 	trace: 1.2, // a gold trace's run, s
 	slider: [Q2 + 0.35, Q2 + 0.8],
@@ -90,6 +91,41 @@ export const meta = {
 // ── The arms ─────────────────────────────────────────────────────────────────
 const SHARE = [0.4, 0.22, 0.14, 0.09, 0.06, 0.04, 0.03, 0.02];
 const SPIN = [0, 1, -1, 2, -2, 3, -3, 4];
+
+// ── For the flows: the entry as a beat of a longer run ───────────────────────
+// A flow can open on this intro as it is — make({ board, answers, live, keep })
+// with its answers made on EPICYCLE.beats, render(ctx, w, h, t, hand) until
+// it takes over — and `keep: true` leaves the figure up: no fold, no fade, the
+// arms still turning, the stop chalk. rosette(digits, spice) is the figure the
+// answers make, at unit size: r the arms' lengths (summing to 1), f their
+// frequencies, at(φ) the curve's point [x, y] (y up) at φ ∈ [0, 2π) — the
+// date's own closed curve, with n-fold symmetry at a whole spice n.
+export const EPICYCLE = {
+	beats: { q1: 6.8, wait1: 7.6, e1: 9.8, q2: 11.6, wait2: 12.4, e2: 14.4 },
+	freeze: 5.14, // the title held at its stop (TERM.stop + 0.2)
+	pivot: [0.5, 0.37], // the stop's place on the board, as fractions of w, h, from 6.8 s
+	radius: (w, h) => Math.min(0.22 * h, 0.46 * w), // the figure's R
+	share: SHARE,
+	spin: SPIN,
+	period: 12 // the arms turn once in 12 s (θ = 2π t / 12)
+};
+export function rosette(digits, spice) {
+	const d = String(digits).padEnd(8, '0').slice(0, 8).split('').map(Number);
+	const wk = d.map((x, k) => (Number.isFinite(x) ? x : 0) * SHARE[k]);
+	const sum = wk.reduce((a, b) => a + b, 0);
+	const r = sum > 0 ? wk.map((x) => x / sum) : [1, 0, 0, 0, 0, 0, 0, 0];
+	const f = SPIN.map((sp) => 1 + spice * sp);
+	const at = (ph) => {
+		let x = 0;
+		let y = 0;
+		for (let k = 0; k < 8; k++) {
+			x += r[k] * Math.cos(f[k] * ph);
+			y += r[k] * Math.sin(f[k] * ph);
+		}
+		return [x, y];
+	};
+	return { r, f, at };
+}
 const GROW = 0.3;
 const SHRINK = 0.2;
 const PERIOD = 12; // θ = 2π t / 12
@@ -171,7 +207,7 @@ function badGroups(typed) {
 	];
 }
 
-export async function make({ board, answers, live }) {
+export async function make({ board, answers, live, keep = false }) {
 	await document.fonts.load(TECHF(24)).catch(() => null);
 
 	// ── Layout, cached per board size ────────────────────────────────────────
@@ -405,30 +441,27 @@ export async function make({ board, answers, live }) {
 		}
 	}
 
-	// The title, frozen, panned, its lines going to a ghost top first, then
-	// gone while the date is asked (the figure is hung from the stop, so it
-	// would be drawn over the sentence); the stop is left out of it and drawn
-	// on its own, whole.
-	function title(ctx, g, t, dx, dy, out) {
+	// The title, frozen where it was typed, its lines fading out top first and
+	// gone before the first question; the stop is left out of it and drawn on
+	// its own, whole.
+	function title(ctx, g, t) {
 		const { L, stop, w, h } = g;
 		const img = frozenFrame(w, h);
 		const ys = L.out.map((ln) => ln.y - 0.3 * L.fs);
 		const cut = [-1e4, (ys[0] + ys[1]) / 2, (ys[1] + ys[2]) / 2, 1e4];
-		const gone = 1 - smooth(span(t, Q1, W1));
 		for (let i = 0; i < 3; i++) {
-			const a =
-				out * gone * lerp(1, 0.18, smooth(span(t, B.ghost + 0.3 * i, B.ghost + 0.7 + 0.3 * i)));
+			const a = 1 - smooth(span(t, B.gone + 0.25 * i, B.gone + 0.5 + 0.25 * i));
 			if (a <= 0.004) continue;
 			ctx.save();
 			ctx.beginPath();
-			ctx.rect(-1, cut[i] + dy, w + 2, cut[i + 1] - cut[i]);
+			ctx.rect(-1, cut[i], w + 2, cut[i + 1] - cut[i]);
 			if (i === 2) {
-				ctx.moveTo(stop.x + dx + stop.r + 1.5, stop.y + dy);
-				ctx.arc(stop.x + dx, stop.y + dy, stop.r + 1.5, 0, TAU);
+				ctx.moveTo(stop.x + stop.r + 1.5, stop.y);
+				ctx.arc(stop.x, stop.y, stop.r + 1.5, 0, TAU);
 			}
 			ctx.clip('evenodd');
 			ctx.globalAlpha = a;
-			ctx.drawImage(img, dx, dy, w, h);
+			ctx.drawImage(img, 0, 0, w, h);
 			ctx.restore();
 		}
 	}
@@ -534,13 +567,13 @@ export async function make({ board, answers, live }) {
 				if (live) setCursor('');
 				return;
 			}
-			const out = 1 - smooth(span(t, ...B.out));
+			const out = keep ? 1 : 1 - smooth(span(t, ...B.out));
 			const pan = easeIO(span(t, ...B.pan));
 			const dx = pan * (g.cx - g.stop.x);
 			const dy = pan * (g.cy - g.stop.y);
 			const X = g.stop.x + dx;
 			const Y = g.stop.y + dy;
-			title(ctx, g, t, dx, dy, out);
+			title(ctx, g, t);
 
 			// The figure: the curve, the arms, the pen.
 			if (live) remember(hand, t);
@@ -562,7 +595,7 @@ export async function make({ board, answers, live }) {
 				let reach = 0;
 				for (let k = 0; k < 8; k++) {
 					const f0 = B.fold + 0.08 * (7 - k);
-					const rk = r[k] * (1 - smooth(span(t, f0, f0 + 0.44)));
+					const rk = keep ? r[k] : r[k] * (1 - smooth(span(t, f0, f0 + 0.44)));
 					if (rk < 0.05) continue;
 					const ang = f[k] * ph;
 					const nx = x + rk * Math.cos(ang);
@@ -591,7 +624,7 @@ export async function make({ board, answers, live }) {
 			}
 
 			// The stop: a full chalk dot, the pivot; at the end a dim gold point.
-			const gk = smooth(span(t, ...B.gold));
+			const gk = keep ? 0 : smooth(span(t, ...B.gold));
 			const c = mix(CHALK, GOLD, gk);
 			disc(ctx, X, Y, g.stop.r, {
 				fill: `rgb(${c[0]}, ${c[1]}, ${c[2]})`,
