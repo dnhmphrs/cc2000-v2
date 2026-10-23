@@ -1,5 +1,5 @@
 // ── Sketch: log-swimmer — the swimmer made in 3D, swimming at the maths ──────
-// Ten ways to make the swimmer FROM NOTHING as a real 3D body — a head, a
+// Twelve ways to make the swimmer FROM NOTHING as a real 3D body — a head, a
 // midpiece, a beating flagellum, surfaces, not a flat outline — and set it
 // swimming toward a mathematical object (a logarithmic spiral, the exponential
 // map, a Riemann surface …). Each is a module in lab/swimmer/, picked by ?v=.

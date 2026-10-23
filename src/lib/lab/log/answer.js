@@ -41,7 +41,7 @@
 //   done      0…1 after both
 //   secs      the clock a caret blinks on: real seconds live, t scripted
 //
-// Keys: the date — digits, Backspace, Enter (once all eight are in). The
+// Keys (from wait1 and wait2): the date — digits, Backspace, Enter (once all eight are in). The
 // spice — drag the handle, or ← → (one stop), a digit (0 is 10), Home/End,
 // Enter.
 
@@ -78,6 +78,15 @@ export function makeAnswers({ live = false, beats }) {
 		if (st.date && !st.spice && t >= B.q2) return 'spice';
 		return null;
 	};
+	// Keys and the pointer are taken once the field is up (wait1, wait2), not
+	// while its question is still being asked: typed ahead, a digit would land
+	// in a field the sketch has not drawn yet.
+	const taking = (t) => {
+		const a = asking(t);
+		if (a === 'date' && t >= B.wait1 - 0.05) return a;
+		if (a === 'spice' && t >= B.wait2 - 0.05) return a;
+		return null;
+	};
 	const reset = () => {
 		st.typed = '';
 		st.value = 1;
@@ -90,7 +99,7 @@ export function makeAnswers({ live = false, beats }) {
 
 	const onKey = (e) => {
 		if (!clockRef) return;
-		const a = asking(clockRef.t);
+		const a = taking(clockRef.t);
 		if (a === 'date') {
 			if (/^[0-9]$/.test(e.key) && st.typed.length < 8) st.typed += e.key;
 			else if (e.key === 'Backspace') st.typed = st.typed.slice(0, -1);
@@ -121,7 +130,7 @@ export function makeAnswers({ live = false, beats }) {
 	};
 	const clampV = (v) => Math.max(1, Math.min(10, v));
 	const onDown = (e) => {
-		if (!clockRef || !hit || asking(clockRef.t) !== 'spice') return;
+		if (!clockRef || !hit || taking(clockRef.t) !== 'spice') return;
 		const v = hit(e.clientX, e.clientY, 'down');
 		if (v === null || v === undefined || !Number.isFinite(v)) return;
 		st.held = 1;
@@ -173,7 +182,7 @@ export function makeAnswers({ live = false, beats }) {
 				s.asking = asking(t);
 				if (!st.date) {
 					s.typed = st.typed;
-					s.caret = t >= B.q1 + 0.4 ? 1 : 0;
+					s.caret = t >= Math.min(B.q1 + 0.4, B.wait1) ? 1 : 0;
 					s.steady = now() - st.key < 0.5 ? 1 : 0;
 				} else s.typed = answers.date;
 				if (!st.spice) {

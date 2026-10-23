@@ -59,6 +59,129 @@ export const BOARD = [
 		]
 	},
 	{
+		sketch: 'log-intro',
+		cut: null,
+		name: 'The intro, by hand',
+		round: 5,
+		what: 'From the title card to both answers, typed and dragged by hand: the run waits at each question (?demo=1, or a pin, plays the demo’s hand). No zoom into the full stop, no command, dim.',
+		variants: [
+			[
+				'prompt',
+				'the terminal carries on: the questions typed under the title, answered at a prompt, the spice an ASCII slider'
+			],
+			[
+				'inline',
+				'the sentence completed by hand: the date typed into its blank, the spice rolled in by a slider'
+			],
+			[
+				'scroll',
+				'a real shell: lines arrive at the bottom, the title scrolls off the top, the spice a bar of characters'
+			],
+			[
+				'form',
+				'a clean form under the frozen title: a boxed DD | MM | YYYY, a notched spice track, ▸ CONTINUE'
+			],
+			[
+				'orb-net',
+				'the stop lights into a quiet orb, the net in faint chalk round it; each answer one log step in'
+			],
+			[
+				'orb-rings',
+				'the stop lights in place, the log picture round it, dim; the spice a dial dragged round a ring'
+			],
+			[
+				'spiral',
+				'time as a log spiral round the full stop: the date read along it as it is typed, the spice a dial on its inner turn'
+			],
+			[
+				'dial',
+				'odometer wheels roll the date into place; a rotary knob with ten detents for the spice'
+			],
+			[
+				'one',
+				'one thing at a time, large; each answer collapses to a point that joins the full stop'
+			],
+			[
+				'plot',
+				'the machine plots you: a timeline 1900–2099 and a scale 1–10, the date a point along one, the spice its height'
+			],
+			[
+				'carriage',
+				'one fixed point the type is struck at, the paper moving under it; Enter a carriage return, the spice a scale dragged past the point'
+			],
+			[
+				'cal',
+				'the month you were born in prints and sets itself as you type; the box on your day becomes the spice’s handle'
+			],
+			[
+				'morse',
+				'the full stop is the lamp: the date sent in dots and dashes; the spice a window sliding on the code'
+			],
+			[
+				'punch',
+				'the date cut into a card a digit at a time, the card read by light; the spice one hole punched by a die'
+			],
+			[
+				'epicycle',
+				'the date drawn as one closed curve by a chain of circles hung from the full stop; the spice its symmetry'
+			]
+		]
+	},
+	{
+		sketch: 'log-swimmer',
+		cut: null,
+		name: 'The swimmer, made in 3D',
+		round: 5,
+		what: 'A true 3D swimmer generated from nothing, twelve ways of making a solid, then swimming at an exact mathematical object. Not joined to the intro.',
+		variants: [
+			[
+				'lathe',
+				'a profile turned on its axis, pressed to the paddle, the tail drawn out; along the equiangular spiral into its pole'
+			],
+			[
+				'rings',
+				'sections stacked nose to tip, joined by generatrices; down the Riemann surface of log z to its branch point'
+			],
+			[
+				'cloud',
+				'a chalk haze condenses onto the body, then is wired; it swims the spiral of e^z toward 0'
+			],
+			['implicit', 'metaballs summed and sliced nose to tip; twice round the branch point of √z'],
+			[
+				'cell',
+				'a round cell elongates, the head condenses, the tail buds; the loxodrome of the Riemann sphere to its pole'
+			],
+			[
+				'sweep',
+				'the centreline first, a tube swept round it, the head blown; into the nautilus, a log-spiral tube'
+			],
+			[
+				'contours',
+				'the body mapped by its thickness, the map raised into slices; up ζ(½ + it) to its first zero'
+			],
+			[
+				'knit',
+				'the skin knitted round by round from the nose; down a loxodromic Möbius flow into its sink'
+			],
+			[
+				'draft',
+				'drawn in plan and elevation, lifted off the sheet; into a golden-angle phyllotaxis funnel'
+			],
+			[
+				'three',
+				'a shaded mesh on the lab’s renderer, lathed and extruded; round the three sheets of z^{1/3} into the branch point'
+			],
+			[
+				'cage',
+				'box-modelled: a cube extruded, subdivided (Catmull–Clark) to its limit; to the point where the Fermat quintic’s five sheets meet'
+			],
+			[
+				'filament',
+				'one thread, the pen never lifting, wound on an invisible mandrel; up the pseudosphere’s horn'
+			]
+		]
+	},
+	{
 		sketch: 'log-orb',
 		cut: 'net',
 		name: 'The orb',

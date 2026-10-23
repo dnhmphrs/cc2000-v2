@@ -1,5 +1,5 @@
 // ── Sketch: log-intro — the site's opening, through the two answers ─────────
-// Ten ways to open the site and take its two answers BY HAND — the date, and
+// Fifteen ways to open the site and take its two answers BY HAND — the date, and
 // how spicy from 1 to 10 — each a module in lab/intro/, picked by ?v=. They
 // share log/answer.js (the keyboard, the pointer, the run waiting at each
 // question, the demo's hand when no one is there) and draw their own fields.
@@ -35,7 +35,13 @@ export default async function make({ THREE, renderer, at }) {
 	const scene = await mod.make({ THREE, renderer, board, answers, live });
 
 	return {
-		info: { seconds: mod.meta.seconds, variant: v, live, answers: answers.answers },
+		info: {
+			seconds: mod.meta.seconds,
+			variant: v,
+			live,
+			beats: mod.meta.beats,
+			answers: answers.answers
+		},
 		seek: (x) => time.seek(x),
 		update: (dt) => answers.step(time, dt),
 		render() {
