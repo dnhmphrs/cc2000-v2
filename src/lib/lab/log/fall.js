@@ -45,6 +45,11 @@
 // all the way down, chalk at the top, the answer's room in full (a function
 // (k, L) → 0…1 gives another ramp). `dust` the board's chalk dust, the
 // board's own by default.
+//
+// `fill: { h, w }` (makeFall's option) with `beats.push: [t0, t1]`: after it
+// lands the lens dollies in on the last room until it fills h of the board's
+// height or w of its width (whichever first; w over 1 crops its sides) — the
+// room ending near full size, its depths parting as the lens goes in.
 
 import { PAL, PHI, span, smooth, lerp, clamp01, stroke, norm, sub3, getBoard } from './board.js';
 import { glow } from './ink.js';
@@ -72,8 +77,20 @@ export function orderOf(decade, crossings = FALL.crossings) {
 	return order;
 }
 
-export function makeFall({ art, order, beats, fov, fit, margin, nearZ, zeta0, pace } = {}) {
+export function makeFall({
+	art,
+	order,
+	beats,
+	fov,
+	fit,
+	margin,
+	nearZ,
+	zeta0,
+	pace,
+	fill = null
+} = {}) {
 	const K = {
+		fill,
 		fov: fov ?? FALL.fov,
 		fit: fit ?? FALL.fit,
 		margin: margin ?? FALL.margin,
@@ -111,7 +128,7 @@ export function makeFall({ art, order, beats, fov, fit, margin, nearZ, zeta0, pa
 	};
 	const draw = (ctx, w, h, t, { background = null, colourAlong = false, dust } = {}) => {
 		const g = geometry(w, h);
-		const cam = lensAt(g, g.zetaAt(t), t, w, h, beats);
+		const cam = lensAt(g, g.zetaAt(t), t, w, h, beats, K);
 		if (background) background(ctx, cam, g.efolds(t), lerp(1, 0.7, cam.land));
 		const d = dust === undefined ? getBoard().dust : dust;
 		const glassAt = drawFall(ctx, w, h, d, g, art, cam, t, beats, K, colourAlong, bake);
@@ -244,12 +261,25 @@ function fitNest(w, h, order, art, K, beats) {
 // lands, and swaying — with the screen shifted so that the plane d₀ ahead
 // holds still: on the landed plate the frame holds and the room drifts
 // behind it by depth, the back wall most, the bed least.
-function lensAt(geo, zeta, t, w, h, B) {
+function lensAt(geo, zeta, t, w, h, B, K = {}) {
 	const cam = geo.pose(zeta);
 	const last = geo.levels[geo.L];
 	const land = smooth(span(t, B.land[0], B.land[1]));
 	cam.x -= last.s * last.glass.x * land;
 	cam.y -= last.s * last.glass.y * land;
+	// The push: after the landing, the lens dollies in on the last plate
+	// until it fills `fill.h` of the board's height — or `fill.w` of its
+	// width, whichever comes first (fill.w over 1 lets an upright board crop
+	// the room's sides to keep it large) — over beats.push.
+	if (K.fill && B.push) {
+		const p = smooth(span(t, B.push[0], B.push[1]));
+		if (p > 0) {
+			const want = Math.min(K.fill.h * h, ((K.fill.w ?? 0.98) * w) / PHI);
+			const k = lerp(1, Math.max(1, want / geo.plate), p);
+			const zP = last.O[2];
+			cam.z = zP + (cam.z - zP) / k;
+		}
+	}
 	const A = lerp(
 		lerp(0, 0.05, span(t, B.fall[0], B.fall[0] + 2)),
 		0.3,

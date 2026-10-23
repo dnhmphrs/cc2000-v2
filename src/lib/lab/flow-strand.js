@@ -46,12 +46,11 @@
 // the same picture again and again, a horn with no bottom. The apex is the
 // one lit point, the swimmer's nose just below and right of it (the lens
 // rides the axis, the nose a little off it, heading in), so the light it
-// chases is in sight all the way down. The seeds are draft's: discs of 0.16ρ laid round in the
-// wall; the horn's sections drawn every 21 seeds as it deepens. Behind it
-// all, dim, SPACETIME GRAPH PAPER: a Minkowski floor under the flight — its
-// lines of constant time across it, of constant place along it, and its
-// light lines at 45° in faint gold — streaming toward the lens at the
-// zoom's own rate (5 cells an e-fold), fogged into the distance.
+// chases is in sight all the way down. The seeds are draft's: discs of
+// 0.16ρ laid round in the wall; the horn's sections drawn every 21 seeds as
+// it deepens. Behind it all, on every beat, the board's own ground: a soft
+// warm fuzz that never stands still (log/grain.js), in place of the fixed
+// chalk dust.
 //
 // THE CALCULATION (the interim). The calculator's own workings, in chalk,
 // written large on planes across the horn that the swimmer flies through —
@@ -69,7 +68,7 @@
 // the year's room (the site's rule, before 1960 the 50s, before 1980 the
 // 60s, before 2005 the 90s, then the 10s). Last, at the apex itself, the
 // conception date in GOLD, its full stop ON the apex — the lit point all
-// along. The horn and the floor go into the dark around it, and that stop
+// along. The horn goes into the dark around it, and that stop
 // IS the first room's glass as the fall opens (the fall is started so far
 // back that the glass is the stop's size, and the zoom runs on at the
 // fall's own rate: no zoom into the stop). EXACT: every date 1900–2099 checked against Date, leap years
@@ -77,8 +76,10 @@
 // February, → 08 · 06 · 1899, a Thursday).
 //
 // The fall (log/fall.js), the 3D swimmer leading the lens through the
-// glasses at the fall's vanishing point, on into the last room's monitor,
-// the splash on its screen (log/splash.js). The room held; a fade; round.
+// glasses at the fall's vanishing point, on into the last room's monitor —
+// and as it reaches the screen, a bright WHITE FLASH, out of which the room
+// comes up in its colours while the lens pushes in on it, until it fills the
+// board (fall.js's fill and push). The room held; a fade; round.
 //
 // Beats, in seconds (60; at = t / 60):
 //    0    – 5.14  the terminal types the card, centred; frozen at its stop
@@ -102,7 +103,8 @@
 //                 (each block's second: the lens half an e-fold short of it)
 //   42   – 53.6   the fall (at 0.7), its first glass the stop; landing
 //                 51.6 – 53.6, the swimmer on into the last monitor
-//   53.7          the splash on the last screen; the room held; 58.8 – 60
+//   53.7          the white flash; the colour under it; 53.8 – 56.8 the lens
+//                 in on the room to near full size; held; 58.8 – 60
 //                 a fade; round
 //
 // Live in the lab (no ?at=, not ?demo=1): the run waits at each question.
@@ -123,6 +125,7 @@ import {
 	tag,
 	camera3,
 	PAL,
+	PHI,
 	TAU,
 	TECH_FONT,
 	MATH_FONT,
@@ -145,8 +148,8 @@ import { makeTerminal } from './log-dawn.js';
 import { EPICYCLE } from './intro/epicycle.js';
 import { makeBody, specOf } from './log/body.js';
 import { PHYLLO, seeds, parastichy, seedFrame } from './log/phyllo.js';
-import { caption, CAPTION } from './log/caption.js';
-import { splash } from './log/splash.js';
+import { caption, captionSize, CAPTION } from './log/caption.js';
+import { grain } from './log/grain.js';
 import { makeFall, orderOf } from './log/fall.js';
 import { DECADES, loadRooms, decadeOfDate } from './log/rooms.js';
 
@@ -199,11 +202,27 @@ const B = {
 	dusk: [40.4, 41.9], // the horn and the floor gone into the dark
 	fall: [42, 53.6],
 	land: [51.6, 53.6],
-	colour: [52.0, 54.2],
+	colour: [53.62, 54.1], // the room's colour, come up under the flash
 	aim: [51.8, 53.7], // the swimmer on into the last glass
-	hit: 53.7,
+	hit: 53.7, // the flash
+	push: [53.8, 56.8], // the lens in on the last room, to near full size
 	out: [58.8, 60]
 };
+
+// THE FLASH: the swimmer reaching the last screen. The board goes white in
+// 0.07 s, holds a moment, and gives way over a second and a half to the room
+// in its colours, which have come up underneath it (B.colour) while the lens
+// pushes in on it (B.push). `s` the seconds since the hit.
+function flash(ctx, w, h, s) {
+	if (s < 0) return;
+	const a = smooth(span(s, 0, 0.07)) * (s < 0.2 ? 1 : Math.exp(-(s - 0.2) / 0.5));
+	if (a < 0.003) return;
+	ctx.save();
+	ctx.globalAlpha = a;
+	ctx.fillStyle = 'rgb(255, 252, 245)';
+	ctx.fillRect(0, 0, w, h);
+	ctx.restore();
+}
 
 // ∫ of a smoothstep ramp of length D: a clock that starts from rest.
 function eased(x, D) {
@@ -372,6 +391,29 @@ const DIR_C = norm([-1, 0.2, 0.26]);
 const OFF = [0, -1.5, -2.2];
 const FOV_CHASE = 52;
 const FOV_END = 40;
+const fovAt = (t) =>
+	t > B.swim
+		? lerp(lerp(30, FOV_CHASE, smooth(span(t, B.swim, 25.0))), FOV_END, smooth(span(t, 34, 41)))
+		: 30;
+
+// ── The board's shape ────────────────────────────────────────────────────────
+// A fixed vertical field of view crops the sides of a board narrower than it
+// is tall (a phone held upright): there the lens keeps a square's width of
+// the scene instead, k (px a unit at unit depth) set by min(h, w / AMIN) and
+// the vertical field widened to match. A board as wide as it is tall or wider
+// is the lens as it was. The fall fits its rooms to the board (log/fall.js:
+// the plate min(0.62 h, 0.74 w / φ)); `plateQ` is that fit against the
+// board's height, which the swimmer over the fall is scaled by.
+const AMIN = 1;
+const qOf = (w, h) => Math.min(1, w / (AMIN * h));
+const kOf = (fov, w, h) => Math.min(h, w / AMIN) / 2 / Math.tan((fov * Math.PI) / 360);
+const fovOf = (fov, w, h, s = qOf(w, h)) =>
+	s >= 1 ? fov : (360 / Math.PI) * Math.atan(Math.tan((fov * Math.PI) / 360) / s);
+const plateQ = (w, h) => Math.min(1, (0.74 * w) / PHI / (0.62 * h));
+// The workings and the result fitted to the board's width (a phone, either
+// way up; a tablet held upright), and set larger there to be read.
+const fitText = (w, h) => h > w || Math.min(w, h) < 600;
+const TEXT_UP = 1.6;
 
 export default async function make({ at }) {
 	const q = new URLSearchParams(location.search);
@@ -418,16 +460,23 @@ export default async function make({ at }) {
 		const body = makeBody(spec);
 		const decade = forced ?? decadeOfDate(ans.date);
 		const order = orderOf(decade);
-		const fb = { fall: B.fall, land: B.land, colour: B.colour, swim: [-2, -1] };
+		const calc = calcOf(ans.date, decade, h > w);
+		const result = resultOf(board.ctx, calc, w, h);
+		const fb = { fall: B.fall, land: B.land, colour: B.colour, push: B.push, swim: [-2, -1] };
+		// The last room ends near full size: the lens pushed in on it after the
+		// flash, to 0.94 of the board's height (an upright board crops its
+		// sides rather than leave it small).
+		const fill = { h: 0.94, w: h > w ? 1.75 : 0.985 };
 		// The fall starts far enough back that the first glass is the size of
-		// the gold date's full stop (0.015 h tall).
+		// the gold date's full stop (0.015 h tall, or less where the date
+		// would not fit left of it).
 		const g0 = makeFall({ art, order, beats: fb }).geometry(w, h);
 		const G0 = g0.levels[0].glass;
-		const want = 0.015 * h;
+		const want = result.want;
 		// The glass is G.h·F/(z − G.z) tall from a lens at z = d₀X^ζ (ζ < 0).
 		const zWant = ((G0.h * g0.F) / want + G0.z) / g0.d0;
 		const z0 = zWant > 1 ? clamp(Math.log(zWant) / Math.log(g0.levels[0].X), -3.5, -0.55) : -0.55;
-		const fall = makeFall({ art, order, beats: fb, zeta0: z0, pace: { n: 512, c: 0.55 } });
+		const fall = makeFall({ art, order, beats: fb, zeta0: z0, pace: { n: 512, c: 0.55 }, fill });
 		const geo = fall.geometry(w, h);
 		// The zoom: e-folds of the nose's distance to the apex, flown at a rate
 		// that starts from rest (the swim), runs at the swim's pace in world
@@ -453,11 +502,12 @@ export default async function make({ at }) {
 			const i = Math.min(N - 1, Math.floor(f));
 			return lerp(E[i], E[i + 1], f - i);
 		};
-		const calc = calcOf(ans.date, decade);
 		S = { key, bases, spec, body, decade, fall, geo, rc, efolds, calc, glass0: want };
+		S.result = result.lines;
+		S.fits = null;
 		// The result's type: at the fall's start its full stop (a disc 0.26 of
 		// the type across) is the first glass, 0.015 h tall.
-		const kEnd = h / 2 / Math.tan((FOV_END * Math.PI) / 360);
+		const kEnd = kOf(FOV_END, w, h);
 		S.resultFont = ((want / 0.26) * zetaLens(B.fall[0], S)) / kEnd;
 		return S;
 	}
@@ -569,27 +619,30 @@ export default async function make({ at }) {
 		const nose = add3(axis, mul3(OFF, s * turn));
 		return { E, zN, s, axis, nose, dir };
 	}
-	// The entry's framing: the strand across 0.62 of the width, its middle at
-	// 0.37 h, seen a little from above.
-	function entryLens(w, h) {
+	// The entry's framing: the strand across `frac` of the width (0.62), its
+	// middle `off` above the board's (0.13 h: at 0.37 h), seen a little from
+	// above. On a phone the entry's own layout says (entry.frame).
+	function entryLens(w, h, fr) {
 		const fov = 30;
-		const k = h / 2 / Math.tan((fov * Math.PI) / 360);
-		const d = Math.max((S_LEN * k) / (0.62 * w), (S_LEN * k) / (1.25 * h));
+		const k = kOf(fov, w, h);
+		const frac = fr?.frac ?? 0.62;
+		const off = fr?.off ?? 0.13 * h;
+		const d = Math.max((S_LEN * k) / (frac * w), (S_LEN * k) / (1.25 * h));
 		const el = (11 * Math.PI) / 180;
 		const dir = [0, Math.sin(el), Math.cos(el)];
-		// The middle at 0.37 h: shift the lens down, along its own up.
+		// The middle off the board's: shift the lens down, along its own up.
 		const up = [0, Math.cos(el), -Math.sin(el)];
-		const shift = mul3(up, (-(0.13 * h) * d) / k);
+		const shift = mul3(up, (-off * d) / k);
 		const tgt = add3([S_LEN / 2, 0, 0], shift);
 		return { pos: add3(tgt, mul3(dir, d)), tgt, fov };
 	}
-	function lensAt(t, w, h, st) {
+	function lensAt(t, w, h, st, fr) {
 		const L = st.body.length;
-		const E0 = entryLens(w, h);
+		const E0 = entryLens(w, h, fr);
 		// Reading: close, from the front, a little above, tracking the frame.
 		const xf = frameX(t);
 		const dirR = norm([-0.5, 0.42, 0.76]);
-		const kR0 = h / 2 / Math.tan((30 * Math.PI) / 360);
+		const kR0 = kOf(30, w, h);
 		const dR = Math.max(12, (5 * kR0) / Math.min(0.5 * w, 0.75 * h));
 		const tgtR = [clamp(xf + 0.4, 2.2, S_LEN - 1.5), 0, 0];
 		const posR = add3(tgtR, mul3(dirR, dR));
@@ -616,15 +669,11 @@ export default async function make({ at }) {
 			pos = add3(sw.axis, mul3(rel, s));
 			const tA = add3(sw.axis, mul3(relT, s));
 			tgt = lerp3(tA, [X_APEX, 0, 0], k2);
-			fov = lerp(
-				lerp(30, FOV_CHASE, smooth(span(t, B.swim, 25.0))),
-				FOV_END,
-				smooth(span(t, 34, 41))
-			);
+			fov = fovAt(t);
 		}
-		const cam = camera3({ pos, target: tgt, up: [0, 1, 0], fov, w, h });
-		cam.fov = fov;
-		cam.k = h / 2 / Math.tan((fov * Math.PI) / 360);
+		const cam = camera3({ pos, target: tgt, up: [0, 1, 0], fov: fovOf(fov, w, h), w, h });
+		cam.fov = fovOf(fov, w, h);
+		cam.k = kOf(fov, w, h);
 		cam.tgt = tgt;
 		return cam;
 	}
@@ -1002,93 +1051,6 @@ export default async function make({ at }) {
 		ctx.restore();
 	}
 
-	// ── Drawing: the spacetime floor ─────────────────────────────────────────
-	// A Minkowski sheet under the flight, at a fixed depth below the lens and
-	// turned with it: lines of constant time across the flight, of constant
-	// place along it, the light lines at 45° dashed; streaming toward the lens
-	// at `flow` (e-folds flown × 5 cells an e-fold), fogged with distance.
-	function drawFloor(ctx, rot, flow, a, ox = 0, oy = 0) {
-		if (a <= 0.004) return;
-		const Y = -1;
-		const off = ((flow % 1) + 1) % 1;
-		const X0 = -22;
-		const X1 = 2;
-		const Z0 = 12;
-		const fog = (x, z) => 1 - smooth(span(Math.hypot(x, z), 3, 20));
-		// Pieces of a line on the floor, by ten levels of fog; cut at the lens.
-		const L = Array.from({ length: 11 }, () => []);
-		const G = Array.from({ length: 11 }, () => []);
-		// A line in six pieces, each at its own level of fog, the pieces at
-		// one level joined into runs.
-		const seg3 = (P0, P1, al, out) => {
-			const n = 6;
-			let qa = rot.project(P0);
-			let run = null;
-			let rk = -1;
-			for (let i = 1; i <= n; i++) {
-				const pb = lerp3(P0, P1, i / n);
-				const qb = rot.project(pb);
-				if (qa[2] > 0.02 && qb[2] > 0.02) {
-					const m = lerp3(P0, P1, (i - 0.5) / n);
-					const k = Math.round(10 * fog(m[0], m[2]) * al);
-					if (k > 0) {
-						if (run && k === rk) run.push(qb[0] + ox, qb[1] + oy);
-						else {
-							run = [qa[0] + ox, qa[1] + oy, qb[0] + ox, qb[1] + oy];
-							out[k].push(run);
-							rk = k;
-						}
-					} else run = null;
-				} else run = null;
-				qa = qb;
-			}
-		};
-		// Constant time: across the flight (x = const), streaming toward +x;
-		// every fifth bolder.
-		for (let i = 0; i <= X1 - X0; i++) {
-			const x = X0 + i + off;
-			if (x > X1) continue;
-			const major = (i - Math.floor(flow)) % 5 === 0;
-			seg3([x, Y, -Z0], [x, Y, Z0], major ? 1 : 0.5, L);
-		}
-		// Constant place: along it, to the vanishing point.
-		for (let j = -Z0; j <= Z0; j++) seg3([X0, Y, j], [X1, Y, j], j % 5 === 0 ? 1 : 0.5, L);
-		// The light lines, x − x₀ = ±(z − z₀), through every fourth crossing.
-		for (let c = -36; c <= 36; c += 4) {
-			for (const sg of [1, -1]) {
-				const x0 = X0 + off + c;
-				const zA = (X0 - x0) * sg;
-				const zB = (X1 - x0) * sg;
-				const z0 = Math.max(-Z0, Math.min(zA, zB));
-				const z1 = Math.min(Z0, Math.max(zA, zB));
-				if (z1 > z0) seg3([x0 + sg * z0, Y, z0], [x0 + sg * z1, Y, z1], 1, G);
-			}
-		}
-		const paint = (B10, color, gain) => {
-			ctx.save();
-			ctx.strokeStyle = color;
-			ctx.lineWidth = 1;
-			for (let k = 1; k <= 10; k++) {
-				const P = B10[k];
-				if (!P.length) continue;
-				ctx.globalAlpha = (a * gain * k) / 10;
-				ctx.beginPath();
-				for (const R of P) {
-					ctx.moveTo(R[0], R[1]);
-					for (let i = 2; i < R.length; i += 2) ctx.lineTo(R[i], R[i + 1]);
-				}
-				ctx.stroke();
-			}
-			ctx.restore();
-		};
-		paint(L, PAL.chalk, 0.15);
-		paint(G, PAL.gold, 0.1);
-	}
-	// The lens turned but not moved: the floor is at infinity's distance in
-	// spirit (its streaming is the motion).
-	const rotOf = (cam, w, h) =>
-		camera3({ pos: [0, 0, 0], target: sub3(cam.tgt, cam.pos), up: [0, 1, 0], fov: cam.fov, w, h });
-
 	// ── Drawing: the calculation ─────────────────────────────────────────────
 	// Each block of the workings is a plane facing the lens across the horn,
 	// half an e-fold ahead of the lens at its `read` second (calcOf) — its
@@ -1122,13 +1084,17 @@ export default async function make({ at }) {
 			return { zj, m: cam.k / depth, dl: Math.log(zL / zj) };
 		};
 		const fade = (dl, W) => on * smooth(span(dl, ...W.in)) * (1 - smooth(span(dl, ...W.out)));
-		for (const pl of calc.planes) {
+		const fit = fitsOf(ctx, w, h, st);
+		const { rx, ry } = monthRound(w, h);
+		for (let j = 0; j < calc.planes.length; j++) {
+			const pl = calc.planes[j];
 			const P = place(pl.read);
 			if (!P) continue;
 			const a = fade(P.dl, PLANE);
 			const write = smooth(span(P.dl, ...PLANE.write));
 			if (write <= 0 || a <= 0.004) continue;
-			const font = 0.036 * P.zj * P.m; // 0.036 of its distance to the apex, in px
+			// 0.036 of its distance to the apex, in px (fitted to the board).
+			const font = 0.036 * P.zj * P.m * fit.planes[j];
 			const c = cam.project([X_APEX + P.zj, 0, 0]);
 			if (c[2] <= NEAR) continue;
 			drawBlock(ctx, pl, c[0], c[1] - pl.lift * font, font, a, write);
@@ -1140,17 +1106,61 @@ export default async function make({ at }) {
 			const a = fade(P.dl, MONTH);
 			const write = smooth(span(P.dl, ...MONTH.write));
 			if (write <= 0 || a <= 0.004) continue;
-			const font = 0.036 * MONTH.size * P.zj * P.m;
+			const font = 0.036 * MONTH.size * P.zj * P.m * fit.months[i];
 			const th = -0.6 + i * GOLDEN; // the birth month low right, under the date
 			const r = MONTH.r * P.zj;
 			// On the board: right is −z, up is +y.
-			const c = cam.project([X_APEX + P.zj, r * Math.sin(th), -r * Math.cos(th)]);
+			const c = cam.project([X_APEX + P.zj, r * Math.sin(th) * ry, -r * Math.cos(th) * rx]);
 			if (c[2] <= NEAR) continue;
 			const cs = Math.cos(th);
 			const align = cs > 0.3 ? 'left' : cs < -0.3 ? 'right' : 'center';
 			const lines = mo.year ? [{ text: mo.year, size: 0.62, alpha: 0.5 }, mo.line] : [mo.line];
 			drawBlock(ctx, { lines: lines.map((l) => ({ ...l, align })) }, c[0], c[1], font, a, write);
 		}
+	}
+	// The sunflower of months on an upright board: drawn in across the board
+	// and out along it, so the months' lines stay on it.
+	const monthRound = (w, h) => (h > w ? { rx: 0.55, ry: 1.3 } : { rx: 1, ry: 1 });
+	// Each block's type fitted to the board (1 on a desktop): at the moment
+	// it is written in full, its widest line 0.9 of the width (a month's, out
+	// from where it hangs to 0.46 w from the middle), set at most TEXT_UP
+	// larger than the lens has it. Cached with the answers and the board.
+	function fitsOf(ctx, w, h, st) {
+		if (st.fits) return st.fits;
+		const calc = st.calc;
+		const ones = { planes: calc.planes.map(() => 1), months: calc.months.map(() => 1) };
+		if (!fitText(w, h)) return (st.fits = ones);
+		const legible = (read, write) => (0.036 * kOf(fovAt(read), w, h)) / (Math.exp(write) - 1);
+		const widest = (lines, font) => {
+			let W = 0;
+			for (const ln of lines) {
+				const fs = font * (ln.size ?? 1);
+				ctx.font = ln.math ? `italic 400 ${fs}px ${MATH_FONT}` : `400 ${fs}px ${TECH_FONT}`;
+				W = Math.max(W, ctx.measureText(ln.text).width);
+			}
+			return W;
+		};
+		ctx.save();
+		const planes = calc.planes.map((pl) => {
+			const W = widest(pl.lines, legible(pl.read, PLANE.write[1]));
+			return W > 0 ? Math.min(TEXT_UP, (0.9 * w) / W) : 1;
+		});
+		const { rx } = monthRound(w, h);
+		const months = calc.months.map((mo, i) => {
+			const k = kOf(fovAt(mo.read), w, h);
+			const font = MONTH.size * legible(mo.read, MONTH.write[1]);
+			const lines = mo.year ? [{ text: mo.year, size: 0.62 }, mo.line] : [mo.line];
+			const W = widest(lines, font);
+			const cs = Math.cos(-0.6 + i * GOLDEN);
+			// The month hangs this far from the middle (px), and its line runs
+			// out from there (or both ways, centred, near the vertical).
+			const off = (MONTH.r * rx * Math.abs(cs) * k) / (Math.exp(MONTH.write[1]) - 1);
+			const room = Math.max(0.1 * w, 0.46 * w - off);
+			const need = Math.abs(cs) > 0.3 ? W : W / 2;
+			return need > 0 ? Math.min(TEXT_UP, room / need) : 1;
+		});
+		ctx.restore();
+		return (st.fits = { planes, months });
 	}
 	// One block of the workings: lines centred on (cx, cy), `font` px, written
 	// on to `write`.
@@ -1190,10 +1200,7 @@ export default async function make({ at }) {
 		const r = 0.13 * font;
 		if (a > 0.004 && font > 4) {
 			const write = smooth(span(t, 39.4, 40.6));
-			const lines = [
-				{ s: st.calc.weekday, f: 0.62, al: 0.6, y: -1.05 },
-				{ s: fmt(st.calc.date), f: 1, al: 0.85, y: 0 }
-			];
+			const lines = st.result;
 			const total = lines.reduce((n, l) => n + l.s.length, 0);
 			let budget = Math.floor(write * total + 1e-6);
 			ctx.save();
@@ -1218,7 +1225,7 @@ export default async function make({ at }) {
 
 	// ── Render ───────────────────────────────────────────────────────────────
 	function render() {
-		clearBoard(board);
+		clearBoard(board, { chalkDust: false });
 		const { ctx, w, h } = board;
 		const t = time.t;
 		const hand = answers.hand(t);
@@ -1230,6 +1237,7 @@ export default async function make({ at }) {
 		if (t < FREEZE) {
 			entry.reset();
 			TERM.draw(ctx, w, h, t / 10, t, t - 10);
+			grain(ctx, w, h, t);
 			tag(ctx, w, h, 'flow-strand');
 			return;
 		}
@@ -1237,16 +1245,21 @@ export default async function make({ at }) {
 		const st = settled(w, h);
 		if (t < B.fall[0]) world(ctx, w, h, t, hand, st);
 		else fallen(ctx, w, h, t, st);
+		// The captions at the terminal's size, and at least 15 px on a phone.
+		const size = Math.max(captionSize(w, h), Math.min(15, 0.04 * Math.min(w, h)));
 		caption(ctx, w, h, CAPTION.genetics, t, {
 			at: B.genetics[0],
 			until: B.genetics[1],
-			align: 'center'
+			align: 'center',
+			size
 		});
 		caption(ctx, w, h, CAPTION.conception, t, {
 			at: B.conception[0],
 			until: B.conception[1],
-			align: 'center'
+			align: 'center',
+			size
 		});
+		flash(ctx, w, h, t - B.hit);
 		const out = smooth(span(t, ...B.out));
 		if (out > 0.003) {
 			ctx.save();
@@ -1255,12 +1268,13 @@ export default async function make({ at }) {
 			ctx.fillRect(0, 0, w, h);
 			ctx.restore();
 		}
+		grain(ctx, w, h, t);
 		tag(ctx, w, h, 'flow-strand');
 	}
 
 	// From the stop's glide to the fall: one world.
 	function world(ctx, w, h, t, hand, st) {
-		const cam = lensAt(t, w, h, st);
+		const cam = lensAt(t, w, h, st, t < B.back[1] ? entry.frame(ctx, w, h, t, hand) : undefined);
 		const body = st.body;
 		const L = body.length;
 
@@ -1276,14 +1290,9 @@ export default async function make({ at }) {
 		const pose = sw
 			? { at: sw.nose, dir: sw.dir, up: [0, 0, 1], scale: sw.s }
 			: { at: [0, 0, 0], dir: [-1, 0, 0], up: [0, 0, 1], scale: 1 };
-		// The tunnel and its floor go into the dark as the result is written,
-		// so the first room comes up round the stop out of nothing.
+		// The tunnel goes into the dark as the result is written, so the first
+		// room comes up round the stop out of nothing.
 		const dusk = 1 - smooth(span(t, ...B.dusk));
-		const space = smooth(span(t, B.swim, B.swim + 1.6)) * dusk;
-		if (space > 0.004) {
-			const flow = 5 * (sw ? sw.E : 0) + 0.6 * eased(t - B.swim, 1.5);
-			drawFloor(ctx, rotOf(cam, w, h), flow, 0.9 * space);
-		}
 		Z.reset(w, h);
 		if (t > B.rim[0]) body.fillDepth(Z, cam, shape, pose);
 		if (t > B.rim[0]) {
@@ -1405,22 +1414,7 @@ export default async function make({ at }) {
 		const zf = g.efolds(t);
 		const cam = st.fall.draw(ctx, w, h, t, {
 			colourAlong: false,
-			dust: board.dust,
-			background: (c, lens, zoom, alpha) => {
-				const rot = camera3({
-					pos: [0, 0, 0],
-					target: [-1, 0, 0],
-					up: [0, 1, 0],
-					fov: 34,
-					w,
-					h
-				});
-				// Where it can show: round the first room while it is small,
-				// and round the last as the lens lands.
-				const show = Math.max(1 - smooth(span(t, B.fall[0] + 2, B.fall[0] + 3.5)), lens.land);
-				const flow = 5 * (st.efolds(B.fall[0]) + zoom);
-				drawFloor(c, rot, flow, 0.9 * alpha * show, lens.ox - w / 2, lens.oy - h / 2);
-			}
+			dust: null
 		});
 		// Out of the dark: the first room comes up round the stop.
 		const dark = 1 - smooth(span(t, B.fall[0], B.fall[0] + 1.4));
@@ -1453,13 +1447,15 @@ export default async function make({ at }) {
 		}
 		const alpha = 1 - smooth(span(t, B.hit - 0.15, B.hit));
 		if (alpha > 0.01) {
-			const back =
-				lerp(1, 1.6, smooth(span(t, B.fall[0] + 0.5, B.fall[0] + 4))) * lerp(1, 2.6, aim * aim);
+			const drop = smooth(span(t, B.fall[0] + 0.5, B.fall[0] + 4));
+			const back = lerp(1, 1.6, drop) * lerp(1, 2.6, aim * aim);
+			// The chase's own lens at the seam, then scaled with the rooms as
+			// the fall has fitted them to the board (1 on a desktop).
 			const view = camera3({
 				pos: [D_C * back, 0, 0],
 				target: [-1000, 0, 0],
 				up: [0, 1, 0],
-				fov: FOV_END,
+				fov: fovOf(FOV_END, w, h, lerp(qOf(w, h), plateQ(w, h), drop)),
 				w,
 				h
 			});
@@ -1474,7 +1470,6 @@ export default async function make({ at }) {
 			st.body.draw(ctx, view, shape, pose, { back: 0 });
 			ctx.restore();
 		}
-		if (t >= B.hit && cam.glass) splash(ctx, cam.glass, t - B.hit, ans.spice);
 	}
 
 	return {
@@ -1496,7 +1491,8 @@ export default async function make({ at }) {
 // birth month's own days, then each whole month borrowed, the year marked
 // where it turns), read one after another across MONTHS.
 const READ = { birth: 34.6, months: [35.6, 37.65], land: 38.25, zeller: 39.2, room: 40.15 };
-function calcOf(digits, decade) {
+// `narrow` (a board taller than it is wide): Zeller's formula in two lines.
+function calcOf(digits, decade, narrow = false) {
 	const b = birthOf(digits);
 	const c = conceive(b);
 	const z = zeller(c.date);
@@ -1529,13 +1525,20 @@ function calcOf(digits, decade) {
 		]
 	});
 	const T = z.terms;
+	const gap = narrow ? '   ' : '    ';
+	const formula = narrow
+		? [
+				{ text: 'h = (q + ⌊13(m+1)/5⌋ + K', size: 0.62, math: true },
+				{ text: '+ ⌊K/4⌋ + ⌊J/4⌋ + 5J) mod 7', size: 0.62, math: true }
+			]
+		: [{ text: 'h = (q + ⌊13(m+1)/5⌋ + K + ⌊K/4⌋ + ⌊J/4⌋ + 5J) mod 7', size: 0.62, math: true }];
 	planes.push({
 		read: READ.zeller,
-		lift: -2.6,
+		lift: narrow ? -3.1 : -2.6,
 		lines: [
-			{ text: 'h = (q + ⌊13(m+1)/5⌋ + K + ⌊K/4⌋ + ⌊J/4⌋ + 5J) mod 7', size: 0.62, math: true },
+			...formula,
 			{
-				text: `q = ${z.q}    m = ${z.mm}    K = ${z.K}    J = ${z.J}${c.date.m < 3 ? `    (${z.yy})` : ''}`,
+				text: `q = ${z.q}${gap}m = ${z.mm}${gap}K = ${z.K}${gap}J = ${z.J}${c.date.m < 3 ? `${gap}(${z.yy})` : ''}`,
 				size: 0.62,
 				alpha: 0.5,
 				math: true
@@ -1569,6 +1572,33 @@ function calcOf(digits, decade) {
 		planes,
 		months
 	};
+}
+
+// The result's lines (the weekday over the date, set left of the stop on the
+// apex) and the first glass's size: 0.015 h, or as large as lets the date's
+// widest line sit within 0.44 w left of the stop — on a narrow board the
+// date in two lines, the year and its stop under the day and the month.
+function resultOf(ctx, calc, w, h) {
+	const one = [
+		{ s: calc.weekday, f: 0.62, al: 0.6, y: -1.05 },
+		{ s: fmt(calc.date), f: 1, al: 0.85, y: 0 }
+	];
+	const { d, m, y } = calc.date;
+	const two = [
+		{ s: calc.weekday, f: 0.62, al: 0.6, y: -2.2 },
+		{ s: `${pad2(d)} · ${pad2(m)} ·`, f: 1, al: 0.85, y: -1.12 },
+		{ s: String(y), f: 1, al: 0.85, y: 0 }
+	];
+	ctx.save();
+	ctx.font = `400 100px ${TECH_FONT}`;
+	const em = (L) => Math.max(...L.map((l) => (l.f * ctx.measureText(l.s).width) / 100)) + 0.32;
+	const e1 = em(one);
+	const e2 = em(two);
+	ctx.restore();
+	const room = 0.44 * w;
+	const want = 0.015 * h;
+	if ((0.26 * room) / e1 >= want) return { lines: one, want };
+	return { lines: two, want: Math.min(want, (0.26 * room) / e2) };
 }
 
 // ── Which groups cannot be (epicycle's) ──────────────────────────────────────
@@ -1618,12 +1648,23 @@ const typedBy = (K, x) => {
 	return n;
 };
 
+// On a COMPACT board — a touch screen, a board taller than it is wide, or
+// one under 560 px either way — the entry is laid out for a phone: the type
+// at least 16 px (by min(w, h)), the strand wider and the block in the upper
+// middle, so the keypad (the lower ~40% of an upright phone) never hides the
+// date being typed, and the bottom ~80 px clear for the ENTER button; the
+// slider's track a finger's length (0.68 w, to 300 px) and its band 45 px
+// tall. If the keypad still covers the field (a phone held sideways), the
+// block is lifted above it and the strand shrinks into the room left.
+const STRAND_HALF = 0.075; // the strand's half-height on the board, of its length
 function makeEntryText(board, answers, live) {
 	let G = null;
-	function geom(ctx, w, h) {
-		if (G && G.w === w && G.h === h) return G;
+	function geom(ctx, w, h, touch = 0) {
+		if (G && G.w === w && G.h === h && G.touch === touch) return G;
 		const L = TERM.layout(ctx, w, h);
-		const fq = Math.max(11, L.fs);
+		const compact = touch > 0 || h > w || Math.min(w, h) < 560;
+		const tall = h >= w;
+		const fq = compact ? Math.max(L.fs, Math.min(16, 0.042 * Math.min(w, h))) : Math.max(11, L.fs);
 		ctx.save();
 		ctx.font = TECHF(fq);
 		const cell = ctx.measureText('0').width;
@@ -1631,14 +1672,17 @@ function makeEntryText(board, answers, live) {
 		const wQ2 = ctx.measureText(Q2_TEXT).width;
 		ctx.restore();
 		const cx = 0.5 * w;
-		const yQ1 = 0.72 * h;
+		const yQ1 = compact ? (tall ? 0.4 : 0.5) * h : 0.72 * h;
 		const yF = yQ1 + 1.75 * fq;
 		const yQ2 = yF + 2.1 * fq;
 		const ty = yQ2 + 1.6 * fq;
-		const sp = Math.max(2.3 * cell, Math.min(0.065 * w, 30));
+		const sp0 = Math.max(2.3 * cell, Math.min(0.065 * w, 30));
+		const sp = compact ? Math.max(sp0, Math.min(0.68 * w, 300) / 9) : sp0;
 		G = {
 			w,
 			h,
+			touch,
+			compact,
 			L,
 			fq,
 			cell,
@@ -1652,9 +1696,38 @@ function makeEntryText(board, answers, live) {
 			ty,
 			sp,
 			x1: cx - 4.5 * sp,
-			x10: cx + 4.5 * sp
+			x10: cx + 4.5 * sp,
+			band: compact ? Math.max(22, 1.4 * fq) : 18,
+			// The strand: across this much of the width, its middle here.
+			frac: compact && tall ? 0.84 : 0.62,
+			yS: compact ? (tall ? 0.28 : 0.26) * h : 0.37 * h
 		};
 		return G;
+	}
+	// How far the block is lifted this frame: the field being asked (the
+	// date's, then the slider) kept above the keypad and the button over it.
+	function liftOf(g, t, hand) {
+		if (!g.compact) return 0;
+		const bottom = t < Q2 ? g.yF + 0.5 * g.fq : g.ty + g.band;
+		const limit = g.h - (hand.cover ?? 0) - (hand.touch ? 76 : 8);
+		return Math.max(0, bottom - limit);
+	}
+	// The strand's framing for the entry lens: { frac, off } (off the height
+	// of its middle above the board's).
+	function frame(ctx, w, h, t, hand) {
+		const g = geom(ctx, w, h, hand.touch ? 1 : 0);
+		if (!g.compact) return { frac: 0.62, off: 0.13 * h };
+		const lift = liftOf(g, t, hand);
+		let frac = g.frac;
+		let y = g.yS - lift;
+		if (lift > 0) {
+			const top = 30;
+			const bot = g.yQ1 - lift - 1.3 * g.fq;
+			frac = Math.min(frac, Math.max(0.25, (bot - top) / (2 * STRAND_HALF * w)));
+			const half = STRAND_HALF * frac * w;
+			y = Math.max(top + half, Math.min(y, bot - half));
+		}
+		return { frac, off: 0.5 * h - y };
 	}
 	let frozen = null;
 	function frozenFrame(w, h) {
@@ -1700,21 +1773,26 @@ function makeEntryText(board, answers, live) {
 			if (blinkOn(t, t - last < 0.16)) block(ctx, g, x + xw, y, alpha);
 		}
 	}
+	// The title's lines fade top first, as many as the terminal laid (three,
+	// or more re-wrapped on a narrow board), all gone by 6.4 s.
 	function title(ctx, w, h, t) {
 		if (t > B.gone + 1.1) return;
-		const g = geom(ctx, w, h);
-		const { L } = g;
+		const L = TERM.layout(ctx, w, h);
 		const stop = L.stop;
 		const img = frozenFrame(w, h);
+		const n = L.out.length;
 		const ys = L.out.map((ln) => ln.y - 0.3 * L.fs);
-		const cut = [-1e4, (ys[0] + ys[1]) / 2, (ys[1] + ys[2]) / 2, 1e4];
-		for (let i = 0; i < 3; i++) {
-			const a = 1 - smooth(span(t, B.gone + 0.25 * i, B.gone + 0.5 + 0.25 * i));
+		const cut = [-1e4];
+		for (let i = 1; i < n; i++) cut.push((ys[i - 1] + ys[i]) / 2);
+		cut.push(1e4);
+		const step = n > 1 ? Math.min(0.25, 0.5 / (n - 1)) : 0;
+		for (let i = 0; i < n; i++) {
+			const a = 1 - smooth(span(t, B.gone + step * i, B.gone + 0.5 + step * i));
 			if (a <= 0.004) continue;
 			ctx.save();
 			ctx.beginPath();
 			ctx.rect(-1, cut[i], w + 2, cut[i + 1] - cut[i]);
-			if (i === 2) {
+			if (i === n - 1) {
 				ctx.moveTo(stop.x + stop.r + 1.5, stop.y);
 				ctx.arc(stop.x, stop.y, stop.r + 1.5, 0, TAU);
 			}
@@ -1769,7 +1847,7 @@ function makeEntryText(board, answers, live) {
 		SL.a > 0.3 &&
 		X >= SL.x1 - SL.sp / 2 &&
 		X <= SL.x10 + SL.sp / 2 &&
-		Math.abs(Y - SL.ty) <= 18;
+		Math.abs(Y - SL.ty) <= SL.band;
 	const hit = (X, Y, phase) => {
 		if (!SL) return null;
 		if (phase === 'down' && !onSlider(X, Y)) return null;
@@ -1820,7 +1898,7 @@ function makeEntryText(board, answers, live) {
 			);
 		}
 		const hx = x1 + ((v - 1) / 9) * (x10 - x1);
-		const hw = Math.max(3, 0.34 * cell);
+		const hw = Math.max(g.compact ? 4 : 3, 0.34 * cell);
 		const hh = (held ? 1.1 : 1) * fq;
 		const ha = smooth(span(sA, 0.35, 0.8));
 		ctx.save();
@@ -1829,7 +1907,7 @@ function makeEntryText(board, answers, live) {
 		ctx.fillRect(hx - hw / 2, ty - hh / 2, hw, hh);
 		ctx.restore();
 		text(ctx, String(near), x10 + 0.9 * sp, ty + 0.36 * fq, fq, 0.92 * ha * a);
-		SL = { x1, x10, ty, sp, a: out * sA };
+		SL = { x1, x10, ty, sp, a: out * sA, band: g.band };
 	}
 	return {
 		hit,
@@ -1838,8 +1916,14 @@ function makeEntryText(board, answers, live) {
 			SL = null;
 			if (live) setCursor('');
 		},
+		frame,
 		questions(ctx, w, h, t, hand, out) {
-			const g = geom(ctx, w, h);
+			const g0 = geom(ctx, w, h, hand.touch ? 1 : 0);
+			const lift = liftOf(g0, t, hand);
+			const g =
+				lift > 0
+					? { ...g0, yQ1: g0.yQ1 - lift, yF: g0.yF - lift, yQ2: g0.yQ2 - lift, ty: g0.ty - lift }
+					: g0;
 			const q1a = out * lerp(1, 0.55, smooth(span(t, E1 + 0.3, E1 + 1)));
 			ask(ctx, g, Q1_TEXT, K1, Q1, t, g.xQ1, g.yQ1, q1a);
 			field(ctx, g, t, hand, out);
