@@ -132,7 +132,7 @@ export const BOARD = [
 		cut: null,
 		name: 'The swimmer, made in 3D',
 		round: 5,
-		what: 'A true 3D swimmer generated from nothing, twelve ways of making a solid, then swimming at an exact mathematical object. Not joined to the intro.',
+		what: 'A true 3D swimmer generated from nothing, twelve ways of making a solid, then swimming at an exact mathematical object; and genome, the v5 flows’ shared body on its own.',
 		variants: [
 			[
 				'lathe',
@@ -178,6 +178,10 @@ export const BOARD = [
 			[
 				'filament',
 				'one thread, the pen never lifting, wound on an invisible mandrel; up the pseudosphere’s horn'
+			],
+			[
+				'genome',
+				'the kit on its own: the date’s rosette as the body’s sections (log/body.js), built ring by ring, swimming at draft’s disc as it opens into its tunnel (log/phyllo.js)'
 			]
 		]
 	},
@@ -558,6 +562,31 @@ export const BOARD = [
 // to the point, the flash, the arithmetic geometry, and the rooms out of it —
 // built to be mixed and matched, not judged. /flows plays them end to end.
 export const FLOWS = [
+	{
+		sketch: 'flow-rosette',
+		name: 'Rosette',
+		what: 'v5: the epicycle intro itself, its figure becoming every ring of the swimmer; draft’s disc opens into the tunnel by the log map, and the tunnel’s rings count the years back to the birth year and the days to conception'
+	},
+	{
+		sketch: 'flow-wormhole',
+		name: 'Wormhole',
+		what: 'v5: epicycles draw the head’s outline, filled as an implicit surface; the disc sinks into Flamm’s paraboloid, a wormhole’s throat; out of it down the past light cone to the event'
+	},
+	{
+		sketch: 'flow-harmonic',
+		name: 'Harmonic',
+		what: 'v5: epicycles write the tail’s beat as a wave; the body swept along it; a bending tunnel of golden-angle rings; a cellular automaton seeded with the date runs its generations back to one cell'
+	},
+	{
+		sketch: 'flow-strand',
+		name: 'Strand',
+		what: 'v5: the date written on a double helix, read codon by codon into the body’s rings; a log-scale horn; the calculation worked in chalk — the birth date minus 266 days, Zeller’s weekday'
+	},
+	{
+		sketch: 'flow-calendar',
+		name: 'Calendar',
+		what: 'v5: epicycles in three planes trace a space curve, turned on a lathe into the body; the disc opens onto Gabriel’s horn; back along the calendar’s log spiral to conception'
+	},
 	{
 		sketch: 'flow-record',
 		name: 'The record',
