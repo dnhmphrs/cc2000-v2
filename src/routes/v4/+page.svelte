@@ -286,7 +286,8 @@
 		width: 100vw;
 		height: 100vh;
 		display: block;
-		background: #000;
+		/* the board's ground: what shows before the first frame (app.html) */
+		background: #151515;
 	}
 	.tag {
 		position: fixed;
@@ -299,5 +300,10 @@
 		color: rgba(240, 242, 248, 0.45);
 		letter-spacing: 0.06em;
 		pointer-events: none;
+	}
+	/* A flow drawing its board through the GPU lens (log/lens.js) hides the
+	   board's canvas, which this tag sat under; the board carries its own. */
+	:global(html.board-lens) .tag {
+		visibility: hidden;
 	}
 </style>

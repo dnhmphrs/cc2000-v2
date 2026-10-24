@@ -9,6 +9,18 @@
 <html lang="en" style="background: #090b14">
 	<head>
 		<meta charset="utf-8" />
+		<!-- The board's routes (the lab, the reels, the index, the next run)
+		     open on the BOARD's warm dark (#151515, log/board.js PAL.ground), the
+		     colour their first frame paints, so loading them is one colour and
+		     no blue shows before it; the run at / and /v3 keeps its blue-black.
+		     Before the first paint, so it is the first paint; the layout keeps
+		     it in step on a client-side change of route. -->
+		<script>
+			if (/^\/(lab|v4|log|eva|flows|cut|next)(\/|$)/.test(location.pathname)) {
+				document.documentElement.style.background = '#151515';
+				document.documentElement.style.setProperty('--bg', '#151515');
+			}
+		</script>
 		<link rel="icon" href="%sveltekit.assets%/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
 		%sveltekit.head%

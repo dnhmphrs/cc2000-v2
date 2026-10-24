@@ -154,7 +154,7 @@ import { makeTerminal } from './log-dawn.js';
 import { EPICYCLE } from './intro/epicycle.js';
 import { makeBody, specOf } from './log/body.js';
 import { caption, captionSize, CAPTION } from './log/caption.js';
-import { grain } from './log/grain.js';
+import { makeLens, fuzz } from './log/lens.js';
 import { flash } from './log/flash.js';
 import { DECADES, loadRooms, decadeOfDate } from './log/rooms.js';
 import {
@@ -407,14 +407,6 @@ const STRIKE = 'rgb(232, 70, 56)'; // the red a month is struck through with
 // the glass tall, the block at most `FILL` of its width and `BAND` of its
 // height.
 const TYPE = { lift: 0.31, unit: 0.1, fill: 0.92, band: 0.36 };
-const clearClear = (b) => {
-	const { ctx, dpr } = b;
-	ctx.setTransform(1, 0, 0, 1, 0, 0);
-	ctx.globalAlpha = 1;
-	ctx.globalCompositeOperation = 'source-over';
-	ctx.clearRect(0, 0, b.canvas.width, b.canvas.height);
-	ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-};
 const hash = (n) => {
 	let x = (n * 374761393 + 668265263) | 0;
 	x = (x ^ (x >>> 13)) * 1274126177;
@@ -447,11 +439,18 @@ export default async function make({ THREE, renderer, at }) {
 	const time = clock(SECONDS, at);
 	clearBoard(board);
 	tag(board.ctx, board.w, board.h, 'flow-strand-screens · loading the rooms');
+	// The fuzz: the board through a soft warm lens (log/lens.js), the light
+	// drawn under it in the lens's own pass, on its renderer; without one
+	// (?lens=0), the canvas grain and the light on the lab's renderer.
+	const lens = q.get('lens') === '0' ? null : await makeLens({ THREE, board });
+	let phosDraw = null; // this frame's light, drawn under the board
 	const [art, gpu] = await Promise.all([
 		loadRooms({ chalk: true }),
 		q.get('gpu') === '0'
 			? null
-			: makePhosphor({ THREE, renderer, scale: glowRes }).catch(() => null),
+			: makePhosphor({ THREE, renderer: lens?.renderer ?? renderer, scale: glowRes }).catch(
+					() => null
+				),
 		document.fonts.load(`400 24px ${TECH_FONT}`).catch(() => null),
 		document.fonts.load(`italic 400 24px ${MATH_FONT}`).catch(() => null)
 	]);
@@ -1240,7 +1239,7 @@ export default async function make({ THREE, renderer, at }) {
 		if (gpu) {
 			if (cam.ahead) glasses = drawNest(ctx, w, h, g, art, cam, opts);
 			const lit = field(glasses, true);
-			gpu.render(lit);
+			phosDraw = () => gpu.render(lit); // under the board, by draw's fuzz
 			// The last glass gone white with the sunshine, on the board (over
 			// its type, under the swimmer going into it).
 			for (const sl of lit.slots) {
@@ -1408,20 +1407,24 @@ export default async function make({ THREE, renderer, at }) {
 			window.__lab.t = t;
 			window.__lab.decade = S?.decade;
 		}
+		phosDraw = null;
 		if (t < FREEZE) {
-			clearBoard(board, { chalkDust: false });
+			clearBoard(board, { chalkDust: false, shown: !lens });
 			entry.reset();
 			TERM.draw(ctx, w, h, t / 10, t, t - 10);
-			grain(ctx, w, h, t);
 			tag(ctx, w, h, 'flow-strand-screens');
+			fuzz(lens, ctx, w, h, hand.secs);
 			return;
 		}
 		if (live) remember(hand, t);
 		const st = settled(w, h);
 		// From the swimmer's life on, the board is clear over the field, which
 		// paints the same ground.
-		if (gpu && t >= B.gpu) clearClear(board);
-		else clearBoard(board, { chalkDust: false });
+		clearBoard(board, {
+			chalkDust: false,
+			shown: !lens,
+			ground: gpu && t >= B.gpu ? null : PAL.ground
+		});
 		world(ctx, w, h, t, hand, st);
 		// The captions at the terminal's size, and at least 15 px on a phone.
 		const size = Math.max(captionSize(w, h), Math.min(15, 0.04 * Math.min(w, h)));
@@ -1446,8 +1449,8 @@ export default async function make({ THREE, renderer, at }) {
 			ctx.fillRect(0, 0, w, h);
 			ctx.restore();
 		}
-		grain(ctx, w, h, t);
 		tag(ctx, w, h, 'flow-strand-screens');
+		fuzz(lens, ctx, w, h, hand.secs, { under: phosDraw });
 	}
 
 	// One world, from the stop's glide to the last room: the strand and the

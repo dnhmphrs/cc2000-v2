@@ -46,12 +46,35 @@
 // (k, L) → 0…1 gives another ramp). `dust` the board's chalk dust, the
 // board's own by default.
 //
+// `reveal(glassBox)` (draw's option) → { r, wob, seed } or null: the last
+// room's colour REVEALED rather than flooded — coloured inside a hand-drawn
+// ring of radius r px about its glass (wobbling by wob, re-drawn with seed),
+// chalk outside — so a flow's light can carry the colour out into it.
+//
+// `inside` (makeFall's option, 0…0.9): the fall comes to rest that far on
+// past the last plate, INTO its glass — the lens slowing to a stop inside the
+// last room as it passed through the others, the room past the board's edges
+// round it, centred on its glass — rather than at the plate seen whole.
+//
 // `fill: { h, w }` (makeFall's option) with `beats.push: [t0, t1]`: after it
 // lands the lens dollies in on the last room until it fills h of the board's
 // height or w of its width (whichever first; w over 1 crops its sides) — the
 // room ending near full size, its depths parting as the lens goes in.
 
-import { PAL, PHI, span, smooth, lerp, clamp01, stroke, norm, sub3, getBoard } from './board.js';
+import {
+	PAL,
+	PHI,
+	TAU,
+	span,
+	smooth,
+	lerp,
+	clamp01,
+	stroke,
+	norm,
+	sub3,
+	getBoard
+} from './board.js';
+import { noise1 } from './sketch-hand.js';
 import { glow } from './ink.js';
 import { PLATE, DECADES, roomOf, drawImageAt, pick } from './rooms.js';
 import { drawHelix } from './helix.js';
@@ -87,10 +110,12 @@ export function makeFall({
 	nearZ,
 	zeta0,
 	pace,
-	fill = null
+	fill = null,
+	inside = 0
 } = {}) {
 	const K = {
 		fill,
+		inside,
 		fov: fov ?? FALL.fov,
 		fit: fit ?? FALL.fit,
 		margin: margin ?? FALL.margin,
@@ -126,12 +151,18 @@ export function makeFall({
 		if (!fitted || fitted.w !== w || fitted.h !== h) fitted = fitNest(w, h, order, art, K, beats);
 		return fitted;
 	};
-	const draw = (ctx, w, h, t, { background = null, colourAlong = false, dust } = {}) => {
+	const draw = (
+		ctx,
+		w,
+		h,
+		t,
+		{ background = null, colourAlong = false, dust, reveal = null } = {}
+	) => {
 		const g = geometry(w, h);
 		const cam = lensAt(g, g.zetaAt(t), t, w, h, beats, K);
 		if (background) background(ctx, cam, g.efolds(t), lerp(1, 0.7, cam.land));
 		const d = dust === undefined ? getBoard().dust : dust;
-		const glassAt = drawFall(ctx, w, h, d, g, art, cam, t, beats, K, colourAlong, bake);
+		const glassAt = drawFall(ctx, w, h, d, g, art, cam, t, beats, K, colourAlong, bake, reveal);
 		// The last room's glass on screen ([x0, y0, x1, y1]), once it shows.
 		cam.glass = glassAt[g.L] ? glassAt[g.L].box : null;
 		return cam;
@@ -159,9 +190,12 @@ function makeNest(w, h, order, art, K) {
 		const r = room(order[k]);
 		const lv = { ...r, k, O: O.slice(), s };
 		levels.push(lv);
-		if (k === L) break;
+		// (the last level too, when the fall comes to rest INSIDE it: its
+		// crossing worked out as if its own room hung in its glass, so the
+		// lens can go on into it — K.inside of the way — and stop there)
+		if (k === L && !(K.inside > 0)) break;
 		const G = r.glass;
-		const Gc = room(order[k + 1]).glass;
+		const Gc = room(order[Math.min(L, k + 1)]).glass;
 		const Dg = d0 - G.z;
 		const fh = K.fit * Math.min(G.h, G.w / PHI);
 		const kap = (K.margin * d0 * fh) / (PLATE.H * Dg);
@@ -169,6 +203,7 @@ function makeNest(w, h, order, art, K) {
 		const X = (fh * (Dg + gap)) / (PLATE.H * Dg);
 		lv.X = X;
 		lv.gap = gap;
+		if (k === L) break;
 		const g = [G.x - Gc.x * X, G.y - Gc.y * X, G.z - gap];
 		O = [O[0] + s * g[0], O[1] + s * g[1], O[2] + s * g[2]];
 		s *= X;
@@ -181,12 +216,12 @@ function makeNest(w, h, order, art, K) {
 			k = 0;
 			sc = Math.pow(levels[0].X, zeta);
 			loc = [levels[0].glass.x, levels[0].glass.y, d0 * sc];
-		} else if (zeta >= L) {
+		} else if (zeta >= L && !(K.inside > 0)) {
 			k = L;
 			sc = 1;
 			loc = [levels[L].glass.x, levels[L].glass.y, d0];
 		} else {
-			k = Math.floor(zeta);
+			k = Math.min(L, Math.floor(zeta));
 			const lv = levels[k];
 			const zp = (lv.glass.z - lv.gap) / (1 - lv.X);
 			sc = Math.pow(lv.X, zeta - k);
@@ -203,6 +238,7 @@ function makeNest(w, h, order, art, K) {
 	// The e-folds of zoom from ζ₀ to ζ, and ζ from them: the crossings are
 	// zooms of different sizes, and the fall runs at one pace in e-folds.
 	const logs = levels.map((l) => (l.X ? -Math.log(l.X) : 1));
+	const ZEND = L + Math.max(0, Math.min(0.9, K.inside || 0)); // where the fall comes to rest
 	const efolds = (zeta) => {
 		if (zeta < 0) return zeta * logs[0];
 		let e = 0;
@@ -210,10 +246,11 @@ function makeNest(w, h, order, art, K) {
 			if (zeta < k + 1) return e + (zeta - k) * logs[k];
 			e += logs[k];
 		}
-		return e;
+		const past = Math.min(zeta, ZEND) - L; // into the last room, when it lands inside
+		return past > 0 ? e + past * logs[L] : e;
 	};
 	const E0 = efolds(K.zeta0);
-	const TOTAL = efolds(L) - E0;
+	const TOTAL = efolds(ZEND) - E0;
 	const zetaOf = (tf) => {
 		let lam = tf + E0;
 		if (lam < 0) return lam / logs[0];
@@ -221,9 +258,9 @@ function makeNest(w, h, order, art, K) {
 			if (lam < logs[k]) return k + lam / logs[k];
 			lam -= logs[k];
 		}
-		return L;
+		return Math.min(ZEND, L + lam / logs[L]);
 	};
-	return { w, h, F, d0, plate, L, levels, pose, TOTAL, zetaOf };
+	return { w, h, F, d0, plate, L, levels, pose, TOTAL, zetaOf, ZEND };
 }
 
 // ── The pace ─────────────────────────────────────────────────────────────────
@@ -265,8 +302,12 @@ function lensAt(geo, zeta, t, w, h, B, K = {}) {
 	const cam = geo.pose(zeta);
 	const last = geo.levels[geo.L];
 	const land = smooth(span(t, B.land[0], B.land[1]));
-	cam.x -= last.s * last.glass.x * land;
-	cam.y -= last.s * last.glass.y * land;
+	// (landing inside the room, the lens stays on its glass, where it was
+	// going; landing at its plate, it slides to the plate's centre)
+	if (!(K.inside > 0)) {
+		cam.x -= last.s * last.glass.x * land;
+		cam.y -= last.s * last.glass.y * land;
+	}
 	// The push: after the landing, the lens dollies in on the last plate
 	// until it fills `fill.h` of the board's height — or `fill.w` of its
 	// width, whichever comes first (fill.w over 1 lets an upright board crop
@@ -295,6 +336,18 @@ function lensAt(geo, zeta, t, w, h, B, K = {}) {
 	return cam;
 }
 
+// The reveal's ring: { cx, cy, r, wob, seed } → its points (closed), the
+// same for the clip and for a flow that draws the ring itself.
+export function revealRing({ cx, cy, r, wob = 0.04, seed = 0 }, n = 72) {
+	const out = [];
+	for (let i = 0; i <= n; i++) {
+		const th = (TAU * i) / n;
+		const k = 1 + wob * noise1(2.3 * Math.cos(th) + 5, seed * 7 + 1) * Math.sin(3 * th + seed);
+		out.push([cx + r * k * Math.cos(th), cy + r * k * Math.sin(th)]);
+	}
+	return out;
+}
+
 // ── The fall, drawn ──────────────────────────────────────────────────────────
 // Every layer is a plane parallel to the lens, so its picture is the drawing
 // under one similarity (m px to the plate unit, its origin on screen); a
@@ -304,7 +357,7 @@ function lensAt(geo, zeta, t, w, h, B, K = {}) {
 // over that. The rooms are chalk; the last floods with colour as the lens
 // lands — or, colour along, each carries its share all the way down. Every
 // glass the lens has passed is dropped.
-function drawFall(ctx, w, h, dust, geo, art, cam, t, B, K, colourAlong, bake) {
+function drawFall(ctx, w, h, dust, geo, art, cam, t, B, K, colourAlong, bake, reveal = null) {
 	const { F, L, levels } = geo;
 	const project = (x, y, z) => {
 		const d = cam.z - z;
@@ -371,49 +424,108 @@ function drawFall(ctx, w, h, dust, geo, art, cam, t, B, K, colourAlong, bake) {
 	// One layer: its chalk copy, with the colour under it as it floods (or,
 	// along, the two baked into one); the wall mirror-tiled so the lens off
 	// its axis never sees past its edge.
+	// The colour REVEALED instead of flooded (draw's `reveal`): the last room
+	// coloured inside a region spreading from its glass — a hand-drawn ring,
+	// boiling — chalk outside it. `rv` is set as the last level is drawn.
+	let rv = null;
+	let revealed = false;
+	const regionPath = (f = 1) => {
+		revealRing({ ...rv, r: rv.r * f }).forEach(([x, y], i) =>
+			i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)
+		);
+		ctx.closePath();
+	};
+	const clipRegion = (inside, f = 1) => {
+		ctx.beginPath();
+		if (!inside) ctx.rect(-10, -10, w + 20, h + 20);
+		regionPath(f);
+		ctx.clip(inside ? 'nonzero' : 'evenodd');
+	};
+
+	// One layer: its chalk copy, with the colour under it as it floods (or,
+	// along, the two baked into one); the wall mirror-tiled so the lens off
+	// its axis never sees past its edge.
 	const layer = (lv, key, k, box) => {
 		const l = lv.lay[key];
 		const a = art[lv.decade]?.[key];
 		if (!l || !a) return;
 		const T = plane(lv, l.z);
 		if (!T) return;
-		const p = paintOf(k, l.depth);
+		const rev = rv && k === L;
+		// (with a reveal the last room is chalk until it comes, all colour once
+		// it has passed the board's corners: no flood)
+		const p = rev ? 0 : reveal && k === L ? (revealed ? 1 : 0) : paintOf(k, l.depth);
 		const tiles = key === 'bg' ? 1 : 0;
-		for (let j = -tiles; j <= tiles; j++)
-			for (let i = -tiles; i <= tiles; i++) {
-				const x = l.x + i * l.w;
-				const y = l.y + j * l.h;
-				const R = boxOf(T, x, y, l.w, l.h);
-				if (empty(meet(R, box))) continue;
-				const [px, py] = at(T, x, y);
-				const sw = l.w * T.m;
-				const sh = l.h * T.m;
-				const flipX = i % 2 !== 0;
-				const flipY = j % 2 !== 0;
+		// mode: null as the flood has it; 'chalk' or 'colour' alone (the reveal)
+		const draw = (mode) => {
+			for (let j = -tiles; j <= tiles; j++)
+				for (let i = -tiles; i <= tiles; i++) {
+					const x = l.x + i * l.w;
+					const y = l.y + j * l.h;
+					const R = boxOf(T, x, y, l.w, l.h);
+					if (empty(meet(R, box))) continue;
+					const [px, py] = at(T, x, y);
+					const sw = l.w * T.m;
+					const sh = l.h * T.m;
+					const flipX = i % 2 !== 0;
+					const flipY = j % 2 !== 0;
+					ctx.save();
+					if (flipY) {
+						ctx.translate(px, py);
+						ctx.scale(1, -1);
+						ctx.translate(-px, -py);
+					}
+					if (mode === 'colour') drawImageAt(ctx, a.mips, px, py, sw, sh, { flipX });
+					else if (mode === 'chalk') {
+						if (a.chalk) drawImageAt(ctx, a.chalk, px, py, sw, sh, { alpha: 0.95, flipX });
+					} else if (along && a.chalk && p > 0.002 && p < 0.998) {
+						const dpr = Math.hypot(ctx.getTransform().a, ctx.getTransform().b) || 1;
+						drawImageAt(ctx, bake(k, key, a, p, Math.abs(sw) * dpr), px, py, sw, sh, { flipX });
+					} else {
+						if (p > 0.002) drawImageAt(ctx, a.mips, px, py, sw, sh, { alpha: p, flipX });
+						if (a.chalk && p < 0.998)
+							drawImageAt(ctx, a.chalk, px, py, sw, sh, { alpha: 0.95 * (1 - p), flipX });
+					}
+					ctx.restore();
+				}
+		};
+		if (rev) {
+			// chalk outside; the colour inside, its edge feathered in three
+			// steps (a band 8% of the radius wide) over the chalk
+			ctx.save();
+			clipRegion(false, 1 - rv.feather);
+			draw('chalk');
+			ctx.restore();
+			// (each step only its own ring, so the colour is laid once over
+			// the disc and the two thin rings round it, not three times)
+			for (const [f0, f1, a] of [
+				[1 - rv.feather / 2, 1, 0.4],
+				[1 - rv.feather, 1 - rv.feather / 2, 0.7],
+				[0, 1 - rv.feather, 1]
+			]) {
 				ctx.save();
-				if (flipY) {
-					ctx.translate(px, py);
-					ctx.scale(1, -1);
-					ctx.translate(-px, -py);
-				}
-				if (along && a.chalk && p > 0.002 && p < 0.998) {
-					const dpr = Math.hypot(ctx.getTransform().a, ctx.getTransform().b) || 1;
-					drawImageAt(ctx, bake(k, key, a, p, Math.abs(sw) * dpr), px, py, sw, sh, { flipX });
-				} else {
-					if (p > 0.002) drawImageAt(ctx, a.mips, px, py, sw, sh, { alpha: p, flipX });
-					if (a.chalk && p < 0.998)
-						drawImageAt(ctx, a.chalk, px, py, sw, sh, { alpha: 0.95 * (1 - p), flipX });
-				}
+				ctx.beginPath();
+				regionPath(f1);
+				if (f0 > 0) regionPath(f0);
+				ctx.clip('evenodd');
+				ctx.globalAlpha *= a;
+				draw('colour');
 				ctx.restore();
 			}
+		} else draw(null);
 		// The layer's own rectangle, dashed in: the drawing's construction.
 		if (p < 1 && key !== 'bg' && l.w * T.m > 14) {
+			if (rev) {
+				ctx.save();
+				clipRegion(false);
+			}
 			stroke(ctx, corners(boxOf(T, l.x, l.y, l.w, l.h)), {
 				color: PAL.chalk,
 				width: 0.9,
 				alpha: 0.32 * (1 - p),
 				dash: [4, 5]
 			});
+			if (rev) ctx.restore();
 		}
 	};
 
@@ -429,6 +541,33 @@ function drawFall(ctx, w, h, dust, geo, art, cam, t, B, K, colourAlong, bake) {
 		const G = Tg ? boxOf(Tg, lv.glass.x, lv.glass.y, lv.glass.w, lv.glass.h) : null;
 		const gb = G ? meet(frame, G) : null;
 		const hole = gb && !empty(gb);
+		if (k === L && reveal && G) {
+			const o = reveal(G);
+			rv =
+				o && o.r > 0
+					? {
+							cx: (G[0] + G[2]) / 2,
+							cy: (G[1] + G[3]) / 2,
+							wob: 0.04,
+							seed: 0,
+							feather: 0.08,
+							...o
+						}
+					: null;
+			// past the board's corners all of it is colour: drawn as such
+			if (rv) {
+				const far = Math.max(
+					Math.hypot(rv.cx, rv.cy),
+					Math.hypot(w - rv.cx, rv.cy),
+					Math.hypot(rv.cx, h - rv.cy),
+					Math.hypot(w - rv.cx, h - rv.cy)
+				);
+				if (rv.r * (1 - rv.feather) * (1 - rv.wob) > far + 2) {
+					rv = null;
+					revealed = true;
+				}
+			}
+		}
 		if (hole) glassAt[k] = { box: gb, z: lv.O[2] + lv.s * lv.glass.z };
 		ctx.save();
 		clipBox(frame);

@@ -71,7 +71,7 @@ export function getBoard() {
 	});
 	document.body.appendChild(canvas);
 	const ctx = canvas.getContext('2d');
-	BOARD = { canvas, ctx, w: 0, h: 0, dpr: 1, dust: null };
+	BOARD = { canvas, ctx, w: 0, h: 0, dpr: 1, dust: null, shown: true, lens: null };
 	const resize = () => {
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 		BOARD.w = window.innerWidth;
@@ -103,14 +103,30 @@ function dust(b) {
 	return b.dust;
 }
 
-// Clear to the board (in CSS pixels from here on).
-export function clearBoard(b, { ground = PAL.ground, chalkDust = true } = {}) {
+// Clear to the board (in CSS pixels from here on). `ground: null` clears it
+// to transparent (a flow drawing on the GPU under it). `shown: false` hides
+// the board's canvas — a flow whose lens (log/lens.js) draws the board on the
+// GPU itself; every other sketch shows it, so a reel stepping from one to the
+// other gets its board back. (The style is touched only when it changes.)
+export function clearBoard(b, { ground = PAL.ground, chalkDust = true, shown = true } = {}) {
 	const { ctx, dpr } = b;
+	if (b.shown !== shown) {
+		b.shown = shown;
+		b.canvas.style.visibility = shown ? '' : 'hidden';
+		// the lens's canvas in its place (log/lens.js), when there is one
+		if (b.lens) b.lens.style.visibility = shown ? 'hidden' : '';
+		// (the page's own tag sits under the board: hidden with it, see
+		// routes/lab and routes/v4)
+		document.documentElement.classList.toggle('board-lens', !shown);
+	}
 	ctx.setTransform(1, 0, 0, 1, 0, 0);
 	ctx.globalAlpha = 1;
 	ctx.globalCompositeOperation = 'source-over';
-	ctx.fillStyle = ground;
-	ctx.fillRect(0, 0, b.canvas.width, b.canvas.height);
+	if (ground === null) ctx.clearRect(0, 0, b.canvas.width, b.canvas.height);
+	else {
+		ctx.fillStyle = ground;
+		ctx.fillRect(0, 0, b.canvas.width, b.canvas.height);
+	}
 	ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 	const q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
 	if (chalkDust && q?.get('dust') !== '0') {
@@ -473,6 +489,8 @@ export function reelTag(s) {
 	REEL = s ?? '';
 }
 export function tag(ctx, w, h, s) {
+	// The next run's own page (routes/next) is the run, not a sketch: no tag.
+	if (typeof location !== 'undefined' && location.pathname.startsWith('/next')) return;
 	ctx.save();
 	ctx.font = `11px ${TECH_FONT}`;
 	ctx.fillStyle = 'rgba(236, 230, 218, 0.4)';

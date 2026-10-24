@@ -15,6 +15,18 @@
 	// beside the run switch rather than in main, whose stacking context would
 	// put it under the blackboard sketches' own canvas.
 	$: onLab = /^\/(lab|v4|log|eva)(\/|$)/.test($page.url.pathname);
+	// The board's routes open on the board's own warm dark (see app.html,
+	// which sets it before the first paint); the run keeps its blue-black.
+	$: onBoard = onLab || /^\/(flows|cut|next)(\/|$)/.test($page.url.pathname);
+	$: if (typeof document !== 'undefined') {
+		const root = document.documentElement;
+		const ground = onBoard ? '#151515' : '';
+		if (root.style.getPropertyValue('--bg') !== ground) {
+			root.style.background = ground || '#090b14';
+			if (ground) root.style.setProperty('--bg', ground);
+			else root.style.removeProperty('--bg');
+		}
+	}
 
 	// One place decides what shape of screen this is. Everything that lays out
 	// differently in portrait, landscape or the square middle a tablet lands in

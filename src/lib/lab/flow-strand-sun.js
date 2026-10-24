@@ -164,7 +164,7 @@ import { makeTerminal } from './log-dawn.js';
 import { EPICYCLE } from './intro/epicycle.js';
 import { makeBody, specOf } from './log/body.js';
 import { caption, captionSize, CAPTION } from './log/caption.js';
-import { grain } from './log/grain.js';
+import { makeLens, fuzz } from './log/lens.js';
 import { flash } from './log/flash.js';
 import { makeFall, orderOf } from './log/fall.js';
 import { DECADES, PLATE, loadRooms, decadeOfDate } from './log/rooms.js';
@@ -449,9 +449,14 @@ export default async function make({ THREE, renderer, at }) {
 	// The sun, on the GPU under the board (none without a renderer: the
 	// board is the ground then). One frame now, so its shader is built
 	// before it is on rather than as it comes up.
+	// The fuzz: the board through a soft warm lens (log/lens.js), the sun
+	// drawn under it in the lens's own pass (on the lens's renderer); without
+	// one (?lens=0), the canvas grain and the sun on the lab's renderer.
+	const lens = q.get('lens') === '0' ? null : await makeLens({ THREE, board });
+	const gpu = lens?.renderer ?? renderer;
 	const sun =
-		renderer && THREE && q.get('sun') !== '0'
-			? makeSun({ THREE, renderer, scale: sunres, flat: q.get('sun') === 'flat' })
+		gpu && THREE && q.get('sun') !== '0'
+			? makeSun({ THREE, renderer: gpu, scale: sunres, flat: q.get('sun') === 'flat' })
 			: null;
 	if (sun) {
 		sun.set({ W: board.w, H: board.h });
@@ -1398,13 +1403,7 @@ export default async function make({ THREE, renderer, at }) {
 	// costs a software renderer more than the whole board).
 	const sunUp = (t) => !!sun && t > B.rim[0] - 0.1 && t < SECONDS + 0.5;
 	function clearOver(t) {
-		if (!sunUp(t)) return clearBoard(board, { chalkDust: false });
-		const { ctx, dpr } = board;
-		ctx.setTransform(1, 0, 0, 1, 0, 0);
-		ctx.globalAlpha = 1;
-		ctx.globalCompositeOperation = 'source-over';
-		ctx.clearRect(0, 0, board.canvas.width, board.canvas.height);
-		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+		clearBoard(board, { chalkDust: false, shown: !lens, ground: sunUp(t) ? null : PAL.ground });
 	}
 	function render() {
 		const t = time.t;
@@ -1419,8 +1418,8 @@ export default async function make({ THREE, renderer, at }) {
 		if (t < FREEZE) {
 			entry.reset();
 			TERM.draw(ctx, w, h, t / 10, t, t - 10);
-			grain(ctx, w, h, t);
 			tag(ctx, w, h, 'flow-strand-sun');
+			fuzz(lens, ctx, w, h, hand.secs);
 			return;
 		}
 		if (live) remember(hand, t);
@@ -1450,9 +1449,8 @@ export default async function make({ THREE, renderer, at }) {
 			ctx.fillRect(0, 0, w, h);
 			ctx.restore();
 		}
-		grain(ctx, w, h, t);
 		tag(ctx, w, h, 'flow-strand-sun');
-		if (sunUp(t)) sun.render();
+		fuzz(lens, ctx, w, h, hand.secs, { under: sunUp(t) ? () => sun.render() : null });
 	}
 
 	// The swimmer, keylined: a broad stroke of the board's dark under its

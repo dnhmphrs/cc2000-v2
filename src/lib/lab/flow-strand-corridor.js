@@ -139,7 +139,7 @@ import { makeTerminal } from './log-dawn.js';
 import { EPICYCLE } from './intro/epicycle.js';
 import { makeBody, specOf } from './log/body.js';
 import { caption, captionSize, CAPTION } from './log/caption.js';
-import { grain } from './log/grain.js';
+import { makeLens, fuzz } from './log/lens.js';
 import { flash } from './log/flash.js';
 import { makeFall } from './log/fall.js';
 import { DECADES, PLATE, loadRooms, decadeOfDate, drawImageAt } from './log/rooms.js';
@@ -445,10 +445,16 @@ export default async function make({ THREE, renderer, at }) {
 	const ans = answers.answers;
 	// The corridor's walls, on the GPU under the board (none without a
 	// renderer: the board's lines alone).
+	// (Through the lens — log/lens.js, the board seen through a soft warm
+	// lens — the walls are drawn under the board in the lens's own pass, on
+	// its renderer; without one, ?lens=0, on the lab's, with the canvas grain.)
+	const lens = q.get('lens') === '0' ? null : await makeLens({ THREE, board });
+	const gpuR = lens?.renderer ?? renderer;
 	const hall =
-		renderer && THREE && q.get('gpu') !== '0'
-			? makeHall({ THREE, renderer, art, tint: ERA })
+		gpuR && THREE && q.get('gpu') !== '0'
+			? makeHall({ THREE, renderer: gpuR, art, tint: ERA })
 			: null;
+	let hallDraw = null; // this frame's walls, drawn under the board
 
 	// ── What the answers settle (cached by the answers and the board) ────────
 	let S = null;
@@ -1825,24 +1831,19 @@ export default async function make({ THREE, renderer, at }) {
 			window.__lab.t = t;
 			window.__lab.decade = S?.decade;
 		}
+		hallDraw = null;
 		if (t < FREEZE) {
-			clearBoard(board, { chalkDust: false });
+			clearBoard(board, { chalkDust: false, shown: !lens });
 			entry.reset();
 			TERM.draw(ctx, w, h, t / 10, t, t - 10);
-			grain(ctx, w, h, t);
 			tag(ctx, w, h, 'flow-strand-corridor');
+			fuzz(lens, ctx, w, h, hand.secs);
 			return;
 		}
 		if (live) remember(hand, t);
 		const st = settled(w, h);
 		const gpu = !!hall && t >= B.swim && t < B.hit + 0.08;
-		if (gpu) {
-			ctx.setTransform(1, 0, 0, 1, 0, 0);
-			ctx.globalAlpha = 1;
-			ctx.globalCompositeOperation = 'source-over';
-			ctx.clearRect(0, 0, board.canvas.width, board.canvas.height);
-			ctx.setTransform(board.dpr, 0, 0, board.dpr, 0, 0);
-		} else clearBoard(board, { chalkDust: false });
+		clearBoard(board, { chalkDust: false, shown: !lens, ground: gpu ? null : PAL.ground });
 		if (t < B.swim) world(ctx, w, h, t, hand, st);
 		else corridor(ctx, w, h, t, st, gpu);
 		// The captions at the terminal's size, and at least 15 px on a phone.
@@ -1895,8 +1896,8 @@ export default async function make({ THREE, renderer, at }) {
 			ctx.fillRect(6, h - 24, 222, 18);
 			ctx.restore();
 		}
-		grain(ctx, w, h, t);
 		tag(ctx, w, h, 'flow-strand-corridor');
+		fuzz(lens, ctx, w, h, hand.secs, { under: hallDraw });
 	}
 
 	// How far down the corridor the rooms are set into its walls: a front
@@ -1912,7 +1913,7 @@ export default async function make({ THREE, renderer, at }) {
 	}
 	// The corridor under the board, from a board lens.
 	function hallRender(cam, t, w, h, st) {
-		hall.render({
+		const o = {
 			w,
 			h,
 			pos: cam.lc,
@@ -1924,7 +1925,9 @@ export default async function make({ THREE, renderer, at }) {
 			light: lightAt(t),
 			turn: 0.011 * t,
 			alpha: 1 - smooth(span(t, B.hit - 0.04, B.hit + 0.07))
-		});
+		};
+		// (drawn under the board by render's fuzz, after the board is done)
+		hallDraw = () => hall.render(o);
 	}
 
 	// From the swim to the end: ONE place. To f0 the corridor's lens and the

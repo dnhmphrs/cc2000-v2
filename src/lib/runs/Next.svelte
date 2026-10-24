@@ -1,0 +1,103 @@
+<script>
+	import { onMount } from 'svelte';
+
+	// ── next: the run the lab found ──────────────────────────────────────────
+	// The board flow the lead picked — strand's journey drawn in the sketchy
+	// hand, flow-strand-sketch — out of the lab and in a plain environment of
+	// its own: one canvas, one WebGPURenderer (WebGPU where the browser has it,
+	// WebGL 2 where it does not; ?gl=1 forces that), the run answered by hand,
+	// and nothing of the lab round it — no experiments' bar, no reels. The lab
+	// and everything it tried is the archive (/log, the corner's link).
+	//
+	//   ?v=<name>   a variant of it, flow-strand-sketch-<name>
+	//   ?at=0.42    pin a frame, as the lab does (for contact sheets)
+	//   ?demo=1     the scripted hand rather than yours
+	//
+	// The sketch is the lab's module as it stands — make({ THREE, renderer, at })
+	// → { info, update, render, resize } — so the two never drift apart; this
+	// is only the frame round it. window.__lab is set as the lab sets it (the
+	// sketches report into it and the shots tool waits on it).
+	const SKETCHES = import.meta.glob('/src/lib/lab/flow-strand-sketch*.js');
+
+	let canvas;
+	let failed = '';
+
+	onMount(() => {
+		let renderer = null;
+		let sketch = null;
+		let onResize = null;
+		(async () => {
+			const q = new URLSearchParams(location.search);
+			const atRaw = q.get('at');
+			const at = atRaw === null || atRaw === '' ? null : Math.max(0, Math.min(1, Number(atRaw)));
+			const v = (q.get('v') ?? '').replace(/[^a-z0-9-]/g, '');
+			const name = v ? `flow-strand-sketch-${v}` : 'flow-strand-sketch';
+			const load = SKETCHES[`/src/lib/lab/${name}.js`];
+			if (!load) {
+				failed = `no run called ${name}`;
+				return;
+			}
+			const THREE = await import('three/webgpu');
+			const { default: make, options } = await load();
+			renderer = new THREE.WebGPURenderer({
+				canvas,
+				antialias: true,
+				alpha: false,
+				forceWebGL: q.get('gl') === '1',
+				...(options ?? {})
+			});
+			await renderer.init();
+			renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.setClearColor(0x000000, 1);
+			const lane = renderer.backend.isWebGPUBackend ? 'webgpu' : 'webgl';
+			sketch = await make({ THREE, renderer, at });
+			window.__lab = window.__next = { run: 'next', sketch: name, lane, at, ...sketch.info };
+			onResize = () => {
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				sketch.resize?.(window.innerWidth, window.innerHeight);
+			};
+			window.addEventListener('resize', onResize);
+			let last = performance.now();
+			renderer.setAnimationLoop(() => {
+				const now = performance.now();
+				const dt = Math.min((now - last) / 1000, 0.05);
+				last = now;
+				if (at === null) sketch.update(dt);
+				sketch.render();
+			});
+		})().catch((e) => {
+			failed = String(e?.message ?? e);
+			throw e;
+		});
+		return () => {
+			if (onResize) window.removeEventListener('resize', onResize);
+			renderer?.setAnimationLoop(null);
+			sketch?.dispose?.();
+		};
+	});
+</script>
+
+<canvas bind:this={canvas}></canvas>
+{#if failed}<p class="failed">{failed}</p>{/if}
+
+<style>
+	canvas {
+		position: fixed;
+		inset: 0;
+		width: 100vw;
+		height: 100vh;
+		display: block;
+		background: #151515; /* the board's ground (log/board.js PAL.ground) */
+	}
+	.failed {
+		position: fixed;
+		left: 12px;
+		bottom: 10px;
+		margin: 0;
+		font:
+			11px/1 ui-monospace,
+			monospace;
+		color: rgba(240, 242, 248, 0.6);
+	}
+</style>

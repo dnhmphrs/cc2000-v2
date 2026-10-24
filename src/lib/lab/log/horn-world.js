@@ -71,7 +71,6 @@ import {
 	length,
 	fwidth,
 	texture,
-	uv,
 	If
 } from 'three/tsl';
 import { PAL, PHI, TAU, stroke, span, smooth, lerp } from './board.js';
@@ -467,16 +466,19 @@ export function makeHornField({
 		if (!rt) {
 			rt = new THREE.RenderTarget(w, h, { depthBuffer: false });
 			const mat = new THREE.MeshBasicNodeMaterial({ depthTest: false, depthWrite: false });
-			mat.colorNode = vec4(texture(rt.texture, uv()).rgb, 1);
+			// (read by screenUV, as it was written: the same way up in any
+			// target, the canvas or a flow's lens's)
+			mat.colorNode = vec4(texture(rt.texture, screenUV).rgb, 1);
 			blit = new THREE.Scene();
 			const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
 			quad.frustumCulled = false;
 			quad.position.z = -0.5;
 			blit.add(quad);
 		} else if (rt.width !== w || rt.height !== h) rt.setSize(w, h);
+		const was = renderer.getRenderTarget();
 		renderer.setRenderTarget(rt);
 		renderer.render(scene, camera);
-		renderer.setRenderTarget(null);
+		renderer.setRenderTarget(was);
 		renderer.render(blit, camera);
 	}
 
@@ -498,7 +500,7 @@ export function makeHornField({
 		const cs = renderer.outputColorSpace;
 		renderer.outputColorSpace = THREE.ColorManagement.workingColorSpace;
 		try {
-			renderer.setRenderTarget(null);
+			// (into whatever target is bound: the canvas, or a lens's scene)
 			if (direct) renderer.render(scene, camera);
 			else drawScaled(scene);
 		} finally {

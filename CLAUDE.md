@@ -89,7 +89,22 @@ its own way (`director.setRun`) — beside the build number. Everything below is
 v3 unless it says v2. The README is lean on purpose; the long design history
 of v2 is `docs/design-notes.md`.
 
-The NEXT run is being looked for, not built: **`/log`** indexes the blackboard
+**The next run is at `/next`** (`runs/Next.svelte`): the board flow the lead
+picked, strand's journey in the sketchy hand (`lab/flow-strand-sketch.js`,
+docs/explore-10.md), out of the lab in a plain environment of its own — one
+canvas, one WebGPURenderer, the run answered by hand, no lab bar and no
+sketch tags (`board.js tag` stays silent there). `?v=<name>` plays a variant
+`flow-strand-sketch-<name>.js`; `?at=` and `?demo=1` as in the lab. It
+draws through the LENS (`lab/log/lens.js`): the board's 2D canvas uploaded
+each frame into one GPU pass that does the soft warm focus (mist, halo, lift,
+grain, a rare leak) and the conception's light, with the heavy lines
+instanced on the GPU under and over it (`lab/log/gpu-ink.js`); the lens's own
+renderer is WebGL 2 (a canvas → texture copy is cheap there and was not on
+WebGPU in the sandbox). The corner's switch reads v2 · v3 · next · ARCHIVE:
+the archive is `/log`, everything the lab tried. It takes `/` when the lead
+says so; v3 keeps `/v3`.
+
+Everything the lab tried is the ARCHIVE: **`/log`** indexes the blackboard
 sketches (`lab/log-*.js` on the shared kit `lab/log/`, a 2D canvas over the
 page, not the Stage — `docs/explore-03.md` to `-06`). **`/flows`**
 (`?chain=flows`) plays the v4 FLOWS: whole runs on the board, one answer each

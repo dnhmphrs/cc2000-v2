@@ -1174,7 +1174,8 @@ export function circleMark(ink, box, k, o = {}) {
 // the board's edge, tapering in, at angles drawn afresh each drawing (seed).
 // `band` { W, hb } spreads their feet along a horizontal seam W either side
 // of the point and lifts them off its edges (hb), so they spray out of it.
-// `rIn(r01)` the inner radius for a line's random 0…1. One fill.
+// `rIn(r01)` the inner radius for a line's random 0…1. One fill — or, given
+// `gpu` (log/gpu-ink.js), a wedge apiece onto that layer.
 export function speedLines(ctx, o) {
 	const {
 		ox,
@@ -1188,14 +1189,17 @@ export function speedLines(ctx, o) {
 		alpha = 0.5,
 		color = HAND.ink,
 		band = null,
-		aspect = 1
+		aspect = 1,
+		gpu = null
 	} = o;
 	if (alpha <= 0.004 || n <= 0) return;
 	const R = Math.hypot(w, h);
-	ctx.save();
-	ctx.globalAlpha = alpha;
-	ctx.fillStyle = color;
-	ctx.beginPath();
+	if (!gpu) {
+		ctx.save();
+		ctx.globalAlpha = alpha;
+		ctx.fillStyle = color;
+		ctx.beginPath();
+	}
 	for (let i = 0; i < n; i++) {
 		const a = TAU * rand(i, seed, 1);
 		const r0 = rIn(rand(i, seed, 2));
@@ -1217,6 +1221,10 @@ export function speedLines(ctx, o) {
 		const len = R * (0.5 + 0.6 * rand(i, seed, 5));
 		const x1 = x0 + ux * len;
 		const y1 = y0 + uy * len;
+		if (gpu) {
+			gpu.wedge(x0, y0, x1, y1, wd, color, alpha);
+			continue;
+		}
 		const px = -uy * wd;
 		const py = ux * wd;
 		ctx.moveTo(x0, y0);
@@ -1224,6 +1232,7 @@ export function speedLines(ctx, o) {
 		ctx.lineTo(x1 - px, y1 - py);
 		ctx.closePath();
 	}
+	if (gpu) return;
 	ctx.fill();
 	ctx.restore();
 }

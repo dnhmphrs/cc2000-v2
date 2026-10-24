@@ -161,7 +161,7 @@ import { EPICYCLE } from './intro/epicycle.js';
 import { makeBody, specOf } from './log/body.js';
 import { PHYLLO } from './log/phyllo.js';
 import { caption, captionSize, CAPTION } from './log/caption.js';
-import { grain } from './log/grain.js';
+import { makeLens, fuzz } from './log/lens.js';
 import { flash } from './log/flash.js';
 import { makeFall, orderOf, FALL } from './log/fall.js';
 import { DECADES, PLATE, loadRooms, decadeOfDate } from './log/rooms.js';
@@ -438,16 +438,22 @@ export default async function make({ THREE, renderer, at }) {
 	// the scale it is drawn at, 1 every pixel — by default every pixel on a
 	// GPU and 0.3 of each side on a software renderer.)
 	const fieldRes = Number(q.get('fieldres')) || null;
+	// The fuzz: the board through a soft warm lens (log/lens.js), the field
+	// drawn under it in the lens's own pass (on the lens's renderer); without
+	// one (?lens=0), the canvas grain and the field on the lab's renderer.
+	const lens = q.get('lens') === '0' ? null : await makeLens({ THREE, board });
+	const gpuR = lens?.renderer ?? renderer;
 	const field =
-		renderer && THREE && q.get('field') !== '0'
+		gpuR && THREE && q.get('field') !== '0'
 			? makeHornField({
 					THREE,
-					renderer,
+					renderer: gpuR,
 					flat: q.get('field') === 'flat',
 					scale: fieldRes,
-					own: location.pathname.startsWith('/lab')
+					own: !lens && location.pathname.startsWith('/lab')
 				})
 			: null;
+	let fieldOn = false; // the field to draw this frame (under the board)
 	if (field) {
 		// Both of the field's builds drawn once now, so neither is compiled
 		// mid-run.
@@ -1469,24 +1475,19 @@ export default async function make({ THREE, renderer, at }) {
 			window.__lab.t = t;
 			window.__lab.decade = S?.decade;
 		}
+		fieldOn = false;
 		if (t < FREEZE) {
-			clearBoard(board, { chalkDust: false });
+			clearBoard(board, { chalkDust: false, shown: !lens });
 			entry.reset();
 			TERM.draw(ctx, w, h, t / 10, t, t - 10);
-			grain(ctx, w, h, t);
 			tag(ctx, w, h, 'flow-strand-horn');
+			fuzz(lens, ctx, w, h, hand.secs);
 			return;
 		}
 		if (live) remember(hand, t);
 		const st = settled(w, h);
 		const gpu = !!field && t >= B.gpu;
-		if (gpu) {
-			ctx.setTransform(1, 0, 0, 1, 0, 0);
-			ctx.globalAlpha = 1;
-			ctx.globalCompositeOperation = 'source-over';
-			ctx.clearRect(0, 0, board.canvas.width, board.canvas.height);
-			ctx.setTransform(board.dpr, 0, 0, board.dpr, 0, 0);
-		} else clearBoard(board, { chalkDust: false });
+		clearBoard(board, { chalkDust: false, shown: !lens, ground: gpu ? null : PAL.ground });
 		world(ctx, w, h, t, hand, st, gpu);
 		// The captions at the terminal's size, and at least 15 px on a phone.
 		const size = Math.max(captionSize(w, h), Math.min(15, 0.04 * Math.min(w, h)));
@@ -1511,8 +1512,8 @@ export default async function make({ THREE, renderer, at }) {
 			ctx.fillRect(0, 0, w, h);
 			ctx.restore();
 		}
-		grain(ctx, w, h, t);
 		tag(ctx, w, h, 'flow-strand-horn');
+		fuzz(lens, ctx, w, h, hand.secs, { under: fieldOn ? () => field.render() : null });
 	}
 
 	// From the stop's glide to the end: one world. From the swim on it is the
@@ -1524,7 +1525,7 @@ export default async function make({ THREE, renderer, at }) {
 		const L = body.length;
 		if (gpu) {
 			field.set(hornAt(t, w, h, cam, st));
-			field.render();
+			fieldOn = true; // drawn under the board (render's fuzz)
 		}
 
 		// The title fading and the stop gliding to the strand's 5′ end.

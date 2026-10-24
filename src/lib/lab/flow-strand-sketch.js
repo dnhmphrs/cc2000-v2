@@ -78,12 +78,32 @@
 // the 50s, before 1980 the 60s, before 2005 the 90s, then the 10s), the
 // decade ringed — rooms before its own comes. The rings let go as it lands.
 //
-// THE LAST SCREEN. The band returns as the last room's monitor: as the lens
-// lands, a white line across the glass opens to fill it (the tube switched
-// on), the swimmer goes into it, and it BLOWS OUT — across the board's
-// width, then its height — into strand's white flash, the room's colour
-// coming up under it while the lens pushes in to near full size (fall.js's
-// fill and push). The boil eases off the coloured room. Held; a fade; round.
+// THE LAST ROOM, FROM INSIDE. The fall does not stop at the last room's
+// plate, seen whole from a distance: it goes on into it and slows to rest
+// INSIDE it, as it passed through the others (log/fall.js `inside`: on into
+// its glass until the room is ~3 boards wide and over a board tall — the
+// monitor at the middle, the lamp and the tower either side, the frame far
+// past the edges; an upright phone goes deeper), its pace re-shaped so it
+// still opens at the tunnel's rate.
+//
+// THE CONCEPTION: THE LIGHT. The band returns as the last room's monitor: a
+// white line across the glass opens to fill it (the tube switched on) and
+// the swimmer swims into it; and the light comes OUT of it (log/lens.js
+// `light`, lightAt here) — made of what is on the board: shafts that are the
+// screen's own white smeared out along its rays (the room's lines shadow
+// them), a slow sunburst through them, each ray its own warm hue
+// (red-orange, gold, cream), a white-gold core, and the tunnel's rings come
+// back as rings of light drifting out of the screen. It swells as the
+// swimmer goes in; at the hit a disc of white blooms out of the screen over
+// the whole board and holds (the holy white), then burns out — the darks
+// first, the edges first, the screen last — onto the room in chalk, lit by
+// its beams. Then the COLOUR comes, carried out of the screen by the light:
+// the room coloured inside a hand-drawn ring of warm light spreading from
+// the glass (log/fall.js `reveal`), chalk outside it, out past the corners
+// over ~2.6 s; the beams stay, breathing, and settle to a glow on the room,
+// the boil easing off it. Held; a fade; round. (?inside=0: the old ending —
+// the plate seen whole, the band blowing out into strand's flash, the colour
+// under it, the push in.)
 //
 // EXACT under the play: the count is 266 figures, one a day; each month
 // crossed off at its last day; every date 1900–2099 checked against Date,
@@ -111,14 +131,30 @@
 //                 closing into the rings round the room, 36.9 – 37.35
 //   38.3 – 46.9   over the rooms: Zeller (38.3, 40.0, the weekday 42.3), the
 //                 room's rule (44.2, ringed 45.0)
-//   50.8 – 52.2   the rings let go; 51.6 – 53.6 the landing; 52.4 – 53.6
-//                 the band as the last screen
-//   53.7          the band blows out: the white flash; the colour under it;
-//                 53.8 – 56.8 the lens in on the room; held; 58.8 – 60 a
-//                 fade; round
+//   50.8 – 52.2   the rings let go; 51.6 – 53.6 the lens slows to rest
+//                 inside the last room; 52.4 – 53.6 the band as its screen
+//   52.6 – 53.7   the light swelling out of the screen as the swimmer goes in
+//   53.7          the conception: the white blooms out of the screen (0.45 s),
+//                 held to 54.4, burnt out onto the chalk room by ~55
+//   55.0 – 57.6   the colour carried out of the screen in a ring of light;
+//                 the beams breathing, settling; 58.8 – 60 a fade; round
 //
-// GPU and board: all of it is the board, on purpose — the lines ARE the
-// picture, and they are few: ~15 rings of ≤ 56 points (a point every ~9 px
+// GPU AND BOARD. Through the lens (log/lens.js: three's WebGPURenderer on
+// its WebGL 2 backend, on its own canvas in the board's place) the board is
+// a texture, and the hand's many lines are not stroked on it but drawn on
+// the GPU (log/gpu-ink.js), one instanced draw a layer, in the lens's scene
+// target: the tunnel's and the fall's RINGS under the board (it is clear
+// where they show), the SPEED LINES, the DEBRIS and every lettered FIGURE
+// (the count, the months, the slams, their red strikes and rings, the
+// band's flecks, the working) over it. What stays on the board's canvas:
+// the title and the strand, the swimmer, the rooms (chalk plates through
+// the hand), the band and its glow, the date on it, the captions, the
+// fade. The fuzz (the old canvas grain: four full-board fills a frame) is
+// the lens's one pass. Without a renderer (or ?lens=0, ?gpuink=0) it is all
+// the board's, as below.
+//
+// The board alone: the lines ARE the picture, and they are few: ~15 rings
+// of ≤ 56 points (a point every ~9 px
 // round the small ones round the rooms; the nearest gone over twice; a piece
 // wholly off one side of the board not stroked), ≤ 95 speed-line wedges in one
 // fill, ≤ 90 debris dashes in one stroke, the figures batched into a path a
@@ -167,9 +203,11 @@ import { EPICYCLE } from './intro/epicycle.js';
 import { makeBody, specOf } from './log/body.js';
 import { caption, captionSize, CAPTION } from './log/caption.js';
 import { grain } from './log/grain.js';
+import { makeLens } from './log/lens.js';
+import { makeGpuInk } from './log/gpu-ink.js';
 import { flash as burnOut } from './log/flash.js';
-import { makeFall, orderOf } from './log/fall.js';
-import { DECADES, loadRooms, decadeOfDate } from './log/rooms.js';
+import { makeFall, orderOf, revealRing } from './log/fall.js';
+import { DECADES, loadRooms, decadeOfDate, PLATE } from './log/rooms.js';
 import {
 	HAND,
 	boilOf,
@@ -183,6 +221,10 @@ import {
 	rand,
 	noise1
 } from './log/sketch-hand.js';
+
+// A harness's layer timer (window.__prof: begin / mark(name) / end), a no-op
+// without one: ?prof is not a switch, a profiling script defines it.
+const prof = (n) => window.__prof?.mark(n);
 
 export const meta = {
 	title:
@@ -234,7 +276,8 @@ const B = {
 	fall: [36.8, 53.6],
 	land: [51.6, 53.6],
 	screen: [52.4, 53.62], // the band again: the last screen switched on
-	colour: [53.62, 54.1], // the room's colour, come up under the flash
+	colour: [53.62, 54.1], // the room's colour flooded under the flash (landing at the plate, ?inside=0)
+	reveal: [55.0, 57.6], // … or carried out of the screen by the light (inside; see lightAt)
 	aim: [51.8, 53.7], // the swimmer on into the last glass
 	hit: 53.7, // the flash
 	push: [53.8, 56.8], // the lens in on the last room, to near full size
@@ -424,6 +467,8 @@ const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05 };
 // The fall: eleven crossings (twelve rooms, the answer's last) at strand's
 // pace, so the rooms rush (a crossing every ~1.4 s, at 0.5–1 e-folds a second).
 const FALL_X = 11;
+const INSIDE = 0.4; // the fall stops inside the last room (?inside=: this far into its glass)
+const FILL = { w: 3.1, h: 1.15 }; // … where the room is this many boards wide, and at least this tall
 const FALL_PACE = { n: 512, c: 0.55 };
 
 // ── The count ────────────────────────────────────────────────────────────────
@@ -497,10 +542,11 @@ const plateQ = (w, h) => Math.min(1, (0.74 * w) / PHI / (0.62 * h));
 const figH = (w, h) => Math.min(h, 1.25 * w);
 const spreadX = (w, h) => clamp(w / h, 0.75, 1.5);
 
-export default async function make({ at }) {
+export default async function make({ THREE, at }) {
 	const q = new URLSearchParams(location.search);
 	const forced = DECADES.includes(q.get('decade')) ? q.get('decade') : null;
-	const live = at === null && q.get('demo') !== '1' && location.pathname.startsWith('/lab');
+	const live =
+		at === null && q.get('demo') !== '1' && /^\/(lab|next)(\/|$)/.test(location.pathname);
 	const board = getBoard();
 	const time = clock(SECONDS, at);
 	clearBoard(board);
@@ -515,6 +561,34 @@ export default async function make({ at }) {
 	const Z = makeDepth(4);
 	// The hand: the board's context, boiling (log/sketch-hand.js).
 	const pen = makeHand(board.ctx);
+	// The lens: the board drawn on the GPU through a soft warm lens
+	// (log/lens.js); none without a renderer (?lens=0 neither), and then the
+	// board is shown as it is with the canvas grain over it.
+	const lens = q.get('lens') === '0' ? null : await makeLens({ THREE, board });
+	// With the lens, the hand's many lines go to the GPU (log/gpu-ink.js): the
+	// rings UNDER the board (the board clear where they show, its alpha
+	// hiding them under the rooms), the speed lines, the debris and every
+	// lettered figure OVER it — each layer one instanced draw. Without it,
+	// the board's canvas strokes them all, as before. (?gpuink=0: the canvas.)
+	const gpuInk = lens && q.get('gpuink') !== '0';
+	const gUnder = gpuInk ? makeGpuInk({ THREE }) : null;
+	const gOver = gpuInk ? makeGpuInk({ THREE }) : null;
+	const inkFor = (g) => (g ? g.ink() : makeInk());
+	// The board is clear (not the ground) while the rings show under it.
+	const ringsShow = (t) => gUnder && t > B.tunnel[0] - 0.15 && t < B.land[0] + 0.7;
+	// The fall comes to rest INSIDE the last room (log/fall.js `inside`: this
+	// far on into its glass), the room past the board's edges, before the
+	// light; ?inside=0 lands at the plate and pushes in after the flash, as
+	// it was.
+	const inside = q.has('inside') ? clamp(Number(q.get('inside')) || 0, 0, 0.9) : INSIDE;
+	// ?look=halo:0.2,grain:0 — the lens's numbers (log/lens.js LENS), to try.
+	const look = Object.fromEntries(
+		(q.get('look') ?? '')
+			.split(',')
+			.map((kv) => kv.split(':'))
+			.filter(([k, v]) => k && v !== undefined && Number.isFinite(Number(v)))
+			.map(([k, v]) => [k, Number(v)])
+	);
 
 	// ── What the answers settle (cached by the answers and the board) ────────
 	let S = null;
@@ -541,7 +615,72 @@ export default async function make({ at }) {
 		const X0 = g0.levels[0].X;
 		const far = g0.plate / (0.34 * h);
 		const z0 = far > 1 ? clamp(Math.log(far) / Math.log(X0), -2, -0.05) : -0.05;
-		const fall = makeFall({ art, order, beats: fb, zeta0: z0, pace: FALL_PACE, fill });
+		// Inside: how far into the last room's glass the lens stops — so the
+		// room is FILL.w times the board's width (the monitor at the middle,
+		// the lamp and the tower either side, the frame far past the edges)
+		// and at least FILL.h times its height (no ground above or below it):
+		// an upright phone goes deeper than a laptop. (?inside= fixes it.)
+		let deep = inside;
+		if (inside > 0 && !q.has('inside')) {
+			const pg = makeFall({
+				art,
+				order,
+				beats: fb,
+				zeta0: z0,
+				pace: FALL_PACE,
+				inside: 0.5
+			}).geometry(w, h);
+			const lv = pg.levels[pg.L];
+			const cover = (d) => {
+				const dist = pg.pose(pg.L + d).z - lv.O[2];
+				const k = (pg.F * lv.s) / dist;
+				return Math.min((PLATE.W * k) / w / FILL.w, (PLATE.H * k) / h / FILL.h);
+			};
+			let lo = 0.05;
+			let hi = 0.85;
+			for (let i = 0; i < 30; i++) {
+				const mid = (lo + hi) / 2;
+				if (cover(mid) < 1) lo = mid;
+				else hi = mid;
+			}
+			deep = (lo + hi) / 2;
+		}
+		// (Going on into the last room is more e-folds in the same seconds;
+		// the fall's pace is re-shaped — its c — so that it still OPENS at the
+		// rate it did, the tunnel's, and the tunnel before it is unchanged.)
+		let pace = FALL_PACE;
+		if (deep > 0) {
+			const want = makeFall({ art, order, beats: fb, zeta0: z0, pace: FALL_PACE }).geometry(
+				w,
+				h
+			).rate0;
+			const rateAt = (c) =>
+				makeFall({
+					art,
+					order,
+					beats: fb,
+					zeta0: z0,
+					pace: { ...FALL_PACE, c },
+					inside: deep
+				}).geometry(w, h).rate0;
+			let lo = 0.2;
+			let hi = FALL_PACE.c;
+			for (let i = 0; i < 24; i++) {
+				const mid = (lo + hi) / 2;
+				if (rateAt(mid) > want) hi = mid;
+				else lo = mid;
+			}
+			pace = { ...FALL_PACE, c: (lo + hi) / 2 };
+		}
+		const fall = makeFall({
+			art,
+			order,
+			beats: deep > 0 ? { ...fb, push: null } : fb,
+			zeta0: z0,
+			pace,
+			fill: deep > 0 ? null : fill,
+			inside: deep
+		});
 		const geo = fall.geometry(w, h);
 		// The zoom: e-folds of the nose's distance to the apex, flown at a rate
 		// that starts from rest (the swim), runs at the swim's pace in world
@@ -564,7 +703,7 @@ export default async function make({ at }) {
 			const i = Math.min(N - 1, Math.floor(f));
 			return lerp(E[i], E[i + 1], f - i);
 		};
-		S = { key, bases, spec, body, decade, fall, geo, rc, efolds, calc, order };
+		S = { key, bases, spec, body, decade, fall, geo, rc, efolds, calc, order, deep };
 		// The nearest ring as the tunnel is sketched in (the rings are drawn
 		// in from it, near to far).
 		const zL0 = Z_NOSE0 * Math.exp(-efolds(B.tunnel[0])) + 60;
@@ -588,6 +727,18 @@ export default async function make({ at }) {
 		},
 		get zoom() {
 			return S ? { rate0: S.geo.rate0, z0: S.geo.zetaAt(0), total: S.geo.TOTAL } : null;
+		},
+		// where the fall comes to rest: how far into the last glass, and how
+		// many times the room covers the board there (its tighter direction)
+		get rest() {
+			if (!S) return null;
+			const g = S.geo;
+			const lv = g.levels[g.L];
+			const k = (g.F * lv.s) / (g.pose(g.ZEND).z - lv.O[2]);
+			return {
+				inside: S.deep,
+				cover: Math.min((PLATE.W * k) / board.w, (PLATE.H * k) / board.h)
+			};
 		}
 	};
 
@@ -1302,12 +1453,15 @@ export default async function make({ at }) {
 		const H = figH(w, h);
 		const R = 0.75 * Math.hypot(w, h);
 		const AX = spreadX(w, h);
-		ctx.save();
-		ctx.globalAlpha = a;
-		ctx.strokeStyle = HAND.ink;
-		ctx.lineCap = 'round';
-		ctx.lineWidth = Math.max(1.2, 0.0028 * H);
-		ctx.beginPath();
+		const lw = Math.max(1.2, 0.0028 * H);
+		if (!gOver) {
+			ctx.save();
+			ctx.globalAlpha = a;
+			ctx.strokeStyle = HAND.ink;
+			ctx.lineCap = 'round';
+			ctx.lineWidth = lw;
+			ctx.beginPath();
+		}
 		for (let k = 0; k < n; k++) {
 			const v = 1.4 + 2.2 * rand(k, 601);
 			const r0 = 0.03 * H;
@@ -1329,9 +1483,14 @@ export default async function make({ at }) {
 			const y0 = fy + uy * r;
 			const len = Math.max(0.6, r * v * 0.03 * (0.3 + rand(k, 605)));
 			const L = Math.hypot(ux, uy) || 1;
+			if (gOver) {
+				gOver.dash(x0, y0, x0 + (ux / L) * len, y0 + (uy / L) * len, lw, HAND.ink, a);
+				continue;
+			}
 			ctx.moveTo(x0, y0);
 			ctx.lineTo(x0 + (ux / L) * len, y0 + (uy / L) * len);
 		}
+		if (gOver) return;
 		ctx.stroke();
 		ctx.restore();
 	}
@@ -1361,9 +1520,12 @@ export default async function make({ at }) {
 			alpha: (inFall ? 0.24 + 0.1 * peak : 0.3 + 0.12 * peak) * s,
 			color: HAND.ink,
 			band: seam,
-			aspect: spreadX(w, h)
+			aspect: spreadX(w, h),
+			gpu: gOver
 		});
+		prof('speedlines');
 		debris(ctx, w, h, t, O, seam ? band : null, 0.75 * s, Math.round((inFall ? 50 : 90) * s));
+		prof('debris');
 	}
 
 	// ── The figures ──────────────────────────────────────────────────────────
@@ -1601,13 +1763,90 @@ export default async function make({ at }) {
 		ctx.restore();
 	}
 
+	// ── The conception's light ───────────────────────────────────────────────
+	// Out of the last screen once the lens is at rest inside the room (the
+	// fall lands `inside` it, log/fall.js): the screen already lit by the band
+	// (screenBand), the swimmer swimming into it. The light is MADE of what is
+	// there (log/lens.js `light`): its shafts are the picture's own brights —
+	// the screen — smeared out along its rays, so the room's lines shadow them;
+	// through them a slow sunburst of warm rays, each its own hue (red-orange,
+	// gold, cream), a core of white-gold light, and the tunnel's rings come
+	// back as rings of light drifting out of it. Swelling as the swimmer goes
+	// in; at the hit a disc of white blooms out of the screen over the whole
+	// board (0.45 s) and holds; then it BURNS OUT — the darks first, the room's
+	// lights last, the edges first and the screen last — over ~3 s, the room's
+	// colour flooding in under it (B.colour, bed first, wall last), so the
+	// colour comes up out of the light as the light draws back into the
+	// screen; the rays stay, breathing, and settle to a glow on the room.
+	function lightAt(t, w, h) {
+		const H = B.hit;
+		const g = lastGlass;
+		if (!g || t < H - 1.6) return null;
+		const x = (g[0] + g[2]) / 2;
+		const y = (g[1] + g[3]) / 2;
+		const D = Math.hypot(w, h);
+		const gr = 0.5 * Math.min(g[2] - g[0], g[3] - g[1]);
+		const pre = smooth(span(t, H - 1.1, H));
+		const HOLD = H + 0.7; // the white held from the bloom to here
+		const after = Math.max(0, t - HOLD); // since it began to burn out
+		const breath = 1 + 0.12 * Math.sin((TAU * (t - H)) / 2.3);
+		const out = 1 - smooth(span(t, ...B.out));
+		const rise = smooth(span(t, H - 0.05, H + 0.35));
+		const rays =
+			(t < HOLD
+				? lerp(0.45 * pre * pre, 1, rise)
+				: (0.18 + 0.55 * Math.exp(-after / 1.8)) * breath) * out;
+		const core = (t < HOLD ? lerp(0.3 * pre, 1, rise) : 0.12 + 0.55 * Math.exp(-after / 0.9)) * out;
+		const rings =
+			(0.3 * smooth(span(t, H - 0.7, H)) * (1 - smooth(span(t, H + 0.4, H + 2.2))) +
+				0.06 * smooth(span(t, H + 1.5, H + 3))) *
+			out;
+		// the white: blooming out of the screen, held, then burning out
+		const bloom =
+			t >= H && t < HOLD ? gr + 1.4 * D * Math.pow(smooth(span(t, H, H + 0.45)), 1.6) : -1;
+		const A = t >= HOLD ? Math.exp(-after / 0.6) : 0;
+		const Bn = t >= HOLD ? 0.35 * Math.exp(-after / 0.8) * (1 - A) : 0;
+		return {
+			x,
+			y,
+			r: Math.max(8, 0.9 * gr),
+			rays,
+			core,
+			rings,
+			phase: 1.6 * (t - H),
+			turn: 0.07 * t,
+			bloom,
+			bloomSoft: 0.3 * D,
+			burnA: A,
+			burnB: Bn,
+			burnR: 0.3 * D
+		};
+	}
+
+	// The colour's reach out of the screen (log/fall.js `reveal`): from the
+	// glass's edge out past the board's corners over B.reveal, its ring
+	// hand-drawn and boiling; null before it starts.
+	function revealAt(t, w, h, G, bo) {
+		const k = span(t, ...B.reveal);
+		if (k <= 0) return null;
+		const g0 = 0.5 * Math.min(G[2] - G[0], G[3] - G[1]);
+		return { r: g0 + 0.68 * Math.hypot(w, h) * Math.pow(smooth(k), 1.15), wob: 0.035, seed: bo };
+	}
+
 	// ── Render ───────────────────────────────────────────────────────────────
 	let lastGlass = null; // the last glass on the board this frame (the flash's)
 	function render() {
-		clearBoard(board, { chalkDust: false });
-		const { ctx, w, h } = board;
+		window.__prof?.begin();
 		const t = time.t;
+		clearBoard(board, { chalkDust: false, shown: !lens, ground: ringsShow(t) ? null : PAL.ground });
+		gUnder?.reset();
+		gOver?.reset();
+		prof('clear');
+		const { ctx, w, h } = board;
 		const hand = answers.hand(t);
+		// The fuzz's clock: real seconds live (it keeps moving while the run
+		// waits at a question), exactly t pinned, in the demo, in a reel.
+		const secs = hand.secs;
 		answers.slider(entry.hit);
 		if (window.__lab) {
 			window.__lab.t = t;
@@ -1616,8 +1855,9 @@ export default async function make({ at }) {
 		if (t < FREEZE) {
 			entry.reset();
 			TERM.draw(ctx, w, h, t / 10, t, t - 10);
-			grain(ctx, w, h, t);
 			tag(ctx, w, h, 'flow-strand-sketch');
+			fuzz(ctx, w, h, secs, t);
+			window.__prof?.end();
 			return;
 		}
 		if (live) remember(hand, t);
@@ -1639,7 +1879,11 @@ export default async function make({ at }) {
 			align: 'center',
 			size
 		});
-		flash(ctx, w, h, t - B.hit, lastGlass);
+		prof('captions');
+		// The end: on the board as it was, or (with the lens) the conception's
+		// light out of the last screen, on the GPU (lightAt).
+		if (!lens || !(inside > 0)) flash(ctx, w, h, t - B.hit, lastGlass);
+		prof('flash');
 		const out = smooth(span(t, ...B.out));
 		if (out > 0.003) {
 			ctx.save();
@@ -1648,8 +1892,25 @@ export default async function make({ at }) {
 			ctx.fillRect(0, 0, w, h);
 			ctx.restore();
 		}
-		grain(ctx, w, h, t);
+		prof('out');
 		tag(ctx, w, h, 'flow-strand-sketch');
+		fuzz(ctx, w, h, secs, t);
+		prof('grain');
+		window.__prof?.end();
+	}
+	// The fuzz over the frame: the lens on the GPU, or the canvas grain.
+	function fuzz(ctx, w, h, secs, t) {
+		if (lens)
+			lens.frame({
+				secs,
+				look,
+				light: lens && inside > 0 ? lightAt(t, w, h) : null,
+				// the rings under the board, the rest over it, both inside the
+				// lens (so they take its halo, its mist and its grain)
+				under: gUnder?.count ? (r, o) => gUnder.draw(r, { w, h, dpr: o.dpr }) : null,
+				over: gOver?.count ? (r, o) => gOver.draw(r, { w, h, dpr: o.dpr }) : null
+			});
+		else grain(ctx, w, h, secs);
 	}
 
 	// The swimmer's lines in the hand: on the screen's own noise (it holds
@@ -1721,10 +1982,12 @@ export default async function make({ at }) {
 		const body = st.body;
 		const L = body.length;
 		const bo = boilOf(t);
+		prof('lens');
 
 		// The title fading and the stop gliding to the strand's 5′ end.
 		const five = cam.project([0, 0, 0]);
 		entry.title(ctx, w, h, t);
+		prof('title');
 		const pan = easeIO(span(t, ...B.pan));
 		const stop = TERM.layout(ctx, w, h).stop;
 
@@ -1740,10 +2003,13 @@ export default async function make({ at }) {
 		Z.reset(w, h);
 		if (journey && O[2] > NEAR) {
 			body.fillDepth(Z, cam, shape, pose);
-			const ink = makeInk();
+			prof('depth');
+			const ink = inkFor(gUnder);
 			rings(ink, t, w, h, cam, st, bo, band, O);
 			ink.flush(ctx);
+			prof('rings');
 			firstRoom(ctx, w, h, t, st, O, bo);
+			prof('rooms');
 			rush(ctx, w, h, t, O, bo, band, false);
 		}
 
@@ -1824,6 +2090,7 @@ export default async function make({ at }) {
 			if (spark > 0 && t < B.life + 2)
 				lit3(ctx, cam, body.at(shape, pose, (body.parts.mid[0] + body.parts.mid[1]) / 2), 2, spark);
 		}
+		prof('strand+body');
 		// The reading frame.
 		const fa =
 			smooth(span(t, B.read[0] - 0.3, B.read[0] + 0.1)) *
@@ -1833,18 +2100,23 @@ export default async function make({ at }) {
 		// ── The band over the swimmer (its head into the glare), the date on
 		// it, the figures over all ──
 		if (journey && O[2] > NEAR) {
-			const ink = makeInk();
+			const ink = inkFor(gOver);
 			const inkD = makeInk();
+			prof('frame');
 			drawBand(ctx, ink, w, h, O, band, bo);
+			prof('band');
 			conceivedDate(inkD, ink, t, w, h, O, st, bo, band);
 			inkD.flush(ctx);
+			prof('date');
 			figures(ink, w, h, t, O, st, bo);
 			ink.flush(ctx);
+			prof('figures');
 		}
 
 		// ── The questions ──
 		const asked = 1 - smooth(span(t, ...B.asked));
 		if (asked > 0.004) entry.questions(ctx, w, h, t, hand, asked);
+		prof('questions');
 	}
 
 	// The fall: the rooms coming out of the band as it opens, in the hand, the
@@ -1856,7 +2128,7 @@ export default async function make({ at }) {
 		const bo = boilOf(t);
 		const opening = t < B.dive[1];
 		// The boil eases off the coloured room after the flash.
-		const calm = lerp(1, 0.3, smooth(span(t, B.hit, B.hit + 1.5)));
+		const calm = lerp(1, 0.3, smooth(span(t, B.hit + 0.5, B.hit + 3.5)));
 		let band = null;
 		// The vanishing point: the fall's own, its lens's sway (log/fall.js
 		// lensAt), at the board's middle as it opens.
@@ -1876,22 +2148,50 @@ export default async function make({ at }) {
 			O = camT.project([X_APEX, 0, 0]);
 			band = bandAt(t, w, h, st);
 			Z.reset(w, h);
-			const ink = makeInk();
+			const ink = inkFor(gUnder);
 			rings(ink, t, w, h, camT, st, bo, band, O);
 			ink.flush(ctx);
 		}
+		prof('lens');
 		// The rings going on round the rooms, under them.
 		{
-			const ink = makeInk();
+			const ink = inkFor(gUnder);
 			fallRings(ink, t, w, h, O, st.efolds(B.fall[0]) + zf, bo, band);
 			ink.flush(ctx);
 		}
+		prof('rings');
 		// The rooms: the first already there, grown out of the tunnel (see
 		// firstRoom), the band opening over it.
 		const cam = st.fall.draw(roomPen(O, zf, bo, calm), w, h, t, {
 			colourAlong: false,
-			dust: null
+			dust: null,
+			// inside, the colour carried out of the screen by the light: a
+			// hand-drawn ring spreading from the glass, chalk outside it
+			reveal: lens && inside > 0 ? (G) => revealAt(t, w, h, G, bo) : null
 		});
+		// The colour's front: a ring of warm light, hand-drawn, boiling (the
+		// tunnel's rings come back as the light's), over the edge it carries.
+		if (lens && inside > 0 && cam.glass && gOver) {
+			const rv = revealAt(t, w, h, cam.glass, bo);
+			const k = span(t, ...B.reveal);
+			const a = rv ? smooth(span(k, 0, 0.12)) * (1 - smooth(span(k, 0.7, 1))) : 0;
+			if (a > 0.01) {
+				const ring = inkFor(gOver);
+				const C = { cx: (cam.glass[0] + cam.glass[2]) / 2, cy: (cam.glass[1] + cam.glass[3]) / 2 };
+				const sc = Math.sqrt(h / 800);
+				ring.line(revealRing({ ...C, ...rv }, 96), '#ffcf8a', 12 * sc, 0.16 * a, false);
+				ring.line(revealRing({ ...C, ...rv }, 96), '#ffd99a', 4.2 * sc, 0.85 * a, false);
+				ring.line(
+					revealRing({ ...C, ...rv, r: rv.r * 1.012, seed: rv.seed + 7 }, 96),
+					'#fff1d6',
+					1.6 * sc,
+					0.55 * a,
+					false
+				);
+				ring.flush(ctx);
+			}
+		}
+		prof('rooms');
 
 		// The swimmer, the chase's own picture, at the vanishing point; on into
 		// the last glass as the lens lands.
@@ -1929,12 +2229,14 @@ export default async function make({ at }) {
 			st.body.draw(hd, view, shape, pose, { back: 0 });
 			ctx.restore();
 		}
+		prof('strand+body');
 
 		// The band, still opening over it all, torn off the rooms from the
 		// swimmer's nose out; the speed lines over it; the date bursting out
 		// of it, its dark ink torn away with the white it is written on.
-		const ink = makeInk();
+		const ink = inkFor(gOver);
 		if (opening) drawBand(ctx, ink, w, h, O, band, bo);
+		prof('band');
 		rush(ctx, w, h, t, O, bo, band, !opening || band.open > 0.6);
 		if (opening) {
 			const inkD = makeInk();
@@ -1944,10 +2246,13 @@ export default async function make({ at }) {
 			inkD.flush(ctx);
 			ctx.restore();
 		}
+		prof('date');
 		// The last screen switched on.
 		if (cam.glass) screenBand(ctx, cam.glass, smooth(span(t, ...B.screen)), bo);
+		prof('band');
 		figures(ink, w, h, t, O, st, bo);
 		ink.flush(ctx);
+		prof('figures');
 	}
 
 	return {

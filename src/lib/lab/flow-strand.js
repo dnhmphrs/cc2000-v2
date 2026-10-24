@@ -149,7 +149,7 @@ import { EPICYCLE } from './intro/epicycle.js';
 import { makeBody, specOf } from './log/body.js';
 import { PHYLLO, seeds, parastichy, seedFrame } from './log/phyllo.js';
 import { caption, captionSize, CAPTION } from './log/caption.js';
-import { grain } from './log/grain.js';
+import { makeLens, fuzz } from './log/lens.js';
 import { flash } from './log/flash.js';
 import { makeFall, orderOf } from './log/fall.js';
 import { DECADES, loadRooms, decadeOfDate } from './log/rooms.js';
@@ -406,7 +406,7 @@ const plateQ = (w, h) => Math.min(1, (0.74 * w) / PHI / (0.62 * h));
 const fitText = (w, h) => h > w || Math.min(w, h) < 600;
 const TEXT_UP = 1.6;
 
-export default async function make({ at }) {
+export default async function make({ THREE, at }) {
 	const q = new URLSearchParams(location.search);
 	const forced = DECADES.includes(q.get('decade')) ? q.get('decade') : null;
 	const live = at === null && q.get('demo') !== '1' && location.pathname.startsWith('/lab');
@@ -1215,8 +1215,16 @@ export default async function make({ at }) {
 	}
 
 	// ── Render ───────────────────────────────────────────────────────────────
+	// The fuzz: the board through a soft warm lens on the GPU (log/lens.js),
+	// on the hand's clock — real seconds live, so it keeps moving while the
+	// run waits at a question; t pinned, in the demo, in a reel. (?lens=0:
+	// the canvas grain.)
+	const lens =
+		new URLSearchParams(location.search).get('lens') === '0'
+			? null
+			: await makeLens({ THREE, board });
 	function render() {
-		clearBoard(board, { chalkDust: false });
+		clearBoard(board, { chalkDust: false, shown: !lens });
 		const { ctx, w, h } = board;
 		const t = time.t;
 		const hand = answers.hand(t);
@@ -1228,8 +1236,8 @@ export default async function make({ at }) {
 		if (t < FREEZE) {
 			entry.reset();
 			TERM.draw(ctx, w, h, t / 10, t, t - 10);
-			grain(ctx, w, h, t);
 			tag(ctx, w, h, 'flow-strand');
+			fuzz(lens, ctx, w, h, hand.secs);
 			return;
 		}
 		if (live) remember(hand, t);
@@ -1259,8 +1267,8 @@ export default async function make({ at }) {
 			ctx.fillRect(0, 0, w, h);
 			ctx.restore();
 		}
-		grain(ctx, w, h, t);
 		tag(ctx, w, h, 'flow-strand');
+		fuzz(lens, ctx, w, h, hand.secs);
 	}
 
 	// From the stop's glide to the fall: one world.
