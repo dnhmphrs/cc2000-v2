@@ -583,6 +583,31 @@ export const FLOWS = [
 		what: 'v5: the date written on a double helix, read codon by codon into the body’s rings; a log-scale horn; the calculation worked in chalk — the birth date minus 266 days, Zeller’s weekday'
 	},
 	{
+		sketch: 'flow-strand-sun',
+		name: 'Strand · sun',
+		what: 'v6, the journey as one beat: draft’s seeds dawn into a spectral log-polar sun (GPU), the months written on its spokes; its rings square up into the rooms’ frames, the sun in every glass, its core the last screen and the white flash'
+	},
+	{
+		sketch: 'flow-strand-sketch',
+		name: 'Strand · sketch',
+		what: 'v6, the journey as one beat, in a shaky warm hand (Eva / Akira): speed lines, the 266 days hand-lettered and struck out in red, the tunnel flattened into a white-hot band the swimmer dives through, the rings round every room after'
+	},
+	{
+		sketch: 'flow-strand-horn',
+		name: 'Strand · horn',
+		what: 'v6, the journey as one beat: the horn’s own sections square off into the rooms’ frames, drawn out of its seeds, on one zoom; the workings pinned one card a room; the log-polar lattice warming into sunshine to the flash'
+	},
+	{
+		sketch: 'flow-strand-corridor',
+		name: 'Strand · corridor',
+		what: 'v6, the journey as one beat: back through time down a corridor walled with the decades’ rooms, the years on hanging signs struck through, the 266 days on a floor ruler; the birth year’s room its far end from the start, a sun in its screen'
+	},
+	{
+		sketch: 'flow-strand-screens',
+		name: 'Strand · screens',
+		what: 'v6, the journey as one beat: the calculator working your conception out on screen after glowing screen, each the next room’s monitor, the rooms coming up out of the dark round them; the sunshine on the glass'
+	},
+	{
 		sketch: 'flow-calendar',
 		name: 'Calendar',
 		what: 'v5: epicycles in three planes trace a space curve, turned on a lathe into the body; the disc opens onto Gabriel’s horn; back along the calendar’s log spiral to conception'

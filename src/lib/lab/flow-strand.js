@@ -150,6 +150,7 @@ import { makeBody, specOf } from './log/body.js';
 import { PHYLLO, seeds, parastichy, seedFrame } from './log/phyllo.js';
 import { caption, captionSize, CAPTION } from './log/caption.js';
 import { grain } from './log/grain.js';
+import { flash } from './log/flash.js';
 import { makeFall, orderOf } from './log/fall.js';
 import { DECADES, loadRooms, decadeOfDate } from './log/rooms.js';
 
@@ -209,20 +210,10 @@ const B = {
 	out: [58.8, 60]
 };
 
-// THE FLASH: the swimmer reaching the last screen. The board goes white in
-// 0.07 s, holds a moment, and gives way over a second and a half to the room
-// in its colours, which have come up underneath it (B.colour) while the lens
-// pushes in on it (B.push). `s` the seconds since the hit.
-function flash(ctx, w, h, s) {
-	if (s < 0) return;
-	const a = smooth(span(s, 0, 0.07)) * (s < 0.2 ? 1 : Math.exp(-(s - 0.2) / 0.5));
-	if (a < 0.003) return;
-	ctx.save();
-	ctx.globalAlpha = a;
-	ctx.fillStyle = 'rgb(255, 252, 245)';
-	ctx.fillRect(0, 0, w, h);
-	ctx.restore();
-}
+// THE FLASH (log/flash.js): the swimmer reaching the last screen. The board
+// goes white, holds a moment, and burns out — the dark ground back first, the
+// room's colours, which have come up underneath it (B.colour) while the lens
+// pushes in on it (B.push), last — so the room comes up out of the white.
 
 // ∫ of a smoothstep ramp of length D: a clock that starts from rest.
 function eased(x, D) {
