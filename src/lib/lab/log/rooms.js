@@ -22,6 +22,18 @@ export const PLATE = { W: 2 * PHI, H: 2, DEPTH: 3 };
 export { DECADES, LAYERS };
 export const DECADE_NAME = { '50s': '1950s', '60s': '1960s', '90s': '1990s', '10s': '2010s' };
 
+// The room a birthday lands in, from its year (DDMMYYYY): before 1960 the
+// 1950s, before 1980 the 1960s, before 2005 the 1990s, then the 2010s. Not
+// yet eight digits: the 1990s.
+export function decadeOfDate(digits) {
+	const y = Number(String(digits).slice(4, 8));
+	if (!Number.isFinite(y) || String(digits).length < 8) return '90s';
+	if (y < 1960) return '50s';
+	if (y < 1980) return '60s';
+	if (y < 2005) return '90s';
+	return '10s';
+}
+
 // ── Loading ──────────────────────────────────────────────────────────────────
 // Every asked-for decade's six layers; await it in make() before returning.
 // art[decade][key] = { w, h, mips, chalk? }; art.missing lists failed URLs.

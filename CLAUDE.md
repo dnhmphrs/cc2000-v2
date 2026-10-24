@@ -91,11 +91,28 @@ of v2 is `docs/design-notes.md`.
 
 The NEXT run is being looked for, not built: **`/log`** indexes the blackboard
 sketches (`lab/log-*.js` on the shared kit `lab/log/`, a 2D canvas over the
-page, not the Stage — `docs/explore-03.md`, `-04`, `-05`), and
-`/v4?chain=log`, `?chain=clopen` and `?chain=play` play one variant of each,
-and **`/cut`** (`?chain=all`) is THE CUT: everything there is, one variant of
-each beat in the run's order, the variant each beat's `cut` names in the
-registry, so a beat that lands in the registry is in the cut. A
+page, not the Stage — `docs/explore-03.md` to `-06`). **`/flows`**
+(`?chain=flows`) plays the v4 FLOWS: whole runs on the board, one answer each
+to the same brief (the terminal without its command, the questions in the
+flow's own geometry, the swimmer hidden until the flash, one to three beats
+from the last answer to the room), listed in the registry's `FLOWS`, to mix
+and match from; they share the kit's `helix.js` (the swimmer as a helix turning
+on its own axis), `log-dawn.js makeTerminal` and `log-orb.js drawPrompt`.
+The rooms are the 2D drawings — the lead looked at the SOLID room (the 90s
+room rebuilt in 3D: `lab/solid/`, the sketch `log-solid`, seven loops round
+it on the blue, and `?ink=1` its ink mode: the board's dark, chalk lines, no
+colour) and is sticking to 2D; it stays an exploration in the lab and the
+cut, and `flow-dodeca?end=solid` shows the one way it was tried in a flow
+(the chalk pane handed to the ink model without a seam by
+`solid/flowroom.js`; a flow that renders three.js under the board gets a
+`renderer` from the reel and the lab and clears the board over it).
+`/v4?chain=log` and `?chain=clopen` play one variant of each of a round's
+beats, `?chain=play` the five clopen films as one loop, and **`/cut`**
+(`?chain=all`) is THE CUT: everything there is, EVERY variant of every beat in
+the run's order, the short cut's first in each beat, so a sketch or a variant
+that lands in the registry is in the cut — eighteen minutes, and ← and → step
+between beats; `?chain=one` is the short cut, one of each, the variant each
+beat's `cut` names in the registry. A
 log sketch reads its variant from `?v=`, or from the reel (`pickVariant` round
 its `make()`). EVERY experiment is listed once, in `data/experiments.js` — the
 board's beats and variants in the run's order, the reels, the rounds before
@@ -106,7 +123,9 @@ board's canvas) steps through; a new sketch or variant goes in that list or it
 is nowhere. The kit is `board.js` (the board, views, strokes, maths type,
 the clock), `space.js` (the lens, keyframed paths, a depth buffer for hidden
 lines, 3D lines), `ink.js` (the orb, lit points, the lecture), `rooms.js` (the
-bedrooms on the board), `plate.js` and `sperm.js`; use it rather than copying
+bedrooms on the board), `helix.js` (the swimmer, a helix turning on its axis),
+`plate.js` and `sperm.js` (the old flat spiral swimmer; the lead asked for the
+helix instead); use it rather than copying
 a sketch's own helpers. `/lab` finds sketches by a glob, and in
 dev fetches one the glob does not know by its path — the dev server here does
 not see files added after it started — so a new file in `src/lib/lab/` is

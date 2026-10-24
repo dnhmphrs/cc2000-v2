@@ -23,8 +23,12 @@ import {
 	dot,
 	cross,
 	norm,
-	easeInOutCubic
+	easeInOutCubic,
+	PHI
 } from './log/board.js';
+import { toSphere } from './log/space.js';
+import { drawHelix, poseOn } from './log/helix.js';
+import { loadRooms, drawRoom, DECADES, LAYERS } from './log/rooms.js';
 
 // ── Sketch: log-mobius — the projective zoom out ─────────────────────────────
 // After the centre beat: the swimmer has reached the pole of the cyan/pink net
@@ -70,9 +74,94 @@ import {
 //           axis, 0 and ∞ changing places; and the lens comes round to look
 //           down on the lit pole. The four compose to (az + b)/(cz + d).
 //
-// The end of every variant is the same shot: the lens square to the surface
-// over a gold disc with a cream core, about a third of the frame across.
-// Every frame is a pure function of progress: ?at= pins it exactly.
+// The end of each of those three is the same shot: the lens square to the
+// surface over a gold disc with a cream core, about a third of the frame
+// across. Every frame is a pure function of progress: ?at= pins it exactly.
+//
+// Five more, the maps ON the torus — twelve seconds each, in chalk, gold only
+// for a lit point, no lecture:
+//
+//   cat     Arnold's cat map A = [[2, 1], [1, 1]], (x, y) ↦ (2x + y, x + y)
+//           mod 1, on the torus of rooms: the room (rooms.js, one chalk
+//           drawing, each layer hiding the ones behind it) fills the flat
+//           torus — its φ : 1 frame with the arrows of the gluing, the
+//           coordinates (x, y) ∈ [0, 1)² across it — and the corner, the
+//           map's one fixed point, is lit. Three iterates, honestly: the
+//           picture carried by A^s, s 0 → 1 (A symmetric, so A^s stretches by
+//           φ^{2s} along its eigenline (φ, 1) and squeezes by as much along
+//           (−1, φ); drawn faint the first time; A¹ = A), the view pulling back
+//           over the integer lines; the parallelogram A[0, 1]² cut along them
+//           into its four pieces; each piece slid home by its integer vector
+//           into the square. Each drawn iterate is the room sampled exactly at
+//           A⁻ᵏ(x, y) mod 1 (bilinear, 2² or 3² samples a pixel). Then the room
+//           on the discrete torus, 192 × 192 cells of its frame,
+//           (i, j) ↦ (2i + j, i + j) mod 192: a permutation whose period is
+//           counted at start (48 — for N = 2ᵏ, k ≥ 2, it is 3·2^{k−2}), run
+//           to its period: the room goes to noise, is a ghost of itself
+//           halfway (A²⁴ ≡ 97·I mod 192: alternate cells shifted by half, four
+//           interleaved rooms), and comes back. A tick a turn along the top.
+//           Exact: the iterates, the cuts, the permutation and its period. A
+//           picture: the cross-fade from the drawn third iterate to its
+//           sampling, and back to the drawing at the end. ?decade= picks the
+//           room, 90s by default.
+//   twist   Dehn twists. On the left the plane: Λ = ℤ + τℤ (τ = 0.22 + 0.95i),
+//           its points fixed, tiled by the cell of the current basis (six
+//           lines a cell: the edges, and the net between) with the first
+//           basis's cell dashed and ω₂′ lit. On the right the torus ℂ/Λ, drawn
+//           in the first basis's coordinates (ω₁ round the hole, ω₂ round the
+//           tube), carrying the same lines, the lattice's one point lit. The
+//           basis is sheared by [[1, 1], [0, 1]] (ω₂ ↦ ω₂ + ω₁: the cut is the
+//           circle along ω₁, which glows while it is made; the ω₂-lines,
+//           (0, 1) circles, become (1, 1) curves) and then [[1, 0], [1, 1]]
+//           (ω₁ ↦ ω₁ + ω₂′, cut along an ω₂′-line: the (1, 0) circles become
+//           (2, 1) curves) — together the cat map's matrix. Then z ↦ z/ω₁′ on
+//           the plane puts ω₁′ back at 1, and the lit point is the new τ =
+//           (1 + τ)/(2 + τ), low in the upper half-plane: the same torus, a
+//           different picture of it. The ends of each shear are exact; in
+//           between, the open arcs (failing to meet across the cut by t) are
+//           the path of the twist.
+//   weierstrass  ℘: the torus ℂ/Λ folded two to one onto the Riemann sphere
+//           (τ = 0.3 + 1.05i). The four half-periods 0, ½, τ/2, (1 + τ)/2 are
+//           lit. z ↦ −z is, on the torus of revolution, the half-turn about the
+//           axis through them; the near half swings up and over about it,
+//           hinged at those four points, onto the far half: the quotient
+//           doubly covered (the pillowcase). Under it the parallelogram does
+//           the same — its right half turned π about (1 + τ)/2, z ↦ 1 + τ − z,
+//           which is −z mod Λ. The folded half then carries its net to the
+//           sphere, every point (a, b) to ℘(a + bτ)/5 stereographically, ∞ at
+//           the top: the half-periods land on ∞, e₁, e₂, e₃, the seams through
+//           them (a, b ∈ {0, ½}) on the arcs between, and ±z on one point (the
+//           net, sixteen lines a family, offset half a step so no line meets a
+//           half-period). ℘ by its q-series — exact to double precision in
+//           twelve terms here (|q| ≈ 0.0014), checked against the lattice
+//           sum. Exact: the fold's two ends, the hinge points, the sphere.
+//           Pictures: the swing between (a rigid turn of the half) and the
+//           straight-line morph from the folded half-torus to the sphere.
+//   hopf    S³ ⊂ ℂ², z₁ = cos η e^{iξ₁}, z₂ = sin η e^{iξ₂}, projected from
+//           (0, 0, 0, 1), axis vertical: the tori T_η are tori of revolution
+//           (R = sec η, r = tan η), nested round the core circle (η = 0) and
+//           the axis (η = π/2, the circle through ∞), and their Hopf circles
+//           ξ₁ = θ, ξ₂ = θ + δ are round circles, every two linked once. Drawn:
+//           the core and the axis, twelve circles of the Clifford torus
+//           (η = π/4), ten of an outer torus (η = 1.08), and the centre beat's
+//           net streaming on T_η with tan η = π/TX — there ζ = x + iθ ↦
+//           (πx/TX, θ) is a similarity of flat tori and the projection is
+//           conformal, so the loxodromes meet at their own angles (the net
+//           hidden-line tested, the circles dashed behind it). The lens comes
+//           round the nest and in, onto a Hopf circle of its own (η = 0.95,
+//           between the Clifford and the outer torus) and rides it through
+//           the hole of every torus inside it, chasing a light on it. All
+//           exact but the lens's path.
+//   knot    a (p, q) torus knot is a straight line on the flat torus: the
+//           square on the ground (X round the tube, Y round the hole, the
+//           arrows of the gluing on it) and the torus above it, the line
+//           (X, Y) = (X₀ + ps, Y₀ + qs) of slope q/p drawing itself on both,
+//           cut at the square's edges and coming back at the opposite one,
+//           with the helix swimmer for a pen (its gold core, and the pen's
+//           point on the square, lit). The (3, 2) trefoil (three times round
+//           the tube, twice round the hole; T(p, q) ≅ T(q, p)) and then the
+//           (5, 2) cinquefoil, the lens rising to look down on its five lobes.
+//           Exact.
 
 const SECONDS = 10;
 const K = GOLDEN_K; // the cyan family's rate: golden loxodromes
@@ -80,27 +169,54 @@ const KP = 0.9; // the pink family's pitch, the other way
 const N = 8; // arms in each family
 const RING = TAU / (N * (1 / K + 1 / KP)); // node spacing along an arm, in log|z|
 const NEAR = 0.05;
+const LENGTH = { cat: 12, twist: 12, weierstrass: 12, hopf: 12, knot: 12 };
 
 const io = (t) => easeInOutCubic(clamp01(t));
 const lerp3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
 
 export default async function make({ at }) {
-	const v = variant(['sphere', 'torus', 'flip']);
+	const v = variant(['sphere', 'torus', 'flip', 'cat', 'twist', 'weierstrass', 'hopf', 'knot']);
 	const b = getBoard();
-	const time = clock(SECONDS, at);
+	const seconds = LENGTH[v] ?? SECONDS;
+	const time = clock(seconds, at);
+	// The cat map's room: loaded, drawn in chalk, its iterates sampled.
+	let room = null;
+	if (v === 'cat') {
+		const q = new URLSearchParams(location.search);
+		const decade = DECADES.includes(q.get('decade')) ? q.get('decade') : '90s';
+		clearBoard(b);
+		tag(b.ctx, b.w, b.h, `log-mobius · cat · ${decade} · loading the room`);
+		room = catSetup(await loadRooms({ decades: [decade], chalk: true }), decade);
+	}
+	const info = { seconds, variant: v, frameMs: 0 };
+	let frames = 0;
+	let ms = 0;
 
 	function render() {
+		const t0 = performance.now();
 		clearBoard(b);
 		const { ctx, w, h } = b;
 		const u = time.u;
 		if (v === 'sphere') sphere(ctx, w, h, u);
 		else if (v === 'torus') torus(ctx, w, h, u);
-		else flip(ctx, w, h, u);
+		else if (v === 'flip') flip(ctx, w, h, u);
+		else if (v === 'cat') cat(ctx, w, h, u, room);
+		else if (v === 'twist') twist(ctx, w, h, u);
+		else if (v === 'weierstrass') weierstrass(ctx, w, h, u);
+		else if (v === 'hopf') hopf(ctx, w, h, u);
+		else knot(ctx, w, h, u, time.t);
 		tag(ctx, w, h, `log-mobius · ${v}`);
+		ms += performance.now() - t0;
+		if (++frames === 30) {
+			info.frameMs = Math.round((ms / frames) * 10) / 10;
+			if (window.__lab) window.__lab.frameMs = info.frameMs; // the lab copies info once
+			frames = 0;
+			ms = 0;
+		}
 	}
 
 	return {
-		info: { seconds: SECONDS, variant: v },
+		info,
 		seek: (x) => time.seek(x),
 		update: (dt) => time.step(dt),
 		render,
@@ -401,7 +517,11 @@ function drawNet(ctx, cam, place, o) {
 		hidden = true,
 		nodeCap = 13,
 		goldUpto = null,
-		hid = 0.32
+		hid = 0.32,
+		cyan = PAL.cyan,
+		pink = PAL.pink,
+		cw = 2.2,
+		pw = 2.2
 	} = o;
 	const fz = fade ? (p, i, z) => fade(z) : null;
 	const lines = [];
@@ -412,16 +532,16 @@ function drawNet(ctx, cam, place, o) {
 		const pf = fz ? (p, i) => fz(p, i, pz[i]) : null;
 		lines.push({
 			R: runs3(cam, pz.map(place), { fade: pf, hidden }),
-			color: PAL.pink,
-			width: 2.2
+			color: pink,
+			width: pw
 		});
 		const isGold = gold.includes(j) && goldAlpha > 0;
 		let gz = cz;
 		if (isGold && goldUpto) gz = cz.slice(0, Math.max(2, Math.round(cz.length * goldUpto(j))));
 		lines.push({
 			R: runs3(cam, cz.map(place), { fade: cf, hidden }),
-			color: PAL.cyan,
-			width: 2.2,
+			color: cyan,
+			width: cw,
 			gold: isGold
 				? runs3(cam, gz.map(place), {
 						fade: fz ? (p, i) => fz(p, i, gz[i]) : null,
@@ -569,15 +689,21 @@ function curlGrid(k, place = (p) => p, rmax = 3000) {
 	return grid;
 }
 // The sphere's outline from the lens, and a faint body inside it.
-function limb(ctx, cam, a, centre = [0, 0, 0]) {
+function limb(ctx, cam, a, centre = [0, 0, 0], radius = 1, color = PAL.rose) {
 	if (a <= 0) return;
 	const c = sub3(cam.pos, centre);
-	const d = Math.hypot(...c);
+	const d = Math.hypot(...c) / radius;
 	if (d <= 1.02) return;
-	const n = mul3(c, 1 / d);
+	const n = mul3(c, 1 / (d * radius));
 	const e1 = norm(cross(n, Math.abs(n[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0]));
 	const e2 = cross(n, e1);
-	const pts = circle3(add3(centre, mul3(n, 1 / d)), e1, e2, Math.sqrt(1 - 1 / (d * d)), 180);
+	const pts = circle3(
+		add3(centre, mul3(n, radius / d)),
+		e1,
+		e2,
+		radius * Math.sqrt(1 - 1 / (d * d)),
+		180
+	);
 	const Q = pts.map((p) => cam.project(p));
 	if (Q.some((q) => q[2] <= NEAR)) return;
 	ctx.save();
@@ -587,7 +713,7 @@ function limb(ctx, cam, a, centre = [0, 0, 0]) {
 	Q.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])));
 	ctx.fill();
 	ctx.restore();
-	stroke(ctx, Q, { color: PAL.rose, width: 2, alpha: 0.75 * a });
+	stroke(ctx, Q, { color, width: 2, alpha: 0.75 * a });
 }
 
 // The plate's construction on the board — the unit circle and the two axes —
@@ -1126,4 +1252,1253 @@ function flip(ctx, w, h, u) {
 		['z ↦ 1 / z', span(u, 0.62, 0.67), now(0.62, 0.88) * out],
 		['(az + b) / (cz + d)', span(u, 0.87, 0.93), out]
 	]);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// The maps on the torus: cat, twist, weierstrass, hopf, knot. Ink on the board,
+// gold only for a lit point; no lecture.
+
+// A lens moved across the board by (dx, dy) px: a panel of the board.
+const shiftCam = (cam, dx, dy) => ({
+	...cam,
+	project: (p) => {
+		const q = cam.project(p);
+		return [q[0] + dx, q[1] + dy, q[2]];
+	}
+});
+
+// A torus of revolution about the y axis through `c`: a round the hole and b
+// round the tube, both in turns.
+function ring([a, b], R, r, c = [0, 0, 0]) {
+	const A = TAU * a;
+	const B = TAU * b;
+	const s = R + r * Math.cos(B);
+	return [c[0] + s * Math.cos(A), c[1] + r * Math.sin(B), c[2] - s * Math.sin(A)];
+}
+// Its outward normal.
+function ringN([a, b]) {
+	const A = TAU * a;
+	const B = TAU * b;
+	return [Math.cos(B) * Math.cos(A), Math.sin(B), -Math.cos(B) * Math.sin(A)];
+}
+// A patch of parameter space [a0, a1] × [b0, b1] as a grid of 3D points.
+function patch(place, a0, a1, b0, b1, na, nb) {
+	const grid = [];
+	for (let i = 0; i <= na; i++) {
+		const a = lerp(a0, a1, i / na);
+		const row = [];
+		for (let j = 0; j <= nb; j++) row.push(place([a, lerp(b0, b1, j / nb)]));
+		grid.push(row);
+	}
+	return grid;
+}
+// n + 1 points from p to q.
+function seg2(p, q, n) {
+	const out = [];
+	for (let i = 0; i <= n; i++) out.push([lerp(p[0], q[0], i / n), lerp(p[1], q[1], i / n)]);
+	return out;
+}
+// A chalk line in 3D, hidden-line tested against the depth buffer.
+const ink3 = (ctx, cam, pts, o, which = null) => paint(ctx, runs3(cam, pts), o, which);
+// The turn about the x axis through `c` (for the fold).
+function turnAbout(p, c, a) {
+	if (!a) return p;
+	const y = p[1] - c[1];
+	const z = p[2] - c[2];
+	const co = Math.cos(a);
+	const si = Math.sin(a);
+	return [p[0], c[1] + co * y - si * z, c[2] + si * y + co * z];
+}
+// The arrows of a gluing on an edge: n chevrons at P pointing along d, with
+// `side` across it — 3D points through a lens, or 2D with cam null.
+function chevrons(ctx, cam, P, d, side, s, n, o) {
+	for (let k = 0; k < n; k++) {
+		const off = s * 1.5 * (k - (n - 1) / 2);
+		const at = (x, y) =>
+			P.length === 3
+				? add3(P, add3(mul3(d, off + x), mul3(side, y)))
+				: [P[0] + d[0] * (off + x) + side[0] * y, P[1] + d[1] * (off + x) + side[1] * y];
+		const V = [at(-0.5 * s, 0.6 * s), at(0.5 * s, 0), at(-0.5 * s, -0.6 * s)];
+		if (cam) ink3(ctx, cam, V, o);
+		else stroke(ctx, V, o);
+	}
+}
+// A lit point on the flat board.
+function lit2(ctx, q, r, a = 1) {
+	if (a <= 0) return;
+	bloom(ctx, q[0], q[1], r * 6, 'rgba(255, 222, 150, 0.75)', a);
+	disc(ctx, q[0], q[1], r, { fill: PAL.gold, alpha: a });
+	disc(ctx, q[0], q[1], r * 0.45, { fill: '#fffaf0', alpha: a });
+}
+// The lens on its orbit, as a raw pose (so two poses can be blended).
+function orbitPose({ target = [0, 0, 0], az, el, dist }) {
+	const ce = Math.cos(el);
+	const se = Math.sin(el);
+	const ca = Math.cos(az);
+	const sa = Math.sin(az);
+	return {
+		pos: add3(target, mul3([sa * ce, se, ca * ce], dist)),
+		target,
+		up: [-sa * se, ce, -ca * se]
+	};
+}
+// Piecewise eased keys [[u, value], …]: at rest at every key.
+function eased(u, keys) {
+	if (u <= keys[0][0]) return keys[0][1];
+	for (let i = 0; i < keys.length - 1; i++) {
+		const [u0, v0] = keys[i];
+		const [u1, v1] = keys[i + 1];
+		if (u <= u1) return lerp(v0, v1, smooth((u - u0) / (u1 - u0)));
+	}
+	return keys[keys.length - 1][1];
+}
+
+// ── cat ──────────────────────────────────────────────────────────────────────
+// Matrices are [m00, m01, m10, m11], acting on (x, y) as (m00 x + m01 y,
+// m10 x + m11 y). A is the cat map; A^s its flow (A symmetric: φ^{±2s} on its
+// eigenlines (φ, 1) and (−1, φ)), A¹ = A exactly.
+const CAT_A = [2, 1, 1, 1];
+const CAT_N = 192; // the discrete torus; A's period on it is counted at start (48)
+const mat2 = (A, B) => [
+	A[0] * B[0] + A[1] * B[2],
+	A[0] * B[1] + A[1] * B[3],
+	A[2] * B[0] + A[3] * B[2],
+	A[2] * B[1] + A[3] * B[3]
+];
+function catPow(s) {
+	const l1 = Math.pow(PHI, 2 * s);
+	const l2 = Math.pow(PHI, -2 * s);
+	const n = 1 + PHI * PHI;
+	const off = (PHI * (l1 - l2)) / n;
+	return [(l1 * PHI * PHI + l2) / n, off, off, (l1 + l2 * PHI * PHI) / n];
+}
+function catPeriod(N) {
+	let M = [1, 0, 0, 1];
+	for (let k = 1; k < 10 * N; k++) {
+		M = mat2(CAT_A, M).map((x) => x % N);
+		if (M[0] === 1 && M[1] === 0 && M[2] === 0 && M[3] === 1) return k;
+	}
+	return 0;
+}
+// The parallelogram A[0, 1]² and its cuts along the integer lines: four
+// pieces, each slid back into the square by its cell (Sutherland–Hodgman).
+const CAT_SQ = [
+	[0, 0],
+	[1, 0],
+	[1, 1],
+	[0, 1]
+];
+const CAT_PAR = CAT_SQ.map(([x, y]) => [2 * x + y, x + y]);
+function clipBox(poly, x0, y0, x1, y1) {
+	let P = poly;
+	const edges = [(p) => p[0] - x0, (p) => x1 - p[0], (p) => p[1] - y0, (p) => y1 - p[1]];
+	for (const f of edges) {
+		const out = [];
+		for (let i = 0; i < P.length; i++) {
+			const a = P[i];
+			const b = P[(i + 1) % P.length];
+			const fa = f(a);
+			const fb = f(b);
+			if (fa >= 0) out.push(a);
+			if (fa * fb < 0) {
+				const t = fa / (fa - fb);
+				out.push([lerp(a[0], b[0], t), lerp(a[1], b[1], t)]);
+			}
+		}
+		P = out;
+		if (!P.length) break;
+	}
+	return P;
+}
+const area2 = (P) =>
+	P.reduce((s, p, i) => s + p[0] * P[(i + 1) % P.length][1] - P[(i + 1) % P.length][0] * p[1], 0) /
+	2;
+const CAT_PIECES = [];
+for (let j = 0; j < 2; j++)
+	for (let i = 0; i < 3; i++) {
+		const poly = clipBox(CAT_PAR, i, j, i + 1, j + 1);
+		if (poly.length > 2 && Math.abs(area2(poly)) > 1e-9) CAT_PIECES.push({ cell: [i, j], poly });
+	}
+// The far piece slides first.
+CAT_PIECES.sort((p, q) => q.cell[0] + q.cell[1] - (p.cell[0] + p.cell[1]));
+
+// The three drawn iterates: stretched (A^s), cut, slid back.
+const CAT_STEPS = [
+	{ s: [0.07, 0.17], c: [0.17, 0.2], l: [0.2, 0.28] },
+	{ s: [0.29, 0.36], c: [0.36, 0.38], l: [0.38, 0.44] },
+	{ s: [0.45, 0.5], c: [0.5, 0.515], l: [0.515, 0.56] }
+];
+const CAT_SWAP = [0.565, 0.59]; // the drawn third iterate → its sampling
+const CAT_HOME = [0.93, 0.97]; // the discrete room → the drawn room
+const catKeys = (P) => [
+	[0.59, 3],
+	[0.64, 6],
+	[0.705, P / 2 - 2],
+	[0.73, P / 2],
+	[0.765, P / 2],
+	[0.79, P / 2 + 2],
+	[0.86, P - 4],
+	[0.92, P]
+];
+
+// The room as one chalk drawing (every layer's silhouette cleared before its
+// chalk goes down, so the bed hides the wall), its alpha as the picture.
+function catSetup(art, decade) {
+	const W = 1024;
+	const H = Math.round(W / PHI);
+	const c = document.createElement('canvas');
+	c.width = W;
+	c.height = H;
+	const x = c.getContext('2d', { willReadFrequently: true });
+	for (const L of LAYERS) {
+		const o = { cx: W / 2, cy: H / 2, height: H, layers: [L.key] };
+		x.globalCompositeOperation = 'destination-out';
+		drawRoom(x, art, decade, o);
+		x.globalCompositeOperation = 'source-over';
+		drawRoom(x, art, decade, { ...o, chalk: true });
+	}
+	const d = x.getImageData(0, 0, W, H).data;
+	const a0 = new Float32Array(W * H);
+	for (let i = 0; i < W * H; i++) a0[i] = d[i * 4 + 3] / 255;
+	// The k-th iterate, sampled exactly from the room at A⁻ᵏ(x, y) mod 1.
+	const pics = [c];
+	let M = [1, 0, 0, 1];
+	for (let k = 1; k <= 3; k++) {
+		M = mat2(M, [1, -1, -1, 2]);
+		pics.push(catPicture(a0, W, H, M, k < 3 ? 2 : 3));
+	}
+	// The room on the discrete torus: cell (i, j) centred at (i, j)/N.
+	const N = CAT_N;
+	const acc = new Float32Array(N * N);
+	const cnt = new Float32Array(N * N);
+	for (let py = 0; py < H; py++)
+		for (let px = 0; px < W; px++) {
+			const i = Math.round(((px + 0.5) / W) * N) % N;
+			const j = Math.round((1 - (py + 0.5) / H) * N) % N;
+			acc[j * N + i] += a0[py * W + px];
+			cnt[j * N + i] += 1;
+		}
+	const d0 = new Uint8ClampedArray(N * N);
+	for (let i = 0; i < N * N; i++) d0[i] = cnt[i] ? (255 * acc[i]) / cnt[i] : 0;
+	const cv = document.createElement('canvas');
+	cv.width = cv.height = N;
+	const cx = cv.getContext('2d');
+	return { W, H, pics, N, d0, period: catPeriod(N), cv, cx, img: cx.createImageData(N, N) };
+}
+function catPicture(a0, W, H, M, S) {
+	const c = document.createElement('canvas');
+	c.width = W;
+	c.height = H;
+	const x = c.getContext('2d');
+	const img = x.createImageData(W, H);
+	const p = img.data;
+	const at = (X, Y) => {
+		const sx = X * W - 0.5;
+		const sy = (1 - Y) * H - 0.5;
+		let x0 = Math.floor(sx);
+		let y0 = Math.floor(sy);
+		const fx = sx - x0;
+		const fy = sy - y0;
+		x0 = ((x0 % W) + W) % W;
+		y0 = ((y0 % H) + H) % H;
+		const x1 = (x0 + 1) % W;
+		const y1 = (y0 + 1) % H;
+		return (
+			(a0[y0 * W + x0] * (1 - fx) + a0[y0 * W + x1] * fx) * (1 - fy) +
+			(a0[y1 * W + x0] * (1 - fx) + a0[y1 * W + x1] * fx) * fy
+		);
+	};
+	for (let j = 0; j < H; j++)
+		for (let i = 0; i < W; i++) {
+			let s = 0;
+			for (let sj = 0; sj < S; sj++)
+				for (let si = 0; si < S; si++) {
+					const X0 = (i + (si + 0.5) / S) / W;
+					const Y0 = 1 - (j + (sj + 0.5) / S) / H;
+					let X = M[0] * X0 + M[1] * Y0;
+					let Y = M[2] * X0 + M[3] * Y0;
+					X -= Math.floor(X);
+					Y -= Math.floor(Y);
+					s += at(X, Y);
+				}
+			const o = (j * W + i) * 4;
+			p[o] = 236;
+			p[o + 1] = 230;
+			p[o + 2] = 218;
+			p[o + 3] = (255 * s) / (S * S);
+		}
+	x.putImageData(img, 0, 0);
+	return c;
+}
+// The discrete torus after k turns: cell q goes to Aᵏq mod N.
+function catDiscrete(S, k) {
+	const { N, d0, img, cv, cx } = S;
+	let M = [1, 0, 0, 1];
+	for (let i = 0; i < k; i++) M = mat2(CAT_A, M).map((x) => x % N);
+	const p = img.data;
+	for (let j = 0; j < N; j++)
+		for (let i = 0; i < N; i++) {
+			const ti = (M[0] * i + M[1] * j) % N;
+			const tj = (M[2] * i + M[3] * j) % N;
+			const o = ((N - 1 - tj) * N + ti) * 4;
+			p[o] = 236;
+			p[o + 1] = 230;
+			p[o + 2] = 218;
+			p[o + 3] = d0[j * N + i];
+		}
+	cx.putImageData(img, 0, 0);
+	return cv;
+}
+// Canvas affines [a, b, c, d, e, f]: A after B.
+const aff = (A, B) => [
+	A[0] * B[0] + A[2] * B[1],
+	A[1] * B[0] + A[3] * B[1],
+	A[0] * B[2] + A[2] * B[3],
+	A[1] * B[2] + A[3] * B[3],
+	A[0] * B[4] + A[2] * B[5] + A[4],
+	A[1] * B[4] + A[3] * B[5] + A[5]
+];
+
+function cat(ctx, w, h, u, S) {
+	if (!S) return;
+	const P = S.period;
+	// Where the run is: the k-th drawn iterate at rest, or being stretched,
+	// cut and slid back into the square; then the discrete torus.
+	let k = 3;
+	let mode = 'rest';
+	let p = 0;
+	for (let i = 0; i < CAT_STEPS.length; i++) {
+		const st = CAT_STEPS[i];
+		if (u < st.s[0]) {
+			k = i;
+			break;
+		}
+		if (u < st.s[1]) {
+			[k, mode, p] = [i, 'stretch', span(u, st.s[0], st.s[1])];
+			break;
+		}
+		if (u < st.c[1]) {
+			[k, mode, p] = [i, 'cut', span(u, st.c[0], st.c[1])];
+			break;
+		}
+		if (u < st.l[1]) {
+			[k, mode, p] = [i, 'slide', span(u, st.l[0], st.l[1])];
+			break;
+		}
+	}
+	const L = mode === 'stretch' ? catPow(io(p)) : CAT_A;
+	// Each piece's slide home, the far one first.
+	const slid = CAT_PIECES.map((pc, i) =>
+		mode === 'slide' ? io(span(p, 0.2 * i, 0.2 * i + 0.6)) : 0
+	);
+	const offOf = (i) => [-CAT_PIECES[i].cell[0] * slid[i], -CAT_PIECES[i].cell[1] * slid[i]];
+
+	// The view: everything drawn, in frame.
+	let pts = [
+		[0, 0],
+		[1, 1]
+	];
+	if (mode === 'stretch')
+		pts = pts.concat(CAT_SQ.map(([x, y]) => [L[0] * x + L[1] * y, L[2] * x + L[3] * y]));
+	else if (mode === 'cut') pts = pts.concat(CAT_PAR);
+	else if (mode === 'slide')
+		CAT_PIECES.forEach((pc, i) => {
+			const o = offOf(i);
+			pts = pts.concat(pc.poly.map((q) => [q[0] + o[0], q[1] + o[1]]));
+		});
+	const bx0 = Math.min(...pts.map((q) => q[0]));
+	const bx1 = Math.max(...pts.map((q) => q[0]));
+	const by0 = Math.min(...pts.map((q) => q[1]));
+	const by1 = Math.max(...pts.map((q) => q[1]));
+	const Hfull = Math.min((0.84 * w) / PHI, 0.76 * h);
+	const Hpx = Math.min((0.84 * w) / (PHI * (bx1 - bx0)), (0.76 * h) / (by1 - by0));
+	const Wpx = PHI * Hpx;
+	const ox = w / 2 - ((bx0 + bx1) / 2) * Wpx;
+	const oy = 0.53 * h + ((by0 + by1) / 2) * Hpx;
+	const scr = ([x, y]) => [ox + x * Wpx, oy - y * Hpx];
+	const zoomOut = 1 - Hpx / Hfull;
+
+	// A picture of the torus (W × H px, y down) under (x, y) ↦ L(x, y) + t.
+	const pic = (img, M, t, alpha, clip = null, crisp = false) => {
+		if (alpha <= 0.003) return;
+		ctx.save();
+		if (clip) {
+			ctx.beginPath();
+			clip.forEach((q, i) => (i ? ctx.lineTo(...scr(q)) : ctx.moveTo(...scr(q))));
+			ctx.closePath();
+			ctx.clip();
+		}
+		ctx.globalAlpha = alpha;
+		ctx.imageSmoothingEnabled = !crisp;
+		ctx.transform(
+			...aff(
+				[Wpx, 0, 0, -Hpx, ox, oy],
+				aff([M[0], M[2], M[1], M[3], t[0], t[1]], [1 / img.width, 0, 0, -1 / img.height, 0, 1])
+			)
+		);
+		ctx.drawImage(img, 0, 0);
+		ctx.restore();
+	};
+	const SQ = CAT_SQ;
+	const I2 = [1, 0, 0, 1];
+	// The discrete torus: cells centred on the grid points, so wrapped.
+	const discrete = (kk, alpha) => {
+		const img = catDiscrete(S, kk);
+		const hc = -0.5 / S.N;
+		for (const dy of [0, 1])
+			for (const dx of [0, 1]) pic(img, I2, [hc + dx, hc + dy], alpha, SQ, true);
+	};
+	const poly = (Q, o) => stroke(ctx, [...Q, Q[0]].map(scr), o);
+
+	// The cover: the integer lines, faint, once the view has pulled back.
+	if (zoomOut > 0.02) {
+		const ga = 0.28 * span(zoomOut, 0.02, 0.4);
+		for (let i = -1; i <= 4; i++)
+			stroke(ctx, [scr([i, -1]), scr([i, 3])], {
+				color: PAL.chalk,
+				width: 1,
+				alpha: ga,
+				dash: [3, 6]
+			});
+		for (let j = -1; j <= 3; j++)
+			stroke(ctx, [scr([-1, j]), scr([4, j])], {
+				color: PAL.chalk,
+				width: 1,
+				alpha: ga,
+				dash: [3, 6]
+			});
+	}
+
+	// The picture.
+	const fadeIn = smooth(span(u, 0, 0.05));
+	let kd;
+	if (u < CAT_SWAP[0]) {
+		if (mode === 'rest') pic(S.pics[k], I2, [0, 0], fadeIn);
+		else if (mode === 'stretch' || mode === 'cut') pic(S.pics[k], L, [0, 0], 1);
+		else
+			CAT_PIECES.forEach((pc, i) => {
+				const o = offOf(i);
+				pic(
+					S.pics[k],
+					CAT_A,
+					o,
+					1,
+					pc.poly.map((q) => [q[0] + o[0], q[1] + o[1]])
+				);
+			});
+		kd = k;
+	} else {
+		const sw = span(u, CAT_SWAP[0], CAT_SWAP[1]);
+		kd = Math.floor(eased(u, catKeys(P)) + 1e-6);
+		const home = span(u, CAT_HOME[0], CAT_HOME[1]);
+		if (sw < 1) pic(S.pics[3], I2, [0, 0], 1 - sw);
+		discrete(kd, sw * (1 - home));
+		if (home > 0) pic(S.pics[0], I2, [0, 0], home);
+	}
+
+	// The chalk: the stretched parallelogram, its cuts, the pieces going home.
+	if (mode === 'stretch')
+		poly(
+			CAT_SQ.map(([x, y]) => [L[0] * x + L[1] * y, L[2] * x + L[3] * y]),
+			{ color: PAL.chalk, width: 1.8, alpha: 0.9 }
+		);
+	if (mode === 'cut') {
+		poly(CAT_PAR, { color: PAL.chalk, width: 1.8, alpha: 0.9 });
+		for (const pc of CAT_PIECES)
+			stroke(ctx, [...pc.poly, pc.poly[0]].map(scr), {
+				color: PAL.chalk,
+				width: 1.6,
+				alpha: 0.85,
+				upto: p
+			});
+	}
+	if (mode === 'slide')
+		CAT_PIECES.forEach((pc, i) => {
+			const o = offOf(i);
+			poly(
+				pc.poly.map((q) => [q[0] + o[0], q[1] + o[1]]),
+				{ color: PAL.chalk, width: 1.6, alpha: 0.85 * (1 - span(slid[i], 0.7, 1)) }
+			);
+		});
+	// The eigenlines through the fixed point, while the first stretch runs.
+	if (k === 0 && mode === 'stretch') {
+		const a = 0.35 * Math.sin(Math.PI * p);
+		for (const d of [
+			[PHI, 1],
+			[-1, PHI]
+		])
+			stroke(ctx, [scr([-1.2 * d[0], -1.2 * d[1]]), scr([2 * d[0], 2 * d[1]])], {
+				color: PAL.chalk,
+				width: 1.2,
+				alpha: a
+			});
+	}
+	// The square: the torus's own frame, with the arrows of its gluing.
+	const fa = smooth(span(u, 0, 0.06));
+	stroke(ctx, [...SQ, SQ[0]].map(scr), { color: PAL.chalk, width: 2.2, alpha: 0.95, upto: fa });
+	const ar = Math.min(11, Hpx * 0.03);
+	const ao = { color: PAL.chalk, width: 2, alpha: 0.9 * span(u, 0.03, 0.07) };
+	for (const x of [0, 1]) chevrons(ctx, null, scr([x, 0.5]), [0, -1], [1, 0], ar, 1, ao);
+	for (const y of [0, 1]) chevrons(ctx, null, scr([0.5, y]), [1, 0], [0, 1], ar, 2, ao);
+	// The fixed point: every corner, one point of the torus.
+	lit2(ctx, scr([0, 0]), 4.5, fadeIn);
+
+	// The count: a tick for every turn, to the period.
+	const tw = Math.min(0.62 * w, 9 * P);
+	const ta = span(u, 0.04, 0.08);
+	for (let i = 1; i <= P; i++) {
+		const x = w / 2 + tw * ((i - 0.5) / P - 0.5);
+		const on = i <= kd;
+		const tall = i === P / 2 ? 1.4 : 1;
+		if (i === P && on) lit2(ctx, [x, 30], 3, 1);
+		else
+			stroke(
+				ctx,
+				[
+					[x, 30 - 5 * tall],
+					[x, 30 + 5 * tall]
+				],
+				{ color: PAL.chalk, width: 1.6, alpha: ta * (on ? 0.9 : 0.22) }
+			);
+	}
+}
+
+// ── twist ────────────────────────────────────────────────────────────────────
+// Λ = ℤ + τℤ. The basis, in the coordinates of the first one (ω₁, ω₂) = (1, τ):
+// e₂ = (t₁, 1) — the first twist, ω₂ ↦ ω₂ + ω₁ — then e₁ = (1, 0) + t₂e₂ — the
+// second, ω₁ ↦ ω₁ + ω₂′; integral (a basis of Λ) at t = 0 and t = 1.
+const TT = [0.22, 0.95]; // τ
+const TW = { R: 1.6, r: 0.72, n: 6 };
+const cross2 = (a, b) => a[0] * b[1] - a[1] * b[0];
+// A line through P along D, clipped to the box [x0, y0, x1, y1].
+function clipLine(P, D, [x0, y0, x1, y1]) {
+	let t0 = -Infinity;
+	let t1 = Infinity;
+	for (const [p, d, lo, hi] of [
+		[P[0], D[0], x0, x1],
+		[P[1], D[1], y0, y1]
+	]) {
+		if (Math.abs(d) < 1e-12) {
+			if (p < lo || p > hi) return null;
+			continue;
+		}
+		let a = (lo - p) / d;
+		let b = (hi - p) / d;
+		if (a > b) [a, b] = [b, a];
+		t0 = Math.max(t0, a);
+		t1 = Math.min(t1, b);
+	}
+	if (!(t0 < t1)) return null;
+	return [
+		[P[0] + t0 * D[0], P[1] + t0 * D[1]],
+		[P[0] + t1 * D[0], P[1] + t1 * D[1]]
+	];
+}
+// An offscreen layer the size of the board, drawn into and then laid on the
+// board through a soft round window, so the plane fades out at its edge.
+let LAYER = null;
+function layerOf(ctx) {
+	const W = ctx.canvas.width;
+	const H = ctx.canvas.height;
+	if (!LAYER || LAYER.width !== W || LAYER.height !== H) {
+		LAYER = document.createElement('canvas');
+		LAYER.width = W;
+		LAYER.height = H;
+	}
+	const x = LAYER.getContext('2d');
+	x.setTransform(1, 0, 0, 1, 0, 0);
+	x.globalCompositeOperation = 'source-over';
+	x.globalAlpha = 1;
+	x.clearRect(0, 0, W, H);
+	x.setTransform(ctx.getTransform());
+	return x;
+}
+function layDown(ctx, x, cx, cy, r0, r1) {
+	x.save();
+	x.setTransform(1, 0, 0, 1, 0, 0);
+	const k = ctx.getTransform().a;
+	x.globalCompositeOperation = 'destination-in';
+	const g = x.createRadialGradient(cx * k, cy * k, r0 * k, cx * k, cy * k, r1 * k);
+	g.addColorStop(0, 'rgba(0, 0, 0, 1)');
+	g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+	x.fillStyle = g;
+	x.fillRect(0, 0, LAYER.width, LAYER.height);
+	x.restore();
+	ctx.save();
+	ctx.setTransform(1, 0, 0, 1, 0, 0);
+	ctx.drawImage(LAYER, 0, 0);
+	ctx.restore();
+}
+
+function twist(ctx, w, h, u) {
+	const t1 = io(span(u, 0.1, 0.34));
+	const t2 = io(span(u, 0.42, 0.66));
+	const nu = io(span(u, 0.74, 0.9));
+	const e2 = [t1, 1];
+	const e1 = [1 + t2 * t1, t2];
+	const toC = ([a, b]) => [a + b * TT[0], b * TT[1]];
+	// The plane, and at the end z ↦ z/ω₁′ (a similarity) to put ω₁′ at 1.
+	const lg = C.log(toC(e1));
+	const sim = C.exp([-nu * lg[0], -nu * lg[1]]);
+	const Zm = (z) => C.mul(z, sim);
+	const z1 = Zm(toC(e1));
+	const z2 = Zm(toC(e2));
+	const P4 = [[0, 0], z1, C.add(z1, z2), z2];
+	const xs = P4.map((q) => q[0]);
+	const ys = P4.map((q) => q[1]);
+	const mx = (Math.min(...xs) + Math.max(...xs)) / 2;
+	const my = (Math.min(...ys) + Math.max(...ys)) / 2;
+	const pcx = 0.27 * w;
+	const pcy = 0.5 * h;
+	const r1 = 0.4 * Math.min(h, 0.5 * w);
+	const sc = Math.min(
+		0.3 * h,
+		(1.2 * r1) / (Math.max(...xs) - Math.min(...xs)),
+		(1.2 * r1) / (Math.max(...ys) - Math.min(...ys))
+	);
+	const toS = (z) => [pcx + sc * (z[0] - mx), pcy - sc * (z[1] - my)];
+	const fromS = ([sx, sy]) => [mx + (sx - pcx) / sc, my - (sy - pcy) / sc];
+	const box = [pcx - r1, pcy - r1, pcx + r1, pcy + r1];
+	const corners = [
+		[box[0], box[1]],
+		[box[2], box[1]],
+		[box[2], box[3]],
+		[box[0], box[3]]
+	].map(fromS);
+	const fin = span(u, 0, 0.08);
+
+	// The plane: the tiling by the current basis (the parallelograms' edges,
+	// and the net, four lines a cell), and the lattice — which never moves.
+	const L = layerOf(ctx);
+	const family = (d, base) => {
+		const A = cross2(d, base);
+		const cs = corners.map((q) => cross2(d, q) / A);
+		const c0 = Math.floor(Math.min(...cs) * TW.n);
+		const c1 = Math.ceil(Math.max(...cs) * TW.n);
+		for (let i = c0; i <= c1; i++) {
+			const s = clipLine(toS(C.scale(base, i / TW.n)), [d[0], -d[1]], box);
+			if (!s) continue;
+			const bold = i % TW.n === 0;
+			stroke(L, s, { color: PAL.chalk, width: bold ? 1.6 : 1, alpha: fin * (bold ? 0.55 : 0.2) });
+		}
+	};
+	family(z1, z2);
+	family(z2, z1);
+	const ab = corners.map((q) => {
+		const z = C.div(q, sim);
+		const b = z[1] / TT[1];
+		return [z[0] - b * TT[0], b];
+	});
+	for (
+		let n = Math.floor(Math.min(...ab.map((q) => q[1]))) - 1;
+		n <= Math.max(...ab.map((q) => q[1])) + 1;
+		n++
+	)
+		for (
+			let m = Math.floor(Math.min(...ab.map((q) => q[0]))) - 1;
+			m <= Math.max(...ab.map((q) => q[0])) + 1;
+			m++
+		) {
+			const q = toS(Zm(toC([m, n])));
+			disc(L, q[0], q[1], 2.8, { fill: PAL.node, alpha: 0.9 * fin });
+		}
+	layDown(ctx, L, pcx, pcy, 0.62 * r1, r1);
+	// The first basis's cell, dashed; the current one, in chalk.
+	const P0 = [[0, 0], [1, 0], toC([1, 1]), toC([0, 1])].map((z) => toS(Zm(z)));
+	stroke(ctx, [...P0, P0[0]], {
+		color: PAL.chalk,
+		width: 1.4,
+		alpha: 0.45 * span(u, 0.1, 0.16),
+		dash: [5, 6]
+	});
+	const Q = P4.map(toS);
+	ctx.save();
+	ctx.globalAlpha = 0.07 * fin;
+	ctx.fillStyle = PAL.chalk;
+	ctx.beginPath();
+	Q.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])));
+	ctx.fill();
+	ctx.restore();
+	stroke(ctx, [...Q, Q[0]], { color: PAL.chalk, width: 2.4, alpha: 0.95, upto: fin });
+	// ω₁′ and ω₂′ from 0, arrowed; τ = ω₂′/ω₁′ (at the end), lit.
+	for (const z of [z1, z2]) {
+		const a = toS([0, 0]);
+		const b = toS(z);
+		const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+		const d = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
+		const s = 9;
+		stroke(
+			ctx,
+			[
+				[b[0] - d[0] * s * 1.6 + d[1] * s * 0.7, b[1] - d[1] * s * 1.6 - d[0] * s * 0.7],
+				b,
+				[b[0] - d[0] * s * 1.6 - d[1] * s * 0.7, b[1] - d[1] * s * 1.6 + d[0] * s * 0.7]
+			],
+			{ color: PAL.chalk, width: 2.2, alpha: fin }
+		);
+	}
+	disc(ctx, ...toS([0, 0]), 4, { fill: PAL.chalk, alpha: fin });
+	lit2(ctx, toS(z2), 5, fin);
+
+	// The torus, in the first basis's coordinates (a along ω₁ round the hole,
+	// b along ω₂ round the tube): the lines of the current basis on it.
+	const cam = shiftCam(
+		orbit(w, h, {
+			target: [0, 0, 0],
+			az: spline(u, [
+				[0, 1.15],
+				[1, 1.85]
+			]),
+			el: spline(u, [
+				[0, 0.72],
+				[0.5, 0.6],
+				[1, 0.52]
+			]),
+			dist: spline(u, [
+				[0, 11.2],
+				[1, 10.4]
+			]),
+			fov: 34
+		}),
+		0.25 * w,
+		0.02 * h
+	);
+	const T = (q) => ring(q, TW.R, TW.r);
+	zReset(w, h);
+	zGrid(cam, patch(T, 0, 1, 0, 1, 72, 28));
+	const ref = 10.6;
+	const lines = [];
+	for (const [d, base, wide] of [
+		[e1, e2, 2.6],
+		[e2, e1, 2.2]
+	])
+		for (let i = 0; i < TW.n; i++) {
+			const c = i / TW.n;
+			const pts = [];
+			for (let j = 0; j <= 260; j++) {
+				const l = j / 260;
+				pts.push(T([c * base[0] + l * d[0], c * base[1] + l * d[1]]));
+			}
+			lines.push({
+				R: runs3(cam, pts),
+				o: {
+					color: PAL.chalk,
+					width: i ? 1.3 : wide,
+					alpha: fin * (i ? 0.6 : 0.95),
+					ref,
+					hid: 0.3
+				}
+			});
+		}
+	// The cut each twist is made along, while it is made: the circle b = 0,
+	// then the ω₂′-line through 0.
+	const cut1 = Math.sin(Math.PI * t1);
+	const cut2 = Math.sin(Math.PI * t2);
+	if (cut1 > 0.01) {
+		const pts = [];
+		for (let j = 0; j <= 200; j++) pts.push(T([j / 200, 0]));
+		lines.push({
+			R: runs3(cam, pts),
+			o: { color: PAL.chalk, width: 4, alpha: 0.35 * cut1, ref, glow: 10 }
+		});
+	}
+	if (cut2 > 0.01) {
+		const pts = [];
+		for (let j = 0; j <= 200; j++) pts.push(T([(j / 200) * e2[0], (j / 200) * e2[1]]));
+		lines.push({
+			R: runs3(cam, pts),
+			o: { color: PAL.chalk, width: 4, alpha: 0.35 * cut2, ref, glow: 10 }
+		});
+	}
+	for (const l of lines) paint(ctx, l.R, l.o, 'back');
+	for (const l of lines) paint(ctx, l.R, l.o, 'front');
+	// The lattice, on the torus: one point, lit.
+	const q0 = cam.project(T([0, 0]));
+	lit(ctx, cam, T([0, 0]), 4.5, fin * (zHidden(q0) ? 0.35 : 1));
+}
+
+// ── weierstrass ──────────────────────────────────────────────────────────────
+// ℘ by its q-series, u = e^{2πiz}, q = e^{2πiτ}:
+//   ℘(z) = (2πi)² [1/12 + Σ_{n∈ℤ} qⁿu/(1 − qⁿu)² − 2 Σ_{n≥1} qⁿ/(1 − qⁿ)²].
+// With Im τ = 1.05, |q| ≈ 0.0014: twelve terms are exact to double precision
+// (it agrees with the lattice sum Σ′ 1/(z − ω)² − 1/ω² to its own truncation).
+const WT = [0.3, 1.05]; // τ
+const WK = 0.2; // ℘ scaled by this onto the sphere
+const WS = {
+	R: 1.45,
+	r: 0.6,
+	c: [0, 0.6, -0.55],
+	plate: [0, -1.15, 1.3],
+	ps: 1.55,
+	rs: 1.3,
+	psi: 0.5
+};
+function wp(a, b) {
+	if (Math.abs(a - Math.round(a)) < 1e-9 && Math.abs(b - Math.round(b)) < 1e-9)
+		return [Infinity, Infinity];
+	const q = C.exp([-TAU * WT[1], TAU * WT[0]]);
+	const z = [a + b * WT[0], b * WT[1]];
+	const uu = C.exp([-TAU * z[1], TAU * z[0]]);
+	const ui = C.div([1, 0], uu);
+	const term = (x) => {
+		const d = C.sub([1, 0], x);
+		return C.div(x, C.mul(d, d));
+	};
+	let s = C.add(term(uu), [1 / 12, 0]);
+	let qn = [1, 0];
+	for (let n = 1; n <= 12; n++) {
+		qn = C.mul(qn, q);
+		s = C.add(s, C.add(term(C.mul(qn, uu)), term(C.mul(qn, ui))));
+		s = C.sub(s, C.scale(term(qn), 2));
+	}
+	return C.scale(s, -TAU * TAU);
+}
+// The torus point (a, b), and the sphere point ℘(a + bτ)·WK (stereographic,
+// ∞ at the top), turned ψ about the vertical.
+const wTorus = (q) => ring(q, WS.R, WS.r, WS.c);
+function wSphere([a, b]) {
+	const [X, Y, Z] = toSphere(C.scale(wp(a, b), WK));
+	const c = Math.cos(WS.psi);
+	const s = Math.sin(WS.psi);
+	return add3(WS.c, mul3([c * X + s * Y, Z, -s * X + c * Y], WS.rs));
+}
+// The plate: the parallelogram 0, 1, 1 + τ, τ on the ground, centred on
+// (1 + τ)/2 (the fourth half-period); its right half turned π about that
+// centre by `f` — z ↦ 1 + τ − z at f = 1, which is −z on the torus.
+function wPlate([a, b], f) {
+	let z = [a + b * WT[0] - (1 + WT[0]) / 2, b * WT[1] - WT[1] / 2];
+	if (a > 0.5 + 1e-9 && f > 0) z = C.rot(z, Math.PI * f);
+	return [WS.plate[0] + WS.ps * z[0], WS.plate[1], WS.plate[2] - WS.ps * z[1]];
+}
+// The net, offset half a step so no line runs through a half-period, and the
+// four seams through them (a, b ∈ {0, ½}): lines of (a, b), with the sphere
+// points of those in the fixed half a ∈ [0, ½] — constant, made once.
+let WGEO = null;
+function wGeo() {
+	if (WGEO) return WGEO;
+	const lines = [];
+	for (let k = 0; k < 16; k++) {
+		const c = (2 * k + 1) / 32;
+		lines.push({ ab: seg2([c, 0], [c, 1], 120), seam: false });
+		lines.push({ ab: seg2([0, c], [0.5, c], 60), seam: false });
+		lines.push({ ab: seg2([0.5, c], [1, c], 60), seam: false });
+	}
+	for (const c of [0, 0.5]) {
+		lines.push({ ab: seg2([c, 0], [c, 1], 160), seam: true });
+		lines.push({ ab: seg2([0, c], [0.5, c], 80), seam: true });
+		lines.push({ ab: seg2([0.5, c], [1, c], 80), seam: true });
+	}
+	// The parallelogram's other two edges: a = 1 is a = 0 again on the torus
+	// (the near half's own rim); b = 1 is b = 0 again, drawn on the plate only.
+	lines.push({ ab: seg2([1, 0], [1, 1], 160), seam: true });
+	lines.push({ ab: seg2([0, 1], [0.5, 1], 80), seam: true, plateOnly: true });
+	lines.push({ ab: seg2([0.5, 1], [1, 1], 80), seam: true, plateOnly: true });
+	for (const L of lines) {
+		L.swung = L.ab.every((q) => q[0] >= 0.5 - 1e-9) && L.ab.some((q) => q[0] > 0.5 + 1e-9);
+		L.sph = L.swung ? null : L.ab.map(wSphere);
+	}
+	const gab = [];
+	const gsph = [];
+	for (let i = 0; i <= 24; i++) {
+		const ra = [];
+		const rs = [];
+		for (let j = 0; j <= 48; j++) {
+			const q = [(0.5 * i) / 24, j / 48];
+			ra.push(q);
+			rs.push(wSphere(q));
+		}
+		gab.push(ra);
+		gsph.push(rs);
+	}
+	const HP = [
+		[0, 0],
+		[0.5, 0],
+		[0, 0.5],
+		[0.5, 0.5]
+	].map((q) => ({ ab: q, sph: wSphere(q) }));
+	WGEO = { lines, gab, gsph, HP };
+	return WGEO;
+}
+
+function weierstrass(ctx, w, h, u) {
+	const G = wGeo();
+	const fin = span(u, 0, 0.08);
+	const f = io(span(u, 0.2, 0.46));
+	const m = io(span(u, 0.5, 0.78));
+	const th = -Math.PI * f; // the near half swings up and over
+	const cam = orbit(w, h, {
+		target: spline3(u, [
+			[0, [0, -0.05, 0.35]],
+			[0.5, [0, 0.05, 0.25]],
+			[1, [0, 0.15, 0]]
+		]),
+		az: spline(u, [
+			[0, -0.3],
+			[0.5, 0.15],
+			[1, 0.75]
+		]),
+		el: spline(u, [
+			[0, 0.5],
+			[0.5, 0.6],
+			[1, 0.5]
+		]),
+		dist: spline(u, [
+			[0, 7.2],
+			[0.5, 6.7],
+			[1, 6.1]
+		]),
+		fov: 40
+	});
+	const ref = 6.6;
+	// The surface: the torus with its near half turned th about the axis
+	// through the half-periods; then the fixed half, carried to the sphere.
+	zReset(w, h);
+	if (m > 0) {
+		const grid = G.gab.map((row, i) => row.map((q, j) => lerp3(wTorus(q), G.gsph[i][j], m)));
+		zGrid(cam, grid);
+	} else {
+		zGrid(cam, patch(wTorus, 0, 0.5, 0, 1, 36, 40));
+		zGrid(
+			cam,
+			patch((q) => turnAbout(wTorus(q), WS.c, th), 0.5, 1, 0, 1, 36, 40)
+		);
+	}
+	const draw = [];
+	for (const L of G.lines) {
+		if (L.plateOnly || (m > 0 && L.swung)) continue;
+		const pts =
+			m > 0
+				? L.ab.map((q, i) => lerp3(wTorus(q), L.sph[i], m))
+				: L.ab.map((q) => (L.swung ? turnAbout(wTorus(q), WS.c, th) : wTorus(q)));
+		draw.push({
+			R: runs3(cam, pts),
+			o: {
+				color: PAL.chalk,
+				width: L.seam ? 2.3 : 1.1,
+				alpha: fin * (L.seam ? 0.95 : 0.5),
+				ref,
+				hid: 0.3
+			}
+		});
+	}
+	// The plate, under it all: the same lines, the right half turning over.
+	for (const L of G.lines) {
+		const pts = L.ab.map((q) => wPlate(q, f));
+		draw.push({
+			R: runs3(cam, pts),
+			o: {
+				color: PAL.chalk,
+				width: L.seam ? 2 : 1,
+				alpha: fin * (L.seam ? 0.85 : 0.45),
+				ref,
+				hid: 0.25
+			}
+		});
+	}
+	// The half-turn's axis, through the four half-periods.
+	const ax = (1 - span(u, 0.46, 0.54)) * span(u, 0.08, 0.16);
+	if (ax > 0) {
+		const X = WS.R + WS.r + 0.7;
+		const pts = seg2([-X, 0], [X, 0], 120).map(([x]) => [x, WS.c[1], WS.c[2]]);
+		draw.push({
+			R: runs3(cam, pts),
+			o: { color: PAL.chalk, width: 1.4, alpha: 0.6 * ax, ref, hid: 0.4 }
+		});
+	}
+	for (const d of draw) paint(ctx, d.R, d.o, 'back');
+	for (const d of draw) paint(ctx, d.R, d.o, 'front');
+	// The half-periods, lit: four on the torus (on the axis, so the fold
+	// never moves them), and the nine on the plate that are half-periods.
+	for (const H of G.HP) {
+		const P = m > 0 ? lerp3(wTorus(H.ab), H.sph, m) : wTorus(H.ab);
+		const q = cam.project(P);
+		lit(ctx, cam, P, 4.5, fin * (zHidden(q) ? 0.4 : 1));
+	}
+	for (const a of [0, 0.5, 1])
+		for (const b of [0, 0.5, 1]) {
+			const P = wPlate([a, b], f);
+			const q = cam.project(P);
+			lit(ctx, cam, P, 3.2, fin * (zHidden(q) ? 0.4 : 0.9));
+		}
+	if (m > 0.85) limb(ctx, cam, 0.6 * span(m, 0.85, 1), WS.c, WS.rs, PAL.chalk);
+}
+
+// ── hopf ─────────────────────────────────────────────────────────────────────
+// S³ = {|z₁|² + |z₂|² = 1}, z₁ = cos η e^{iξ₁}, z₂ = sin η e^{iξ₂}; projected
+// from (0, 0, 0, 1) to ℝ³ (axis vertical). T_η is the torus of revolution with
+// R = sec η, r = tan η; its Hopf circles ξ₁ = θ, ξ₂ = θ + δ are round circles,
+// every two linked once. The net lies on T_η with tan η = π/TX: there the
+// torus variant's ζ = x + iθ ↦ (ξ₁, ξ₂) = (πx/TX, θ) is a similarity of flat
+// tori, and the projection is conformal, so the net meets at its own angles.
+const H_NET = Math.atan(Math.PI / TX);
+const H_CLIFF = Math.PI / 4;
+const H_OUT = 1.08;
+const H_RIDE = 0.95; // the lens's own circle: outside the Clifford torus, inside the outer
+const H_RD = 0.6;
+const H_TH0 = Math.PI / 2 - H_RD; // its outermost point
+function hopfP(eta, x1, x2) {
+	const c = Math.cos(eta);
+	const s = Math.sin(eta);
+	const d = Math.max(1e-6, 1 - s * Math.sin(x2));
+	return [(c * Math.cos(x1)) / d, (s * Math.cos(x2)) / d, (c * Math.sin(x1)) / d];
+}
+function fibre(eta, delta, n = 160, upto = 1) {
+	const out = [];
+	const k = Math.max(2, Math.round(n * clamp01(upto)));
+	for (let i = 0; i <= k; i++) {
+		const th = (TAU * i) / n;
+		out.push(hopfP(eta, th, th + delta));
+	}
+	return out;
+}
+const rideAt = (th) => hopfP(H_RIDE, th, th + H_RD);
+const H_P0 = rideAt(H_TH0);
+const H_N = (() => {
+	const a = rideAt(0);
+	const n = norm(cross(sub3(rideAt(2.1), a), sub3(rideAt(4.2), a)));
+	return n[1] < 0 ? mul3(n, -1) : n;
+})();
+
+function hopf(ctx, w, h, u) {
+	// The lens: round the nest and in, to the outermost point of its own
+	// circle; then along it, through the hole of every torus, chasing a light.
+	const ride = span(u, 0.56, 1);
+	const th = H_TH0 + 1.15 * Math.PI * (0.3 * ride + 0.7 * ride * ride);
+	const az0 = Math.atan2(H_P0[0], H_P0[2]);
+	const o = orbitPose({
+		target: [0, 0, 0],
+		az: spline(u, [
+			[0, az0 - 1.5],
+			[0.3, az0 - 0.75],
+			[0.58, az0]
+		]),
+		el: spline(u, [
+			[0, 0.66],
+			[0.3, 0.5],
+			[0.58, 0]
+		]),
+		dist: spline(u, [
+			[0, 9.6],
+			[0.3, 7.8],
+			[0.58, Math.hypot(...H_P0)]
+		])
+	});
+	const wp_ = smooth(span(u, 0.5, 0.6));
+	const wt = smooth(span(u, 0.54, 0.7));
+	const pos = lerp3(o.pos, rideAt(th), wp_);
+	const cam = camera3({
+		pos,
+		target: lerp3(o.target, lerp3(rideAt(th + 0.55), [0, 0, 0], 0.45), wt),
+		up: norm(lerp3(o.up, H_N, wt)),
+		fov: lerp(42, 64, smooth(span(u, 0.55, 0.8))),
+		w,
+		h
+	});
+	const ref = lerp(9, 2.5, smooth(span(u, 0.3, 0.7)));
+	const place = ([x, t]) => hopfP(H_NET, (Math.PI * x) / TX, t);
+	zReset(w, h);
+	zGrid(
+		cam,
+		patch(([a, b]) => hopfP(H_NET, TAU * a, TAU * b), 0, 1, 0, 1, 72, 36)
+	);
+
+	// The circles: the core (η = 0) and the axis (η = π/2, through ∞), the
+	// Clifford torus's, the outer torus's, and the lens's own — each written
+	// on in turn.
+	const draw = [];
+	const add = (pts, wd, a) =>
+		a > 0 &&
+		draw.push({ R: runs3(cam, pts), o: { color: PAL.chalk, width: wd, alpha: a, ref, hid: 0.3 } });
+	const wr = span(u, 0, 0.08);
+	add(fibre(0, 0, 160, wr), 2, 0.8);
+	const axis = [];
+	for (let i = 0; i <= 200; i++) axis.push([0, Math.sinh(lerp(-1, 1, i / 200) * 4), 0]);
+	add(axis.slice(0, Math.max(2, Math.round(201 * wr))), 2, 0.8);
+	for (let k = 0; k < 12; k++) {
+		const a0 = 0.05 + 0.011 * k;
+		add(fibre(H_CLIFF, (TAU * k) / 12, 160, span(u, a0, a0 + 0.07)), 1.7, 0.75);
+	}
+	for (let k = 0; k < 10; k++) {
+		const a0 = 0.13 + 0.011 * k;
+		add(fibre(H_OUT, (TAU * (k + 0.5)) / 10, 180, span(u, a0, a0 + 0.07)), 1.3, 0.5);
+	}
+	add(fibre(H_RIDE, H_RD, 200, span(u, 0.24, 0.34)), 2.6, 0.95 - 0.75 * smooth(span(u, 0.5, 0.62)));
+	for (const d of draw) paint(ctx, d.R, d.o, 'back');
+	// The net, streaming with the zoom, on its torus.
+	drawNet(ctx, cam, place, {
+		m: 0.1 * u * 12 + 0.2 * u * u * u * 12,
+		x0: -TX,
+		x1: TX,
+		kp: KPT,
+		ref,
+		alpha: 0.9 * span(u, 0.02, 0.12),
+		gold: [],
+		node: span(u, 0.04, 0.14),
+		cyan: PAL.chalk,
+		pink: PAL.chalk,
+		cw: 1.9,
+		pw: 1.1,
+		hid: 0.28
+	});
+	for (const d of draw) paint(ctx, d.R, d.o, 'front');
+	// The light the lens chases, on its circle.
+	const lp = rideAt(Math.max(th, H_TH0) + 0.9);
+	const ql = cam.project(lp);
+	if (ql[2] > NEAR) lit(ctx, cam, lp, 5, span(u, 0.32, 0.38) * (zHidden(ql) ? 0.4 : 1));
+}
+
+// ── knot ─────────────────────────────────────────────────────────────────────
+// The flat torus [0, 1)², X round the tube and Y round the hole; the line
+// (X, Y) = (X₀ + ps, Y₀ + qs), s ∈ [0, 1], slope q/p, closes after p turns
+// round the tube and q round the hole: the (p, q) torus knot (T(p, q) ≅
+// T(q, p): (3, 2) is the trefoil, (5, 2) the cinquefoil).
+const KN = { R: 1.4, r: 0.55, c: [0, 0.6, -1.1], plate: [0, -1.25, 0.95], side: 2.2 };
+const KS0 = [0.11, 0.03];
+const KNOTS = [
+	{ p: 3, q: 2, draw: [0.05, 0.4], on: [0.03, 0.07], off: [0.45, 0.53] },
+	{ p: 5, q: 2, draw: [0.5, 0.9], on: [0.5, 0.54], off: [2, 2] }
+];
+const kTorus = ([X, Y], lift = 0) => {
+	const P = ring([Y, X], KN.R, KN.r, KN.c);
+	return lift ? add3(P, mul3(ringN([Y, X]), lift)) : P;
+};
+const kPlate = ([X, Y]) => [
+	KN.plate[0] + (X - 0.5) * KN.side,
+	KN.plate[1],
+	KN.plate[2] - (Y - 0.5) * KN.side
+];
+// The pen's way along the line: from rest, then steady (s = 1 at the end of
+// the draw, and on round the closed knot after).
+const pen = (u, [u0, u1]) => {
+	const x = (u - u0) / (u1 - u0);
+	return x > 0 ? (x - 0.08 * (1 - Math.exp(-x / 0.08))) / 0.92 : 0;
+};
+// The line from s = 0 to s on the square: cut where it crosses an edge, each
+// piece moved back into the square.
+function squarePieces(K, s) {
+	const cuts = [0, s];
+	for (let n = 1; n < K.p * s + KS0[0] + 1; n++) {
+		const t = (n - KS0[0]) / K.p;
+		if (t > 0 && t < s) cuts.push(t);
+	}
+	for (let n = 1; n < K.q * s + KS0[1] + 1; n++) {
+		const t = (n - KS0[1]) / K.q;
+		if (t > 0 && t < s) cuts.push(t);
+	}
+	cuts.sort((a, b) => a - b);
+	const out = [];
+	for (let i = 0; i < cuts.length - 1; i++) {
+		const [t0, t1] = [cuts[i], cuts[i + 1]];
+		if (t1 - t0 < 1e-9) continue;
+		const tm = (t0 + t1) / 2;
+		const fx = Math.floor(KS0[0] + K.p * tm);
+		const fy = Math.floor(KS0[1] + K.q * tm);
+		out.push(
+			seg2(
+				[KS0[0] + K.p * t0 - fx, KS0[1] + K.q * t0 - fy],
+				[KS0[0] + K.p * t1 - fx, KS0[1] + K.q * t1 - fy],
+				16
+			)
+		);
+	}
+	return out;
+}
+
+function knot(ctx, w, h, u, secs) {
+	const cam = orbit(w, h, {
+		target: spline3(u, [
+			[0, [0, -0.3, 0]],
+			[1, [0, -0.2, -0.15]]
+		]),
+		az: spline(u, [
+			[0, -0.35],
+			[0.5, 0.1],
+			[1, 0.45]
+		]),
+		el: spline(u, [
+			[0, 0.5],
+			[0.5, 0.62],
+			[1, 0.9]
+		]),
+		dist: spline(u, [
+			[0, 9.4],
+			[1, 8.6]
+		]),
+		fov: 40
+	});
+	const ref = 8.8;
+	const fin = span(u, 0, 0.06);
+	zReset(w, h);
+	zGrid(
+		cam,
+		patch((q) => kTorus([q[1], q[0]]), 0, 1, 0, 1, 72, 30)
+	);
+
+	const draw = [];
+	const add = (pts, o) =>
+		draw.push({ R: runs3(cam, pts), o: { color: PAL.chalk, ref, hid: 0.3, ...o } });
+	// The flat torus on the ground, with the arrows of its gluing, and the
+	// faint net it shares with the torus: meridians Y = k/12, longitudes X = k/6.
+	for (let k = 1; k < 12; k++) {
+		add(seg2([0, k / 12], [1, k / 12], 12).map(kPlate), { width: 1, alpha: 0.22 * fin });
+		add(
+			seg2([0, k / 12], [1, k / 12], 90).map((q) => kTorus(q)),
+			{ width: 1, alpha: 0.3 * fin }
+		);
+	}
+	for (let k = 1; k <= 6; k++) {
+		if (k < 6) add(seg2([k / 6, 0], [k / 6, 1], 12).map(kPlate), { width: 1, alpha: 0.22 * fin });
+		add(
+			seg2([k / 6, 0], [k / 6, 1], 120).map((q) => kTorus(q)),
+			{ width: 1, alpha: 0.3 * fin }
+		);
+	}
+	const SQ = [
+		[0, 0],
+		[1, 0],
+		[1, 1],
+		[0, 1],
+		[0, 0]
+	];
+	add(SQ.map(kPlate), { width: 2.2, alpha: 0.95 * fin });
+	// The knots, drawing themselves on both.
+	const pens = [];
+	for (const K of KNOTS) {
+		const s = pen(u, K.draw);
+		const a = 1 - span(u, K.off[0], K.off[1]);
+		if (s <= 0 || a <= 0) continue;
+		const sd = Math.min(1, s);
+		const n = Math.max(2, Math.ceil(sd * (K.p + K.q) * 80));
+		const pts = [];
+		for (let i = 0; i <= n; i++) {
+			const t = (sd * i) / n;
+			pts.push(kTorus([KS0[0] + K.p * t, KS0[1] + K.q * t]));
+		}
+		add(pts, { width: 2.8, alpha: 0.98 * a });
+		for (const P of squarePieces(K, sd)) add(P.map(kPlate), { width: 2.4, alpha: 0.95 * a });
+		pens.push({ K, s, a: span(u, K.on[0], K.on[1]) * a });
+	}
+	for (const d of draw) paint(ctx, d.R, d.o, 'back');
+	for (const d of draw) paint(ctx, d.R, d.o, 'front');
+	// The arrows of the gluing: one on the sides, two on the top and bottom.
+	const ao = { color: PAL.chalk, width: 2, alpha: 0.9 * fin, ref };
+	const ex = [1, 0, 0];
+	const ey = [0, 0, -1];
+	for (const X of [0, 1]) chevrons(ctx, cam, kPlate([X, 0.5]), ey, ex, 0.08, 1, ao);
+	for (const Y of [0, 1]) chevrons(ctx, cam, kPlate([0.5, Y]), ex, ey, 0.08, 2, ao);
+	// The pen: the swimmer on the torus, a lit point on the square.
+	for (const { K, s, a } of pens) {
+		if (a <= 0) continue;
+		const path = (v) => kTorus([KS0[0] + K.p * 2 * v, KS0[1] + K.q * 2 * v], 0.14);
+		drawHelix(ctx, cam, poseOn(path, s / 2, secs * 2.6 * Math.PI, 0.2), {
+			alpha: a,
+			width: 2.2,
+			core: 0.9,
+			glow: 0.5,
+			depth: { hidden: zHidden }
+		});
+		const X = KS0[0] + K.p * s;
+		const Y = KS0[1] + K.q * s;
+		lit(ctx, cam, kPlate([X - Math.floor(X), Y - Math.floor(Y)]), 4.5, a);
+	}
 }

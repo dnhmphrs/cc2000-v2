@@ -116,7 +116,9 @@ export default async function make({ THREE, renderer, at }) {
 	const RINGS = q.get('tunnel') !== '0';
 	const SPERM = q.get('sperm') !== '0';
 
-	const T = SCENES.approach;
+	// The run no longer has a crtOn window (the set lights as the nose reaches
+	// its glass), so this sketch keeps the one it was made against.
+	const T = { crtOn: [0.86, 0.93], ...SCENES.approach };
 	const TK = SCENES.kaleido;
 	const A = APPROACH;
 	const K = KALEIDO;
