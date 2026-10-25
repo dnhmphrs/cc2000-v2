@@ -654,8 +654,8 @@ export default async function make({ THREE, at }) {
 		// flash, to 0.94 of the board's height (an upright board crops its
 		// sides rather than leave it small).
 		const fill = { h: 0.94, w: h > w ? 1.75 : 0.985 };
-		// The fall starts with the first plate 0.15 h tall (it was 0.34: too
-		// big by the flash — the lead): a speck swum up on slowly, what the band opens
+		// The fall starts with the first plate 0.3 h tall (0.15 was too small
+		// at the flash — the lead): a speck swum up on slowly, what the band opens
 		// on, the lens still coming to it (at ζ < 0 the lens is X^ζ as far as
 		// at rest, the plate 1/X^ζ the size).
 		// (made with `inside`, as the fall itself is: so the last room has its
@@ -663,7 +663,7 @@ export default async function make({ THREE, at }) {
 		// counts back from it in e-folds rather than going nowhere)
 		const g0 = makeFall({ art, order, beats: fb, inside: 0.5 }).geometry(w, h);
 		const X0 = g0.levels[0].X;
-		const far = g0.plate / (0.15 * h);
+		const far = g0.plate / (0.3 * h);
 		const z0 = far > 1 ? clamp(Math.log(far) / Math.log(X0), -2, -0.05) : -0.05;
 		// Inside: how far into the last room's glass the lens stops — so the
 		// room is FILL.w times the board's width (the monitor at the middle,
