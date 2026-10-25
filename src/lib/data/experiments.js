@@ -590,17 +590,22 @@ export const FLOWS = [
 	{
 		sketch: 'flow-strand-sketch',
 		name: 'Strand · sketch',
-		what: 'the next run (/next), in a shaky warm hand (Eva / Akira): one tunnel of hand-drawn rings and speed lines, the maths slammed up and struck out in red, the circle drawn out into a rectangle as the rooms begin and staying so, the years and their news, the months and the days flying out over the rooms, the lens to rest inside the last room, the date once, a white band blowing out of the screen into the sunbeam and the colour; every word in log/sketch-copy.js'
+		what: 'the next run (/next), sketch D: one tunnel in a shaky warm hand (Eva / Akira), in two parts — THE DATE: the maths slammed up and struck out in red, quickening into the mass of years and their news, months and days, the date found in the middle of the board and ringed; THE SONG: the circle drawn out into the slot as it is found and kept so, the rooms rushing past inside it with a glimpse of each one’s colour, the song computed over them (steaminess, the almanac, the chart week), the lens to rest inside the last room, the white band out of the screen into the sunbeam, the song and its artist held on the lit room; every word in log/sketch-copy.js'
 	},
 	{
 		sketch: 'flow-strand-sketch-a',
 		name: 'Sketch · A',
-		what: 'kept beside the next run (/next?v=a): sketch as it was at 0.11 — the lens, the GPU ink, the landing inside the room; the journey in its two halves, the count, the band, the dive, the rooms, Zeller over them'
+		what: 'kept beside the next run (/next?v=a): the original sketch of 0.10 — the journey in two halves: the count of days struck off down the tunnel, the rings drawn apart into the slot, the date on the white-hot band, the dive through it, the chalk fall through the rooms with Zeller over them, the flash'
 	},
 	{
 		sketch: 'flow-strand-sketch-b',
 		name: 'Sketch · B',
-		what: 'the B round, one version kept (/next?v=b): variant two — every wrong sum a real date and the zoom flying into its decade, then the long way day by day to the date on the band — with its opening −266 DAYS slam taken out'
+		what: 'kept beside the next run (/next?v=b): sketch A’s tuned version of 0.11 — the same two halves through the lens and the GPU ink, the soft fuzz that keeps moving, the sunbeam flash, the landing inside the room'
+	},
+	{
+		sketch: 'flow-strand-sketch-c',
+		name: 'Sketch · C',
+		what: 'kept beside the next run (/next?v=c): 0.13 — one tunnel half as long, the number theory then the flying dates and news, the circle drawn into a rectangle as the rooms begin, the date once on the last screen, the band flash with the flood of colour'
 	},
 	{
 		sketch: 'flow-strand-sketch-one',

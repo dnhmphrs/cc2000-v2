@@ -95,10 +95,13 @@ its header the map; docs/explore-10.md the round it came from), out of the
 lab in a plain environment of its own — one canvas, one WebGPURenderer, the
 run answered by hand, no lab bar and no sketch tags (`board.js tag` stays
 silent there). `?v=<name>` plays a variant `flow-strand-sketch-<name>.js`:
-`?v=a` is sketch as it was at 0.11 (two halves), `?v=b` the B round's one
-kept version (variant two without its opening slam); the five of 0.12 are
-set aside, kept for reference; `?at=` and `?demo=1`
-as in the lab. **Every word that flies over the journey is in ONE table,
+the run itself is sketch D (0.14); `?v=a` is the original sketch of 0.10
+(two halves, the slot and the band, the chalk fall), `?v=b` sketch A's tuned
+0.11, `?v=c` sketch C of 0.13 (one short tunnel); the five of 0.12 are set
+aside, kept for reference; `?at=` and `?demo=1` as in the lab. The song comes
+from `functions/answer.js resolve` into the copy's tokens ({title} {artist}
+{chart}); a birthday the archive cannot answer for leaves them blank — the
+three error flows (past, future, unknown) are not in this run yet. **Every word that flies over the journey is in ONE table,
 `lab/log/sketch-copy.js`** — the maths slams, the years and their headlines,
 the months, the days, the captions, the date at the end — each with its
 seconds and where and how it flies; the lead edits it there, and nothing

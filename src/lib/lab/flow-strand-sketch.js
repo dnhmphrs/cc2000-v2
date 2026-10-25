@@ -6,7 +6,10 @@
 // true and drawn AGAIN twelve times a second, on twos, so the lines boil like
 // hand-drawn animation, the camera's own move staying smooth under them
 // (log/sketch-hand.js: the hand, the lettering, the red pencil, the speed
-// lines). ONE tunnel, one zoom, one beat, ~16 s from the swim to the hit:
+// lines). ONE tunnel, one zoom, one beat, ~21 s from the swim to the hit,
+// in two parts: THE DATE (the maths, the mass of dates, the date found in
+// the middle of the board) and THE SONG (the rooms, the song computed over
+// them, the flash, the song named):
 //
 // THE TUNNEL. As the swimmer sets off the hand comes into its lines (the
 // boil ramped in over 1.4 s: the precise compile loosening into a drawing),
@@ -39,17 +42,24 @@
 // it gives; and the days themselves, 266 … 1, a blizzard in the middle. The
 // conception date is nowhere in it: it comes ONCE, at the end.
 //
-// THE RECTANGLE. As the rooms begin (B.stretch) the circle is DRAWN OUT
-// SIDEWAYS: each ring's halves pushed apart — to either side by kx of its
-// radius, up and down by ky — so the round tunnel becomes a slot of rounded
-// rectangles of the rooms' own proportion (φ), the long runs drawn freehand
-// (cut and wobbled, so the lattice behind is looser than the circles were);
+// THE SLOT. As the date is found (B.stretch) the circle is DRAWN OUT
+// SIDEWAYS, as the original strand/sketch drew it at the end of its tunnel
+// before its dive: each ring's halves pushed apart along the seam by one and
+// a half boards — far past the edges, so what is left of every ring is its
+// two long runs, a line above and a line below the middle, rushing up and
+// down off it, drawn freehand (cut and wobbled, so the lattice behind is
+// looser than the circles were) — and the speed lines spray out of that seam,
+// more across than up: the whole picture shifts into that horizontal rush,
 // and it STAYS so through the whole fall: the same rings, the same zoom,
 // going on round every room, under the plates and through every glass, so
-// every room hangs in the tunnel the swimmer came down — never back to
-// circles. The rooms rush past inside it (log/fall.js's chalk plates through
-// the hand: every cel jittering a pixel or so each drawing, every line
-// wobbling and overshooting its corners), faster and faster, to the last.
+// every room hangs in the slot the swimmer came down — never back to
+// circles, let go only as the lens lands. The rooms rush past inside it
+// (log/fall.js's chalk plates through the hand: every cel jittering a pixel
+// or so each drawing, every line wobbling and overshooting its corners),
+// faster and faster, to the last — each carrying a GLIMPSE of its own colour
+// (ALONG, log/fall.js colourAlong: a fifth at the first room, more the
+// deeper), one style of colour from the first room to the last, which floods
+// to full under the light.
 //
 // THE LAST ROOM, FROM INSIDE. The fall does not stop at the last room's
 // plate, seen whole from a distance: it goes on into it and slows to rest
@@ -81,23 +91,30 @@
 // February, → 08 · 06 · 1899, a Thursday); the number theory worked for real
 // (log/sketch-copy.js: a prime at the birth year, the curve never singular).
 //
-// Beats, in seconds (46; at = t / 46):
-//    0    – 22.3  strand's, unchanged (the title, the strand, the compile)
+// Beats, in seconds (53; at = t / 53):
+//    0    – 22.3  strand's (the title, the strand, the compile; the reading
+//                 frame 16 – 18.9, a touch quicker than it was)
 //   22.2          life; 22.2 – 23.6 the hand comes into the lines
 //   22.5          the swim from rest; 22.6 – 24.4 the lens round behind it;
 //                 24.4 – 26.4 onto the axis; the zoom gathering to the fall's
-//                 opening rate over 24 – 29
+//                 opening rate over 24 – 33.5
 //   23.1 – 25.4   the rings sketched in; 24.0 – 26.4 the speed lines;
 //                 24 – 26 the glint, the first room a speck in it
-//   25.7 – 30.5   THE MATHS (sketch-copy.js)
-//   30.2 – 31.4   the circle drawn out sideways into the rectangle
-//   30.8 – 38.0   THE FALL: the rooms rushing past inside it, the years, the
-//                 news, the months, the days flying out over them (31 – 37.2)
-//   36.6 – 38.0   the lens slows to rest inside the last room; 37.2 – 38.2
-//                 the last screen switches on; 38.0 the date, ringed 38.45
-//   38.9          the conception: the white blows out of the screen (0.22 s),
-//                 held to 39.3, burnt out over ~2 s, the colour flooding in
-//                 under it 39.15 – 41.9, the beams settling; 44.8 – 46 a fade
+//   25.7 – 30.9   THE DATE, I: THE MATHS (sketch-copy.js), quickening …
+//   30.3 – 35.0   … into the mass of dates: the years and their news, the
+//                 months, the days (a blizzard by the end)
+//   34.9          THE DATE, found: in the middle of the board, ringed 35.4,
+//                 held over the mess; 35.2 – 36.4 the circle drawn out into
+//                 the slot as it is found
+//   35.6 – 43.2   THE SONG: the rooms rushing past inside the slot, a glimpse
+//                 of each one's colour, the song computed over them
+//                 (36.6 – 41.3: the steaminess, the almanac, the chart week)
+//   41.6 – 43.2   the lens slows to rest inside the last room; 42.3 – 43.3
+//                 the last screen switches on
+//   44.0          the conception: the white blows out of the screen (0.22 s),
+//                 held to 44.4, burnt out over ~2 s, the colour flooding in
+//                 under it 44.25 – 47, the beams settling; 44.5 the song and
+//                 its artist, ringed 45.3, held; 51.6 – 53 a fade
 //
 // GPU AND BOARD. Through the lens (log/lens.js: three's WebGPURenderer on
 // its WebGL 2 backend, on its own canvas in the board's place) the board is
@@ -159,7 +176,18 @@ import { makeGpuInk } from './log/gpu-ink.js';
 import { flash as burnOut } from './log/flash.js';
 import { makeFall, orderOf } from './log/fall.js';
 import { DECADES, loadRooms, decadeOfDate, PLATE } from './log/rooms.js';
-import { COPY, HEADLINES, NOW, GESTATION, MON, DAYS, fieldsOf, fill } from './log/sketch-copy.js';
+import {
+	COPY,
+	HEADLINES,
+	NOW,
+	GESTATION,
+	MON,
+	DAYS,
+	fieldsOf,
+	fill,
+	birthOf
+} from './log/sketch-copy.js';
+import { resolve } from '../functions/answer.js';
 import {
 	HAND,
 	boilOf,
@@ -184,7 +212,7 @@ export const meta = {
 };
 
 // ── The beats ────────────────────────────────────────────────────────────────
-const SECONDS = 46;
+const SECONDS = 53;
 const TERM = makeTerminal(0.8, { cmd: false, align: 'center' });
 const FREEZE = TERM.stop + 0.2; // ≈ 5.14
 const { q1: Q1, wait1: W1, e1: E1, q2: Q2, wait2: W2, e2: E2 } = EPICYCLE.beats;
@@ -204,7 +232,7 @@ const B = {
 	asked: [14.7, 15.3], // the questions go (before the caption types over the slider's row)
 	genetics: [15.3, 22.3], // the caption
 	view: [15.0, 16.2], // the lens comes to the reading
-	read: [16.0, 19.6], // the frame 5′ → 3′
+	read: [16.0, 18.9], // the frame 5′ → 3′ (a touch faster than it was)
 	axis: [19.2, 20.4], // the strand closes onto the axis
 	rope: [19.5, 21.0], // the backbones twist down the tail
 	back: [19.4, 21.2], // the lens draws back to the whole body
@@ -219,17 +247,19 @@ const B = {
 	tunnel: [23.1, 25.4], // the rings sketched in, near to far
 	lines: [24.0, 26.4], // the speed lines come
 	glint: [24.0, 26.0], // the light at the end of it
-	gather: [24.0, 29.0], // the zoom gathers to the fall's opening rate
-	narrow: [27.0, 30.5], // the field of view closes to the fall's
-	stretch: [30.2, 31.4], // the circle drawn out sideways into the rectangle
-	fall: [30.8, 38.0],
-	land: [36.6, 38.0], // … to rest inside the last room
-	screen: [37.2, 38.2], // the last screen switched on
-	aim: [36.9, 38.9], // the swimmer on into the last glass
-	hit: 38.9, // the conception: the white blows out of the screen
-	colour: [39.15, 41.9], // the room's colour flooded in under the light
-	push: [39.1, 42.1], // (?inside=0: the lens in on the last room after the flash)
-	out: [44.8, 46]
+	gather: [24.0, 33.5], // the zoom gathers to the fall's opening rate
+	narrow: [31.5, 35.3], // the field of view closes to the fall's
+	// THE DATE (sketch-copy.js: 34.9, ringed 35.4) is the first part's end:
+	// as it is found the circle is drawn out into the slot and the rooms begin
+	stretch: [35.2, 36.4], // the circle drawn out sideways into the slot
+	fall: [35.6, 43.2],
+	land: [41.6, 43.2], // … to rest inside the last room
+	screen: [42.3, 43.3], // the last screen switched on
+	aim: [42.0, 44.0], // the swimmer on into the last glass
+	hit: 44.0, // the conception: the white blows out of the screen
+	colour: [44.25, 47.0], // the room's colour flooded in under the light
+	push: [44.2, 47.2], // (?inside=0: the lens in on the last room after the flash)
+	out: [51.6, 53]
 };
 
 // THE FLASH: the band in the last screen blowing out — across the board's
@@ -286,8 +316,11 @@ const DS = S_LEN / NR; // between rungs
 const RS = 0.55; // the helix's radius
 const GROOVE = 0.78 * Math.PI; // the backbones' offset round the axis (the minor groove)
 const XR = (j) => (j + 0.5) * DS; // rung j's place on the axis
-const TWIST_NAT = (34.3 * Math.PI) / 180; // B-DNA's, before the spice is asked
-const twistOf = (n) => ((9 * n) / 180) * Math.PI; // 9° a base pair a stop
+// The twist: 9° a base pair a stop of the spice, from 18° at 1 (what was 2:
+// a touch more than the least there was) — and the strand's own twist before
+// the spice is asked IS the slider's rest, 1, so it never has to untwist.
+const twistOf = (n) => ((9 * (n + 1)) / 180) * Math.PI;
+const TWIST_NAT = twistOf(1);
 const SPIN = TAU / 18; // the strand turns once in 18 s while it is typed
 function basesOf(digits) {
 	const out = [];
@@ -353,8 +386,14 @@ const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05 };
 // The fall: five crossings (six rooms, the answer's last) at strand's pace,
 // so the rooms rush (a crossing every ~1.3 s, at 0.5–1 e-folds a second).
 const FALL_X = 5;
-const INSIDE = 0.4; // the fall stops inside the last room (?inside=: this far into its glass)
-const FILL = { w: 3.1, h: 1.15 }; // … where the room is this many boards wide, and at least this tall
+const INSIDE = 0.25; // the fall stops inside the last room (?inside=: this far into its glass)
+const FILL = { w: 2.3, h: 1.0 }; // … where the room is this many boards wide, and at least this tall
+// The colour as you fall (log/fall.js colourAlong): every room carries a
+// share of its own colour all the way down — a glimpse of each, the deeper
+// the more, the last one's flooded to full under the light — ONE style of
+// colour from the first room to the end, rather than a chalk fall coloured
+// at its last second.
+const ALONG = (k, L) => 0.2 + 0.36 * Math.pow(k / Math.max(1, L), 1.3);
 const FALL_PACE = { n: 512, c: 0.55 };
 
 // ── The swimmer, followed ────────────────────────────────────────────────────
@@ -458,7 +497,7 @@ export default async function make({ THREE, at }) {
 		const body = makeBody(spec);
 		const decade = forced ?? decadeOfDate(ans.date);
 		const order = orderOf(decade, FALL_X);
-		const F = fieldsOf(ans.date);
+		const F = fieldsOf(ans.date, songOf(ans));
 		const words = wordsOf(F);
 		const fb = { fall: B.fall, land: B.land, colour: B.colour, push: B.push, swim: [-2, -1] };
 		// The last room ends near full size: the lens pushed in on it after the
@@ -1014,7 +1053,14 @@ export default async function make({ THREE, at }) {
 	// tunnel's rings, projected by the chase's lens, and the fall's, about the
 	// fall's own vanishing point: the same rings, the same zoom; let go as the
 	// lens lands.
-	const STRETCH = { kx: 1.0, ky: 0.236 }; // (1 + kx) / (1 + ky) = φ
+	// THE SLOT (as the original strand/sketch had it at the end of its tunnel,
+	// before its dive): each ring's halves are pushed apart along the seam by
+	// SLOT.W of the board's width — far past its edges, so what is left of a
+	// ring is its two long runs, a line above and a line below the middle,
+	// rushing up and down off it — and off the seam by SLOT.hb of its height;
+	// the round tunnel the slot between two planes, kept so through the whole
+	// fall, the rooms hanging in it.
+	const SLOT = { W: 1.5, hb: 0.012 };
 	function ringsAt(ink, t, w, h, zL, Kpx, O, toScreen, st, bo, hidden) {
 		if (zL <= 1) return;
 		const { k, step, umin } = TUN;
@@ -1039,10 +1085,10 @@ export default async function make({ THREE, at }) {
 			// (Each ring's own stretch, a quarter either way, and a drift off the
 			// centre by a little of its size: the lattice looser than the circles
 			// were, the rectangles not nested to a rule.)
-			const sx = stretch * STRETCH.kx * rs * (0.78 + 0.44 * rand(i, 0, 51));
-			const sy = stretch * STRETCH.ky * rs * (0.8 + 0.4 * rand(i, 0, 52));
+			const sx = Math.pow(stretch, 1.6) * SLOT.W * w * (0.8 + 0.4 * rand(i, 0, 51));
+			const sy = stretch * (SLOT.hb * h + 0.05 * rs * rand(i, 0, 52));
 			const ox = stretch * 0.1 * rs * (2 * rand(i, 0, 53) - 1);
-			const oy = stretch * 0.06 * rs * (2 * rand(i, 0, 54) - 1);
+			const oy = stretch * 0.04 * rs * (2 * rand(i, 0, 54) - 1);
 			const at = (px, py) => {
 				const q = toScreen(zi, px, py);
 				if (!q) return null;
@@ -1165,10 +1211,14 @@ export default async function make({ THREE, at }) {
 	function rush(ctx, w, h, t, O, bo, inFall) {
 		const H = figH(w, h);
 		const come = smooth(span(t, ...B.lines));
-		const gone = 1 - smooth(span(t, B.land[0] - 0.2, B.land[1]));
+		const gone = 1 - smooth(span(t, B.land[0] + 0.2, B.land[1] + 0.2));
 		const s = come * gone;
 		if (s <= 0.004) return;
 		const peak = smooth(span(t, B.fall[0] - 1.5, B.fall[0] + 2.5));
+		// (the slot: the lines spray out of a seam across the middle, more
+		// across than up — the blur the slot's lines rush in)
+		const stretch = smooth(span(t, ...B.stretch));
+		const seam = stretch > 0.01 ? { W: 0.55 * w * stretch, hb: 0.012 * h * stretch } : null;
 		const inner = inFall ? (u) => (0.3 + 0.35 * u) * H : (u) => (0.13 + 0.32 * u) * H;
 		speedLines(ctx, {
 			ox: O[0],
@@ -1181,7 +1231,8 @@ export default async function make({ THREE, at }) {
 			width: 1.7 * Math.sqrt(h / 800),
 			alpha: (inFall ? 0.24 + 0.1 * peak : 0.3 + 0.08 * peak) * s,
 			color: HAND.ink,
-			aspect: spreadX(w, h),
+			band: seam,
+			aspect: spreadX(w, h) * (1 + 0.9 * stretch),
 			gpu: gOver
 		});
 		prof('speedlines');
@@ -1537,7 +1588,7 @@ export default async function make({ THREE, at }) {
 		pc.save();
 		pc.translate(O[0] - w / 2, O[1] - h / 2);
 		try {
-			st.fall.draw(pc, w, h, t, { colourAlong: false, dust: null });
+			st.fall.draw(pc, w, h, t, { colourAlong: ALONG, dust: null });
 		} finally {
 			pc.restore();
 			g.zetaAt = keep;
@@ -1744,7 +1795,7 @@ export default async function make({ THREE, at }) {
 		prof('rings');
 		// The rooms: the first already there, grown out of the tunnel (see
 		// firstRoom); the last floods with colour under the light (B.colour).
-		const cam = st.fall.draw(roomPen(O, zf, bo, calm), w, h, t, { colourAlong: false, dust: null });
+		const cam = st.fall.draw(roomPen(O, zf, bo, calm), w, h, t, { colourAlong: ALONG, dust: null });
 		prof('rooms');
 
 		// The swimmer, the chase's own picture, at the vanishing point; on into
@@ -1804,6 +1855,31 @@ export default async function make({ THREE, at }) {
 			S = null;
 			entry.resize();
 		}
+	};
+}
+
+// ── The song (functions/answer.js: the archive, the one place it is asked) ──
+// The copy's {title} {artist} {chart} {spice}: the chart's track at the
+// spice's position in the week the conception falls in. A birthday the
+// archive cannot answer for ({edge}: 'past', 'future' or 'unknown', the
+// original site's three verdicts) has no song yet — its words are blanks
+// here until the error flows are drawn into the run.
+function songOf(ans) {
+	const b = birthOf(ans.date);
+	const p2 = (x) => String(x).padStart(2, '0');
+	const spice = clamp(Math.round(Number(ans.spice) || 1), 1, 10);
+	const r = resolve(`${b.y}-${p2(b.m)}-${p2(b.d)}`, spice);
+	const up = (s) =>
+		String(s ?? '')
+			.toUpperCase()
+			.replace(/&/g, '+');
+	const [cy, cm, cd] = (r.conceived ?? '').split('-');
+	return {
+		spice,
+		edge: r.edge ?? null,
+		title: r.track ? up(r.track.title) : '',
+		artist: r.track ? up(r.track.artist) : '',
+		chart: r.conceived ? `${cd} · ${cm} · ${cy}` : ''
 	};
 }
 

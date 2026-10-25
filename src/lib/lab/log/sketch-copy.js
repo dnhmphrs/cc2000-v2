@@ -8,12 +8,19 @@
 // THE RUN'S LANDMARKS (seconds; the sketch's beat table `B` has them all):
 //   22.2  the swimmer alive; 22.5 it sets off; 23.1 – 25.4 the tunnel's rings
 //         are sketched in round it, the speed lines from 24
-//   25.7 – 30.5  THE FIRST HALF: the maths, out of the vanishing point
-//   30.2 – 31.4  the circle drawn out sideways into the rectangle
-//   30.8 – 38.0  THE SECOND HALF: the rooms rush past inside it — over them
-//         the years back to the birth year, the news, the months, the days
-//   37.2  the last screen lights; 38.0 the date, once, over it; 38.9 the
-//         flash; 46 the end
+//   THE FIRST PART — THE DATE:
+//   25.7 – 30.6  the maths, out of the vanishing point, each struck as it is
+//         used, coming quicker …
+//   30.3 – 35.0  … into the mass of dates: the years back to the birth year
+//         with their news, the months, the days, a blizzard by the end
+//   34.9  THE DATE, once, in the middle of the board over the mess, ringed
+//         35.4 — and as it is found the circle is drawn out into the slot
+//         (35.2 – 36.4) and the rooms begin
+//   THE SECOND PART — THE SONG:
+//   35.6 – 43.2  the rooms rush past inside the slot, a glimpse of each one's
+//         colour; over them the song is computed (36.6 – 41.3)
+//   42.3  the last screen lights; 44.0 the flash; 44.5 the song and its
+//         artist, held; 53 the end
 //
 // A ROW is one thing that flies. Its fields:
 //   at      the second it leaves the vanishing point (a slam pops in over
@@ -44,26 +51,36 @@
 //   color   a slam's ink, if not the hand's white (e.g. '#1d1612' dark)
 //
 // TOKENS: {…} in any text is filled from the answers (fieldsOf below): the
-// date's parts and the number theory worked from them. The ones there are:
+// date's parts, the number theory worked from them, and the song. They are:
 //   {birth}  14 · 02 · 1987      {dd} {mm} {yyyy} {yy}   its parts
 //   {conception}  24 · 05 · 1986  {weekday}  SUNDAY     (266 days before)
+//   {cdd} {cmm} {cyyyy}  the conception's parts
 //   Zeller's congruence for the conception's weekday —
 //   {zq} {zt} {zK} {zK4} {zJ4} {z5J}  its six terms   {zsum}  their sum
 //   {zh}  the sum mod 7
 //   {p}      the first prime at or past the birth year (1987 is one)
 //   {ecA} {ecB}   the curve y² = x³ + ax + b over F_p: a the day, b the month
 //   {ecPx} {ecPy}  a point P on it, the first past x = the day
-//   {ec2x} {ec2y}  2P, the point doubled
+//   {ec2x} {ec2y}  2P, the point doubled    {np}  the points on the curve
 //   {inv}    the day's inverse mod p: {dd} · {inv} ≡ 1 (mod p)
 //   {ddmm}   the day and month as one number (1402)   {leg}  its Legendre
 //            symbol ({ddmm} | p), 1 or −1
 //   {b1} {b2}  a lattice basis made of the date, (dd, mm) and (yy, cc)
 //   {r1} {r2}  … reduced (Lagrange–Gauss): the two shortest vectors in it
 //   {cf}     the continued fraction of yyyy / ddmm, its first six terms
+//   the conception's day, as the almanac has it —
+//   {jd}     its Julian day number      {doy}  its day of the year  {week}
+//   {moon}   the moon that night (NEW … FULL … WANING CRESCENT)
+//   {sun}    the sun's sign (TAURUS)     {animal}  the year's (TIGER)
+//   {cycle}  the solar cycle it fell in
+//   the song (functions/answer.js: the archive's chart for the week) —
+//   {spice}  the lever, 1 … 10          {chart}  the chart week's date
+//   {title} {artist}   the track at the spice's position (blank on a
+//            birthday the archive cannot answer for)
 //
 // LETTERING: the stroke font has the digits, the capitals, the small letters,
-// and · . , : − + = ( ) ⌊ ⌋ / → ⇒ ≤ < ! ≡ ² ³ | [ ] ; ×. Anything else shows
-// as a space. Headlines are set in CAPITALS.
+// and · . , : − + = ( ) ⌊ ⌋ / → ⇒ ≤ < ! ≡ ≈ ² ³ | [ ] ; × ± Ш. Anything else
+// shows as a space. Headlines are set in CAPITALS.
 
 // ── The copy ─────────────────────────────────────────────────────────────────
 export const NOW = 2026; // the year the years count back from
@@ -71,13 +88,15 @@ export const NOW = 2026; // the year the years count back from
 export const COPY = [
 	// the machine's status lines, typed at the bottom
 	{ caption: 'COMPILING USER GENETICS', at: 15.3, until: 22.3 },
-	{ caption: 'SIMULATING CONCEPTION', at: 22.6, until: 29.0 },
+	{ caption: 'SIMULATING CONCEPTION', at: 22.6, until: 35.6 },
+	{ caption: 'COMPUTING SOUNDTRACK', at: 36.4, until: 43.4 },
 
-	// ── the first half: the maths, straight-faced and quick ──
+	// ── THE FIRST PART, THE DATE. The maths first, straight-faced and quick,
+	// each slam a little sooner after the last …
 	// the weekday of the conception by Zeller's congruence, mod 7
 	{
 		at: 25.7,
-		out: 27.2,
+		out: 27.4,
 		x: 0,
 		y: -0.27,
 		lines: [
@@ -89,79 +108,174 @@ export const COPY = [
 			}
 		],
 		marks: [
-			{ line: 1, text: '{zq} + {zt} + {zK} + {zK4} + {zJ4} + {z5J}', at: 26.6 },
-			{ line: 1, text: '{zh}', at: 26.9, kind: 'circle' }
+			{ line: 1, text: '{zq} + {zt} + {zK} + {zK4} + {zJ4} + {z5J}', at: 26.7 },
+			{ line: 1, text: '{zh}', at: 27.0, kind: 'circle' }
 		]
 	},
 	// an elliptic curve with the date in it, a point on it doubled
 	{
-		at: 26.8,
-		out: 28.4,
+		at: 27.0,
+		out: 28.6,
 		x: 0,
 		y: 0.26,
 		lines: [
 			{ text: 'y² ≡ x³ + {ecA}x + {ecB}  (mod {p})', size: 0.044 },
-			{ text: 'P = ({ecPx}, {ecPy})   2P = ({ec2x}, {ec2y})', size: 0.04, write: [27.2, 27.6] }
+			{ text: 'P = ({ecPx}, {ecPy})   2P = ({ec2x}, {ec2y})', size: 0.04, write: [27.4, 27.8] }
 		],
 		marks: [
-			{ line: 1, text: 'P = ({ecPx}, {ecPy})', at: 27.8 },
-			{ line: 1, text: '2P = ({ec2x}, {ec2y})', at: 28.1, kind: 'circle' }
+			{ line: 1, text: 'P = ({ecPx}, {ecPy})', at: 28.0 },
+			{ line: 1, text: '2P = ({ec2x}, {ec2y})', at: 28.3, kind: 'circle' }
 		]
 	},
 	// the day's inverse mod p, and the Legendre symbol of the day and month
 	{
-		at: 27.9,
-		out: 29.3,
+		at: 28.1,
+		out: 29.5,
 		x: 0,
 		y: -0.26,
 		lines: [
 			{ text: '{dd} · {inv} ≡ 1  (mod {p})', size: 0.046 },
-			{ text: '({ddmm} | {p}) = {leg}', size: 0.046, write: [28.3, 28.6] }
+			{ text: '({ddmm} | {p}) = {leg}', size: 0.046, write: [28.45, 28.75] }
 		],
 		marks: [
-			{ line: 0, text: '{inv}', at: 28.7 },
-			{ line: 1, text: '{leg}', at: 29.0 }
+			{ line: 0, text: '{inv}', at: 28.9 },
+			{ line: 1, text: '{leg}', at: 29.2 }
+		]
+	},
+	// the curve's points counted, and its Tate–Shafarevich group — assumed
+	{
+		at: 29.0,
+		out: 30.2,
+		x: 0,
+		y: 0.26,
+		lines: [
+			{ text: '|E(F{p})| = {np}  ≈  {p} + 1', size: 0.044 },
+			{ text: 'Ш(E) = 0   (ASSUMING BSD)', size: 0.044, write: [29.3, 29.6] }
+		],
+		marks: [
+			{ line: 0, text: '{np}', at: 29.7 },
+			{ line: 1, text: 'ASSUMING BSD', at: 29.9 },
+			{ line: 1, text: '0', at: 30.0, kind: 'circle' }
 		]
 	},
 	// a lattice made of the date, reduced
 	{
-		at: 29.0,
-		out: 30.5,
+		at: 29.7,
+		out: 30.9,
 		x: 0,
-		y: 0.26,
+		y: -0.27,
 		lines: [
 			{ text: '{b1}  {b2}  → LLL →  {r1}  {r2}', size: 0.042 },
-			{ text: '{yyyy} / {ddmm} = {cf}', size: 0.04, write: [29.4, 29.8] }
+			{ text: '{yyyy} / {ddmm} = {cf}', size: 0.04, write: [30.0, 30.3] }
 		],
 		marks: [
-			{ line: 0, text: '{b1}  {b2}', at: 29.6 },
-			{ line: 0, text: '{r1}  {r2}', at: 29.9, kind: 'circle' },
-			{ line: 1, text: '{cf}', at: 30.2 }
+			{ line: 0, text: '{b1}  {b2}', at: 30.3 },
+			{ line: 0, text: '{r1}  {r2}', at: 30.5, kind: 'circle' },
+			{ line: 1, text: '{cf}', at: 30.7 }
 		]
 	},
 
-	// ── the second half: the dates, the news, the mass of numbers ──
-	// the years back from now to the birth year, a headline flying with
-	// every `every`-th year (1: every year's; HEADLINES has one or two each)
-	{ stream: 'years', at: 31.0, out: 34.4, slow: 2.5, fast: 16, every: 3 },
+	// … quickening into the mass of dates: the years back from now to the
+	// birth year, a headline flying with every `every`-th year (1: every
+	// year's; HEADLINES has one or two each)
+	{ stream: 'years', at: 30.3, out: 32.9, slow: 3, fast: 22, every: 2 },
 	// the months back from the birthday, each with the days it gives
-	{ stream: 'months', at: 34.2, out: 35.6 },
-	// the days: 266 … 1, a blizzard in the middle
-	{ stream: 'days', at: 34.9, out: 37.2, slow: 3, fast: 110 },
+	{ stream: 'months', at: 32.7, out: 33.7 },
+	// the days: 266 … 1, a blizzard by the end
+	{ stream: 'days', at: 33.3, out: 35.0, slow: 3, fast: 120 },
 
-	// ── the end: the answer, once, popped up over the last room's screen
-	// and held for the flash to take it; its weekday under it ──
+	// THE DATE, once: in the middle of the board, over the mess, held and
+	// ringed — found, and as it is found the circle opens into the slot and
+	// the rooms begin under it (it fades out over the first of them)
 	{
-		at: 38.0,
-		out: 38.9,
+		at: 34.9,
+		out: 36.6,
 		hold: true,
 		x: 0,
-		y: -0.3,
+		y: 0,
 		lines: [
-			{ text: '{conception}', size: 0.072 },
-			{ text: '{weekday}', size: 0.044, write: [38.3, 38.55] }
+			{ text: '{conception}', size: 0.082 },
+			{ text: '{weekday}', size: 0.046, write: [35.25, 35.5] }
 		],
-		marks: [{ line: 0, at: 38.45, kind: 'circle' }]
+		marks: [{ line: 0, at: 35.4, kind: 'circle', pad: 0.34 }]
+	},
+
+	// ── THE SECOND PART, THE SONG. Over the rooms rushing past: the song
+	// computed from the date, by what the machine takes to matter ──
+	// the parents' steaminess, read off the lever, is a chart position
+	{
+		at: 36.6,
+		out: 38.0,
+		x: 0,
+		y: -0.27,
+		lines: [
+			{ text: 'STEAMINESS  {spice} / 10', size: 0.046 },
+			{ text: '⇒  CHART POSITION  {spice}', size: 0.044, write: [37.0, 37.3] }
+		],
+		marks: [
+			{ line: 0, text: '{spice} / 10', at: 37.4 },
+			{ line: 1, text: '{spice}', at: 37.6, kind: 'circle' }
+		]
+	},
+	// the almanac: the night's moon, the sun's sign, the year's animal
+	{
+		at: 37.7,
+		out: 39.1,
+		x: 0,
+		y: 0.26,
+		lines: [
+			{ text: 'JD {jd}   ·   MOON: {moon}', size: 0.042 },
+			{ text: 'SUN IN {sun}   ·   YEAR OF THE {animal}', size: 0.042, write: [38.1, 38.45] }
+		],
+		marks: [
+			{ line: 0, text: '{moon}', at: 38.5 },
+			{ line: 1, text: '{animal}', at: 38.7 }
+		]
+	},
+	// the day in its year, and the sun's own weather
+	{
+		at: 38.8,
+		out: 40.2,
+		x: 0,
+		y: -0.27,
+		lines: [
+			{ text: 'DAY {doy} OF {cyyyy}   ·   WEEK {week}', size: 0.044 },
+			{ text: 'SOLAR CYCLE {cycle}', size: 0.044, write: [39.2, 39.45] }
+		],
+		marks: [
+			{ line: 0, text: 'WEEK {week}', at: 39.55 },
+			{ line: 1, text: '{cycle}', at: 39.8, kind: 'circle' }
+		]
+	},
+	// the chart week the archive answers from
+	{
+		at: 39.9,
+		out: 41.3,
+		x: 0,
+		y: 0.26,
+		lines: [
+			{ text: 'CHART WEEK  {chart}', size: 0.046 },
+			{ text: 'POSITION {spice}  →  ONE RECORD', size: 0.042, write: [40.3, 40.6] }
+		],
+		marks: [
+			{ line: 0, text: '{chart}', at: 40.7, kind: 'circle' },
+			{ line: 1, text: 'POSITION {spice}', at: 40.9 }
+		]
+	},
+
+	// ── the end: the flash, and the song and its artist on the lit room,
+	// held to the fade ──
+	{
+		at: 44.5,
+		out: 52.2,
+		hold: true,
+		x: 0,
+		y: -0.06,
+		lines: [
+			{ text: '{title}', size: 0.072 },
+			{ text: '{artist}', size: 0.044, write: [45.0, 45.5] }
+		],
+		marks: [{ line: 0, at: 45.3, kind: 'circle', pad: 0.3 }]
 	}
 ];
 
@@ -395,10 +509,97 @@ function contfrac(n, d, k = 6) {
 	}
 	return out;
 }
-const vec = ([x, y]) => `(${x}, ${y})`;
+const neg = (n) => String(n).replace('-', '−'); // the font has the minus, not the hyphen
+const vec = ([x, y]) => `(${neg(x)}, ${neg(y)})`;
 
-// Every token the copy can use, from the answers' eight digits.
-export function fieldsOf(digits) {
+// The curve's points, counted the slow way: 1 + Σ (1 + (f(x) | p)) + the
+// point at infinity (Hasse: within 2√p of p + 1).
+function countPoints(a, b, p) {
+	let n = 1;
+	for (let x = 0; x < p; x++) n += 1 + legendre((((x * x * x + a * x + b) % p) + p) % p, p);
+	return n;
+}
+// ── The almanac ──────────────────────────────────────────────────────────────
+// The Julian day number of a Gregorian date (at noon).
+function julian({ d, m, y }) {
+	const a = Math.floor((14 - m) / 12);
+	const yy = y + 4800 - a;
+	const mm = m + 12 * a - 3;
+	return (
+		d +
+		Math.floor((153 * mm + 2) / 5) +
+		365 * yy +
+		Math.floor(yy / 4) -
+		Math.floor(yy / 100) +
+		Math.floor(yy / 400) -
+		32045
+	);
+}
+const PHASES = [
+	'NEW',
+	'WAXING CRESCENT',
+	'FIRST QUARTER',
+	'WAXING GIBBOUS',
+	'FULL',
+	'WANING GIBBOUS',
+	'LAST QUARTER',
+	'WANING CRESCENT'
+];
+// The moon's phase from its age: a new moon at JD 2451550.1, a synodic
+// month of 29.530588853 days.
+function moonOf(jd) {
+	const age = (((jd - 2451550.1) % 29.530588853) + 29.530588853) % 29.530588853;
+	return PHASES[Math.floor((age / 29.530588853) * 8 + 0.5) % 8];
+}
+const SIGNS = [
+	[1, 20, 'AQUARIUS'],
+	[2, 19, 'PISCES'],
+	[3, 21, 'ARIES'],
+	[4, 20, 'TAURUS'],
+	[5, 21, 'GEMINI'],
+	[6, 21, 'CANCER'],
+	[7, 23, 'LEO'],
+	[8, 23, 'VIRGO'],
+	[9, 23, 'LIBRA'],
+	[10, 23, 'SCORPIO'],
+	[11, 22, 'SAGITTARIUS'],
+	[12, 22, 'CAPRICORN']
+];
+const sunOf = ({ d, m }) => {
+	const i = SIGNS.findIndex(([mm, dd]) => m < mm || (m === mm && d < dd));
+	return i < 0 ? 'CAPRICORN' : i === 0 ? 'CAPRICORN' : SIGNS[i - 1][2];
+};
+const ANIMALS = [
+	'RAT',
+	'OX',
+	'TIGER',
+	'RABBIT',
+	'DRAGON',
+	'SNAKE',
+	'HORSE',
+	'GOAT',
+	'MONKEY',
+	'ROOSTER',
+	'DOG',
+	'PIG'
+];
+const animalOf = (y) => ANIMALS[(((y - 4) % 12) + 12) % 12];
+// The solar cycle a year falls in: the minima that open each, cycle 1 at 1755.
+const MINIMA = [
+	1755.2, 1766.5, 1775.5, 1784.7, 1798.3, 1810.6, 1823.3, 1833.9, 1843.5, 1855.9, 1867.2, 1878.9,
+	1889.6, 1901.7, 1913.6, 1923.6, 1933.8, 1944.2, 1954.3, 1964.8, 1976.5, 1986.8, 1996.4, 2008.9,
+	2019.9
+];
+const cycleOf = ({ d, m, y }) => MINIMA.filter((x) => x <= y + (m - 1 + d / 31) / 12).length;
+const dayOfYear = ({ d, m, y }) => {
+	let n = d;
+	for (let k = 1; k < m; k++) n += DAYS(k, y);
+	return n;
+};
+
+// Every token the copy can use, from the answers' eight digits — and `extra`
+// (the song's, from the sketch), laid over them.
+export function fieldsOf(digits, extra = {}) {
 	const b = birthOf(digits);
 	const c = conceive(b);
 	const z = zeller(c.date);
@@ -409,13 +610,19 @@ export function fieldsOf(digits) {
 	const cc = Math.floor(b.y / 100);
 	const [r1, r2] = reduce2([b.d, b.m], [yy, cc]);
 	const cf = contfrac(b.y, ddmm);
+	const jd = julian(c.date);
+	const doy = dayOfYear(c.date);
 	return {
+		...extra,
 		birth: fmt(b),
 		dd: pad2(b.d),
 		mm: pad2(b.m),
 		yyyy: String(b.y),
 		yy: pad2(yy),
 		conception: fmt(c.date),
+		cdd: pad2(c.date.d),
+		cmm: pad2(c.date.m),
+		cyyyy: String(c.date.y),
 		weekday: z.day,
 		zq: z.terms[0],
 		zt: z.terms[1],
@@ -432,6 +639,7 @@ export function fieldsOf(digits) {
 		ecPy: ec.P[1],
 		ec2x: ec.P2[0],
 		ec2y: ec.P2[1],
+		np: countPoints(ec.a, ec.b, p),
 		inv: modinv(b.d, p),
 		ddmm,
 		leg: legendre(ddmm, p) < 0 ? '−1' : String(legendre(ddmm, p)),
@@ -440,6 +648,13 @@ export function fieldsOf(digits) {
 		r1: vec(r1),
 		r2: vec(r2),
 		cf: `[${cf[0]}; ${cf.slice(1).join(', ')}]`,
+		jd,
+		doy,
+		week: Math.ceil(doy / 7),
+		moon: moonOf(jd),
+		sun: sunOf(c.date),
+		animal: animalOf(c.date.y),
+		cycle: cycleOf(c.date),
 		// the structures the streams are built from
 		_birth: b,
 		_conceived: c,
