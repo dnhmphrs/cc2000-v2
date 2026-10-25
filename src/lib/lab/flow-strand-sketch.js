@@ -341,7 +341,7 @@ const B = {
 	// (K2) THE IRIS: the room floods with its colour UNDER the label as the
 	// label forms — done by the time the spindle hole is dark in it (≈ 37.6,
 	// bandAt: m > 0.35) — so the hole is a porthole onto the colour room
-	colour: [36.6, 37.6],
+	colour: [27.0, 27.6],
 	aim: [41.4, 42.4],
 	// (K2) the monitor switched on softly as the lens comes to rest (B.land
 	// ends 42.4); the song lettered on it; no needle drop, no flash
@@ -372,10 +372,10 @@ const endAt = (edge) => (edge ? BREAK.end : SECONDS);
 const EXIT = {
 	words: [0, 0.7],
 	screen: [0.3, 1.2],
-	fly: [0.9, 4.1],
+	fly: [0.9, 7.4],
 	depth: 2.6,
 	black: 0.25,
-	len: 7
+	len: 11
 };
 const PARALLAX = [0.09, 0.05];
 
@@ -544,7 +544,6 @@ const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05 };
 // pace, so the rooms rush (a crossing every ~1.4 s, at 0.5–1 e-folds a second).
 const FALL_X = 0; // no crossings: the room through the band is the last
 const COUNT_FLIES = false; // the 266 figures and the months flying out (cut G has them)
-const SPINDLE = 0.17; // (I5) the spindle hole's radius, of the label's
 const GROOVE_TURN = 0.11; // (I5) the record's turn under the stylus, turns a second
 const ROOM_AT_BAND = 0.3; // the room this much of the board tall at the dive (firstRoom; the fall's start)
 const INSIDE = 0.12; // the fall stops inside the last room (?inside=: this far into its glass)
@@ -1248,6 +1247,14 @@ export default async function make({ THREE, at }) {
 	// the tunnel is narrowed into it (m), how far it has opened (open), how hot
 	// it is, how white inside (the rooms come out of the white as it opens),
 	// and the glint it grows out of.
+	// (L) THE PORTHOLE: the circle at the apex the room is seen through,
+	// grown steadily from a speck of two pixels as the lens locks on to
+	// ROOM_AT_BAND of the board by the dive (firstRoom's law), in px.
+	const portR = (t, h) => {
+		if (t < B.onAxis[1]) return 0;
+		const u = span(t, B.onAxis[1], B.fall[0]);
+		return 0.5 * lerp(2, ROOM_AT_BAND * h, u * u);
+	};
 	function bandAt(t, w, h, st) {
 		const m = smooth(span(t, ...B.seam));
 		const hold = smooth(span(t, B.conceived[0] - 0.15, B.conceived[0] + 0.3));
@@ -1276,12 +1283,14 @@ export default async function make({ THREE, at }) {
 			// (the room seen through it), and at the dive the stylus goes
 			// through it — it widens out past the board's edges in ~0.5 s, the
 			// white torn off the room, never faded to grey over it.
+			// (L: no label, no spindle — the HOLE is the porthole itself, and at
+			// the dive THE IRIS: widened at one rate in e-folds of its radius,
+			// past the board's corners by B.dive's end)
 			hole: edge
 				? 0
-				: m > 0.35
-					? SPINDLE *
-						hb0 *
-						Math.pow((1.3 * Math.hypot(w, h)) / (SPINDLE * hb0), smooth(span(tau, 0, B.iris)))
+				: portR(t, h) > 0.75
+					? portR(t, h) *
+						Math.pow((1.3 * Math.hypot(w, h)) / portR(t, h), smooth(span(tau, 0, B.iris)))
 					: 0,
 			tau
 		};
@@ -1342,103 +1351,18 @@ export default async function make({ THREE, at }) {
 	}
 	// The glint, the glow round the band and the band itself, white-hot.
 	function drawBand(ctx, ink, w, h, O, band, bo) {
-		const { W, hb, hot, glint } = band;
-		const st0 = S;
+		// (L) Nothing of the label is drawn — no white disc, no glow round it,
+		// no flecks off its rim, no rings on it: the spiral runs to the
+		// porthole and that is all. The glint at the apex while the tunnel
+		// is sketched in stays (the light the swimmer swims at).
+		void ink;
+		void w;
+		void bo;
+		const { glint } = band;
 		if (glint > 0.01 && band.m < 1) {
 			const r = 0.07 * h * (0.6 + 0.4 * glint);
 			glow(ctx, O[0], O[1], r, [255, 226, 180], 0.55 * glint * (1 - band.m));
 			disc(ctx, O[0], O[1], 1.6 + 1.4 * glint, { fill: '#fffaf0', alpha: 0.95 * glint });
-		}
-		if (band.m <= 0.002) return;
-		const G = (0.05 + 0.13 * hot) * h;
-		// (Opening, the glow stays the seam's, and its light goes with it as
-		// the swimmer punches through: over the dive's first 0.3 s, on the
-		// room in the hole as round it.)
-		const a = (0.3 + 0.55 * hot) * (1 - smooth(span(band.tau, 0, 0.3)));
-		if (a > 0.005) {
-			const hg = band.open > 0 ? Math.min(hb, st0.bandHold) : hb;
-			ctx.save();
-			ctx.globalCompositeOperation = 'lighter';
-			const rx = W + 1.6 * G;
-			const ry = hg + G;
-			ctx.translate(O[0], O[1]);
-			ctx.scale(rx / ry, 1);
-			const g = ctx.createRadialGradient(0, 0, 0, 0, 0, ry);
-			const s1 = clamp(hg / ry, 0.01, 0.9);
-			const s2 = clamp((hg + 0.3 * G) / ry, s1 + 0.01, 0.97);
-			g.addColorStop(0, `rgba(255, 242, 220, ${a})`);
-			g.addColorStop(s1, `rgba(255, 232, 200, ${0.85 * a})`);
-			g.addColorStop(s2, `rgba(255, 196, 140, ${0.22 * a})`);
-			g.addColorStop(1, 'rgba(255, 180, 120, 0)');
-			ctx.fillStyle = g;
-			ctx.fillRect(-ry, -ry, 2 * ry, 2 * ry);
-			ctx.restore();
-		}
-		const wa = (0.6 + 0.4 * hot) * band.white * smooth(span(band.m, 0, 0.15));
-		if (wa > 0.004) {
-			ctx.save();
-			clipOutHole(ctx, w, h, O, band, bo);
-			bandPath(ctx, w, h, O, band, bo);
-			ctx.globalAlpha = wa;
-			ctx.fillStyle = '#fffdf8';
-			ctx.fill();
-			ctx.restore();
-		}
-		// Opening, its two edges part as lines of light — the beam of a tube
-		// switching on — and go off the board.
-		const op =
-			band.open > 0 ? (1 - smooth(span(band.open, 0.55, 1))) * smooth(span(band.open, 0, 0.05)) : 0;
-		if (op > 0.01) {
-			const { top, bottom } = bandEdges(w, h, O, band, bo);
-			const sc = Math.sqrt(h / 800);
-			for (const [wd, al] of [
-				[14 * sc, 0.12],
-				[5 * sc, 0.35],
-				[2.2 * sc, 1]
-			]) {
-				stroke(ctx, top, { color: '#fffdf6', width: wd, alpha: al * op, cap: 'butt' });
-				stroke(ctx, bottom, { color: '#fffdf6', width: wd, alpha: al * op, cap: 'butt' });
-			}
-		}
-		// Flecks along its edges, the reference's: little white squiggles off
-		// the seam, a fresh set each drawing.
-		const fl = smooth(span(band.m, 0.5, 1)) * (1 - band.open) * band.white;
-		if (fl > 0.02) {
-			// (I5: the flecks round the label's rim — the sparks off the
-			// cutter — a fresh set each drawing)
-			const n = Math.round(14 + (10 * w) / 1280);
-			for (let i = 0; i < 2 * n; i++) {
-				const th = TAU * rand(i, bo, 41);
-				const off = hb + (2 + 6 * rand(i, bo, 42)) * (h / 800);
-				const len = (8 + 26 * rand(i, bo, 43)) * (h / 800);
-				const pts = [];
-				for (let k = 0; k <= 4; k++) {
-					const u = k / 4;
-					const rr = off + (u - 0.5) * len;
-					const ph = th + 0.02 * Math.sin(u * 6 + i);
-					pts.push([O[0] + rr * Math.cos(ph), O[1] + rr * Math.sin(ph)]);
-				}
-				ink.line(pts, HAND.ink, 1.1 * Math.sqrt(h / 800), 0.8 * fl, false);
-			}
-		}
-		// (I5) the label's own ring, a line inside its rim, and the spindle
-		// hole's rim: the hand's
-		if (wa > 0.004 && band.m > 0.35 && !(band.hole > 0.5 * hb)) {
-			const sc = Math.sqrt(h / 800);
-			for (const [rr, al] of [
-				[0.9 * hb, 0.5],
-				[Math.max(1, band.hole || SPINDLE * hb) * 1.04, 0.7]
-			]) {
-				const pts = [];
-				const n = 40;
-				const ph0 = TAU * rand(7, bo, 44);
-				for (let j = 0; j <= n; j++) {
-					const ph = ph0 + (TAU * 1.02 * j) / n;
-					const k = 1 + 0.012 * noise1(j * 0.5, bo * 9 + 1);
-					pts.push([O[0] + rr * k * Math.cos(ph), O[1] + rr * k * Math.sin(ph)]);
-				}
-				ink.line(pts, '#1d1612', 1.1 * sc, al * wa, false);
-			}
 		}
 	}
 
@@ -2319,14 +2243,14 @@ export default async function make({ THREE, at }) {
 		// rim drawn in the hand — and as the tunnel narrows into the band
 		// (B.seam) the circle opens out into the room's own rectangle, so more
 		// of it shows; by the dive it is the whole plate, as the fall draws it.
-		const m = smooth(span(t, ...B.seam));
-		const rc = 0.5 * ph;
-		const hw = lerp(rc, 0.5 * ph * PHI, m);
-		const hh = lerp(rc, 0.5 * ph, m);
-		const cr = Math.min(lerp(rc, 0.06 * ph, m), hw, hh);
+		// (L) It stays a circle to the dive, and the dive widens it: THE IRIS
+		// (bandAt's hole), the colour room growing in it, the chalk tunnel
+		// outside, until it has taken the frame.
+		const band = bandAt(t, w, h, st);
+		const R = band.hole > 0 ? band.hole : 0.5 * ph;
 		const port = () => {
 			ctx.beginPath();
-			ctx.roundRect(O[0] - hw, O[1] - hh, 2 * hw, 2 * hh, cr);
+			holePath(ctx, w, h, O, R, bo);
 		};
 		const keep = g.zetaAt;
 		g.zetaAt = () => zeta;
@@ -2340,7 +2264,9 @@ export default async function make({ THREE, at }) {
 				origin: O,
 				colourAlong: false,
 				dust: null,
-				reveal: iris(bandAt(t, w, h, st), O)
+				// (L: in colour from its first pixel; the disc a hair wider than
+				// the hole so the rim's wobble never shows chalk)
+				reveal: () => ({ cx: O[0], cy: O[1], r: 1.06 * R, wob: 0, feather: 0.03 })
 			});
 		} finally {
 			g.zetaAt = keep;
@@ -2352,7 +2278,7 @@ export default async function make({ THREE, at }) {
 			port();
 			ctx.strokeStyle = PAL.chalk;
 			ctx.lineWidth = 1.3 * Math.sqrt(h / 800);
-			ctx.globalAlpha = 0.75 * (1 - 0.6 * m);
+			ctx.globalAlpha = 0.7 * (1 - smooth(span(R, 0.5 * h, 0.8 * h)));
 			ctx.stroke();
 			ctx.restore();
 		}
@@ -2557,6 +2483,42 @@ export default async function make({ THREE, at }) {
 	}
 	// How far the song is up on the screen once the monitor is on.
 	const songUp = (t) => smooth(span(t, ...B.song));
+	// (L) THE SCREEN'S WORDS ON A GRID: the title and the artist in capitals,
+	// one character a cell, monospace, wrapped at the words to the columns
+	// the glass gives, at the largest size at which the whole block fits the
+	// glass — so a long title wraps rather than shrinking to nothing (the
+	// lead; temporary by his own account).
+	const CELL = { w: 0.78, h: 1.3, artist: 0.62, gap: 0.5 };
+	function wrapTo(str, cols) {
+		const lines = [];
+		let line = '';
+		for (const word of str.split(/\s+/).filter(Boolean)) {
+			if (word.length > cols) {
+				if (line) lines.push(line);
+				line = '';
+				for (let i = 0; i < word.length; i += cols) lines.push(word.slice(i, i + cols));
+				continue;
+			}
+			if (!line) line = word;
+			else if (line.length + 1 + word.length <= cols) line += ' ' + word;
+			else {
+				lines.push(line);
+				line = word;
+			}
+		}
+		if (line) lines.push(line);
+		return lines;
+	}
+	function gridFit(title, artist, gw, gh) {
+		for (let s = 0.2 * gh; s > 4; s *= 0.93) {
+			const sa = CELL.artist * s;
+			const tl = wrapTo(title, Math.max(1, Math.floor((0.88 * gw) / (CELL.w * s))));
+			const al = artist ? wrapTo(artist, Math.max(1, Math.floor((0.88 * gw) / (CELL.w * sa)))) : [];
+			const H = tl.length * CELL.h * s + (al.length ? CELL.gap * s + al.length * CELL.h * sa : 0);
+			if (H <= 0.84 * gh) return { s, tl, al, H };
+		}
+		return null;
+	}
 	function screenWords(ctx, glass, t, st, bo, a) {
 		const up = songUp(t) * a;
 		if (up <= 0.01 || st.F.edge) return;
@@ -2566,28 +2528,48 @@ export default async function make({ THREE, at }) {
 		if (gw < 40 || gh < 24) return;
 		const cx = (x0 + x1) / 2;
 		const cy = (y0 + y1) / 2;
-		const title = st.F.title || '';
-		const artist = st.F.artist || '';
+		const title = (st.F.title || '').toUpperCase();
+		const artist = (st.F.artist || '').toUpperCase();
 		if (!title) return;
-		const ts = Math.min(0.16 * gh, (0.84 * gw) / measure(title));
-		const as = Math.min(0.09 * gh, (0.74 * gw) / measure(artist || ' '));
+		const fit = gridFit(title, artist, gw, gh);
+		if (!fit) return;
+		const { s, tl, al, H } = fit;
 		const ink = makeInk();
-		letter(ink, title, cx, cy - 0.04 * gh, ts, {
-			seed: 910,
-			boil: bo,
-			alpha: up,
-			width: 0.12,
-			color: SCREEN_INK
+		const row = (line, y, size, seed, alpha, upto) => {
+			const cw = CELL.w * size;
+			const n = line.length;
+			const shown = Math.floor(upto * n + 1e-6);
+			for (let j = 0; j < shown; j++) {
+				const ch = line[j];
+				if (ch === ' ') continue;
+				letter(ink, ch, cx + (j - (n - 1) / 2) * cw, y, size, {
+					seed: seed + 7 * j,
+					boil: bo,
+					alpha,
+					width: 0.12,
+					color: SCREEN_INK
+				});
+			}
+			return shown;
+		};
+		let y = cy - H / 2 + 0.95 * s;
+		tl.forEach((line, i) => {
+			row(line, y, s, 910 + 97 * i, up, 1);
+			y += CELL.h * s;
 		});
-		if (artist)
-			letter(ink, artist, cx, cy + 0.2 * gh, as, {
-				seed: 911,
-				boil: bo,
-				alpha: up * smooth(span(t, B.artist[0], B.artist[0] + 0.4)),
-				width: 0.11,
-				upto: smooth(span(t, ...B.artist)),
-				color: SCREEN_INK
+		if (al.length) {
+			const sa = CELL.artist * s;
+			y += CELL.gap * s - (CELL.h - 0.95) * s + (CELL.h - 0.95) * sa;
+			// the artist written in character by character over B.artist
+			const total = al.reduce((n, l) => n + l.length, 0);
+			let left = Math.floor(smooth(span(t, ...B.artist)) * total + 1e-6);
+			const aa = up * smooth(span(t, B.artist[0], B.artist[0] + 0.4));
+			al.forEach((line, i) => {
+				const k = Math.max(0, Math.min(1, left / Math.max(1, line.length)));
+				left -= row(line, y, sa, 1300 + 97 * i, aa, k);
+				y += CELL.h * sa;
 			});
+		}
 		ink.flush(ctx);
 	}
 	const covers = (g, w, h) => g[0] <= 0 && g[1] <= 0 && g[2] >= w && g[3] >= h;
@@ -2632,6 +2614,15 @@ export default async function make({ THREE, at }) {
 		const veer = veerAt(t, st);
 		const nd = nudgeOf(t, secsNow);
 		const fly = exit ? smooth(span(exit.s, ...EXIT.fly)) : 0;
+		// (L) while the iris opens the room is clipped to the hole: the colour
+		// disc in the chalk tunnel, nothing of the plate outside it
+		const inHole = opening && band && band.hole > 0 && band.hole < 1.2 * Math.hypot(w, h);
+		if (inHole) {
+			ctx.save();
+			ctx.beginPath();
+			holePath(ctx, w, h, O, band.hole, bo);
+			ctx.clip();
+		}
 		const cam = st.fall.draw(roomPen(O, zf, bo, calm), w, h, tf, {
 			origin: O,
 			// the lens leans after the swimmer's veer, and after the pointer
@@ -2643,13 +2634,15 @@ export default async function make({ THREE, at }) {
 			// the screen) is kept OFF: the monitor's face is screenOn's, even
 			screenOff: 1,
 			// (L: on through the glass, gathering, until it covers the board)
-			zeta: exit ? g.L + st.deep + EXIT.depth * Math.pow(fly, 1.7) : null,
+			// (slow and gentle — the lead; `fly` is a smoothstep over EXIT.fly)
+			zeta: exit ? g.L + st.deep + EXIT.depth * Math.pow(fly, 1.35) : null,
 			colourAlong: false,
 			dust: null,
 			// (K2) the colour through the hole while it opens; all colour
 			// once it has taken the frame (the flood, long done)
 			reveal: opening ? iris(band, O) : null
 		});
+		if (inHole) ctx.restore();
 		prof('rooms');
 
 		// The swimmer, the chase's own picture, at the vanishing point; on into

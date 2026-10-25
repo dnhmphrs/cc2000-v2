@@ -27,12 +27,12 @@
 
 	let canvas;
 	let failed = '';
-	// The end: the run holds on its last frame and the page offers AGAIN and,
-	// when there is a song, PLAY — Spotify's embed of the track in a small
-	// popup over the room (a press is needed to play anything anyway).
+	// The end: the run holds on its last frame; the page offers AGAIN (a key
+	// on the monitor's glass) and, when there is a song, Spotify's embed of
+	// the track — there from the final scene on, a compact bar top left with
+	// the artwork (a press on it is needed to play anything anyway).
 	let ended = false;
 	let song = null;
-	let player = false;
 	let run = null;
 	// The monitor's glass on the board, [x0, y0, x1, y1] in CSS px, when the
 	// sketch gives it (`screen()`): the output — the buttons, the embed — sits
@@ -49,7 +49,6 @@
 		? `https://open.spotify.com/embed/track/${song.uri.replace('spotify:track:', '')}?utm_source=generator&theme=0`
 		: '';
 	function again() {
-		player = false;
 		run?.again?.();
 	}
 	// The layout's main is its own stacking context (z 10) under the board's
@@ -124,7 +123,6 @@
 				if (e !== ended) {
 					ended = e;
 					song = e ? (sketch.song?.() ?? null) : null;
-					if (!e) player = false;
 				}
 				if (e) {
 					const r = sketch.screen?.() ?? null;
@@ -149,18 +147,15 @@
 {#if failed}<p class="failed">{failed}</p>{/if}
 {#if ended}
 	<div class="end" class:on={!!screen} style={endStyle} use:portal>
-		{#if song?.uri}
-			<button type="button" on:click={() => (player = !player)}>{player ? 'close' : 'play'}</button>
-		{/if}
 		<button type="button" on:click={again}>again</button>
 	</div>
-	{#if player && embed}
+	{#if embed}
 		<div class="player" use:portal>
 			<iframe
 				title="{song.title} — {song.artist}"
 				src={embed}
 				width="352"
-				height="80"
+				height="152"
 				frameborder="0"
 				allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 				loading="lazy"
@@ -224,7 +219,7 @@
 		top: 30px;
 		width: 352px;
 		max-width: calc(100vw - 20px);
-		height: 80px;
+		height: 152px; /* Spotify's compact embed: the art, the title, play */
 		border-radius: 12px;
 		overflow: hidden;
 		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
@@ -234,7 +229,7 @@
 		width: 100%;
 	}
 	.player iframe {
-		height: 80px;
+		height: 152px;
 	}
 	.failed {
 		position: fixed;
