@@ -432,7 +432,9 @@ function buildLens({ THREE, renderer, board, canvas }) {
 				const d1 = sin(a2).mul(0.5).add(0.5);
 				const d2 = d1.mul(d1);
 				const d4 = d2.mul(d2);
-				const burst = c2.mul(c2).mul(c1).add(d4.mul(d2).mul(0.5));
+				const broad = c2.mul(c2).mul(c1);
+				const fine = d4.mul(d2).mul(0.5);
+				const burst = broad.add(fine);
 				const hueK = fract(floor(a1.div(TAU).add(0.5)).mul(0.618034));
 				const rayCol = mix(
 					mix(vec3(1.0, 0.42, 0.14), vec3(1.0, 0.72, 0.3), smoothstep(0.0, 0.5, hueK)),
@@ -446,7 +448,9 @@ function buildLens({ THREE, renderer, board, canvas }) {
 				const rays = shafts
 					.mul(burst.mul(0.9).add(0.5))
 					.mul(0.9)
-					.add(rayCol.mul(burst).mul(reach).mul(0.22));
+					.add(rayCol.mul(broad).mul(reach).mul(0.22))
+					// (the fine rays cooler: a little blue in the sun)
+					.add(vec3(0.58, 0.74, 1.0).mul(fine).mul(reach).mul(0.2));
 				// the core: white-gold, falling off warm
 				const core = exp(rr.mul(rr).negate())
 					.mul(1.1)

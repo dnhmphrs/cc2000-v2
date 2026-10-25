@@ -95,11 +95,14 @@ its header the map; docs/explore-10.md the round it came from), out of the
 lab in a plain environment of its own — one canvas, one WebGPURenderer, the
 run answered by hand, no lab bar and no sketch tags (`board.js tag` stays
 silent there). `?v=<name>` plays a variant `flow-strand-sketch-<name>.js`:
-the run itself is sketch D (0.14); `?v=a` is the original sketch of 0.10
-(two halves, the slot and the band, the chalk fall), `?v=b` sketch A's tuned
-0.11, `?v=c` sketch C of 0.13 (one short tunnel); the five of 0.12 are set
-aside, kept for reference; `?at=` and `?demo=1` as in the lab. The song comes
-from `functions/answer.js resolve` into the copy's tokens ({title} {artist}
+the run itself is the newest sketch — E (0.15): the 0.11 tunnel (the count,
+the band, the dive) with the slot kept through the rooms, the song worked out
+over them and a slow sun at the end; `?v=a` is the original sketch of 0.10,
+`?v=b` sketch A's tuned 0.11, `?v=c` sketch C of 0.13 (one short tunnel),
+`?v=d` sketch D of 0.14 (the date, then the song; its table is
+`log/sketch-copy-d.js`); the five of 0.12 are set aside, kept for reference;
+`?at=` and `?demo=1` as in the lab. The song comes from
+`functions/answer.js resolve` into the copy's tokens ({title} {artist}
 {chart}); a birthday the archive cannot answer for leaves them blank — the
 three error flows (past, future, unknown) are not in this run yet. **Every word that flies over the journey is in ONE table,
 `lab/log/sketch-copy.js`** — the maths slams, the years and their headlines,

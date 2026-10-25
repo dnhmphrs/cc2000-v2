@@ -6,21 +6,20 @@
 // in it. Change a line here and the run shows it.
 //
 // THE RUN'S LANDMARKS (seconds; the sketch's beat table `B` has them all):
-//   22.2  the swimmer alive; 22.5 it sets off; 23.1 – 25.4 the tunnel's rings
-//         are sketched in round it, the speed lines from 24
-//   THE FIRST PART — THE DATE:
-//   25.7 – 30.6  the maths, out of the vanishing point, each struck as it is
-//         used, coming quicker …
-//   30.3 – 35.0  … into the mass of dates: the years back to the birth year
-//         with their news, the months, the days, a blizzard by the end
-//   34.9  THE DATE, once, in the middle of the board over the mess, ringed
-//         35.4 — and as it is found the circle is drawn out into the slot
-//         (35.2 – 36.4) and the rooms begin
-//   THE SECOND PART — THE SONG:
-//   35.6 – 43.2  the rooms rush past inside the slot, a glimpse of each one's
-//         colour; over them the song is computed (36.6 – 41.3)
-//   42.3  the last screen lights; 44.0 the flash; 44.5 the song and its
-//         artist, held; 53 the end
+//   22.2  the swimmer alive; 22.5 it sets off; 23.1 – 26.2 the tunnel's rings
+//         are sketched in round it, the speed lines from 24.2
+//   TUNNEL A — THE DATE (the sketch's own, exact: not in this table):
+//   28.7 – 35.0  the count, 266 … 1, struck one by one, the months crossed
+//         off as they go — and the years back from now, in the cloud with
+//         them (the `years` row below)
+//   32.6 – 35.0  the tunnel narrows into the band; 35.0 the date on it,
+//         ringed 35.6; 36.8 the dive through it
+//   TUNNEL B — THE SONG (this table's rows):
+//   36.8 – 53.6  the rooms rush past inside the slot; over them the song is
+//         worked out from the date (38.3 – 47.6), the song itself where the
+//         original put the date up again and ringed it (45.3)
+//   52.4  the last screen lights; 53.7 the sun; 55.0 – 58.8 the colour fades
+//         in under it; 55.3 the song and the date, held on the screen; 62
 //
 // A ROW is one thing that flies. Its fields:
 //   at      the second it leaves the vanishing point (a slam pops in over
@@ -71,12 +70,17 @@
 //   the conception's day, as the almanac has it —
 //   {jd}     its Julian day number      {doy}  its day of the year  {week}
 //   {moon}   the moon that night (NEW … FULL … WANING CRESCENT)
-//   {sun}    the sun's sign (TAURUS)     {animal}  the year's (TIGER)
+//   {sun} {animal}  a sun sign and a year's animal — sketch D's, not used in
+//            the run (no astrology)
 //   {cycle}  the solar cycle it fell in
 //   the song (functions/answer.js: the archive's chart for the week) —
 //   {spice}  the lever, 1 … 10          {chart}  the chart week's date
 //   {title} {artist}   the track at the spice's position (blank on a
 //            birthday the archive cannot answer for)
+//   that day, as the machine makes it up (MUM and DAD below are lists to
+//   edit; picked by the Julian day, so a date always gets the same) —
+//   {news}   the conception year's first headline (HEADLINES)
+//   {mum}    what mum wore         {dad}  what dad had done
 //
 // LETTERING: the stroke font has the digits, the capitals, the small letters,
 // and · . , : − + = ( ) ⌊ ⌋ / → ⇒ ≤ < ! ≡ ≈ ² ³ | [ ] ; × ± Ш. Anything else
@@ -86,196 +90,104 @@
 export const NOW = 2026; // the year the years count back from
 
 export const COPY = [
-	// the machine's status lines, typed at the bottom
-	{ caption: 'COMPILING USER GENETICS', at: 15.3, until: 22.3 },
-	{ caption: 'SIMULATING CONCEPTION', at: 22.6, until: 35.6 },
-	{ caption: 'COMPUTING SOUNDTRACK', at: 36.4, until: 43.4 },
+	// the machine's status line over the second tunnel, typed at the bottom
+	// (the first two, COMPILING USER GENETICS and SIMULATING CONCEPTION, are
+	// the sketch's own, log/caption.js)
+	{ caption: 'COMPUTING SOUNDTRACK', at: 38.0, until: 48.5 },
 
-	// ── THE FIRST PART, THE DATE. The maths first, straight-faced and quick,
-	// each slam a little sooner after the last …
-	// the weekday of the conception by Zeller's congruence, mod 7
+	// ── TUNNEL A: the years back from now to the birth year, in the cloud
+	// with the count (every: 0 — no headlines; 2 flies one with every second
+	// year, from HEADLINES)
+	{ stream: 'years', at: 29.0, out: 32.8, slow: 2.2, fast: 10, every: 0 },
+
+	// ── TUNNEL B: the song worked out from the date, over the rooms, in
+	// chalk. The parents' steaminess, read off the lever, is a chart position
 	{
-		at: 25.7,
-		out: 27.4,
+		at: 38.3,
+		out: 40.3,
 		x: 0,
 		y: -0.27,
 		lines: [
-			{ text: 'h ≡ q + ⌊13(m+1)/5⌋ + K + ⌊K/4⌋ + ⌊J/4⌋ + 5J  (mod 7)', size: 0.04 },
-			{
-				text: '{zq} + {zt} + {zK} + {zK4} + {zJ4} + {z5J} ≡ {zh}  (mod 7)',
-				size: 0.044,
-				write: [26.1, 26.5]
-			}
+			{ text: 'STEAMINESS  {spice} / 10', size: 0.05 },
+			{ text: '⇒  CHART POSITION  {spice}', size: 0.046, write: [38.8, 39.15] }
 		],
 		marks: [
-			{ line: 1, text: '{zq} + {zt} + {zK} + {zK4} + {zJ4} + {z5J}', at: 26.7 },
-			{ line: 1, text: '{zh}', at: 27.0, kind: 'circle' }
+			{ line: 0, text: '{spice} / 10', at: 39.4 },
+			{ line: 1, text: '{spice}', at: 39.7, kind: 'circle' }
 		]
 	},
-	// an elliptic curve with the date in it, a point on it doubled
+	// the almanac: the night's moon, the day in its year, the solar cycle
+	// (no astrology)
 	{
-		at: 27.0,
-		out: 28.6,
+		at: 40.1,
+		out: 42.1,
 		x: 0,
 		y: 0.26,
 		lines: [
-			{ text: 'y² ≡ x³ + {ecA}x + {ecB}  (mod {p})', size: 0.044 },
-			{ text: 'P = ({ecPx}, {ecPy})   2P = ({ec2x}, {ec2y})', size: 0.04, write: [27.4, 27.8] }
+			{ text: 'MOON: {moon}   ·   DAY {doy} OF {cyyyy}', size: 0.044 },
+			{ text: 'JD {jd}   ·   SOLAR CYCLE {cycle}', size: 0.042, write: [40.6, 41.0] }
 		],
 		marks: [
-			{ line: 1, text: 'P = ({ecPx}, {ecPy})', at: 28.0 },
-			{ line: 1, text: '2P = ({ec2x}, {ec2y})', at: 28.3, kind: 'circle' }
+			{ line: 0, text: '{moon}', at: 41.1 },
+			{ line: 1, text: '{cycle}', at: 41.4, kind: 'circle' }
 		]
 	},
-	// the day's inverse mod p, and the Legendre symbol of the day and month
+	// that day: the news, and what mum wore
 	{
-		at: 28.1,
-		out: 29.5,
-		x: 0,
-		y: -0.26,
-		lines: [
-			{ text: '{dd} · {inv} ≡ 1  (mod {p})', size: 0.046 },
-			{ text: '({ddmm} | {p}) = {leg}', size: 0.046, write: [28.45, 28.75] }
-		],
-		marks: [
-			{ line: 0, text: '{inv}', at: 28.9 },
-			{ line: 1, text: '{leg}', at: 29.2 }
-		]
-	},
-	// the curve's points counted, and its Tate–Shafarevich group — assumed
-	{
-		at: 29.0,
-		out: 30.2,
-		x: 0,
-		y: 0.26,
-		lines: [
-			{ text: '|E(F{p})| = {np}  ≈  {p} + 1', size: 0.044 },
-			{ text: 'Ш(E) = 0   (ASSUMING BSD)', size: 0.044, write: [29.3, 29.6] }
-		],
-		marks: [
-			{ line: 0, text: '{np}', at: 29.7 },
-			{ line: 1, text: 'ASSUMING BSD', at: 29.9 },
-			{ line: 1, text: '0', at: 30.0, kind: 'circle' }
-		]
-	},
-	// a lattice made of the date, reduced
-	{
-		at: 29.7,
-		out: 30.9,
+		at: 41.9,
+		out: 43.9,
 		x: 0,
 		y: -0.27,
 		lines: [
-			{ text: '{b1}  {b2}  → LLL →  {r1}  {r2}', size: 0.042 },
-			{ text: '{yyyy} / {ddmm} = {cf}', size: 0.04, write: [30.0, 30.3] }
+			{ text: 'THAT YEAR: {news}', size: 0.044 },
+			{ text: 'A {weekday}.  MUM WORE {mum}', size: 0.042, write: [42.4, 42.85] }
 		],
 		marks: [
-			{ line: 0, text: '{b1}  {b2}', at: 30.3 },
-			{ line: 0, text: '{r1}  {r2}', at: 30.5, kind: 'circle' },
-			{ line: 1, text: '{cf}', at: 30.7 }
+			{ line: 0, text: '{news}', at: 43.0 },
+			{ line: 1, text: '{mum}', at: 43.3, kind: 'circle' }
 		]
 	},
-
-	// … quickening into the mass of dates: the years back from now to the
-	// birth year, a headline flying with every `every`-th year (1: every
-	// year's; HEADLINES has one or two each)
-	{ stream: 'years', at: 30.3, out: 32.9, slow: 3, fast: 22, every: 2 },
-	// the months back from the birthday, each with the days it gives
-	{ stream: 'months', at: 32.7, out: 33.7 },
-	// the days: 266 … 1, a blizzard by the end
-	{ stream: 'days', at: 33.3, out: 35.0, slow: 3, fast: 120 },
-
-	// THE DATE, once: in the middle of the board, over the mess, held and
-	// ringed — found, and as it is found the circle opens into the slot and
-	// the rooms begin under it (it fades out over the first of them)
+	// what dad had done, and the chart week the archive answers from
 	{
-		at: 34.9,
-		out: 36.6,
+		at: 43.7,
+		out: 45.5,
+		x: 0,
+		y: 0.26,
+		lines: [
+			{ text: 'DAD {dad}', size: 0.046 },
+			{ text: 'CHART WEEK  {chart}', size: 0.044, write: [44.2, 44.55] }
+		],
+		marks: [
+			{ line: 0, text: '{dad}', at: 44.7 },
+			{ line: 1, text: '{chart}', at: 45.0, kind: 'circle' }
+		]
+	},
+	// THE SONG — where the original put the date up again and ringed it
+	{
+		at: 45.3,
+		out: 47.8,
+		x: 0,
+		y: -0.25,
+		lines: [
+			{ text: '{title}', size: 0.08 },
+			{ text: '{artist}', size: 0.046, write: [45.8, 46.15] }
+		],
+		marks: [{ line: 0, at: 46.0, kind: 'circle', pad: 0.3 }]
+	},
+
+	// ── the end: the song and the date on the lit room, held to the fade ──
+	{
+		at: 55.3,
+		out: 61.6,
 		hold: true,
 		x: 0,
-		y: 0,
-		lines: [
-			{ text: '{conception}', size: 0.082 },
-			{ text: '{weekday}', size: 0.046, write: [35.25, 35.5] }
-		],
-		marks: [{ line: 0, at: 35.4, kind: 'circle', pad: 0.34 }]
-	},
-
-	// ── THE SECOND PART, THE SONG. Over the rooms rushing past: the song
-	// computed from the date, by what the machine takes to matter ──
-	// the parents' steaminess, read off the lever, is a chart position
-	{
-		at: 36.6,
-		out: 38.0,
-		x: 0,
-		y: -0.27,
-		lines: [
-			{ text: 'STEAMINESS  {spice} / 10', size: 0.046 },
-			{ text: '⇒  CHART POSITION  {spice}', size: 0.044, write: [37.0, 37.3] }
-		],
-		marks: [
-			{ line: 0, text: '{spice} / 10', at: 37.4 },
-			{ line: 1, text: '{spice}', at: 37.6, kind: 'circle' }
-		]
-	},
-	// the almanac: the night's moon, the sun's sign, the year's animal
-	{
-		at: 37.7,
-		out: 39.1,
-		x: 0,
-		y: 0.26,
-		lines: [
-			{ text: 'JD {jd}   ·   MOON: {moon}', size: 0.042 },
-			{ text: 'SUN IN {sun}   ·   YEAR OF THE {animal}', size: 0.042, write: [38.1, 38.45] }
-		],
-		marks: [
-			{ line: 0, text: '{moon}', at: 38.5 },
-			{ line: 1, text: '{animal}', at: 38.7 }
-		]
-	},
-	// the day in its year, and the sun's own weather
-	{
-		at: 38.8,
-		out: 40.2,
-		x: 0,
-		y: -0.27,
-		lines: [
-			{ text: 'DAY {doy} OF {cyyyy}   ·   WEEK {week}', size: 0.044 },
-			{ text: 'SOLAR CYCLE {cycle}', size: 0.044, write: [39.2, 39.45] }
-		],
-		marks: [
-			{ line: 0, text: 'WEEK {week}', at: 39.55 },
-			{ line: 1, text: '{cycle}', at: 39.8, kind: 'circle' }
-		]
-	},
-	// the chart week the archive answers from
-	{
-		at: 39.9,
-		out: 41.3,
-		x: 0,
-		y: 0.26,
-		lines: [
-			{ text: 'CHART WEEK  {chart}', size: 0.046 },
-			{ text: 'POSITION {spice}  →  ONE RECORD', size: 0.042, write: [40.3, 40.6] }
-		],
-		marks: [
-			{ line: 0, text: '{chart}', at: 40.7, kind: 'circle' },
-			{ line: 1, text: 'POSITION {spice}', at: 40.9 }
-		]
-	},
-
-	// ── the end: the flash, and the song and its artist on the lit room,
-	// held to the fade ──
-	{
-		at: 44.5,
-		out: 52.2,
-		hold: true,
-		x: 0,
-		y: -0.06,
+		y: -0.05,
 		lines: [
 			{ text: '{title}', size: 0.072 },
-			{ text: '{artist}', size: 0.044, write: [45.0, 45.5] }
+			{ text: '{artist}', size: 0.044, write: [55.8, 56.3] },
+			{ text: '{conception}', size: 0.04, write: [56.4, 56.8] }
 		],
-		marks: [{ line: 0, at: 45.3, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 56.3, kind: 'circle', pad: 0.3 }]
 	}
 ];
 
@@ -597,6 +509,33 @@ const dayOfYear = ({ d, m, y }) => {
 	return n;
 };
 
+// That day, made up: what mum wore and what dad had done, picked by the
+// Julian day (the lead's lists to edit; CAPITALS, the font's).
+const MUM = [
+	'A DENIM JACKET',
+	'SHOULDER PADS',
+	'THE PAISLEY DRESS',
+	'LEG WARMERS',
+	'A LEATHER SKIRT',
+	'HIS SHIRT',
+	'THE GOOD EARRINGS',
+	'A PERM',
+	'NOTHING SPECIAL',
+	'THE RED ONE'
+];
+const DAD = [
+	'HAD SHAVED',
+	'HAD NOT SHAVED',
+	'HAD DONE THE DISHES',
+	'HAD PUT A RECORD ON',
+	'HAD BEEN TO THE PUB',
+	'HAD LIT A CANDLE',
+	'HAD TAKEN THE BINS OUT',
+	'HAD SAID SORRY',
+	'HAD WORN THE AFTERSHAVE',
+	'HAD COOKED'
+];
+
 // Every token the copy can use, from the answers' eight digits — and `extra`
 // (the song's, from the sketch), laid over them.
 export function fieldsOf(digits, extra = {}) {
@@ -655,6 +594,9 @@ export function fieldsOf(digits, extra = {}) {
 		sun: sunOf(c.date),
 		animal: animalOf(c.date.y),
 		cycle: cycleOf(c.date),
+		news: HEADLINES[c.date.y]?.[0] ?? '',
+		mum: MUM[jd % MUM.length],
+		dad: DAD[Math.floor(jd / 7) % DAD.length],
 		// the structures the streams are built from
 		_birth: b,
 		_conceived: c,

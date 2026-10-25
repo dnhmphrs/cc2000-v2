@@ -590,7 +590,7 @@ export const FLOWS = [
 	{
 		sketch: 'flow-strand-sketch',
 		name: 'Strand · sketch',
-		what: 'the next run (/next), sketch D: one tunnel in a shaky warm hand (Eva / Akira), in two parts — THE DATE: the maths slammed up and struck out in red, quickening into the mass of years and their news, months and days, the date found in the middle of the board and ringed; THE SONG: the circle drawn out into the slot as it is found and kept so, the rooms rushing past inside it with a glimpse of each one’s colour, the song computed over them (steaminess, the almanac, the chart week), the lens to rest inside the last room, the white band out of the screen into the sunbeam, the song and its artist held on the lit room; every word in log/sketch-copy.js'
+		what: 'the next run (/next), sketch E: the original sketch’s tunnel (sketch B’s, 0.11) — the count of days struck off down the tunnel, the years back from now in the cloud with them, the rings drawn apart into the slot, the date on the white-hot band, the dive through it — and from there the slot KEPT through the rooms, the song worked out over them in chalk (the steaminess, the moon and the solar cycle, what mum wore, what dad had done, the chart week) and named where the date was once ringed; the end a slow holy sun — reds, golds, a little blue — that stays on the screen, the room’s colour fading in under it by depth, the song and the date held on it; the words in log/sketch-copy.js'
 	},
 	{
 		sketch: 'flow-strand-sketch-a',
@@ -606,6 +606,11 @@ export const FLOWS = [
 		sketch: 'flow-strand-sketch-c',
 		name: 'Sketch · C',
 		what: 'kept beside the next run (/next?v=c): 0.13 — one tunnel half as long, the number theory then the flying dates and news, the circle drawn into a rectangle as the rooms begin, the date once on the last screen, the band flash with the flood of colour'
+	},
+	{
+		sketch: 'flow-strand-sketch-d',
+		name: 'Sketch · D',
+		what: 'kept beside the next run (/next?v=d): 0.14 — one tunnel in two parts, the maths quickening into the mass of dates and the date found in the middle of the board; the slot, the rooms with a glimpse of their colour, the song computed over them, the band flash, the song named'
 	},
 	{
 		sketch: 'flow-strand-sketch-one',
