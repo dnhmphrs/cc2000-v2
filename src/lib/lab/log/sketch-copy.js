@@ -67,20 +67,22 @@
 //   {b1} {b2}  a lattice basis made of the date, (dd, mm) and (yy, cc)
 //   {r1} {r2}  … reduced (Lagrange–Gauss): the two shortest vectors in it
 //   {cf}     the continued fraction of yyyy / ddmm, its first six terms
-//   the conception's day, as the almanac has it —
-//   {jd}     its Julian day number      {doy}  its day of the year  {week}
-//   {moon}   the moon that night (NEW … FULL … WANING CRESCENT)
-//   {sun} {animal}  a sun sign and a year's animal — sketch D's, not used in
-//            the run (no astrology)
-//   {cycle}  the solar cycle it fell in
 //   the song (functions/answer.js: the archive's chart for the week) —
 //   {spice}  the lever, 1 … 10          {chart}  the chart week's date
 //   {title} {artist}   the track at the spice's position (blank on a
 //            birthday the archive cannot answer for)
-//   that day, as the machine makes it up (MUM and DAD below are lists to
-//   edit; picked by the Julian day, so a date always gets the same) —
-//   {news}   the conception year's first headline (HEADLINES)
-//   {mum}    what mum wore         {dad}  what dad had done
+//   that evening, which the machine has no business knowing (the lists
+//   MUM, DAD, WHERE, LIGHTS, DOOR, SAID and CONTRA below, to edit; picked by
+//   the date, so a date always gets the same evening) —
+//   {mum}    what mum wore         {dad}     what dad had done
+//   {where}  where                 {lights}  the lights   {door}  the door
+//   {said}   what he said          {contra}  the precautions
+//   (the almanac — {jd} {doy} {week} {moon} {cycle} {sun} {animal} — and
+//   {news} are sketch D's: not used in the run)
+//   {dinner} what was for dinner   {telly}  what was on
+//   (the moon, the Julian day, the solar cycle, {moon} {jd} {doy} {week}
+//   {cycle}, and {sun} {animal} are sketch D's: not used in the run — no
+//   sun, moon or stars in it)
 //
 // LETTERING: the stroke font has the digits, the capitals, the small letters,
 // and · . , : − + = ( ) ⌊ ⌋ / → ⇒ ≤ < ! ≡ ≈ ² ³ | [ ] ; × ± Ш. Anything else
@@ -100,8 +102,10 @@ export const COPY = [
 	// year, from HEADLINES)
 	{ stream: 'years', at: 29.0, out: 32.8, slow: 2.2, fast: 10, every: 0 },
 
-	// ── TUNNEL B: the song worked out from the date, over the rooms, in
-	// chalk. The parents' steaminess, read off the lever, is a chart position
+	// ── TUNNEL B: the song worked out over the rooms, in chalk — from what
+	// the machine has no business knowing about that evening (the lists
+	// below, picked by the date, so a date always gets the same evening).
+	// The parents' steaminess, read off the lever, is a chart position
 	{
 		at: 38.3,
 		out: 40.3,
@@ -116,50 +120,49 @@ export const COPY = [
 			{ line: 1, text: '{spice}', at: 39.7, kind: 'circle' }
 		]
 	},
-	// the almanac: the night's moon, the day in its year, the solar cycle
-	// (no astrology)
+	// where, and the lights
 	{
 		at: 40.1,
 		out: 42.1,
 		x: 0,
 		y: 0.26,
 		lines: [
-			{ text: 'MOON: {moon}   ·   DAY {doy} OF {cyyyy}', size: 0.044 },
-			{ text: 'JD {jd}   ·   SOLAR CYCLE {cycle}', size: 0.042, write: [40.6, 41.0] }
+			{ text: 'WHERE: {where}', size: 0.048 },
+			{ text: 'LIGHTS: {lights}   ·   DOOR: {door}', size: 0.042, write: [40.6, 41.0] }
 		],
 		marks: [
-			{ line: 0, text: '{moon}', at: 41.1 },
-			{ line: 1, text: '{cycle}', at: 41.4, kind: 'circle' }
+			{ line: 0, text: '{where}', at: 41.1 },
+			{ line: 1, text: '{lights}', at: 41.4, kind: 'circle' }
 		]
 	},
-	// that day: the news, and what mum wore
+	// what mum wore, what dad had done
 	{
 		at: 41.9,
 		out: 43.9,
 		x: 0,
 		y: -0.27,
 		lines: [
-			{ text: 'THAT YEAR: {news}', size: 0.044 },
-			{ text: 'A {weekday}.  MUM WORE {mum}', size: 0.042, write: [42.4, 42.85] }
+			{ text: 'MUM WORE {mum}', size: 0.046 },
+			{ text: 'DAD {dad}', size: 0.046, write: [42.4, 42.85] }
 		],
 		marks: [
-			{ line: 0, text: '{news}', at: 43.0 },
-			{ line: 1, text: '{mum}', at: 43.3, kind: 'circle' }
+			{ line: 0, text: '{mum}', at: 43.0 },
+			{ line: 1, text: '{dad}', at: 43.3, kind: 'circle' }
 		]
 	},
-	// what dad had done, and the chart week the archive answers from
+	// what was said, and the precautions
 	{
 		at: 43.7,
 		out: 45.5,
 		x: 0,
 		y: 0.26,
 		lines: [
-			{ text: 'DAD {dad}', size: 0.046 },
-			{ text: 'CHART WEEK  {chart}', size: 0.044, write: [44.2, 44.55] }
+			{ text: 'HE SAID: {said}', size: 0.046 },
+			{ text: 'CONTRACEPTION: {contra}', size: 0.044, write: [44.2, 44.55] }
 		],
 		marks: [
-			{ line: 0, text: '{dad}', at: 44.7 },
-			{ line: 1, text: '{chart}', at: 45.0, kind: 'circle' }
+			{ line: 0, text: '{said}', at: 44.7 },
+			{ line: 1, text: '{contra}', at: 45.0, kind: 'circle' }
 		]
 	},
 	// THE SONG — where the original put the date up again and ringed it
@@ -509,8 +512,47 @@ const dayOfYear = ({ d, m, y }) => {
 	return n;
 };
 
-// That day, made up: what mum wore and what dad had done, picked by the
-// Julian day (the lead's lists to edit; CAPITALS, the font's).
+// That evening, which the machine has no business knowing: picked by the
+// Julian day at different strides (the lead's lists to edit; CAPITALS, the
+// font's — it has no quotes or question marks).
+const WHERE = [
+	'THE SOFA',
+	'HER MUMS',
+	'THE BACK SEAT',
+	'A TENT',
+	'THE SPARE ROOM',
+	'A TRAVELODGE',
+	'THE KITCHEN FLOOR',
+	'HIS MATES FLAT',
+	'THE CARAVAN',
+	'THE BATH'
+];
+const LIGHTS = ['OFF', 'ON', 'THE LANDING ONE', 'A CANDLE', 'THE TELLY', 'A LAVA LAMP', 'DIMMED'];
+const DOOR = ['AJAR', 'LOCKED', 'OPEN', 'WEDGED', 'NO DOOR'];
+const SAID = [
+	'SHH',
+	'IS THAT THE CAT',
+	'QUICK',
+	'I LOVE YOU',
+	'ARE YOU SURE',
+	'MIND THE LAMP',
+	'NOTHING',
+	'AGAIN',
+	'YOUR MUMS HOME',
+	'SORRY'
+];
+const CONTRA = [
+	'NONE',
+	'FORGOTTEN',
+	'EXPIRED',
+	'A PRAYER',
+	'THE RHYTHM METHOD',
+	'WITHDRAWAL (LATE)',
+	'IT BROKE',
+	'LEFT IN THE CAR',
+	'UNDISCUSSED',
+	'OPTIMISM'
+];
 const MUM = [
 	'A DENIM JACKET',
 	'SHOULDER PADS',
@@ -597,6 +639,11 @@ export function fieldsOf(digits, extra = {}) {
 		news: HEADLINES[c.date.y]?.[0] ?? '',
 		mum: MUM[jd % MUM.length],
 		dad: DAD[Math.floor(jd / 7) % DAD.length],
+		where: WHERE[Math.floor(jd / 3) % WHERE.length],
+		lights: LIGHTS[Math.floor(jd / 5) % LIGHTS.length],
+		door: DOOR[Math.floor(jd / 13) % DOOR.length],
+		said: SAID[Math.floor(jd / 11) % SAID.length],
+		contra: CONTRA[Math.floor(jd / 17) % CONTRA.length],
 		// the structures the streams are built from
 		_birth: b,
 		_conceived: c,

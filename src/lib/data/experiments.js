@@ -590,7 +590,7 @@ export const FLOWS = [
 	{
 		sketch: 'flow-strand-sketch',
 		name: 'Strand · sketch',
-		what: 'the next run (/next), sketch E: the original sketch’s tunnel (sketch B’s, 0.11) — the count of days struck off down the tunnel, the years back from now in the cloud with them, the rings drawn apart into the slot, the date on the white-hot band, the dive through it — and from there the slot KEPT through the rooms, the song worked out over them in chalk (the steaminess, the moon and the solar cycle, what mum wore, what dad had done, the chart week) and named where the date was once ringed; the end a slow holy sun — reds, golds, a little blue — that stays on the screen, the room’s colour fading in under it by depth, the song and the date held on it; the words in log/sketch-copy.js'
+		what: 'the next run (/next), sketch E: the original sketch’s tunnel (sketch B’s, 0.11) — the count of days struck off down the tunnel, the years back from now in the cloud with them, the rings drawn apart into the slot, the date on the white-hot band, the dive through it — and from there the slot KEPT through the rooms, the song worked out over them in chalk (the steaminess, where and the lights, what mum wore, what dad had done, what he said, the precautions — what it has no business knowing) and named where the date was once ringed; the end a slow holy sun — reds, golds, a little blue — that stays on the screen, the room’s colour fading in under it by depth, the song and the date held on it; the words in log/sketch-copy.js'
 	},
 	{
 		sketch: 'flow-strand-sketch-a',
