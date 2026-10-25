@@ -16,8 +16,8 @@ the beat table `B` in `src/lib/lab/flow-strand-sketch.js` or a row of
 | The dive               | 36.8 | 37.7 | 1 s             | the hole punched through the band, the date bursting out, the first room through it                                                                                                                                                                                                                                   |
 | **Tunnel B: the song** | 36.8 | 51.6 | 15 s            | the rooms rush past inside the slot (a crossing every ~1.4 s, eleven of them); over them, in chalk, two slams only: STEAMINESS 38.6, MUM WORE / DAD 42.0 (two more rows wait in the table, off) — the song is not named here                                                                                          |
 | Landing                | 51.6 | 53.6 | 2 s             | the lens slows to rest inside the last room; the slot's lines let go 50.8 – 52.2; the screen switches on 52.4                                                                                                                                                                                                         |
-| The sun                | 53.7 | ~58  | 4.5 s           | the light swells from 51.7; the white blooms out of the screen over 1 s and holds to 55.0; burns out over ~3 s (the room in chalk under the beams)                                                                                                                                                                    |
-| The colour             | 53.8 | 54.6 | under the white | the last room floods to full colour (by depth) while the white covers it, so it comes back out of the flash already in colour; the song, its artist and the date held on the screen from 55.3                                                                                                                         |
+| The sun                | 53.7 | 56.6 | 3 s             | the light swells from 51.7; the white blooms out of the screen over 1 s and holds to 55.0; then a plain veil of white lifts evenly off the coloured room over 1.6 s, the beams under it                                                                                                                               |
+| The colour             | 54.4 | 54.9 | under the white | the last room floods to full colour while the white covers everything, so it comes back out of the flash already in colour; the song, its artist and the date held on the screen from 55.3                                                                                                                            |
 | Glow                   | 58   | 62   | 4 s             | the rays and the core stay on the screen, breathing; the run HOLDS at 62 — AGAIN on the page takes it from the top, PLAY opens the song on Spotify                                                                                                                                                                    |
 
 Journey (swim → hit): 31 s. The whole run: 62 s.
@@ -53,11 +53,11 @@ no chart for) is the same run: the steaminess, then the search failing over
 the rooms in the same chalk, the sun, and the room left in chalk with the
 verdict's gif playing on its screen and the verdict held over it.
 
-**The end is slow.** The sun takes about a second to bloom, holds a beat,
-and burns out over three; the room is in full colour as it comes back; the rays never quite go. The song and the date
-are the last words, held on the lit screen; the run holds there.
-
-## Knobs
+**The end.** The sun takes about a second to bloom and holds a beat; the
+way back is a plain veil of white lifting evenly over 1.6 s off the room
+already in full colour — no burn, no depth fade — the rays staying. The
+song and the date are the last words, held on the lit screen; the run holds
+there, the hand still boiling.
 
 - The words: every slam and the years row are rows in `log/sketch-copy.js`;
   `MUM` and `DAD` are lists there; `HEADLINES` the year's news.

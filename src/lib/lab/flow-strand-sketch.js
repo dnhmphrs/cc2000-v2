@@ -283,7 +283,7 @@ const B = {
 	fall: [36.8, 53.6],
 	land: [51.6, 53.6],
 	screen: [52.4, 53.62], // the band again: the last screen switched on
-	colour: [53.8, 54.6], // the room's colour, flooded under the white (fall.js's flood, by depth) — so it comes back out of the flash ALREADY in full colour
+	colour: [54.4, 54.9], // the room's colour, flooded while the white covers everything (fall.js's flood is by depth, but none of it shows) — so it comes back out of the flash ALREADY in full colour
 	aim: [51.8, 53.7], // the swimmer on into the last glass
 	hit: 53.7, // the flash
 	push: [53.8, 56.8], // the lens in on the last room, to near full size
@@ -1889,6 +1889,11 @@ export default async function make({ THREE, at }) {
 		ctx.restore();
 	}
 	let secsNow = 0; // the fuzz's clock this frame (real seconds live)
+	// The hold: the run's clock stands at its end, but the hand goes on —
+	// the boil runs on real seconds from the moment it stopped, so the lines
+	// keep their sketchiness under the page's buttons.
+	let holdSecs = null;
+	const boilAt = (t) => boilOf(holdSecs === null ? t : t + (secsNow - holdSecs));
 	// The pointer, −1 … 1 across the board (null until it has moved), and the
 	// lens's nudge eased after it; only on the landed room.
 	let pointer = null;
@@ -1973,7 +1978,9 @@ export default async function make({ THREE, at }) {
 		const pre = smooth(span(t, H - 2.0, H));
 		const HOLD = H + 1.3; // the white held from the bloom to here
 		const after = Math.max(0, t - HOLD); // since it began to burn out
-		const breath = 1 + 0.12 * Math.sin((TAU * (t - H)) / 2.3);
+		// (breathing and turning on real time through the hold, as the boil does)
+		const tb = holdSecs === null ? t : t + (secsNow - holdSecs);
+		const breath = 1 + 0.12 * Math.sin((TAU * (tb - H)) / 2.3);
 		const out = (1 - smooth(span(t, ...B.out))) * (1 - exitFade());
 		const rise = smooth(span(t, H - 0.05, H + 0.35));
 		const rays =
@@ -1988,8 +1995,10 @@ export default async function make({ THREE, at }) {
 		// the white: blooming out of the screen, held, then burning out
 		const bloom =
 			t >= H && t < HOLD ? gr + 1.4 * D * Math.pow(smooth(span(t, H, H + 1.0)), 1.4) : -1;
-		const A = t >= HOLD ? Math.exp(-after / 1.7) : 0;
-		const Bn = t >= HOLD ? 0.35 * Math.exp(-after / 2.4) * (1 - A) : 0;
+		// The way back: no burn (the colour-dodge came back jolting, the
+		// edges first) — a plain veil of white lifting evenly off the coloured
+		// room over 1.6 s, the beams under it all the while.
+		const veil = t >= HOLD ? 1 - smooth(span(after, 0, 1.6)) : 0;
 		return {
 			x,
 			y,
@@ -1997,13 +2006,14 @@ export default async function make({ THREE, at }) {
 			rays,
 			core,
 			rings,
-			phase: 1.6 * (t - H),
-			turn: 0.07 * t,
+			phase: 1.6 * (tb - H),
+			turn: 0.07 * tb,
 			bloom,
 			bloomSoft: 0.3 * D,
-			burnA: A,
-			burnB: Bn,
-			burnR: 0.3 * D
+			burnA: 0,
+			burnB: 0,
+			burnR: 0.3 * D,
+			veil
 		};
 	}
 
@@ -2022,6 +2032,9 @@ export default async function make({ THREE, at }) {
 		// waits at a question), exactly t pinned, in the demo, in a reel.
 		const secs = hand.secs;
 		secsNow = secs;
+		if (t >= endAt(S?.F?.edge) && !exit) {
+			if (holdSecs === null) holdSecs = secs;
+		} else holdSecs = null;
 		answers.slider(entry.hit);
 		if (window.__lab) {
 			window.__lab.t = t;
@@ -2184,7 +2197,7 @@ export default async function make({ THREE, at }) {
 		const cam = lensAt(t, w, h, st, t < B.back[1] ? entry.frame(ctx, w, h, t, hand) : undefined);
 		const body = st.body;
 		const L = body.length;
-		const bo = boilOf(t);
+		const bo = boilAt(t);
 		prof('lens');
 
 		// The title fading and the stop gliding to the strand's 5′ end.
@@ -2329,7 +2342,7 @@ export default async function make({ THREE, at }) {
 	function fallen(ctx, w, h, t, st) {
 		const g = st.geo;
 		const zf = g.efolds(t);
-		const bo = boilOf(t);
+		const bo = boilAt(t);
 		const opening = t < B.dive[1];
 		// The boil eases off the coloured room after the flash.
 		const calm = lerp(1, 0.3, smooth(span(t, B.hit + 0.5, B.hit + 3.5)));

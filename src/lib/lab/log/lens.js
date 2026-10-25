@@ -62,7 +62,8 @@
 //            halfHeight] in CSS px, bandSoft its edge; Akira's), burnA (the
 //            white burning out: a colour-dodge by this level everywhere),
 //            burnB (… and this much more near the light, falling off over
-//            burnR) }
+//            burnR), veil (a plain even mix to white, 0 … 1: the clean fade
+//            out of the flash) }
 //   lens.renderer, lens.canvas, lens.software, lens.res
 //
 // Colours are the board's own display values: the renderer's output is set
@@ -224,7 +225,8 @@ function buildLens({ THREE, renderer, board, canvas }) {
 		bandSoft: uniform(1),
 		burnA: uniform(0), // the white burning out: its level everywhere
 		burnB: uniform(0), // … and more of it near the light
-		burnR: uniform(1)
+		burnR: uniform(1),
+		veil: uniform(0) // a plain veil of white over everything (a clean fade)
 	};
 	const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 	const LUM_ = vec3(0.3, 0.55, 0.15);
@@ -495,6 +497,9 @@ function buildLens({ THREE, renderer, board, canvas }) {
 					.mul(wl.mul(wl))
 					.mul(wl.mul(wl).mul(wl.mul(wl)));
 				col.assign(mix(dodged, vec3(1.0, 0.988, 0.962), veil));
+				// … or the plain veil: an even mix to white, nothing burnt (the
+				// clean fade back into the picture after the flash)
+				col.assign(mix(col, vec3(1.0, 0.988, 0.962), u.veil));
 			}
 			// The grain: two soft fields cross-faded (their weights from JS,
 			// the variance kept level through the fade), strongest in the
@@ -635,7 +640,8 @@ function buildLens({ THREE, renderer, board, canvas }) {
 				(light.bloom ?? -1) > 0 ||
 				(light.band?.[0] ?? -1) > 0 ||
 				(light.burnA ?? 0) > 0.002 ||
-				(light.burnB ?? 0) > 0.002)
+				(light.burnB ?? 0) > 0.002 ||
+				(light.veil ?? 0) > 0.002)
 				? light
 				: null;
 		if (L) {
@@ -654,6 +660,7 @@ function buildLens({ THREE, renderer, board, canvas }) {
 			u.burnA.value = L.burnA ?? 0;
 			u.burnB.value = L.burnB ?? 0;
 			u.burnR.value = Math.max(1, (L.burnR ?? 200) * dpr);
+			u.veil.value = L.veil ?? 0;
 		}
 
 		const cs = renderer.outputColorSpace;
