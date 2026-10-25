@@ -613,6 +613,11 @@ export const FLOWS = [
 		what: 'kept beside the next run (/next?v=d): 0.14 — one tunnel in two parts, the maths quickening into the mass of dates and the date found in the middle of the board; the slot, the rooms with a glimpse of their colour, the song computed over them, the band flash, the song named'
 	},
 	{
+		sketch: 'flow-strand-sketch-direct',
+		name: 'Strand · direct',
+		what: 'the run without tunnel B (/next?v=direct): through the date’s band straight into the last room — the band’s flash IS the sunbeam flash, the room comes out of the white already in colour as the lens comes to rest in it, the song on its screen; the breakdown on a verdict as the run’s'
+	},
+	{
 		sketch: 'flow-strand-sketch-e',
 		name: 'Sketch · E',
 		what: 'kept beside the next run (/next?v=e): 0.15 — the 0.11 tunnel without its sum, the slot kept through the rooms, the evening worked out over them, the song named over the rooms and again on the screen, the slow sun; a fade and round'
