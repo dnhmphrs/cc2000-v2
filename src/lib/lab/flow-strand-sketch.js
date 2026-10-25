@@ -298,12 +298,15 @@ const B = {
 // lettered over the tiles (verdict) and held (end; AGAIN on the page).
 const BREAK = { strip: [37.0, 37.8], spread: [37.8, 40.2], verdict: 40.4, end: 46 };
 const endAt = (edge) => (edge ? BREAK.end : SECONDS);
-// AGAIN: the lens flies on into the middle of the monitor — the whole
-// picture zoomed about the glass's centre until the lit screen fills the
-// board (fly) — and goes to the board's dark, which the next run's title
-// types on (len): one loop, no cut. The parallax on the landed room: the
-// lens nudged by the pointer, by PARALLAX of the room, eased.
-const EXIT = { fly: 2.0, len: 2.5 };
+// AGAIN: the song and the date fade (words), the monitor goes dark
+// (screen), the swimmer comes back and the lens dollies on through the
+// glass after it — the fall's own lens, on into the last room (fly), the
+// room's depths parting as they do — and the picture goes to the board's
+// dark, which the next run's title types on (len): one loop, no cut. The
+// parallax on the landed room: the lens nudged by the pointer, by PARALLAX
+// of the room, eased; and the swimmer's VEER: each answer in tunnel B turns
+// it off its line, the lens leaning after it.
+const EXIT = { words: [0, 0.7], screen: [0.3, 1.2], fly: [0.9, 3.1], len: 3.5 };
 const PARALLAX = [0.09, 0.05];
 
 // THE FLASH: the band in the last screen blowing out — across the board's
@@ -1814,7 +1817,7 @@ export default async function make({ THREE, at }) {
 	}
 	// Everything flying over the journey at t.
 	function figures(ink, w, h, t, O, st, bo) {
-		for (const sl of st.words.slams) slam(ink, t, w, h, O, bo, sl, 1 - exitFade());
+		for (const sl of st.words.slams) slam(ink, t, w, h, O, bo, sl, 1 - exitWords());
 		for (const s of st.words.streams) flyers(ink, w, h, t, O, s, bo);
 		months(ink, w, h, t, O, st, bo);
 		countdown(ink, w, h, t, O, st, bo);
@@ -1916,7 +1919,24 @@ export default async function make({ THREE, at }) {
 	// AGAIN's fly-through: seconds since, and the glass it flies into; how far
 	// gone to the dark at its end (the words and the light go with it).
 	let exit = null;
-	const exitFade = () => (exit ? smooth(span(exit.s, EXIT.fly - 0.35, EXIT.len - 0.05)) : 0);
+	const exitFade = () => (exit ? smooth(span(exit.s, EXIT.len - 0.5, EXIT.len - 0.05)) : 0);
+	const exitWords = () => (exit ? smooth(span(exit.s, ...EXIT.words)) : 0);
+	// The veer: where the answers have turned the swimmer at t — each slam
+	// with a `veer` bends it off its line while it is up, the way read off
+	// the answer (a turn of the circle); [x, y] on the board, −1 … 1.
+	function veerAt(t, st) {
+		let vx = 0;
+		let vy = 0;
+		for (const sl of st.words.slams) {
+			if (sl.veer === null || sl.veer === undefined) continue;
+			const k = span(t, sl.at - 0.5, sl.at + 2.8);
+			if (k <= 0 || k >= 1) continue;
+			const b = Math.sin(Math.PI * k);
+			vx += Math.cos(TAU * sl.veer) * b;
+			vy += Math.sin(TAU * sl.veer) * b;
+		}
+		return [vx, vy];
+	}
 
 	// The last screen: a white line across the glass opening to fill it, the
 	// tube switched on, glowing out over the room.
@@ -1981,17 +2001,15 @@ export default async function make({ THREE, at }) {
 		// (breathing and turning on real time through the hold, as the boil does)
 		const tb = holdSecs === null ? t : t + (secsNow - holdSecs);
 		const breath = 1 + 0.12 * Math.sin((TAU * (tb - H)) / 2.3);
-		const out = (1 - smooth(span(t, ...B.out))) * (1 - exitFade());
+		const out = (1 - smooth(span(t, ...B.out))) * (1 - (exit ? smooth(span(exit.s, 0, 0.9)) : 0));
 		const rise = smooth(span(t, H - 0.05, H + 0.35));
 		const rays =
-			(t < HOLD
-				? lerp(0.45 * pre * pre, 1, rise)
-				: (0.62 + 0.38 * Math.exp(-after / 2.6)) * breath) * out;
-		const core = (t < HOLD ? lerp(0.3 * pre, 1, rise) : 0.38 + 0.5 * Math.exp(-after / 1.8)) * out;
+			(t < HOLD ? lerp(0.45 * pre * pre, 1, rise) : 0.95 * Math.exp(-after / 1.4) * breath) * out;
+		// (after the veil the glow goes altogether, over ~4 s, so the room is
+		// seen as it was drawn)
+		const core = (t < HOLD ? lerp(0.3 * pre, 1, rise) : 0.9 * Math.exp(-after / 1.2)) * out;
 		const rings =
-			(0.3 * smooth(span(t, H - 0.7, H)) * (1 - smooth(span(t, H + 0.4, H + 2.2))) +
-				0.1 * smooth(span(t, H + 1.5, H + 3))) *
-			out;
+			(0.3 * smooth(span(t, H - 0.7, H)) * (1 - smooth(span(t, H + 0.4, H + 2.2))) + 0) * out;
 		// the white: blooming out of the screen, held, then burning out
 		const bloom =
 			t >= H && t < HOLD ? gr + 1.4 * D * Math.pow(smooth(span(t, H, H + 1.0)), 1.4) : -1;
@@ -2053,27 +2071,7 @@ export default async function make({ THREE, at }) {
 		lastGlass = null;
 		// (a verdict never falls: the tunnel stays, and breaks down)
 		if (t < B.fall[0] || st.F.edge) world(ctx, w, h, t, hand, st);
-		else if (exit?.glass) {
-			// AGAIN: the picture zoomed about the glass's centre, on into it
-			const g = exit.glass;
-			const cx = (g[0] + g[2]) / 2;
-			const cy = (g[1] + g[3]) / 2;
-			const sMax = 1.08 * Math.max(w / Math.max(8, g[2] - g[0]), h / Math.max(8, g[3] - g[1]));
-			const zs = Math.exp(Math.log(sMax) * smooth(span(exit.s, 0, EXIT.fly)));
-			ctx.save();
-			ctx.translate(cx, cy);
-			ctx.scale(zs, zs);
-			ctx.translate(-cx, -cy);
-			fallen(ctx, w, h, t, st);
-			ctx.restore();
-			if (lastGlass)
-				lastGlass = [
-					cx + (lastGlass[0] - cx) * zs,
-					cy + (lastGlass[1] - cy) * zs,
-					cx + (lastGlass[2] - cx) * zs,
-					cy + (lastGlass[3] - cy) * zs
-				];
-		} else fallen(ctx, w, h, t, st);
+		else fallen(ctx, w, h, t, st);
 		// The captions at the terminal's size, and at least 15 px on a phone.
 		const size = Math.max(captionSize(w, h), Math.min(15, 0.04 * Math.min(w, h)));
 		caption(ctx, w, h, CAPTION.genetics, t, {
@@ -2186,7 +2184,8 @@ export default async function make({ THREE, at }) {
 		const keep = g.zetaAt;
 		g.zetaAt = () => zeta;
 		try {
-			st.fall.draw(roomPen(O, tf, bo), w, h, t, { colourAlong: false, dust: null });
+			// (locked to the tunnel's apex O, where the rings' centre is)
+			st.fall.draw(roomPen(O, tf, bo), w, h, t, { origin: O, colourAlong: false, dust: null });
 		} finally {
 			g.zetaAt = keep;
 		}
@@ -2344,25 +2343,23 @@ export default async function make({ THREE, at }) {
 		const zf = g.efolds(t);
 		const bo = boilAt(t);
 		const opening = t < B.dive[1];
-		// The boil eases off the coloured room after the flash.
-		const calm = lerp(1, 0.3, smooth(span(t, B.hit + 0.5, B.hit + 3.5)));
+		// The boil eases off the coloured room after the flash — nearly still,
+		// so the room is seen as drawn rather than being worked over.
+		const calm = lerp(1, 0.08, smooth(span(t, B.hit + 0.5, B.hit + 2.5)));
 		let band = null;
-		// The vanishing point: the fall's own, its lens's sway (log/fall.js
-		// lensAt), at the board's middle as it opens.
-		const A = lerp(
-			lerp(0, 0.05, span(t, B.fall[0], B.fall[0] + 2)),
-			0.3,
-			smooth(span(t, B.land[0], B.land[1] + 0.5))
-		);
-		let O = [
-			w / 2 + (g.F * A * Math.sin(1.1 * t - 0.4)) / g.d0,
-			h / 2 - (g.F * A * 0.45 * Math.sin(1.7 * t + 0.6)) / g.d0
-		];
+		// The vanishing point IS the tunnel's apex, projected by the chase's
+		// lens, all the way down (the fall is given it as its origin, so the
+		// rooms are locked to the rings' centre; the fall's own sway rides on
+		// it): the one thing that kept slipping when the two were worked out
+		// apart.
+		const camT = lensAt(t, w, h, st);
+		const Oa = camT.project([X_APEX, 0, 0]);
+		const O = Oa[2] > NEAR ? [Oa[0], Oa[1]] : [w / 2, h / 2];
+		// The hold's time: the run's clock stands, the room goes on swaying.
+		const tf = holdSecs === null ? t : t + (secsNow - holdSecs);
 		if (opening) {
 			// The tunnel, still, outside the opening band: its rings pushed off
 			// the board by the band's edges.
-			const camT = lensAt(t, w, h, st);
-			O = camT.project([X_APEX, 0, 0]);
 			band = bandAt(t, w, h, st);
 			Z.reset(w, h);
 			const ink = inkFor(gUnder);
@@ -2379,12 +2376,21 @@ export default async function make({ THREE, at }) {
 		prof('rings');
 		// The rooms: the first already there, grown out of the tunnel (see
 		// firstRoom), the band opening over it.
-		const cam = st.fall.draw(roomPen(O, zf, bo, calm), w, h, t, {
-			nudge: nudgeOf(t, secsNow),
+		const veer = veerAt(t, st);
+		const nd = nudgeOf(t, secsNow);
+		const fly = exit ? smooth(span(exit.s, ...EXIT.fly)) : 0;
+		const cam = st.fall.draw(roomPen(O, zf, bo, calm), w, h, tf, {
+			origin: O,
+			// the lens leans after the swimmer's veer, and after the pointer
+			nudge: [nd[0] + 0.05 * veer[0], nd[1] + 0.03 * veer[1]],
+			// the tesseract: every room repeated two plates out each way
+			tiles: 2,
+			tilesAlpha: 0.5,
+			// AGAIN: the screen off, and the dolly on through the glass
+			screenOff: exit ? smooth(span(exit.s, ...EXIT.screen)) : 0,
+			zeta: exit ? g.L + lerp(st.deep, 0.9, fly) : null,
 			colourAlong: false,
 			dust: null,
-			// inside, the colour carried out of the screen by the light: a
-			// hand-drawn ring spreading from the glass, chalk outside it
 			reveal: null
 		});
 		prof('rooms');
@@ -2399,7 +2405,9 @@ export default async function make({ THREE, at }) {
 			gy = (cam.glass[1] + cam.glass[3]) / 2;
 			lastGlass = cam.glass;
 		}
-		const alpha = 1 - smooth(span(t, B.hit - 0.15, B.hit));
+		const alpha = exit
+			? smooth(span(exit.s, EXIT.fly[0], EXIT.fly[0] + 0.5)) * (1 - exitFade())
+			: 1 - smooth(span(t, B.hit - 0.15, B.hit));
 		if (alpha > 0.01) {
 			const drop = smooth(span(t, B.fall[0] + 0.5, B.fall[0] + 4));
 			const back = lerp(1, 1.6, drop) * lerp(1, 2.6, aim * aim);
@@ -2417,10 +2425,14 @@ export default async function make({ THREE, at }) {
 			// The chase's offset off the axis, given up as the first glass
 			// opens round the vanishing point, so the nose goes into it.
 			const off = mul3(OFF, 1 - smooth(span(t, B.fall[0] + 0.6, B.fall[0] + 2.6)));
-			const pose = { at: off, dir: DIR_C, up: [0, 0, 1], scale: 1 };
+			// … and the veer: off its line and leaning into the turn
+			const at = add3(off, [0, 1.3 * veer[1], 1.3 * veer[0]]);
+			const dir = norm(add3(DIR_C, [0, 0.2 * veer[1], 0.2 * veer[0]]));
+			const pose = { at, dir, up: [0, 0, 1], scale: exit ? lerp(1, 0.55, fly) : 1 };
 			const hd = swimmerHand(ctx, t, bo);
 			ctx.save();
-			ctx.translate(lerp(cam.ox, gx, aim) - w / 2, lerp(cam.oy, gy, aim) - h / 2);
+			const am = exit ? 1 : aim;
+			ctx.translate(lerp(cam.ox, gx, am) - w / 2, lerp(cam.oy, gy, am) - h / 2);
 			ctx.globalAlpha = alpha;
 			st.body.draw(hd, view, shape, pose, { back: 0 });
 			ctx.restore();
@@ -2446,7 +2458,13 @@ export default async function make({ THREE, at }) {
 		}
 		prof('date');
 		// The last screen switched on.
-		if (cam.glass) screenBand(ctx, cam.glass, smooth(span(t, ...B.screen)), bo);
+		if (cam.glass)
+			screenBand(
+				ctx,
+				cam.glass,
+				smooth(span(t, ...B.screen)) * (1 - (exit ? smooth(span(exit.s, ...EXIT.screen)) : 0)),
+				bo
+			);
 		prof('band');
 		figures(ink, w, h, t, O, st, bo);
 		ink.flush(ctx);
@@ -2476,7 +2494,7 @@ export default async function make({ THREE, at }) {
 		// (a song's end), straight to the title on a verdict.
 		again: () => {
 			if (exit) return;
-			if (lastGlass && !S?.F?.edge) exit = { s: 0, glass: lastGlass.slice() };
+			if (!S?.F?.edge) exit = { s: 0 };
 			else {
 				answers.restart();
 				time.seek(0);
@@ -2576,6 +2594,7 @@ function wordsOf(F) {
 				seed: (seed += 100),
 				hold: !!row.hold,
 				color: row.color,
+				veer: row.veer ? (F._veer?.[row.veer] ?? null) : null,
 				lines
 			});
 		} else if (row.stream === 'years') {

@@ -25,7 +25,16 @@
 //
 //   const fall = makeFall({ art, order, beats });     art: loadRooms({ chalk: true })
 //   const nest = fall.geometry(w, h);                  the nest fitted to the board
-//   const cam = fall.draw(ctx, w, h, t, { background, colourAlong, dust, nudge });
+//   const cam = fall.draw(ctx, w, h, t, { background, colourAlong, dust, nudge,
+//     origin, screenOff, tiles, tilesAlpha, zeta });
+// `origin` ([x, y] px): where the vanishing point sits on the board (the
+// middle by default) — a flow whose tunnel's apex is elsewhere hands it over,
+// so the rooms are LOCKED to it. `screenOff` 0 … 1 turns the last screen's
+// light off. `tiles` (0, 1, 2): every room repeated round itself that many
+// plates out in every direction, mirrored turn and turn about, at
+// `tilesAlpha` — a tesseract of rooms, the real one in the middle, seen
+// through every glass. `zeta`: the fall's position imposed (a flow's dolly
+// on through the last glass: L + 0 … 0.9).
 //
 // `order` the rooms top to bottom, the answer's last (orderOf(decade) is the
 // flows' order: the others cycled, then the answer's). `beats`, in the run's
@@ -156,13 +165,28 @@ export function makeFall({
 		w,
 		h,
 		t,
-		{ background = null, colourAlong = false, dust, reveal = null, nudge = null } = {}
+		{
+			background = null,
+			colourAlong = false,
+			dust,
+			reveal = null,
+			nudge = null,
+			origin = null,
+			screenOff = 0,
+			tiles = 0,
+			tilesAlpha = 0.55,
+			zeta = null
+		} = {}
 	) => {
 		const g = geometry(w, h);
-		const cam = lensAt(g, g.zetaAt(t), t, w, h, beats, K, nudge);
+		const cam = lensAt(g, zeta ?? g.zetaAt(t), t, w, h, beats, K, nudge, origin);
 		if (background) background(ctx, cam, g.efolds(t), lerp(1, 0.7, cam.land));
 		const d = dust === undefined ? getBoard().dust : dust;
-		const glassAt = drawFall(ctx, w, h, d, g, art, cam, t, beats, K, colourAlong, bake, reveal);
+		const glassAt = drawFall(ctx, w, h, d, g, art, cam, t, beats, K, colourAlong, bake, reveal, {
+			screenOff,
+			tiles,
+			tilesAlpha
+		});
 		// The last room's glass on screen ([x0, y0, x1, y1]), once it shows.
 		cam.glass = glassAt[g.L] ? glassAt[g.L].box : null;
 		return cam;
@@ -301,7 +325,7 @@ function fitNest(w, h, order, art, K, beats) {
 // `nudge` ([x, y], room units of the last plate): the lens moved by hand —
 // a flow's pointer parallax — the same way the sway moves it, so the plane
 // d₀ ahead holds and the room's depths part behind it.
-function lensAt(geo, zeta, t, w, h, B, K = {}, nudge = null) {
+function lensAt(geo, zeta, t, w, h, B, K = {}, nudge = null, origin = null) {
 	const cam = geo.pose(zeta);
 	const last = geo.levels[geo.L];
 	const land = smooth(span(t, B.land[0], B.land[1]));
@@ -333,8 +357,8 @@ function lensAt(geo, zeta, t, w, h, B, K = {}, nudge = null) {
 	const ey = A * 0.45 * Math.sin(1.7 * t + 0.6) + (nudge?.[1] ?? 0);
 	cam.x += cam.s * ex;
 	cam.y += cam.s * ey;
-	cam.ox = w / 2 + (geo.F * ex) / geo.d0;
-	cam.oy = h / 2 - (geo.F * ey) / geo.d0;
+	cam.ox = (origin?.[0] ?? w / 2) + (geo.F * ex) / geo.d0;
+	cam.oy = (origin?.[1] ?? h / 2) - (geo.F * ey) / geo.d0;
 	cam.land = land;
 	return cam;
 }
@@ -360,7 +384,22 @@ export function revealRing({ cx, cy, r, wob = 0.04, seed = 0 }, n = 72) {
 // over that. The rooms are chalk; the last floods with colour as the lens
 // lands — or, colour along, each carries its share all the way down. Every
 // glass the lens has passed is dropped.
-function drawFall(ctx, w, h, dust, geo, art, cam, t, B, K, colourAlong, bake, reveal = null) {
+function drawFall(
+	ctx,
+	w,
+	h,
+	dust,
+	geo,
+	art,
+	cam,
+	t,
+	B,
+	K,
+	colourAlong,
+	bake,
+	reveal = null,
+	opts = {}
+) {
 	const { F, L, levels } = geo;
 	const project = (x, y, z) => {
 		const d = cam.z - z;
@@ -448,12 +487,17 @@ function drawFall(ctx, w, h, dust, geo, art, cam, t, B, K, colourAlong, bake, re
 	// One layer: its chalk copy, with the colour under it as it floods (or,
 	// along, the two baked into one); the wall mirror-tiled so the lens off
 	// its axis never sees past its edge.
-	const layer = (lv, key, k, box) => {
+	// (`off` [dx, dy], level units: the layer drawn that far over — a tile)
+	const layer = (lv, key, k, box, off = null) => {
 		const l = lv.lay[key];
 		const a = art[lv.decade]?.[key];
 		if (!l || !a) return;
 		const T = plane(lv, l.z);
 		if (!T) return;
+		if (off) {
+			T.e += T.m * off[0];
+			T.f -= T.m * off[1];
+		}
 		const rev = rv && k === L;
 		// (with a reveal the last room is chalk until it comes, all colour once
 		// it has passed the board's corners: no flood)
@@ -533,7 +577,7 @@ function drawFall(ctx, w, h, dust, geo, art, cam, t, B, K, colourAlong, bake, re
 	};
 
 	const glassAt = [];
-	const lit = smooth(span(t, B.land[0] + 0.6, B.land[1] + 0.3));
+	const lit = smooth(span(t, B.land[0] + 0.6, B.land[1] + 0.3)) * (1 - (opts.screenOff ?? 0));
 
 	const drawLevel = (k, box) => {
 		const lv = levels[k];
@@ -607,6 +651,42 @@ function drawFall(ctx, w, h, dust, geo, art, cam, t, B, K, colourAlong, bake, re
 				width: 1.8,
 				alpha: 0.9
 			});
+		// THE TESSERACT: the room repeated round itself, a plate over each
+		// way, mirrored turn and turn about (as its wallpaper is), fainter —
+		// its screens dark (no glass hole: the ground shows), the real room
+		// the one in the middle; the lines under the board show through.
+		const R = opts.tiles ?? 0;
+		if (R > 0 && T0) {
+			const ta = opts.tilesAlpha ?? 0.55;
+			for (let j = -R; j <= R; j++)
+				for (let i = -R; i <= R; i++) {
+					if (!i && !j) continue;
+					const dx = i * PLATE.W;
+					const dy = j * PLATE.H;
+					const fb = boxOf(T0, dx, dy, PLATE.W, PLATE.H);
+					const fr = meet(box, fb);
+					if (empty(fr) || fb[2] - fb[0] < 10) continue;
+					const cx = (fb[0] + fb[2]) / 2;
+					const cy = (fb[1] + fb[3]) / 2;
+					ctx.save();
+					ctx.globalAlpha *= ta;
+					clipBox(fr);
+					if (i % 2) {
+						ctx.translate(cx, 0);
+						ctx.scale(-1, 1);
+						ctx.translate(-cx, 0);
+					}
+					if (j % 2) {
+						ctx.translate(0, cy);
+						ctx.scale(1, -1);
+						ctx.translate(0, -cy);
+					}
+					for (const key of ['bg', 'poster', 'clock', 'screen', 'desk', 'bed'])
+						layer(lv, key, k, fr, [dx, dy]);
+					ctx.restore();
+					stroke(ctx, corners(fb), { color: PAL.chalk, width: 1.4, alpha: 0.7 * ta });
+				}
+		}
 	};
 
 	// Which level the lens is in: every glass it has passed is dropped.

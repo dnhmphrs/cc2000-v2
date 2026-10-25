@@ -97,9 +97,13 @@ run answered by hand, no lab bar and no sketch tags (`board.js tag` stays
 silent there). `?v=<name>` plays a variant `flow-strand-sketch-<name>.js`:
 the run itself is the newest sketch — F (0.16): the 0.11 tunnel (the sum,
 the count, the band, the dive) with the slot kept through the rooms, the
-evening worked out over them, a slow sun, the song named on the screen and
-HELD — the run stops on its last frame and the page offers AGAIN and PLAY
-(Spotify's embed of the track; `sketch.ended()`, `.song()`, `.again()`);
+questions over them (where, the lights, what mum wore, what dad said; each
+answer veers the swimmer), every room repeated round itself (`fall.js
+tiles`, a tesseract; `origin` locks the rooms to the tunnel's apex), a slow
+sun, the song named on the screen and HELD — the run stops on its last frame
+(the room sways and boils on) and the page offers AGAIN (the lens dollies on
+through the dark glass after the swimmer, `fall.js zeta`) and PLAY (Spotify's
+embed of the track; `sketch.ended()`, `.song()`, `.again()`);
 `docs/next-beats.md` times it. A birthday the archive cannot answer for
 (`functions/answer.js resolve` → `edge`; `?edge=past|future|unknown` forces
 one) runs the same run to the date on the band and then BREAKS DOWN where

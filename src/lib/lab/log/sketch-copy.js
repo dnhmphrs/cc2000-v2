@@ -15,10 +15,10 @@
 //   32.6 – 35.0  the tunnel narrows into the band; 35.0 the date on it,
 //         ringed 35.6; 36.8 the dive through it
 //   TUNNEL B — THE SONG (this table's rows):
-//   36.8 – 53.6  the rooms rush past inside the slot; over them the song is
-//         worked out from what the machine has no business knowing about
-//         that evening (38.3 – 45.5); the song itself is NOT named here —
-//         only after the flash
+//   36.8 – 53.6  the rooms pass inside the slot, each repeated round itself
+//         (a tesseract); over them THE QUESTIONS — where, the lights, what
+//         mum wore, what dad said (38.4 – 48.2), each answer turning the
+//         swimmer; the song is NOT named here — only after the flash
 //   52.4  the last screen lights; 53.7 the sun; 55.0 – 58.8 the colour fades
 //         in under it; 55.3 the song and the date, held on the screen; the
 //         run holds at 62 (AGAIN on the page takes it from the top)
@@ -56,6 +56,9 @@
 //           `out` (the date at the end, held for the flash to take it)
 //   color   a slam's ink, if not the hand's white (e.g. '#1d1612' dark)
 //   off     true: the row is kept but not played (a quick way to try without)
+//   veer    the name of a list (where, lights, door, mum, dad, said, contra):
+//           the swimmer turns off its line as the slam is up, which way read
+//           off which answer the date picked — a different path each date
 //   when    'song': only on a run with a song; 'edge': only on a verdict;
 //           'past' | 'future' | 'unknown': only on that verdict; left out,
 //           on every run
@@ -120,77 +123,79 @@ export const COPY = [
 	// (OFF: with the count and the months it was too much — the lead)
 	{ off: true, stream: 'years', at: 29.0, out: 32.8, slow: 2.2, fast: 10, every: 0 },
 
-	// ── TUNNEL B: the song worked out over the rooms, in chalk — from what
-	// the machine has no business knowing about that evening (the lists
-	// below, picked by the date, so a date always gets the same evening).
-	// The parents' steaminess, read off the lever, is a chart position
+	// ── TUNNEL B: THE QUESTIONS, over the rooms, in chalk — the specifics of
+	// your parents, their home and their sex life, which the machine has no
+	// business knowing (the lists below, picked by the date, so a date always
+	// gets the same evening). No workings. Each answer turns the swimmer
+	// (`veer`: which answer's list the turn is read off) ──
 	{
 		when: 'song',
-		at: 38.6,
-		out: 40.6,
+		veer: 'where',
+		at: 38.4,
+		out: 40.4,
 		x: 0,
 		y: -0.27,
 		lines: [
-			{ text: 'STEAMINESS  {spice} / 10', size: 0.05 },
-			{ text: '⇒  CHART POSITION  {spice}', size: 0.046, write: [39.1, 39.45] }
+			{ text: 'WHERE WERE THEY', size: 0.036 },
+			{ text: '{where}', size: 0.062, write: [38.7, 39.05] }
 		],
-		marks: [
-			{ line: 0, text: '{spice} / 10', at: 39.7 },
-			{ line: 1, text: '{spice}', at: 40.0, kind: 'circle' }
-		]
+		marks: [{ line: 1, at: 39.4, kind: 'circle', pad: 0.3 }]
 	},
-	// where, and the lights
-	// (OFF: four rows over the rooms were too much — the lead; two play)
 	{
-		off: true,
 		when: 'song',
-		at: 40.1,
-		out: 42.1,
+		veer: 'lights',
+		at: 41.0,
+		out: 43.0,
 		x: 0,
 		y: 0.26,
 		lines: [
-			{ text: 'WHERE: {where}', size: 0.048 },
-			{ text: 'LIGHTS: {lights}   ·   DOOR: {door}', size: 0.042, write: [40.6, 41.0] }
+			{ text: 'THE LIGHTS  ·  THE DOOR', size: 0.036 },
+			{ text: '{lights}  ·  {door}', size: 0.058, write: [41.3, 41.7] }
 		],
-		marks: [
-			{ line: 0, text: '{where}', at: 41.1 },
-			{ line: 1, text: '{lights}', at: 41.4, kind: 'circle' }
-		]
+		marks: [{ line: 1, text: '{lights}', at: 42.0, kind: 'circle', pad: 0.3 }]
 	},
-	// what mum wore, what dad had done
 	{
 		when: 'song',
-		at: 42.0,
-		out: 44.0,
+		veer: 'mum',
+		at: 43.6,
+		out: 45.6,
 		x: 0,
 		y: -0.27,
 		lines: [
-			{ text: 'MUM WORE {mum}', size: 0.046 },
-			{ text: 'DAD {dad}', size: 0.046, write: [42.5, 42.95] }
+			{ text: 'WHAT MUM WORE', size: 0.036 },
+			{ text: '{mum}', size: 0.062, write: [43.9, 44.3] }
 		],
-		marks: [
-			{ line: 0, text: '{mum}', at: 43.1 },
-			{ line: 1, text: '{dad}', at: 43.4, kind: 'circle' }
-		]
+		marks: [{ line: 1, at: 44.6, kind: 'circle', pad: 0.3 }]
 	},
-	// what was said, and the precautions
-	// (OFF: four rows over the rooms were too much — the lead; two play)
 	{
-		off: true,
 		when: 'song',
-		at: 43.7,
-		out: 45.5,
+		veer: 'said',
+		at: 46.2,
+		out: 48.2,
 		x: 0,
 		y: 0.26,
 		lines: [
-			{ text: 'HE SAID: {said}', size: 0.046 },
-			{ text: 'CONTRACEPTION: {contra}', size: 0.044, write: [44.2, 44.55] }
+			{ text: 'WHAT DAD SAID', size: 0.036 },
+			{ text: '{said}', size: 0.062, write: [46.5, 46.9] }
 		],
-		marks: [
-			{ line: 0, text: '{said}', at: 44.7 },
-			{ line: 1, text: '{contra}', at: 45.0, kind: 'circle' }
-		]
+		marks: [{ line: 1, at: 47.2, kind: 'circle', pad: 0.3 }]
 	},
+	// (kept, off: what dad had done, the precautions)
+	{
+		off: true,
+		when: 'song',
+		veer: 'contra',
+		at: 48.6,
+		out: 50.4,
+		x: 0,
+		y: -0.27,
+		lines: [
+			{ text: 'DAD {dad}', size: 0.04 },
+			{ text: 'PROTECTION: {contra}', size: 0.05, write: [48.9, 49.3] }
+		],
+		marks: [{ line: 1, text: '{contra}', at: 49.6, kind: 'circle', pad: 0.3 }]
+	},
+
 	// ── THE VERDICTS (functions/answer.js: a birthday the archive cannot
 	// answer for; ?edge=past|future|unknown forces one). The date is found as
 	// on any run; then, where the dive would be, THE BREAKDOWN (the sketch's
@@ -711,6 +716,16 @@ export function fieldsOf(digits, extra = {}) {
 		door: DOOR[Math.floor(jd / 13) % DOOR.length],
 		said: SAID[Math.floor(jd / 11) % SAID.length],
 		contra: CONTRA[Math.floor(jd / 17) % CONTRA.length],
+		// which answer each is, as a turn of the circle (the swimmer's veer)
+		_veer: {
+			mum: (jd % MUM.length) / MUM.length,
+			dad: (Math.floor(jd / 7) % DAD.length) / DAD.length,
+			where: (Math.floor(jd / 3) % WHERE.length) / WHERE.length,
+			lights: (Math.floor(jd / 5) % LIGHTS.length) / LIGHTS.length,
+			door: (Math.floor(jd / 13) % DOOR.length) / DOOR.length,
+			said: (Math.floor(jd / 11) % SAID.length) / SAID.length,
+			contra: (Math.floor(jd / 17) % CONTRA.length) / CONTRA.length
+		},
 		// the structures the streams are built from
 		_birth: b,
 		_conceived: c,
