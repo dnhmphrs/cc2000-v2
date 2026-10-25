@@ -249,7 +249,7 @@ export const meta = {
 };
 
 // ── The beats ────────────────────────────────────────────────────────────────
-const SECONDS = 58;
+const SECONDS = 54;
 const TERM = makeTerminal(0.8, { cmd: false, align: 'center' });
 const FREEZE = TERM.stop + 0.2; // ≈ 5.14
 const { q1: Q1, wait1: W1, e1: E1, q2: Q2, wait2: W2, e2: E2 } = EPICYCLE.beats;
@@ -288,15 +288,15 @@ const B = {
 	premise: [27.2, 28.75], // the slam: the birth date − 266 DAYS
 	count: [28.7, 41.0], // 266 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
 	seam: [38.6, 41.0], // the tunnel narrowed into the band
-	conceived: [41.0, 42.8], // the conception date on the band
-	dive: [42.4, 43.4], // the band and the date FADE (no tear): the swim goes on into the room as its own beat
-	fall: [42.8, 48.0],
-	land: [46.0, 48.0],
-	screen: [47.0, 48.1], // the last screen switched on
-	colour: [48.9, 49.4], // the room's colour, flooded under the white
-	aim: [46.2, 48.2],
-	hit: 48.2, // the conception, straight after the landing
-	push: [48.3, 51.3],
+	conceived: [41.0, 42.4], // the conception date on the band
+	dive: [41.9, 42.5], // the band, the date and the swimmer fade — under the flash, which comes straight off the date
+	fall: [42.2, 44.4], // (the landing under the white: no beat between the date and the final scene)
+	land: [43.2, 44.4],
+	screen: [43.0, 43.4], // the last screen switched on
+	colour: [43.0, 43.5], // the room's colour, flooded under the white
+	aim: [41.6, 42.2],
+	hit: 42.2, // the conception: the flash straight off the date on the band
+	push: [42.3, 45.3],
 	out: [99, 100] // (never: the run HOLDS on its last frame; `again` restarts it)
 };
 // THE BREAKDOWN (a verdict: a birthday the archive cannot answer for). The
@@ -505,6 +505,7 @@ const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05 };
 // The fall: eleven crossings (twelve rooms, the answer's last) at strand's
 // pace, so the rooms rush (a crossing every ~1.4 s, at 0.5–1 e-folds a second).
 const FALL_X = 0; // no crossings: the room through the band is the last
+const COUNT_FLIES = false; // the 266 figures and the months flying out (cut G has them)
 const ROOM_AT_BAND = 0.3; // the room this much of the board tall at the dive (firstRoom; the fall's start)
 const INSIDE = 0.12; // the fall stops inside the last room (?inside=: this far into its glass)
 const FILL = { w: 1.5, h: 0.92 }; // … where the room is this many boards wide, and at least this tall
@@ -1836,8 +1837,12 @@ export default async function make({ THREE, at }) {
 	function figures(ink, w, h, t, O, st, bo) {
 		for (const sl of st.words.slams) slam(ink, t, w, h, O, bo, sl, 1 - exitWords());
 		for (const s of st.words.streams) flyers(ink, w, h, t, O, s, bo);
-		months(ink, w, h, t, O, st, bo);
-		countdown(ink, w, h, t, O, st, bo);
+		// (the count's figures and the months no longer fly — visual noise, the
+		// lead said; the numbers come sparingly, as answers in the conversation)
+		if (COUNT_FLIES) {
+			months(ink, w, h, t, O, st, bo);
+			countdown(ink, w, h, t, O, st, bo);
+		}
 	}
 
 	// THE BREAKDOWN'S GIF (the original site's three: the dinosaurs, the

@@ -14,16 +14,19 @@
 //         them (the `years` row below)
 //   32.6 – 35.0  the tunnel narrows into the band; 35.0 the date on it,
 //         ringed 35.6; 36.8 the dive through it
-//   28.7 – 41.0  the count, spaced out, the OBSERVATIONS about the parents
-//         between the numbers (29.8, 32.8, 35.8, 38.6); the band 38.6 – 41;
-//         the date on it 41.0, ringed 41.6; 42.4 – 43.4 the band, the date
-//         and the swimmer fade
+//   29.0 – 41.0  THE CONVERSATION, one exchange at a time in the middle and
+//         nothing else flying (no count: noise) — the lights 29.0, what are
+//         you wearing 31.4, what did you say 33.8, how long have we got / 266
+//         days 36.2, what music do you want 38.4; the band 38.6 – 41; the
+//         date on it 41.0, ringed 41.6 — and 42.2 THE FLASH straight off
+//         it: the band, the date and the swimmer go under the white, the
+//         lens lands in the room under it (42.2 – 44.4), and the room comes
+//         back out of the white landed and in colour
 //   NO TUNNEL B (cut G, kept at ?v=g, has it — log/sketch-copy-g.js): the
 //   room through the band is the last, grown steadily from a speck since
-//   28.4, and the lens comes to rest in it 42.8 – 48.0
-//   47.0  the last screen lights; 48.2 the sun; the colour under its white;
-//         50.0 the song and the date, held on the screen; the run holds at
-//         58 (AGAIN on the page takes it from the top)
+//   28.4
+//   45.0  the song and the date, held on the screen; the run holds at 54
+//         (AGAIN on the page takes it from the top)
 //   A VERDICT (a birthday the archive cannot answer for): the date found as
 //         on any run, then at 37.0 THE BREAKDOWN where the dive would be —
 //         the gif in the band, the band torn open onto the gif tiled across
@@ -112,57 +115,72 @@ export const NOW = 2026; // the year the years count back from
 export const COPY = [
 	{ when: 'edge', caption: 'SIGNAL LOST', at: 43.4, until: 52 },
 
-	// ── TUNNEL A, between the numbers: OBSERVATIONS about the parents — the
-	// specifics of their evening, which the machine has no business knowing
+	// ── TUNNEL A: THE CONVERSATION, the last beat of the story before the
+	// room — in the middle of the board, one exchange at a time, nothing else
+	// flying: the evening in the parents' own words, as the machine has it
 	// (the lists below, picked by the date, so a date always gets the same
-	// evening), spaced out down the tunnel ──
+	// evening); a number only as an answer; the last question the one the
+	// machine answers with the date and the song ──
 	{
 		when: 'song',
-		at: 29.8,
-		out: 32.0,
+		at: 29.0,
+		out: 31.0,
 		x: 0,
-		y: -0.27,
+		y: -0.22, // (above the middle: the room grows beneath)
 		lines: [
-			{ text: 'WHERE WERE THEY', size: 0.036 },
-			{ text: '{where}', size: 0.062, write: [30.1, 30.45] }
+			{ text: 'LIGHTS ON OR OFF', size: 0.04 },
+			{ text: '{lights}', size: 0.066, write: [29.4, 29.75] }
 		],
-		marks: [{ line: 1, at: 30.8, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 1, at: 30.0, kind: 'circle', pad: 0.3 }]
 	},
 	{
 		when: 'song',
-		at: 32.8,
-		out: 35.0,
+		at: 31.4,
+		out: 33.4,
 		x: 0,
-		y: 0.26,
+		y: -0.22, // (above the middle: the room grows beneath)
 		lines: [
-			{ text: 'THE LIGHTS  ·  THE DOOR', size: 0.036 },
-			{ text: '{lights}  ·  {door}', size: 0.058, write: [33.1, 33.5] }
+			{ text: 'WHAT ARE YOU WEARING', size: 0.04 },
+			{ text: '{mum}', size: 0.066, write: [31.8, 32.2] }
 		],
-		marks: [{ line: 1, text: '{lights}', at: 33.8, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 1, at: 32.5, kind: 'circle', pad: 0.3 }]
 	},
 	{
 		when: 'song',
-		at: 35.8,
+		at: 33.8,
+		out: 35.8,
+		x: 0,
+		y: -0.22, // (above the middle: the room grows beneath)
+		lines: [
+			{ text: 'WHAT DID YOU SAY', size: 0.04 },
+			{ text: '{said}', size: 0.066, write: [34.2, 34.6] }
+		],
+		marks: [{ line: 1, at: 34.9, kind: 'circle', pad: 0.3 }]
+	},
+	{
+		when: 'song',
+		at: 36.2,
 		out: 38.0,
 		x: 0,
-		y: -0.27,
+		y: -0.22, // (above the middle: the room grows beneath)
 		lines: [
-			{ text: 'WHAT MUM WORE', size: 0.036 },
-			{ text: '{mum}', size: 0.062, write: [36.1, 36.5] }
+			{ text: 'HOW LONG HAVE WE GOT', size: 0.04 },
+			{ text: '266 DAYS', size: 0.066, write: [36.6, 36.9] }
 		],
-		marks: [{ line: 1, at: 36.8, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 1, at: 37.2, kind: 'circle', pad: 0.3 }]
 	},
+	// the last question — the one the machine answers with the date and the song
 	{
 		when: 'song',
-		at: 38.6,
-		out: 40.6,
+		at: 38.4,
+		out: 40.2,
 		x: 0,
-		y: 0.26,
+		y: -0.22, // (above the middle: the room grows beneath)
 		lines: [
-			{ text: 'WHAT DAD SAID', size: 0.036 },
-			{ text: '{said}', size: 0.062, write: [38.9, 39.3] }
+			{ text: 'WHAT MUSIC DO YOU WANT', size: 0.04 },
+			{ text: 'PUT ON THAT SONG THAT GETS ME IN THE MOOD', size: 0.05, write: [38.7, 39.5] }
 		],
-		marks: [{ line: 1, at: 39.6, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 1, text: 'THAT SONG', at: 39.7, kind: 'circle', pad: 0.3 }]
 	},
 
 	// ── THE VERDICTS (functions/answer.js: a birthday the archive cannot
@@ -217,17 +235,17 @@ export const COPY = [
 	// ── the end: the song and the date on the lit room, held ──
 	{
 		when: 'song',
-		at: 50.0,
+		at: 45.0,
 		out: 200,
 		hold: true,
 		x: 0,
 		y: -0.05,
 		lines: [
 			{ text: '{title}', size: 0.072 },
-			{ text: '{artist}', size: 0.044, write: [50.5, 51.0] },
-			{ text: '{conception}', size: 0.04, write: [51.1, 51.5] }
+			{ text: '{artist}', size: 0.044, write: [45.5, 46.0] },
+			{ text: '{conception}', size: 0.04, write: [46.1, 46.5] }
 		],
-		marks: [{ line: 0, at: 51.0, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 46.0, kind: 'circle', pad: 0.3 }]
 	}
 ];
 
