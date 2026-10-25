@@ -95,24 +95,23 @@ its header the map; docs/explore-10.md the round it came from), out of the
 lab in a plain environment of its own — one canvas, one WebGPURenderer, the
 run answered by hand, no lab bar and no sketch tags (`board.js tag` stays
 silent there). `?v=<name>` plays a variant `flow-strand-sketch-<name>.js`:
-the run itself is the newest sketch — F (0.16): the 0.11 tunnel (the sum,
-the count, the band, the dive) with the slot kept through the rooms, the
-questions over them (where, the lights, what mum wore, what dad said; each
-answer veers the swimmer), every room repeated round itself (`fall.js
-tiles`, a tesseract; `origin` locks the rooms to the tunnel's apex), a slow
-sun, the song named on the screen and HELD — the run stops on its last frame
-(the room sways and boils on) and the page offers AGAIN (the lens dollies on
-through the dark glass after the swimmer, `fall.js zeta`) and PLAY (Spotify's
-embed of the track; `sketch.ended()`, `.song()`, `.again()`);
+the run itself is the newest cut — H (0.18): the 0.11 tunnel (the count,
+the band, the date, the dive; the first room a speck swum up on slowly from
+the moment the lens is on axis, `origin` locking it to the tunnel's apex) and
+through the band THE LAST ROOM, no tunnel B (cut G, with the tesseract of
+rooms — `fall.js tiles` — and the questions that veer the swimmer, is kept at
+`?v=g`, its table `log/sketch-copy-g.js`); a slow sun, the song named on the
+screen and HELD — the run stops on its last frame (the room sways and boils
+on) and the page offers AGAIN (the lens dollies on through the dark glass,
+`fall.js zeta`) and PLAY (Spotify's embed of the track; `sketch.ended()`,
+`.song()`, `.again()`);
 `docs/next-beats.md` times it. A birthday the archive cannot answer for
 (`functions/answer.js resolve` → `edge`; `?edge=past|future|unknown` forces
 one) runs the same run to the date on the band and then BREAKS DOWN where
 the dive would be (`BREAK`): the gif leaks into the seam, the band tears open
 onto the gif tiled across the board (`data/gifs.js` sheets drawn on the
 board), the verdict is lettered over it and held; the rows of the copy table
-say `when` they apply, and `off` keeps a row without playing it. `?v=h` is CUT H, the run without tunnel B (G's tunnel A exactly, then the
-room through the band is the last, no tesseract, the sun straight after;
-`log/sketch-copy-h.js`); `?v=a` is the
+say `when` they apply, and `off` keeps a row without playing it. `?v=a` is the
 original sketch of 0.10, `?v=b` sketch A's tuned 0.11, `?v=c` sketch C of 0.13, `?v=d` sketch D of 0.14, `?v=e` sketch
 E of 0.15 (D and E read their own tables, `log/sketch-copy-d.js`, `-e.js`);
 the five of 0.12 are set aside, kept for reference; `?at=` and `?demo=1` as

@@ -590,7 +590,7 @@ export const FLOWS = [
 	{
 		sketch: 'flow-strand-sketch',
 		name: 'Strand · sketch',
-		what: 'the next run (/next), sketch F: the 0.11 tunnel — the count of days struck off, the months, the band, the date on it, the dive — then the slot KEPT through the rooms, each repeated round itself (a tesseract), the questions over them in chalk — where, the lights, what mum wore, what dad said — each answer turning the swimmer, the lens to rest in the last room, the slow holy sun, the room back out of it already in full colour, the song and its artist named only there and held; the run holds on its last frame, the glow gone, the room’s depths parting after the pointer (AGAIN: the words fade, the screen goes dark, the lens dollies on through the glass after the swimmer into the next run; PLAY the song on Spotify); a birthday the archive cannot answer for breaks down at the band instead of diving — the gif in the seam, the band torn open onto the gif tiled across the board, the verdict over it; the words in log/sketch-copy.js'
+		what: 'the next run (/next), cut H: the 0.11 tunnel — the swim towards the room, a speck swum up on slowly, the count of days struck off, the circles drawn out into the slot, the band, the date, the swimmer gone into the band’s flash — and through it THE LAST ROOM, no tunnel B: the lens to rest in it, the sun straight after, the room back out of the white in colour, the song and the date on its screen, held (the room sways and boils on, the depths part after the pointer; AGAIN: the words fade, the screen goes dark, the lens dollies on through the glass into the next run; PLAY the song on Spotify); a birthday the archive cannot answer for breaks down at the band onto the verdict’s gif; the words in log/sketch-copy.js'
 	},
 	{
 		sketch: 'flow-strand-sketch-a',
@@ -613,9 +613,9 @@ export const FLOWS = [
 		what: 'kept beside the next run (/next?v=d): 0.14 — one tunnel in two parts, the maths quickening into the mass of dates and the date found in the middle of the board; the slot, the rooms with a glimpse of their colour, the song computed over them, the band flash, the song named'
 	},
 	{
-		sketch: 'flow-strand-sketch-h',
-		name: 'Cut · H',
-		what: 'the run without tunnel B (/next?v=h): G’s tunnel A exactly — the swim, the count, the circles drawn out into the slot, the band, the date, the dive — then the room through the band is the last, no tesseract and no questions, the lens to rest in it in four seconds, the sun straight after, the room back out of the white in colour, the song on its screen; the breakdown on a verdict as the run’s'
+		sketch: 'flow-strand-sketch-g',
+		name: 'Cut · G',
+		what: 'kept beside the run (/next?v=g): the run with tunnel B — five rooms inside the slot, each repeated round itself at every depth (a tesseract), the questions over them (where, the lights, what mum wore, what dad said) each turning the swimmer, the lens to rest in the last, the sun, the song'
 	},
 	{
 		sketch: 'flow-strand-sketch-e',

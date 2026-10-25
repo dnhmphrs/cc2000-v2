@@ -14,14 +14,12 @@
 //         them (the `years` row below)
 //   32.6 – 35.0  the tunnel narrows into the band; 35.0 the date on it,
 //         ringed 35.6; 36.8 the dive through it
-//   TUNNEL B — THE SONG (this table's rows):
-//   36.8 – 53.6  the rooms pass inside the slot, each repeated round itself
-//         (a tesseract); over them THE QUESTIONS — where, the lights, what
-//         mum wore, what dad said (38.4 – 48.2), each answer turning the
-//         swimmer; the song is NOT named here — only after the flash
-//   52.4  the last screen lights; 53.7 the sun; 55.0 – 58.8 the colour fades
-//         in under it; 55.3 the song and the date, held on the screen; the
-//         run holds at 62 (AGAIN on the page takes it from the top)
+//   NO TUNNEL B (cut G, kept at ?v=g, has it — log/sketch-copy-g.js has its
+//   questions): the room through the band is the last — the swimmer gone
+//   into the band's flash — and the lens comes to rest in it 36.8 – 42.0
+//   41.0  the last screen lights; 42.2 the sun; the colour under its white;
+//         44.0 the song and the date, held on the screen; the run holds at
+//         52 (AGAIN on the page takes it from the top)
 //   A VERDICT (a birthday the archive cannot answer for): the date found as
 //         on any run, then at 37.0 THE BREAKDOWN where the dive would be —
 //         the gif in the band, the band torn open onto the gif tiled across
@@ -108,93 +106,7 @@
 export const NOW = 2026; // the year the years count back from
 
 export const COPY = [
-	// the machine's status line over the second tunnel, typed at the bottom
-	// (the first two, COMPILING USER GENETICS and SIMULATING CONCEPTION, are
-	// the sketch's own, log/caption.js)
-	{ when: 'song', caption: 'COMPUTING SOUNDTRACK', at: 38.0, until: 48.5 },
 	{ when: 'edge', caption: 'SIGNAL LOST', at: 37.4, until: 46 },
-
-	// ── TUNNEL A is the sketch's own (the count, the months, the date on the
-	// band): no slam opens it — the 266 days gave the trick away, and the mod
-	// sum that stood in for it was just bad (the lead).
-	// the years back from now to the birth year, in the cloud with the count
-	// (every: 0 — no headlines; 2 flies one with every second year, from
-	// HEADLINES)
-	// (OFF: with the count and the months it was too much — the lead)
-	{ off: true, stream: 'years', at: 29.0, out: 32.8, slow: 2.2, fast: 10, every: 0 },
-
-	// ── TUNNEL B: THE QUESTIONS, over the rooms, in chalk — the specifics of
-	// your parents, their home and their sex life, which the machine has no
-	// business knowing (the lists below, picked by the date, so a date always
-	// gets the same evening). No workings. Each answer turns the swimmer
-	// (`veer`: which answer's list the turn is read off) ──
-	{
-		when: 'song',
-		veer: 'where',
-		at: 38.4,
-		out: 40.4,
-		x: 0,
-		y: -0.27,
-		lines: [
-			{ text: 'WHERE WERE THEY', size: 0.036 },
-			{ text: '{where}', size: 0.062, write: [38.7, 39.05] }
-		],
-		marks: [{ line: 1, at: 39.4, kind: 'circle', pad: 0.3 }]
-	},
-	{
-		when: 'song',
-		veer: 'lights',
-		at: 41.0,
-		out: 43.0,
-		x: 0,
-		y: 0.26,
-		lines: [
-			{ text: 'THE LIGHTS  ·  THE DOOR', size: 0.036 },
-			{ text: '{lights}  ·  {door}', size: 0.058, write: [41.3, 41.7] }
-		],
-		marks: [{ line: 1, text: '{lights}', at: 42.0, kind: 'circle', pad: 0.3 }]
-	},
-	{
-		when: 'song',
-		veer: 'mum',
-		at: 43.6,
-		out: 45.6,
-		x: 0,
-		y: -0.27,
-		lines: [
-			{ text: 'WHAT MUM WORE', size: 0.036 },
-			{ text: '{mum}', size: 0.062, write: [43.9, 44.3] }
-		],
-		marks: [{ line: 1, at: 44.6, kind: 'circle', pad: 0.3 }]
-	},
-	{
-		when: 'song',
-		veer: 'said',
-		at: 46.2,
-		out: 48.2,
-		x: 0,
-		y: 0.26,
-		lines: [
-			{ text: 'WHAT DAD SAID', size: 0.036 },
-			{ text: '{said}', size: 0.062, write: [46.5, 46.9] }
-		],
-		marks: [{ line: 1, at: 47.2, kind: 'circle', pad: 0.3 }]
-	},
-	// (kept, off: what dad had done, the precautions)
-	{
-		off: true,
-		when: 'song',
-		veer: 'contra',
-		at: 48.6,
-		out: 50.4,
-		x: 0,
-		y: -0.27,
-		lines: [
-			{ text: 'DAD {dad}', size: 0.04 },
-			{ text: 'PROTECTION: {contra}', size: 0.05, write: [48.9, 49.3] }
-		],
-		marks: [{ line: 1, text: '{contra}', at: 49.6, kind: 'circle', pad: 0.3 }]
-	},
 
 	// ── THE VERDICTS (functions/answer.js: a birthday the archive cannot
 	// answer for; ?edge=past|future|unknown forces one). The date is found as
@@ -245,21 +157,20 @@ export const COPY = [
 		marks: [{ line: 0, at: 41.5, kind: 'circle', pad: 0.3 }]
 	},
 
-	// ── the end: the song and the date on the lit room, held (the run holds
-	// on its last frame; the song is named here and nowhere before) ──
+	// ── the end: the song and the date on the lit room, held ──
 	{
 		when: 'song',
-		at: 55.3,
+		at: 44.0,
 		out: 200,
 		hold: true,
 		x: 0,
 		y: -0.05,
 		lines: [
 			{ text: '{title}', size: 0.072 },
-			{ text: '{artist}', size: 0.044, write: [55.8, 56.3] },
-			{ text: '{conception}', size: 0.04, write: [56.4, 56.8] }
+			{ text: '{artist}', size: 0.044, write: [44.5, 45.0] },
+			{ text: '{conception}', size: 0.04, write: [45.1, 45.5] }
 		],
-		marks: [{ line: 0, at: 56.3, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 45.0, kind: 'circle', pad: 0.3 }]
 	}
 ];
 

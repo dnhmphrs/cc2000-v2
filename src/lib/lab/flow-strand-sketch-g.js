@@ -1,11 +1,7 @@
-// ── Flow: flow-strand-sketch-h — CUT H: the run without tunnel B ────────────
-// The lead's question: what if tunnel B is simply removed? Tunnel A is G's
-// exactly — the swim, the rings, the count, the circles drawn out into the
-// slot, the band, the date, the dive — but the room through the band is
-// THE LAST ROOM (no crossings: FALL_X 0), no tesseract round it and no
-// questions over it; the lens comes to rest in it in four seconds and the
-// sun comes straight after, the room back out of the white in colour, the
-// song on its screen. The breakdown on a verdict is as the run's.
+// ── Flow: flow-strand-sketch-g — CUT G (0.17), kept beside the run ─────────
+// The run as it was with tunnel B: the tesseract of rooms and the questions
+// over them. (Its copy table is log/sketch-copy-g.js; the run's is
+// log/sketch-copy.js.)
 //
 // ── Flow: flow-strand-sketch-b — sketch tuned (0.11: the lens, the GPU ink, inside the room), kept: /next?v=b ──
 // ── Flow: flow-strand-sketch-a — sketch as it was at 0.11 ("sketch A"), kept ──
@@ -221,7 +217,7 @@ import { makeGpuInk } from './log/gpu-ink.js';
 import { flash as burnOut } from './log/flash.js';
 import { makeFall, orderOf } from './log/fall.js';
 import { DECADES, loadRooms, decadeOfDate, PLATE } from './log/rooms.js';
-import { COPY, HEADLINES, NOW, fieldsOf, fill } from './log/sketch-copy-h.js';
+import { COPY, HEADLINES, NOW, fieldsOf, fill } from './log/sketch-copy-g.js';
 import { resolve } from '../functions/answer.js';
 import { GIFS } from '../data/gifs.js';
 import {
@@ -244,11 +240,11 @@ const prof = (n) => window.__prof?.mark(n);
 
 export const meta = {
 	title:
-		'strand · cut H — G’s tunnel A exactly, then through the band into the last room: no tesseract, no questions, the sun straight after'
+		'strand · cut G (0.17) — the run with tunnel B: the tesseract, the questions turning the swimmer; kept beside the run'
 };
 
 // ── The beats ────────────────────────────────────────────────────────────────
-const SECONDS = 50;
+const SECONDS = 62;
 const TERM = makeTerminal(0.8, { cmd: false, align: 'center' });
 const FREEZE = TERM.stop + 0.2; // ≈ 5.14
 const { q1: Q1, wait1: W1, e1: E1, q2: Q2, wait2: W2, e2: E2 } = EPICYCLE.beats;
@@ -289,13 +285,13 @@ const B = {
 	seam: [32.6, 35.0], // the tunnel narrowed into the band
 	conceived: [35.0, 36.8], // the conception date on the band
 	dive: [36.8, 37.7], // the band opens round the swimmer, onto the rooms
-	fall: [36.8, 41.0],
-	land: [39.0, 41.0],
-	screen: [40.0, 41.1], // the last screen switched on
-	colour: [41.9, 42.4], // the room's colour, flooded under the white
-	aim: [39.2, 41.2],
-	hit: 41.2, // the conception, straight after the landing
-	push: [41.3, 44.3],
+	fall: [36.8, 53.6],
+	land: [51.6, 53.6],
+	screen: [52.4, 53.62], // the band again: the last screen switched on
+	colour: [54.4, 54.9], // the room's colour, flooded while the white covers everything (fall.js's flood is by depth, but none of it shows) — so it comes back out of the flash ALREADY in full colour
+	aim: [51.8, 53.7], // the swimmer on into the last glass
+	hit: 53.7, // the flash
+	push: [53.8, 56.8], // the lens in on the last room, to near full size
 	out: [99, 100] // (never: the run HOLDS on its last frame; `again` restarts it)
 };
 // THE BREAKDOWN (a verdict: a birthday the archive cannot answer for). The
@@ -503,7 +499,7 @@ const ZETA_S = 140; // the swimmer shrinks with the zoom below this distance
 const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05 };
 // The fall: eleven crossings (twelve rooms, the answer's last) at strand's
 // pace, so the rooms rush (a crossing every ~1.4 s, at 0.5–1 e-folds a second).
-const FALL_X = 0; // no crossings: the room through the band is the last
+const FALL_X = 5; // crossings before the answer’s room (was 11: too many, too fast — the lead)
 const INSIDE = 0.12; // the fall stops inside the last room (?inside=: this far into its glass)
 const FILL = { w: 1.5, h: 0.92 }; // … where the room is this many boards wide, and at least this tall
 const FALL_PACE = { n: 512, c: 0.55 };
@@ -653,12 +649,16 @@ export default async function make({ THREE, at }) {
 		// flash, to 0.94 of the board's height (an upright board crops its
 		// sides rather than leave it small).
 		const fill = { h: 0.94, w: h > w ? 1.75 : 0.985 };
-		// The fall starts with the first plate 0.34 h tall: what the band opens
+		// The fall starts with the first plate 0.15 h tall (it was 0.34: too
+		// big by the flash — the lead): a speck swum up on slowly, what the band opens
 		// on, the lens still coming to it (at ζ < 0 the lens is X^ζ as far as
 		// at rest, the plate 1/X^ζ the size).
-		const g0 = makeFall({ art, order, beats: fb }).geometry(w, h);
+		// (made with `inside`, as the fall itself is: so the last room has its
+		// nest ratio X even when it is the only room, and the approach's zoom
+		// counts back from it in e-folds rather than going nowhere)
+		const g0 = makeFall({ art, order, beats: fb, inside: 0.5 }).geometry(w, h);
 		const X0 = g0.levels[0].X;
-		const far = g0.plate / (0.34 * h);
+		const far = g0.plate / (0.15 * h);
 		const z0 = far > 1 ? clamp(Math.log(far) / Math.log(X0), -2, -0.05) : -0.05;
 		// Inside: how far into the last room's glass the lens stops — so the
 		// room is FILL.w times the board's width (the monitor at the middle,
@@ -2070,7 +2070,7 @@ export default async function make({ THREE, at }) {
 		if (t < FREEZE) {
 			entry.reset();
 			TERM.draw(ctx, w, h, t / 10, t, t - 10);
-			tag(ctx, w, h, 'flow-strand-sketch-h');
+			tag(ctx, w, h, 'flow-strand-sketch-g');
 			fuzz(ctx, w, h, secs, t);
 			window.__prof?.end();
 			return;
@@ -2116,7 +2116,7 @@ export default async function make({ THREE, at }) {
 			ctx.restore();
 		}
 		prof('out');
-		tag(ctx, w, h, 'flow-strand-sketch-h');
+		tag(ctx, w, h, 'flow-strand-sketch-g');
 		fuzz(ctx, w, h, secs, t);
 		prof('grain');
 		window.__prof?.end();
@@ -2188,22 +2188,51 @@ export default async function make({ THREE, at }) {
 	function firstRoom(ctx, w, h, t, st, O, bo) {
 		const g = st.geo;
 		const tf = st.efolds(t) - st.efolds(B.fall[0]);
-		// Not before the lens is locked on the tunnel's axis (B.onAxis): until
-		// then tunnel B is nowhere to be seen; then the room comes out of the
-		// vanishing point in perspective — scaled up from nothing over 1.2 s
-		// (so many e-folds further off), growing on at the tunnel's rate.
-		const k = smooth(span(t, B.onAxis[1], B.onAxis[1] + 1.2));
-		if (k <= 0.001) return;
-		const X0 = g.levels[0].X;
-		const zeta = g.zetaOf(tf) - Math.log(k) / Math.log(X0);
-		if (g.plate / Math.pow(X0, zeta) < 2.5) return;
+		// Not before the lens is locked on the tunnel's axis (B.onAxis); from
+		// then on the room is drawn at the size the swim's own zoom gives it —
+		// a speck of a pixel or two, swum up on at exactly the swimmer's pace,
+		// 0.15 of the board tall by the dive. No scaling of its own (there was
+		// one, and it read as the room being brought in — the lead).
+		if (t < B.onAxis[1]) return;
+		const zeta = g.zetaOf(tf);
+		const ph = g.plate / Math.pow(g.levels[0].X, zeta); // the plate's height on the board
+		if (ph < 1.5) return;
+		// THE PORTHOLE. The room is not a rectangle laid on the spiral: it is
+		// seen through a circle at the apex — the far end of the tunnel, a
+		// lens into the void, a disc of the room the size of its height, its
+		// rim drawn in the hand — and as the tunnel narrows into the band
+		// (B.seam) the circle opens out into the room's own rectangle, so more
+		// of it shows; by the dive it is the whole plate, as the fall draws it.
+		const m = smooth(span(t, ...B.seam));
+		const rc = 0.5 * ph;
+		const hw = lerp(rc, 0.5 * ph * PHI, m);
+		const hh = lerp(rc, 0.5 * ph, m);
+		const cr = Math.min(lerp(rc, 0.06 * ph, m), hw, hh);
+		const port = () => {
+			ctx.beginPath();
+			ctx.roundRect(O[0] - hw, O[1] - hh, 2 * hw, 2 * hh, cr);
+		};
 		const keep = g.zetaAt;
 		g.zetaAt = () => zeta;
+		ctx.save();
+		port();
+		ctx.clip();
 		try {
 			// (locked to the tunnel's apex O, where the rings' centre is)
 			st.fall.draw(roomPen(O, tf, bo), w, h, t, { origin: O, colourAlong: false, dust: null });
 		} finally {
 			g.zetaAt = keep;
+			ctx.restore();
+		}
+		// the rim
+		if (ph > 6) {
+			ctx.save();
+			port();
+			ctx.strokeStyle = PAL.chalk;
+			ctx.lineWidth = 1.3 * Math.sqrt(h / 800);
+			ctx.globalAlpha = 0.75 * (1 - 0.6 * m);
+			ctx.stroke();
+			ctx.restore();
 		}
 	}
 
@@ -2399,8 +2428,8 @@ export default async function make({ THREE, at }) {
 			origin: O,
 			// the lens leans after the swimmer's veer, and after the pointer
 			nudge: [nd[0] + 0.08 * veer[0], nd[1] + 0.05 * veer[1]],
-			// (no tesseract in this cut)
-			tiles: 0,
+			// the tesseract: every room repeated two plates out each way
+			tiles: 2,
 			tilesAlpha: 0.5,
 			// AGAIN: the screen off, and the dolly on through the glass
 			screenOff: exit ? smooth(span(exit.s, ...EXIT.screen)) : 0,
