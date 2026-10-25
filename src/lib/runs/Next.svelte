@@ -28,6 +28,19 @@
 	let song = null;
 	let player = false;
 	let run = null;
+	// The monitor's glass on the board, [x0, y0, x1, y1] in CSS px, when the
+	// sketch gives it (`screen()`): the output — the buttons, the embed — sits
+	// ON THE SCREEN, following it as the room sways after the pointer.
+	let screen = null;
+	const BAR = 30; // the buttons' strip at the glass's bottom
+	$: gw = screen ? Math.max(0, screen[2] - screen[0]) : 0;
+	$: gh = screen ? Math.max(0, screen[3] - screen[1]) : 0;
+	$: endStyle = screen
+		? `left:${screen[0]}px;top:${screen[3] - BAR}px;width:${gw}px;height:${BAR}px;bottom:auto;transform:none;`
+		: '';
+	$: playerStyle = screen
+		? `left:${screen[0]}px;top:${screen[1]}px;width:${gw}px;height:${Math.max(80, gh - BAR)}px;bottom:auto;transform:none;max-width:none;border-radius:0;`
+		: '';
 	$: embed = song?.uri
 		? `https://open.spotify.com/embed/track/${song.uri.replace('spotify:track:', '')}?utm_source=generator&theme=0`
 		: '';
@@ -108,6 +121,12 @@
 					song = e ? (sketch.song?.() ?? null) : null;
 					if (!e) player = false;
 				}
+				if (e) {
+					const r = sketch.screen?.() ?? null;
+					if (r && r[2] - r[0] > 60 && r[3] - r[1] > 40) {
+						if (!screen || r.some((v, i) => Math.abs(v - screen[i]) > 0.25)) screen = r;
+					} else if (screen) screen = null;
+				} else if (screen) screen = null;
 			});
 		})().catch((e) => {
 			failed = String(e?.message ?? e);
@@ -124,19 +143,19 @@
 <canvas bind:this={canvas}></canvas>
 {#if failed}<p class="failed">{failed}</p>{/if}
 {#if ended}
-	<div class="end" use:portal>
+	<div class="end" class:on={!!screen} style={endStyle} use:portal>
 		{#if song?.uri}
 			<button type="button" on:click={() => (player = !player)}>{player ? 'close' : 'play'}</button>
 		{/if}
 		<button type="button" on:click={again}>again</button>
 	</div>
 	{#if player && embed}
-		<div class="player" use:portal>
+		<div class="player" class:on={!!screen} style={playerStyle} use:portal>
 			<iframe
 				title="{song.title} — {song.artist}"
 				src={embed}
-				width="352"
-				height="152"
+				width={screen ? gw : 352}
+				height={screen ? Math.max(80, gh - BAR) : 152}
 				frameborder="0"
 				allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 				loading="lazy"
@@ -180,6 +199,17 @@
 	.end button:hover {
 		background: #ffe678;
 	}
+	/* on the screen: a strip of small keys along the glass's bottom */
+	.end.on {
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+	}
+	.end.on button {
+		font-size: 10px;
+		padding: 5px 9px;
+		border-radius: 1px;
+	}
 	.player {
 		position: fixed;
 		z-index: 30;
@@ -196,6 +226,13 @@
 	.player iframe {
 		display: block;
 		width: 100%;
+	}
+	.player.on {
+		box-shadow: none;
+		background: #121212;
+	}
+	.player.on iframe {
+		height: 100%;
 	}
 	.failed {
 		position: fixed;

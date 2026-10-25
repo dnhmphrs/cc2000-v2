@@ -1,3 +1,25 @@
+// ── Flow: flow-strand-sketch — THE RUN (cut K): clean until the room ────────
+// The lead and the PM: simplicity. No words on the fly-in — no date, no
+// maths, no conversation — just the sperm generated from the DNA, then the
+// spiral it swims into, clean all the way to the conception room; the two
+// status lines stay (COMPILING USER GENETICS, SIMULATING CONCEPTION), and
+// the output — the song, PLAY and AGAIN, the embed — is ON THE COMPUTER
+// SCREEN. Built from I5 (the groove the sperm flies into: "perfect") with
+// I3's sperm generation (the worldline tube: each ring of the body a circle
+// contracted by a digit of the date, flashed in gold as the frame passes;
+// the double helix of the entry as the run's) in place of I5's lathe: the
+// entry and the compile are the run's (log/sketch-copy.js has only the two
+// captions and the verdicts); the tunnel is ONE GROOVE, a helix down the
+// cone turning under the stylus, with nothing lettered on its turns; at the
+// apex the LABEL — the white disc with the spindle hole dark in it, no date
+// — and the dive through the hole into the room; a record on the monitor,
+// the arm swung in, the needle drop the flash; the room in colour, the song
+// and its artist lettered ON THE SCREEN as the record dims, and the page's
+// PLAY / AGAIN and the Spotify embed on the glass too (`screen()` gives the
+// page the glass each frame, parallax and all). The flash and the reveal are
+// the open question: five endings beside it, ?v=k1 … k5, and the MEG
+// machine at ?v=meg. Cut H, the conversation in the tunnel, is kept at ?v=h.
+//
 // ── Flow: flow-strand-sketch — THE RUN (cut H): without tunnel B ────────────
 // The lead's answer to his own question — what if tunnel B is simply
 // removed: it is the run now (cut G, with tunnel B, is kept at ?v=g). Tunnel
@@ -223,6 +245,8 @@ import { flash as burnOut } from './log/flash.js';
 import { makeFall, orderOf } from './log/fall.js';
 import { DECADES, loadRooms, decadeOfDate, PLATE } from './log/rooms.js';
 import { COPY, HEADLINES, NOW, fieldsOf, fill } from './log/sketch-copy.js';
+import { worldlineSection, boostsOf, boostShape, knotOf } from './log/i3-worldline.js';
+import { drawRecord, RECORD } from './log/i5-record.js';
 import { resolve } from '../functions/answer.js';
 import { GIFS } from '../data/gifs.js';
 import {
@@ -245,7 +269,7 @@ const prof = (n) => window.__prof?.mark(n);
 
 export const meta = {
 	title:
-		'strand · the run (cut H) — the tunnel, the band, the date, the dive into the last room, the sun; no tunnel B'
+		'I5 · THE LATHE AND THE RECORD — the date as eight harmonics turned on the lathe into the stylus; one groove swum down, a turn a year; the label, the spindle hole, the room, the needle drop'
 };
 
 // ── The beats ────────────────────────────────────────────────────────────────
@@ -293,10 +317,12 @@ const B = {
 	fall: [42.2, 44.4], // (the landing under the white: no beat between the date and the final scene)
 	land: [43.2, 44.4],
 	screen: [43.0, 43.4], // the last screen switched on
-	colour: [43.0, 43.5], // the room's colour, flooded under the white
-	aim: [41.6, 42.2],
-	hit: 42.2, // the conception: the flash straight off the date on the band
-	push: [42.3, 45.3],
+	colour: [44.6, 45.1], // the room's colour, flooded under the white
+	aim: [43.4, 44.4],
+	record: [43.4, 43.9], // (I5) the record comes up on the lit screen
+	arm: [43.9, 44.5], // (I5) the tone arm swung in over the grooves
+	hit: 44.6, // (I5) the conception: THE NEEDLE DROP — the flash off the screen
+	push: [44.7, 47.7],
 	out: [99, 100] // (never: the run HOLDS on its last frame; `again` restarts it)
 };
 // THE BREAKDOWN (a verdict: a birthday the archive cannot answer for). The
@@ -460,6 +486,8 @@ const nu = (c) => (c - 1.5) / 1.5;
 // How far a codon moves its ring (at 0.05 / 0.1 / 0.06 two dates' swimmers
 // were all but the same).
 const CODON = { size: 0.12, ecc: 0.18, lobe: 0.09, flash: 3 };
+const SCREEN_INK = '#1c1a22'; // (K) the song's ink on the lit screen
+const FLASH = 2.2; // (K) the compile's flash: each ring's boost at this gain (I3's)
 function codonOf(b, c) {
 	const k = clamp(c, 1, NR - 2);
 	return [b[k - 1] ?? 0, b[k] ?? 0, b[k + 1] ?? 0];
@@ -506,6 +534,8 @@ const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05 };
 // pace, so the rooms rush (a crossing every ~1.4 s, at 0.5–1 e-folds a second).
 const FALL_X = 0; // no crossings: the room through the band is the last
 const COUNT_FLIES = false; // the 266 figures and the months flying out (cut G has them)
+const SPINDLE = 0.17; // (I5) the spindle hole's radius, of the label's
+const GROOVE_TURN = 0.11; // (I5) the record's turn under the stylus, turns a second
 const ROOM_AT_BAND = 0.3; // the room this much of the board tall at the dive (firstRoom; the fall's start)
 const INSIDE = 0.12; // the fall stops inside the last room (?inside=: this far into its glass)
 const FILL = { w: 1.5, h: 0.92 }; // … where the room is this many boards wide, and at least this tall
@@ -638,7 +668,13 @@ export default async function make({ THREE, at }) {
 		const bases = basesOf(ans.date);
 		const spec0 = specOf(ans);
 		const probe = makeBody(spec0);
-		const spec = specOf(ans, { section: codonSection(bases, probe.stations) });
+		// (K: the body's section is I3's WORLDLINE TUBE — a circle contracted
+		// by a boost at each digit of the date, turning with the spice)
+		void codonSection;
+		const spec = specOf(ans, {
+			section: worldlineSection(ans.date, ans.spice, probe.stations, S_LEN)
+		});
+		const boosts = boostsOf(ans.date, ans.spice);
 		const body = makeBody(spec);
 		const decade = forced ?? decadeOfDate(ans.date);
 		const order = orderOf(decade, FALL_X);
@@ -757,6 +793,7 @@ export default async function make({ THREE, at }) {
 			return lerp(E[i], E[i + 1], f - i);
 		};
 		S = { key, bases, spec, body, decade, fall, geo, rc, efolds, calc, F, words, order, deep };
+		S.boosts = boosts;
 		// The nearest ring as the tunnel is sketched in (the rings are drawn
 		// in from it, near to far).
 		const zL0 = Z_NOSE0 * Math.exp(-efolds(B.tunnel[0])) + 60;
@@ -764,8 +801,10 @@ export default async function make({ THREE, at }) {
 		// The conception date's size on the band, and the band's half-height
 		// that carries it.
 		const H = figH(w, h);
-		S.dateSize = Math.min(0.064 * H, (0.84 * w) / measure(calc.dateStr));
-		S.bandHold = 0.82 * S.dateSize;
+		// (I5: the label's radius from the date it carries under the hole —
+		// the date across ~0.8 of its width at 0.45 R below the middle)
+		S.dateSize = Math.min(0.036 * H, (0.5 * w) / measure(calc.dateStr));
+		S.bandHold = Math.min(0.62 * S.dateSize * measure(calc.dateStr), 0.36 * Math.min(w, h));
 		return S;
 	}
 	settled(board.w, board.h);
@@ -1152,9 +1191,11 @@ export default async function make({ THREE, at }) {
 			const t0 = B.read[0] + ((xf0 - XR(1)) / span0) * (B.read[1] - B.read[0]);
 			const k = span(t, t0, t0 + 0.7);
 			if (k <= 0 || k >= 1) continue;
-			const c = Math.round(clamp(stn.s / DS - 0.5, 1, NR - 2));
-			const gain = lerp(CODON.flash, 1, smooth(k));
-			const shape = codonShape(codonOf(st.bases, c), gain);
+			// (K: the ring is I3's — the knot's boost ellipse, flashed at FLASH
+			// times its rapidity and relaxed into the body's section)
+			const gain = lerp(FLASH, 1, smooth(k));
+			const shape = boostShape(st.boosts[knotOf(stn.s, S_LEN)], gain);
+			void codonShape;
 			const grow = smooth(span(k, 0, 0.25));
 			const pts = [];
 			for (let q = 0; q <= 64; q++) {
@@ -1210,32 +1251,43 @@ export default async function make({ THREE, at }) {
 		// (on a song's run the band does not open at all: it fades, and the
 		// room it hung in front of goes on growing)
 		const open = edge ? smooth(span(t, ...BREAK.spread)) : 0;
-		const hb0 = lerp(lerp(1.2, 0.012 * h, m), st.bandHold, hold);
+		// (I5: the band is THE LABEL — a disc at the apex, W = hb, the edges'
+		// sqrt profile a circle; it grows out of the glint to its radius
+		// bandHold, which carries the date under the spindle hole)
+		void hold;
+		const hb0 = lerp(1.5, st.bandHold, Math.pow(m, 1.4));
+		const hb = hb0 + (1.1 * h - hb0) * Math.pow(open, 1.6);
+		const tau = Math.max(0, t - (edge ? BREAK.strip[0] : B.dive[0]));
 		return {
 			m,
-			W: m > 0 ? lerp(0.006 * w, 1.6 * w, Math.pow(m, 1.8)) : 0,
-			hb: hb0 + (0.9 * h - hb0) * Math.pow(open, 1.6),
+			W: hb,
+			hb,
 			open,
 			hot: smooth(span(t, B.seam[0] + 0.4, B.seam[1])),
-			white: edge ? 1 - smooth(span(t, ...BREAK.strip)) : 1 - smooth(span(t, ...B.dive)),
+			white: edge ? 1 - smooth(span(t, ...BREAK.strip)) : 1,
 			glint: smooth(span(t, ...B.glint)) * (1 - open),
-			// The hole the swimmer punches through it at the dive: from its
-			// nose at the vanishing point, out past the board's edges in
-			// ~0.35 s (11 e-folds a second), so the white is torn off the room
-			// rather than faded to grey over it.
-			hole: 0,
-			tau: Math.max(0, t - (edge ? BREAK.strip[0] : B.dive[0]))
+			// THE SPINDLE HOLE: dark in the label from the moment it is a disc
+			// (the room seen through it), and at the dive the stylus goes
+			// through it — it widens out past the board's edges in ~0.5 s, the
+			// white torn off the room, never faded to grey over it.
+			hole: edge
+				? 0
+				: m > 0.35
+					? lerp(SPINDLE * hb0, 1.3 * Math.hypot(w, h), Math.pow(smooth(span(tau, 0, 0.55)), 1.6))
+					: 0,
+			tau
 		};
 	}
 	// The hole's ragged edge (re-drawn each drawing) as a subpath: wider than
 	// tall, as the band is.
 	function holePath(ctx, w, h, O, r, bo) {
-		const rx = 1.2 * r * Math.max(1, w / h);
-		const ry = 0.85 * r;
+		// (I5: round — the spindle hole — and its edge the hand's, not torn)
+		const rx = r;
+		const ry = r;
 		const n = 40;
 		for (let i = 0; i <= n; i++) {
 			const th = (TAU * i) / n;
-			const k = 1 + 0.09 * noise1(3 * Math.cos(th) + 7, bo * 11 + 5) * Math.sin(th * 5 + bo);
+			const k = 1 + 0.03 * noise1(3 * Math.cos(th) + 7, bo * 11 + 5) * Math.sin(th * 5 + bo);
 			const x = O[0] + rx * k * Math.cos(th);
 			const y = O[1] + ry * k * Math.sin(th);
 			if (i) ctx.lineTo(x, y);
@@ -1344,18 +1396,40 @@ export default async function make({ THREE, at }) {
 		// the seam, a fresh set each drawing.
 		const fl = smooth(span(band.m, 0.5, 1)) * (1 - band.open) * band.white;
 		if (fl > 0.02) {
+			// (I5: the flecks round the label's rim — the sparks off the
+			// cutter — a fresh set each drawing)
 			const n = Math.round(14 + (10 * w) / 1280);
 			for (let i = 0; i < 2 * n; i++) {
-				const s = i < n ? -1 : 1;
-				const x = O[0] + Math.min(W, 0.55 * w) * (2 * rand(i, bo, 41) - 1);
+				const th = TAU * rand(i, bo, 41);
 				const off = hb + (2 + 6 * rand(i, bo, 42)) * (h / 800);
 				const len = (8 + 26 * rand(i, bo, 43)) * (h / 800);
 				const pts = [];
 				for (let k = 0; k <= 4; k++) {
 					const u = k / 4;
-					pts.push([x + (u - 0.5) * len, O[1] + s * (off + 1.6 * Math.sin(u * 6 + i))]);
+					const rr = off + (u - 0.5) * len;
+					const ph = th + 0.02 * Math.sin(u * 6 + i);
+					pts.push([O[0] + rr * Math.cos(ph), O[1] + rr * Math.sin(ph)]);
 				}
 				ink.line(pts, HAND.ink, 1.1 * Math.sqrt(h / 800), 0.8 * fl, false);
+			}
+		}
+		// (I5) the label's own ring, a line inside its rim, and the spindle
+		// hole's rim: the hand's
+		if (wa > 0.004 && band.m > 0.35 && !(band.hole > 0.5 * hb)) {
+			const sc = Math.sqrt(h / 800);
+			for (const [rr, al] of [
+				[0.9 * hb, 0.5],
+				[Math.max(1, band.hole || SPINDLE * hb) * 1.04, 0.7]
+			]) {
+				const pts = [];
+				const n = 40;
+				const ph0 = TAU * rand(7, bo, 44);
+				for (let j = 0; j <= n; j++) {
+					const ph = ph0 + (TAU * 1.02 * j) / n;
+					const k = 1 + 0.012 * noise1(j * 0.5, bo * 9 + 1);
+					pts.push([O[0] + rr * k * Math.cos(ph), O[1] + rr * k * Math.sin(ph)]);
+				}
+				ink.line(pts, '#1d1612', 1.1 * sc, al * wa, false);
 			}
 		}
 	}
@@ -1367,15 +1441,23 @@ export default async function make({ THREE, at }) {
 	// band as the tunnel narrows into it (each ring's halves pushed out to
 	// either side by its spread, and off its edges by hb), so the round
 	// tunnel becomes the slot the seam is the far end of.
+	// (I5: THE GROOVE. Not rings: ONE helix down the cone — turn i from
+	// e^(−step i) to e^(−step (i+1)) of the swim's first distance, its radius
+	// shrinking with the cone through the turn, each turn starting where the
+	// last ended — and the whole groove TURNING about the axis at the
+	// record's rate (recordTurn), so the stylus tracks a record under it. No
+	// pulling apart along a seam: the groove runs up to the label.)
+	const recordTurn = (t) => TAU * GROOVE_TURN * Math.max(0, t - B.swim);
 	function rings(ink, t, w, h, cam, st, bo, band, O) {
+		void band;
+		void O;
 		const zL = cam.pos[0] - X_APEX;
 		if (zL <= 1) return;
 		const { k, step, umin } = TUN;
 		const iLo = Math.ceil(Math.log(Z_NOSE0 / (0.985 * zL)) / step);
 		const iHi = Math.floor(Math.log(Z_NOSE0 / (umin * zL)) / step);
-		const sx = band ? band.W * band.m : 0;
-		const hb = band ? band.hb : 0;
 		const sc = Math.sqrt(h / 800);
+		const rec = recordTurn(t);
 		for (let i = iLo; i <= iHi; i++) {
 			const zi = Z_NOSE0 * Math.exp(-step * i);
 			const u = zi / zL;
@@ -1386,20 +1468,108 @@ export default async function make({ THREE, at }) {
 			if (a < 0.02) continue;
 			const lw = lerp(0.7, 2.6, smooth(span(u, 0.04, 0.8))) * sc;
 			const rho = k * zi;
-			const x = X_APEX + zi;
-			const at = (px, py) => {
-				const q = cam.project([x, py, -px]);
+			const at = (px, py, zf) => {
+				const q = cam.project([X_APEX + zf, py, -px]);
 				if (q[2] <= NEAR) return null;
-				let X = q[0];
-				let Y = q[1];
-				if (sx > 0 || hb > 0) {
-					X += (X >= O[0] ? 1 : -1) * sx;
-					Y += (Y >= O[1] ? 1 : -1) * hb;
-				}
-				return Z.hidden([X, Y, q[2]]) ? null : [X, Y];
+				return Z.hidden([q[0], q[1], q[2]]) ? null : [q[0], q[1]];
 			};
-			sketchRing(ink, at, rho, i, bo, upto, lw, a);
-			if (u > 0.25) sketchRing(ink, at, rho * 1.012, i + 7919, bo, upto, 0.55 * lw, 0.6 * a);
+			sketchTurn(ink, at, rho, zi, i, bo, upto, lw, a, rec);
+			if (u > 0.25)
+				sketchTurn(ink, at, rho * 1.012, zi, i + 7919, bo, upto, 0.55 * lw, 0.6 * a, rec);
+		}
+	}
+	// One turn of the groove through `at` (the cone's point (px, py) at depth
+	// zf → the board, or null where hidden): from angle `rec` round a whole
+	// turn, its radius and depth falling e^(−step) across it, the hand's wobble
+	// on it, new each drawing.
+	function sketchTurn(ink, at, rho, zi, i, bo, upto, lw, a, rec, M = TUN.M) {
+		const { wob, step } = TUN;
+		const sweep = TAU * upto;
+		const n = Math.max(8, Math.ceil(M * upto));
+		const run = [];
+		const flush = () => {
+			if (run.length > 1) ink.line(run.slice(), HAND.ink, lw, a, false);
+			run.length = 0;
+		};
+		const bw = board.w;
+		const bh = board.h;
+		const side = (p) =>
+			(p[0] < -60 ? 1 : 0) |
+			(p[0] > bw + 60 ? 2 : 0) |
+			(p[1] < -60 ? 4 : 0) |
+			(p[1] > bh + 60 ? 8 : 0);
+		let prev = 0;
+		for (let j = 0; j <= n; j++) {
+			const f = j / n;
+			const ph = rec + sweep * f;
+			const fall = Math.exp(-step * f);
+			const rr = rho * fall * (1 + wob * noise1(f * 6.5 + i * 1.7, bo * 13 + i));
+			const p = at(rr * Math.cos(ph), rr * Math.sin(ph), zi * fall);
+			const s = p ? side(p) : 0;
+			if (!p || s & prev) {
+				flush();
+				if (p) run.push(p);
+			} else run.push(p);
+			prev = s;
+		}
+		flush();
+	}
+	// THE YEARS on the groove: a turn a year (near enough — the years from NOW
+	// back to the birth year spread over the turns the stylus tracks from the
+	// tunnel's start to the date), each lettered at its turn's start, riding
+	// round with the record, in the hand, over the board.
+	// (K: nothing lettered on the turns, no date under the hole — kept, unused)
+	void grooveYears;
+	void conceivedDate;
+	function grooveYears(ink, t, w, h, cam, st, bo) {
+		if (t < B.tunnel[0] + 0.8 || t > B.conceived[0] + 0.6) return;
+		const zL = cam.pos[0] - X_APEX;
+		if (zL <= 1) return;
+		const { k, step, umin } = TUN;
+		const Hh = figH(w, h);
+		const iLo = Math.ceil(Math.log(Z_NOSE0 / (0.985 * zL)) / step);
+		const iHi = Math.floor(Math.log(Z_NOSE0 / (umin * zL)) / step);
+		const rec = recordTurn(t);
+		const i0 = (st.efolds(B.tunnel[0] + 1.0) + 0.015) / step;
+		const i1 = (st.efolds(B.conceived[0]) + 0.015) / step;
+		const y0 = NOW;
+		const y1 = st.F._birth.y;
+		const yearOf = (i) => Math.round(lerp(y0, y1, clamp01((i - i0) / Math.max(1, i1 - i0))));
+		const fade = 1 - smooth(span(t, B.conceived[0] - 0.2, B.conceived[0] + 0.5));
+		for (let i = iLo; i <= iHi; i++) {
+			const y = yearOf(i);
+			if (y === yearOf(i - 1) && i > iLo) continue;
+			if (y < y1) continue;
+			const zi = Z_NOSE0 * Math.exp(-step * i);
+			const u = zi / zL;
+			const ti = B.tunnel[0] + 0.14 * Math.max(0, i - st.iRef);
+			const upto = smooth(span(t, ti + 0.3, ti + 0.8));
+			if (upto <= 0) continue;
+			const a =
+				fade *
+				upto *
+				lerp(0.2, 0.9, smooth(span(u, umin, 0.45))) *
+				(1 - smooth(span(u, 0.8, 0.95)));
+			if (a < 0.02) continue;
+			const rho = k * zi;
+			// the lettering sits a little outside the groove at its start, so
+			// the groove runs under it
+			const ph = rec + 0.06;
+			const q = cam.project([X_APEX + zi, 1.08 * rho * Math.sin(ph), -1.08 * rho * Math.cos(ph)]);
+			const qc = cam.project([X_APEX + zi, 0, 0]);
+			if (q[2] <= NEAR || qc[2] <= NEAR) continue;
+			const R = Math.hypot(q[0] - qc[0], q[1] - qc[1]);
+			const size = clamp(0.1 * R, 6, 0.05 * Hh);
+			if (size < 7) continue;
+			if (q[0] < -3 * size || q[0] > w + 3 * size || q[1] < -2 * size || q[1] > h + 2 * size)
+				continue;
+			letter(ink, String(y), q[0], q[1] + 0.5 * size, size, {
+				seed: 3000 + i,
+				boil: bo,
+				alpha: a,
+				width: 0.13,
+				keyed: size > 40
+			});
 		}
 	}
 	// One hand-drawn ring of radius rho through `at` (the plane's point at
@@ -1486,7 +1656,7 @@ export default async function make({ THREE, at }) {
 		// ended on kept through the whole fall (the original closed them back
 		// into circles as the band opened; the lead asked for the slot to stay):
 		// each ring its two long runs above and below the middle, rushing off.
-		const fo = 1;
+		const fo = 0; // (I5: no slot — the grooves run round the rooms as circles)
 		const sx = band ? band.W * band.m : 1.6 * w;
 		const hs = S.bandHold;
 		for (let i = iLo; i <= iHi; i++) {
@@ -1745,10 +1915,13 @@ export default async function make({ THREE, at }) {
 		const H = figH(w, h);
 		// (the date fades with the band on a song's run; on a verdict it bursts
 		// out as the band tears open for the breakdown)
-		const burst = st.F.edge ? Math.max(0, t - dive[0]) : 0;
+		// (I5: on every run the date bursts out as the hole opens — it is
+		// clipped to the white that is left, so it is eaten from the middle
+		// out at full ink)
+		const burst = Math.max(0, t - dive[0]);
 		const grow = Math.exp(3.2 * burst);
-		const a = st.F.edge ? 1 - smooth(span(burst, 0.08, 0.42)) : 1 - smooth(span(t, ...dive));
-		const aD = st.F.edge ? 1 - smooth(span(burst, 0.3, 0.42)) : a;
+		const a = 1 - smooth(span(burst, 0.08, 0.42));
+		const aD = 1 - smooth(span(burst, 0.3, 0.42));
 		if (aD <= 0.01) return;
 		const ws = Math.min(0.04 * H, (0.8 * w) / measure(calc.working + calc.landed)) * grow;
 		const wy = O[1] - band.hb - 0.55 * ws - 0.02 * H;
@@ -1771,7 +1944,8 @@ export default async function make({ THREE, at }) {
 			});
 		if (t < c0) return;
 		const size = st.dateSize * grow;
-		const box = letter(inkD, calc.dateStr, O[0], O[1] + 0.5 * size, size, {
+		// (I5: under the spindle hole, on the label)
+		const box = letter(inkD, calc.dateStr, O[0], O[1] + 0.45 * st.bandHold + 0.5 * size, size, {
 			seed: 900,
 			boil: bo,
 			alpha: aD,
@@ -1879,8 +2053,9 @@ export default async function make({ THREE, at }) {
 				: 0;
 		ctx.save();
 		ctx.globalAlpha = a0 * dim;
-		ctx.beginPath();
-		ctx.rect(0, y0, w, y1 - y0);
+		void y0;
+		void y1;
+		bandPath(ctx, w, h, O, band, boilAt(t)); // (I5: the gif in the label's disc)
 		ctx.clip();
 		const rows = Math.ceil(h / th) + 1;
 		const cols = Math.ceil(w / tw) + 2;
@@ -2099,18 +2274,8 @@ export default async function make({ THREE, at }) {
 		else fallen(ctx, w, h, t, st);
 		// The captions at the terminal's size, and at least 15 px on a phone.
 		const size = Math.max(captionSize(w, h), Math.min(15, 0.04 * Math.min(w, h)));
-		caption(ctx, w, h, CAPTION.genetics, t, {
-			at: B.genetics[0],
-			until: B.genetics[1],
-			align: 'center',
-			size
-		});
-		caption(ctx, w, h, CAPTION.conception, t, {
-			at: B.conception[0],
-			until: B.conception[1],
-			align: 'center',
-			size
-		});
+		void CAPTION; // (the status lines are the table's, sketch-copy.js)
+		void size;
 		{
 			const size = Math.max(captionSize(w, h), Math.min(15, 0.04 * Math.min(w, h)));
 			const edge = st.F.edge;
@@ -2390,8 +2555,10 @@ export default async function make({ THREE, at }) {
 			drawBand(ctx, ink, w, h, O, band, bo);
 			if (st.F.edge) breakdown(ctx, w, h, t, O, band, st);
 			prof('band');
-			conceivedDate(inkD, ink, t, w, h, O, st, bo, band);
+			ctx.save();
+			clipOutHole(ctx, w, h, O, band, bo);
 			inkD.flush(ctx);
+			ctx.restore();
 			prof('date');
 			figures(ink, w, h, t, O, st, bo);
 			ink.flush(ctx);
@@ -2407,6 +2574,41 @@ export default async function make({ THREE, at }) {
 	// The fall: the rooms coming out of the band as it opens, in the hand, the
 	// swimmer leading the lens at the vanishing point, the workings flying
 	// over them; the last screen switching on; the flash.
+	// How far the song is up on the screen after the needle drop.
+	const songUp = (t) => smooth(span(t, B.hit + 2.4, B.hit + 3.2));
+	function screenWords(ctx, glass, t, st, bo, a) {
+		const up = songUp(t) * a;
+		if (up <= 0.01 || st.F.edge) return;
+		const [x0, y0, x1, y1] = glass;
+		const gw = x1 - x0;
+		const gh = y1 - y0;
+		if (gw < 40 || gh < 24) return;
+		const cx = (x0 + x1) / 2;
+		const cy = (y0 + y1) / 2;
+		const title = st.F.title || '';
+		const artist = st.F.artist || '';
+		if (!title) return;
+		const ts = Math.min(0.16 * gh, (0.84 * gw) / measure(title));
+		const as = Math.min(0.09 * gh, (0.74 * gw) / measure(artist || ' '));
+		const ink = makeInk();
+		letter(ink, title, cx, cy - 0.04 * gh, ts, {
+			seed: 910,
+			boil: bo,
+			alpha: up,
+			width: 0.12,
+			color: SCREEN_INK
+		});
+		if (artist)
+			letter(ink, artist, cx, cy + 0.2 * gh, as, {
+				seed: 911,
+				boil: bo,
+				alpha: up * smooth(span(t, B.hit + 3.0, B.hit + 3.4)),
+				width: 0.11,
+				upto: smooth(span(t, B.hit + 3.0, B.hit + 3.7)),
+				color: SCREEN_INK
+			});
+		ink.flush(ctx);
+	}
 	function fallen(ctx, w, h, t, st) {
 		const g = st.geo;
 		const zf = g.efolds(t);
@@ -2477,8 +2679,9 @@ export default async function make({ THREE, at }) {
 		}
 		// The swimmer goes into the band's flash and is gone (the lead): none
 		// in the room, none in AGAIN's dolly through the glass.
-		const alpha = exit ? 0 : 1 - smooth(span(t, ...B.dive));
-		// (the band's fade is the swimmer's: it is gone with the flash)
+		// (I5: the stylus goes on through the hole and into the screen — gone
+		// into the needle drop's flash)
+		const alpha = exit ? 0 : 1 - smooth(span(t, B.hit - 0.9, B.hit - 0.05));
 		if (alpha > 0.01) {
 			const drop = smooth(span(t, B.fall[0] + 0.5, B.fall[0] + 4));
 			const back = lerp(1, 1.6, drop) * lerp(1, 2.6, aim * aim);
@@ -2521,21 +2724,33 @@ export default async function make({ THREE, at }) {
 		rush(ctx, w, h, t, O, bo, slot, !opening || band.open > 0.6);
 		if (opening) {
 			const inkD = makeInk();
-			conceivedDate(inkD, ink, t, w, h, O, st, bo, band);
 			ctx.save();
 			clipOutHole(ctx, w, h, O, band, bo);
 			inkD.flush(ctx);
 			ctx.restore();
 		}
 		prof('date');
-		// The last screen switched on.
-		if (cam.glass)
-			screenBand(
-				ctx,
-				cam.glass,
-				smooth(span(t, ...B.screen)) * (1 - (exit ? smooth(span(exit.s, ...EXIT.screen)) : 0)),
-				bo
-			);
+		// The last screen switched on — and (I5) THE RECORD on it, turning on
+		// the hold's clock, the song on its label once the needle is down; the
+		// arm swung in and set down at the hit.
+		if (cam.glass) {
+			const off = exit ? smooth(span(exit.s, ...EXIT.screen)) : 0;
+			screenBand(ctx, cam.glass, smooth(span(t, ...B.screen)) * (1 - off), bo);
+			const up = smooth(span(t, ...B.record));
+			if (up > 0.01)
+				drawRecord(ctx, cam.glass, {
+					turn: TAU * (RECORD.rpm / 60) * 0.5 * (tf - B.record[0]),
+					alpha: up * (1 - off) * (1 - 0.82 * songUp(t)),
+					arm: span(t, ...B.arm),
+					drop: span(t, B.arm[1], B.hit),
+					bo,
+					lit: smooth(span(t, B.hit, B.hit + 0.4))
+				});
+			// (K) THE OUTPUT ON THE SCREEN: the song and its artist lettered
+			// across the glass as the record dims under them (the page puts
+			// PLAY, AGAIN and the embed on the same glass: `screen()`).
+			screenWords(ctx, cam.glass, t, st, bo, 1 - off);
+		}
 		prof('band');
 		figures(ink, w, h, t, O, st, bo);
 		ink.flush(ctx);
@@ -2573,6 +2788,9 @@ export default async function make({ THREE, at }) {
 		},
 		// The song (or the verdict) of the run, for the page's player.
 		song: () => (S ? { title: S.F.title, artist: S.F.artist, uri: S.F.uri, edge: S.F.edge } : null),
+		// The monitor's glass on the board this frame, CSS px [x0, y0, x1, y1],
+		// once the lens has landed — where the page puts the output.
+		screen: () => (lastGlass && time.t >= B.hit && !exit ? [...lastGlass] : null),
 		render,
 		resize() {
 			S = null;

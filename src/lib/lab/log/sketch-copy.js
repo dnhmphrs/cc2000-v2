@@ -113,75 +113,13 @@
 export const NOW = 2026; // the year the years count back from
 
 export const COPY = [
+	// ── the machine's status lines, typed at the bottom: the only words on
+	// the fly-in (cut K: no date, no maths, no conversation) ──
+	{ caption: 'COMPILING USER GENETICS', at: 15.3, until: 22.3 },
+	{ when: 'song', caption: 'SIMULATING CONCEPTION', at: 22.6, until: 41.2 },
 	{ when: 'edge', caption: 'SIGNAL LOST', at: 43.4, until: 52 },
 
-	// ── TUNNEL A: THE CONVERSATION, the last beat of the story before the
-	// room — in the middle of the board, one exchange at a time, nothing else
-	// flying: the evening in the parents' own words, as the machine has it
-	// (the lists below, picked by the date, so a date always gets the same
-	// evening); a number only as an answer; the last question the one the
-	// machine answers with the date and the song ──
-	{
-		when: 'song',
-		at: 29.0,
-		out: 31.0,
-		x: 0,
-		y: -0.22, // (above the middle: the room grows beneath)
-		lines: [
-			{ text: 'LIGHTS ON OR OFF', size: 0.04 },
-			{ text: '{lights}', size: 0.066, write: [29.4, 29.75] }
-		],
-		marks: [{ line: 1, at: 30.0, kind: 'circle', pad: 0.3 }]
-	},
-	{
-		when: 'song',
-		at: 31.4,
-		out: 33.4,
-		x: 0,
-		y: -0.22, // (above the middle: the room grows beneath)
-		lines: [
-			{ text: 'WHAT ARE YOU WEARING', size: 0.04 },
-			{ text: '{mum}', size: 0.066, write: [31.8, 32.2] }
-		],
-		marks: [{ line: 1, at: 32.5, kind: 'circle', pad: 0.3 }]
-	},
-	{
-		when: 'song',
-		at: 33.8,
-		out: 35.8,
-		x: 0,
-		y: -0.22, // (above the middle: the room grows beneath)
-		lines: [
-			{ text: 'WHAT DID YOU SAY', size: 0.04 },
-			{ text: '{said}', size: 0.066, write: [34.2, 34.6] }
-		],
-		marks: [{ line: 1, at: 34.9, kind: 'circle', pad: 0.3 }]
-	},
-	{
-		when: 'song',
-		at: 36.2,
-		out: 38.0,
-		x: 0,
-		y: -0.22, // (above the middle: the room grows beneath)
-		lines: [
-			{ text: 'HOW LONG HAVE WE GOT', size: 0.04 },
-			{ text: '266 DAYS', size: 0.066, write: [36.6, 36.9] }
-		],
-		marks: [{ line: 1, at: 37.2, kind: 'circle', pad: 0.3 }]
-	},
-	// the last question — the one the machine answers with the date and the song
-	{
-		when: 'song',
-		at: 38.4,
-		out: 40.2,
-		x: 0,
-		y: -0.22, // (above the middle: the room grows beneath)
-		lines: [
-			{ text: 'WHAT MUSIC DO YOU WANT', size: 0.04 },
-			{ text: 'PUT ON THAT SONG THAT GETS ME IN THE MOOD', size: 0.05, write: [38.7, 39.5] }
-		],
-		marks: [{ line: 1, text: 'THAT SONG', at: 39.7, kind: 'circle', pad: 0.3 }]
-	},
+	// ── A VERDICT, held over the gif (the original site's three) ──
 
 	// ── THE VERDICTS (functions/answer.js: a birthday the archive cannot
 	// answer for; ?edge=past|future|unknown forces one). The date is found as
@@ -230,22 +168,6 @@ export const COPY = [
 			{ text: 'YOUR PARENTS FUCK', size: 0.042, write: [47.7, 48.1] }
 		],
 		marks: [{ line: 0, at: 47.5, kind: 'circle', pad: 0.3 }]
-	},
-
-	// ── the end: the song and the date on the lit room, held ──
-	{
-		when: 'song',
-		at: 45.0,
-		out: 200,
-		hold: true,
-		x: 0,
-		y: -0.05,
-		lines: [
-			{ text: '{title}', size: 0.072 },
-			{ text: '{artist}', size: 0.044, write: [45.5, 46.0] },
-			{ text: '{conception}', size: 0.04, write: [46.1, 46.5] }
-		],
-		marks: [{ line: 0, at: 46.0, kind: 'circle', pad: 0.3 }]
 	}
 ];
 

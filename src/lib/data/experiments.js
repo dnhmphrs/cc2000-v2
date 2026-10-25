@@ -590,7 +590,7 @@ export const FLOWS = [
 	{
 		sketch: 'flow-strand-sketch',
 		name: 'Strand · sketch',
-		what: 'the next run (/next), cut H: the 0.11 tunnel — the swim towards the room, a speck swum up on slowly, the count of days struck off, the circles drawn out into the slot, the band, the date, the swimmer gone into the band’s flash — and through it THE LAST ROOM, no tunnel B: the lens to rest in it, the sun straight after, the room back out of the white in colour, the song and the date on its screen, held (the room sways and boils on, the depths part after the pointer; AGAIN: the words fade, the screen goes dark, the lens dollies on through the glass into the next run; PLAY the song on Spotify); a birthday the archive cannot answer for breaks down at the band onto the verdict’s gif; the words in log/sketch-copy.js'
+		what: 'the next run (/next), cut K: clean until the room — the date and the spice typed, COMPILING USER GENETICS (the double helix, the body written from it ring by ring, each ring a circle contracted by a digit of the date, flashed in gold), SIMULATING CONCEPTION: the swim into ONE GROOVE, a helix down the cone turning under the stylus, nothing lettered on it, to the label at the apex and the dive through its spindle hole into the last room; a record on the monitor, the arm swung in, the needle drop the flash; the room in colour and the song ON THE SCREEN with PLAY and AGAIN and the embed; a birthday the archive cannot answer for breaks down at the label onto the verdict’s gif; the words (two captions and the verdicts) in log/sketch-copy.js'
 	},
 	{
 		sketch: 'flow-strand-sketch-a',
@@ -636,6 +636,11 @@ export const FLOWS = [
 		sketch: 'flow-strand-sketch-i5',
 		name: 'Sketch · I5 the lathe and the record',
 		what: 'the calculator a cutting lathe and a gramophone (/next?v=i5): the digits the harmonics of one wave, the spice how deep the cutter bites, the swimmer that profile turned on the lathe — the stylus; the tunnel ONE GROOVE, a turn a year, the years riding the turns; the label at the apex with the spindle hole dark in it and the date under it; through the hole into the room, a record turning on the monitor, the arm swings in and THE NEEDLE DROP is the flash; a verdict pressed with the gif, the needle skips'
+	},
+	{
+		sketch: 'flow-strand-sketch-h',
+		name: 'Cut · H',
+		what: 'the run of 0.18, kept (/next?v=h): the parents’ conversation alone in the tunnel, one exchange at a time, the room grown from a speck through the porthole, the flash straight off the date on the band, the song on the screen; table log/sketch-copy-h.js'
 	},
 	{
 		sketch: 'flow-strand-sketch-j',
