@@ -35,6 +35,16 @@
 		player = false;
 		run?.again?.();
 	}
+	// The layout's main is its own stacking context (z 10) under the board's
+	// canvases (11): the panel is moved out to the body to show over them.
+	function portal(node) {
+		document.body.appendChild(node);
+		return {
+			destroy() {
+				node.remove();
+			}
+		};
+	}
 
 	onMount(() => {
 		let renderer = null;
@@ -71,7 +81,15 @@
 			const lane = renderer.backend.isWebGPUBackend ? 'webgpu' : 'webgl';
 			sketch = await make({ THREE, renderer, at });
 			run = sketch;
-			window.__lab = window.__next = { run: 'next', sketch: name, lane, at, ...sketch.info };
+			// (api: the sketch itself, for the tools — seek, ended, song, again)
+			window.__lab = window.__next = {
+				run: 'next',
+				sketch: name,
+				lane,
+				at,
+				api: sketch,
+				...sketch.info
+			};
 			onResize = () => {
 				renderer.setSize(window.innerWidth, window.innerHeight);
 				sketch.resize?.(window.innerWidth, window.innerHeight);
@@ -106,14 +124,14 @@
 <canvas bind:this={canvas}></canvas>
 {#if failed}<p class="failed">{failed}</p>{/if}
 {#if ended}
-	<div class="end">
+	<div class="end" use:portal>
 		{#if song?.uri}
 			<button type="button" on:click={() => (player = !player)}>{player ? 'close' : 'play'}</button>
 		{/if}
 		<button type="button" on:click={again}>again</button>
 	</div>
 	{#if player && embed}
-		<div class="player">
+		<div class="player" use:portal>
 			<iframe
 				title="{song.title} — {song.artist}"
 				src={embed}
@@ -138,6 +156,8 @@
 	}
 	.end {
 		position: fixed;
+		z-index: 30; /* over the board's canvases (11), under the corner's switch (35) */
+		pointer-events: auto; /* the layout's main has none, for the board */
 		left: 50%;
 		bottom: 22px;
 		transform: translateX(-50%);
@@ -162,6 +182,8 @@
 	}
 	.player {
 		position: fixed;
+		z-index: 30;
+		pointer-events: auto;
 		left: 50%;
 		bottom: 66px;
 		transform: translateX(-50%);
