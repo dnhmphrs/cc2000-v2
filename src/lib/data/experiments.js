@@ -613,6 +613,31 @@ export const FLOWS = [
 		what: 'kept beside the next run (/next?v=d): 0.14 — one tunnel in two parts, the maths quickening into the mass of dates and the date found in the middle of the board; the slot, the rooms with a glimpse of their colour, the song computed over them, the band flash, the song named'
 	},
 	{
+		sketch: 'flow-strand-sketch-i1',
+		name: 'Sketch · I1 the wave',
+		what: "the input as a SIGNAL (/next?v=i1): an oscilloscope at the entry — the carrier, a harmonic a digit, the spice the gain — the swimmer's tail the person's own Fourier series travelling, its head the carrier; the tunnel's rings wavefronts bent into the signal; a dial tuning back down the years to the birth year, CARRIER FOUND, the fine tune of 266 days, LOCK on the band, the room RECEIVING, SIGNAL RECEIVED; a verdict SIGNAL LOST"
+	},
+	{
+		sketch: 'flow-strand-sketch-i2',
+		name: 'Sketch · I2 the MEG',
+		what: "the machine reads the person (/next?v=i2): a head in profile in a sensor cap, eight channel traces spiked by every key typed, the spice the gain; the spectrum of bands, the dominant ringed, the bands turned as epicycles into the swimmer's section; the tunnel a trip inward along the memory, the years rewound, NO MEMORY BEFORE the birth, the prenatal trace read on band by band to the song locked; MEMORY RECOVERED; a verdict TRACE LOST"
+	},
+	{
+		sketch: 'flow-strand-sketch-i3',
+		name: 'Sketch · I3 the light cone',
+		what: "relativity straight-faced (/next?v=i3): HERE · NOW and THE CONCEPTION two events, the person a worldline between them, the tunnel the event's future light cone seen from inside, its rings the calendar of proper time struck as crossed, a τ meter counting down, the swimmer a worldline tube Lorentz-contracted by the digits; the apex flares with the date on it, the flash straight off it; the song and how many light years out it is tonight"
+	},
+	{
+		sketch: 'flow-strand-sketch-i4',
+		name: 'Sketch · I4 the narrative',
+		what: 'copy-first, the calculator in its own voice (/next?v=i4): the swimmer the PAYLOAD, kept swimming in an inset while four numbered pages do the work — I SUBTRACTING 266 DAYS (the ledger), torn away; II LOCATING THE PARENTS (four polaroids, three crossed, one ringed), an iris; III SOLVING FOR THE NIGHT (Zeller), wiped; IV DISPATCHING down the tunnel, addressed TO: the date, the fall watched with no band, the swimmer into the screen, the flash; V RETRIEVING THE RECORD'
+	},
+	{
+		sketch: 'flow-strand-sketch-i5',
+		name: 'Sketch · I5 the lathe and the record',
+		what: 'the calculator a cutting lathe and a gramophone (/next?v=i5): the digits the harmonics of one wave, the spice how deep the cutter bites, the swimmer that profile turned on the lathe — the stylus; the tunnel ONE GROOVE, a turn a year, the years riding the turns; the label at the apex with the spindle hole dark in it and the date under it; through the hole into the room, a record turning on the monitor, the arm swings in and THE NEEDLE DROP is the flash; a verdict pressed with the gif, the needle skips'
+	},
+	{
 		sketch: 'flow-strand-sketch-j',
 		name: 'Cut · J',
 		what: 'the conversation over the rooms (/next?v=j): tunnel A as the original (the count, the band, the date, the dive), then the fall through five rooms as tunnel B first was — no tesseract — the rooms hung at a slight roll that turns as you fall, and the exchanges over them (lights on or off, what are you wearing, what did you say, how long have we got, what music do you want), the last over the last room; the flash, the song'

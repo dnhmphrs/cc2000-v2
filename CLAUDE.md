@@ -103,7 +103,11 @@ rooms — `fall.js tiles` — and the questions that veer the swimmer, is kept a
 `?v=g`, its table `log/sketch-copy-g.js`; cut J, `?v=j`, is the
 conversation done over the rooms instead — tunnel A as the original, the
 fall through five rooms with no tesseract, the rooms hung at a slight roll,
-the exchanges over them — table `log/sketch-copy-j.js`); a slow sun, the song named on the
+the exchanges over them — table `log/sketch-copy-j.js`; and round I, five explorations
+beside the run with H's length — `?v=i1` the wave, `?v=i2` the MEG, `?v=i3` the
+light cone, `?v=i4` the narrative, `?v=i5` the lathe and the record, each with its
+own table `log/sketch-copy-i<n>.js` and helpers `log/i<n>-*.js`; `docs/explore-11.md`
+is the round); a slow sun, the song named on the
 screen and HELD — the run stops on its last frame (the room sways and boils
 on) and the page offers AGAIN (the lens dollies on through the dark glass,
 `fall.js zeta`) and PLAY (Spotify's embed of the track; `sketch.ended()`,
