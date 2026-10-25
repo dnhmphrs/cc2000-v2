@@ -590,7 +590,32 @@ export const FLOWS = [
 	{
 		sketch: 'flow-strand-sketch',
 		name: 'Strand · sketch',
-		what: 'v6, the journey as one beat, in a shaky warm hand (Eva / Akira): speed lines, the 266 days hand-lettered and struck out in red, the tunnel flattened into a white-hot band the swimmer dives through, the rings round every room after'
+		what: 'v6, the journey as one beat, in a shaky warm hand (Eva / Akira): speed lines, the 266 days hand-lettered and struck out in red, the tunnel flattened into a white-hot band the swimmer dives through, the rings round every room after; v7 (0.11): through a soft warm lens, landing inside the last room into a holy light — the base of the five below'
+	},
+	{
+		sketch: 'flow-strand-sketch-one',
+		name: 'Sketch · one',
+		what: 'v7, one beat (an independent answer): the hand bad at maths through the decades — − 26.6 years, + 266 months, − 9 years, − 9 months (ten days early) — each scribbled out in its room; then the count day by day; the date only on the last screen'
+	},
+	{
+		sketch: 'flow-strand-sketch-two',
+		name: 'Sketch · two',
+		what: 'v7, one beat (an independent answer): every wrong sum is a real date and the zoom flies into its decade — + 266 months (the 2010s), − 266 months (the 60s), − 266 weeks, − 40 weeks, − 9 months — then the long way, day by day, to the date on the band'
+	},
+	{
+		sketch: 'flow-strand-sketch-three',
+		name: 'Sketch · three',
+		what: 'v7, one beat (an independent answer): the hand turns 266 days into years by the calendar’s numbers — ÷ 7, ÷ 12, ÷ 24, ÷ 52, ÷ 100 — a needle swinging either side of the birth year into each decade’s room; then gives up and counts day by day, the drumroll, the date on the band'
+	},
+	{
+		sketch: 'flow-strand-sketch-four',
+		name: 'Sketch · four',
+		what: 'v7, one beat (an independent answer): the hand reads 266 in the wrong unit — years, months, weeks — each answer a room, the error shrinking tenfold, the sign hunting like a needle; then 266 days done properly'
+	},
+	{
+		sketch: 'flow-strand-sketch-five',
+		name: 'Sketch · five',
+		what: 'v7, one beat (an independent answer): the hand can only add — it guesses a day, adds 266, reads TOO EARLY / TOO LATE and overcorrects, swinging closer room by room, decades to days; the date once, on the band'
 	},
 	{
 		sketch: 'flow-strand-horn',

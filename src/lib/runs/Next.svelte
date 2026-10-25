@@ -32,7 +32,11 @@
 			const at = atRaw === null || atRaw === '' ? null : Math.max(0, Math.min(1, Number(atRaw)));
 			const v = (q.get('v') ?? '').replace(/[^a-z0-9-]/g, '');
 			const name = v ? `flow-strand-sketch-${v}` : 'flow-strand-sketch';
-			const load = SKETCHES[`/src/lib/lab/${name}.js`];
+			// The glob is fixed when the dev server first serves this page; a
+			// variant added since is fetched by its path, as the lab does.
+			const path = `/src/lib/lab/${name}.js`;
+			const load =
+				SKETCHES[path] ?? (import.meta.env.DEV ? () => import(/* @vite-ignore */ path) : null);
 			if (!load) {
 				failed = `no run called ${name}`;
 				return;
