@@ -25,7 +25,7 @@
 //
 //   const fall = makeFall({ art, order, beats });     art: loadRooms({ chalk: true })
 //   const nest = fall.geometry(w, h);                  the nest fitted to the board
-//   const cam = fall.draw(ctx, w, h, t, { background, colourAlong, dust });
+//   const cam = fall.draw(ctx, w, h, t, { background, colourAlong, dust, nudge });
 //
 // `order` the rooms top to bottom, the answer's last (orderOf(decade) is the
 // flows' order: the others cycled, then the answer's). `beats`, in the run's
@@ -156,10 +156,10 @@ export function makeFall({
 		w,
 		h,
 		t,
-		{ background = null, colourAlong = false, dust, reveal = null } = {}
+		{ background = null, colourAlong = false, dust, reveal = null, nudge = null } = {}
 	) => {
 		const g = geometry(w, h);
-		const cam = lensAt(g, g.zetaAt(t), t, w, h, beats, K);
+		const cam = lensAt(g, g.zetaAt(t), t, w, h, beats, K, nudge);
 		if (background) background(ctx, cam, g.efolds(t), lerp(1, 0.7, cam.land));
 		const d = dust === undefined ? getBoard().dust : dust;
 		const glassAt = drawFall(ctx, w, h, d, g, art, cam, t, beats, K, colourAlong, bake, reveal);
@@ -298,7 +298,10 @@ function fitNest(w, h, order, art, K, beats) {
 // lands, and swaying — with the screen shifted so that the plane d₀ ahead
 // holds still: on the landed plate the frame holds and the room drifts
 // behind it by depth, the back wall most, the bed least.
-function lensAt(geo, zeta, t, w, h, B, K = {}) {
+// `nudge` ([x, y], room units of the last plate): the lens moved by hand —
+// a flow's pointer parallax — the same way the sway moves it, so the plane
+// d₀ ahead holds and the room's depths part behind it.
+function lensAt(geo, zeta, t, w, h, B, K = {}, nudge = null) {
 	const cam = geo.pose(zeta);
 	const last = geo.levels[geo.L];
 	const land = smooth(span(t, B.land[0], B.land[1]));
@@ -326,8 +329,8 @@ function lensAt(geo, zeta, t, w, h, B, K = {}) {
 		0.3,
 		smooth(span(t, B.land[0], B.land[1] + 0.5))
 	);
-	const ex = A * Math.sin(1.1 * t - 0.4);
-	const ey = A * 0.45 * Math.sin(1.7 * t + 0.6);
+	const ex = A * Math.sin(1.1 * t - 0.4) + (nudge?.[0] ?? 0);
+	const ey = A * 0.45 * Math.sin(1.7 * t + 0.6) + (nudge?.[1] ?? 0);
 	cam.x += cam.s * ex;
 	cam.y += cam.s * ey;
 	cam.ox = w / 2 + (geo.F * ex) / geo.d0;
