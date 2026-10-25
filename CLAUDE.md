@@ -91,56 +91,71 @@ of v2 is `docs/design-notes.md`.
 
 **The next run is at `/next`** (`runs/Next.svelte`): the board flow the lead
 picked, strand's journey in the sketchy hand (`lab/flow-strand-sketch.js`,
-its header the map; docs/explore-10.md the round it came from), out of the
-lab in a plain environment of its own — one canvas, one WebGPURenderer, the
-run answered by hand, no lab bar and no sketch tags (`board.js tag` stays
-silent there). `?v=<name>` plays a variant `flow-strand-sketch-<name>.js`:
-the run itself is the newest cut — H (0.18): the 0.11 tunnel (the count,
-the band, the date, the dive; the first room a speck swum up on slowly from
-the moment the lens is on axis, `origin` locking it to the tunnel's apex) and
-through the band THE LAST ROOM, no tunnel B (cut G, with the tesseract of
-rooms — `fall.js tiles` — and the questions that veer the swimmer, is kept at
-`?v=g`, its table `log/sketch-copy-g.js`; cut J, `?v=j`, is the
-conversation done over the rooms instead — tunnel A as the original, the
-fall through five rooms with no tesseract, the rooms hung at a slight roll,
-the exchanges over them — table `log/sketch-copy-j.js`; and round I, five explorations
-beside the run with H's length — `?v=i1` the wave, `?v=i2` the MEG, `?v=i3` the
-light cone, `?v=i4` the narrative, `?v=i5` the lathe and the record, each with its
-own table `log/sketch-copy-i<n>.js` and helpers `log/i<n>-*.js`; `docs/explore-11.md`
-is the round); a slow sun, the song named on the
-screen and HELD — the run stops on its last frame (the room sways and boils
-on) and the page offers AGAIN (the lens dollies on through the dark glass,
-`fall.js zeta`) and PLAY (Spotify's embed of the track; `sketch.ended()`,
-`.song()`, `.again()`);
-`docs/next-beats.md` times it. A birthday the archive cannot answer for
+its header the map), out of the lab in a plain environment of its own — one
+canvas, one WebGPURenderer, the run answered by hand, no lab bar and no
+sketch tags (`board.js tag` stays silent there). `?v=<name>` plays a variant
+`flow-strand-sketch-<name>.js`: the run itself is the newest cut — K (0.20),
+CLEAN UNTIL THE ROOM: the entry (the title, the date and the spice typed into
+the double helix), COMPILING USER GENETICS (the body written ring by ring,
+each ring a circle contracted by a digit of the date and flashed in gold —
+I3's generation, `log/i3-worldline.js`), SIMULATING CONCEPTION: the swim
+into ONE GROOVE (I5's: a helix down the cone turning under the stylus,
+nothing lettered on it), the LABEL at the apex — a white disc with the
+spindle hole dark in it, no date — and the dive through the hole into the
+last room; a record on the monitor, the arm swung in, the needle drop the
+flash, the room in colour; no date, no maths, no conversation anywhere on
+the fly-in. THE OUTPUT IS ON THE COMPUTER SCREEN: the song and its artist
+lettered on the glass as the record dims (`screenWords`), and the page puts
+PLAY / AGAIN as a strip of keys along the glass's bottom and Spotify's embed
+in the glass (`sketch.screen()` gives it the glass each frame, so it follows
+the room as it sways after the pointer). The run HOLDS on its last frame
+(`sketch.ended()`; the room sways and boils on); AGAIN (`.again()`) dollies
+the lens on through the dark glass into the next title; PLAY (`.song()`)
+opens the embed. The flash and the reveal are THE OPEN QUESTION — "the
+messiest and least clean part" — so five endings sit beside the run on the
+same base, `docs/explore-12.md` the round: `?v=k1` the needle drop cleaned
+(an even white, one even fade), `?v=k2` the iris (no flash: the hole opens
+onto the room already in colour), `?v=k3` the screen's light (the monitor's
+glow carries the colour out as a radial wipe, `log/fall.js reveal`), `?v=k4`
+the cut (black for a beat, then the room, the CRT switching on), `?v=k5` the
+develop (the white a sheet of paper the room is inked and painted on cel by
+cel, `log/k5-fall.js`). `?v=meg` is THE MACHINE, for the lead's own humour:
+after the date and the spice a faux clinical procedure in six steps — the
+sensor cap, the traces, THINK ABOUT YOUR FATHER'S SPERM, NOW THINK ABOUT YOUR
+PARENTS HAVING SEX, the sperm reverse-engineered from the signal — then the
+run's own journey (`log/sketch-copy-meg.js`, `log/meg-signal.js`, on I2's
+`log/i2-meg.js`). Earlier cuts are kept: `?v=h` cut H of 0.18 (the parents'
+conversation alone in the tunnel, the flash straight off the date; table
+`log/sketch-copy-h.js`), `?v=g` cut G (tunnel B with the tesseract and the
+questions that veer the swimmer, `log/sketch-copy-g.js`), `?v=j` cut J (the
+conversation over five rooms, `log/sketch-copy-j.js`), round I's five
+explorations with H's length (`?v=i1` the wave, `?v=i2` the MEG, `?v=i3` the
+light cone, `?v=i4` the narrative, `?v=i5` the lathe and the record;
+`docs/explore-11.md`), `?v=a` the original sketch of 0.10, `?v=b` sketch A's
+tuned 0.11, `?v=c` sketch C of 0.13, `?v=d` sketch D of 0.14, `?v=e` sketch E
+of 0.15 (each with its own table, `log/sketch-copy-<v>.js`); the five of 0.12
+are set aside, kept for reference; `?at=` and `?demo=1` as in the lab.
+`docs/next-beats.md` times the run. A birthday the archive cannot answer for
 (`functions/answer.js resolve` → `edge`; `?edge=past|future|unknown` forces
-one) runs the same run to the date on the band and then BREAKS DOWN where
-the dive would be (`BREAK`): the gif leaks into the seam, the band tears open
-onto the gif tiled across the board (`data/gifs.js` sheets drawn on the
-board), the verdict is lettered over it and held; the rows of the copy table
-say `when` they apply, and `off` keeps a row without playing it. `?v=a` is the
-original sketch of 0.10, `?v=b` sketch A's tuned 0.11, `?v=c` sketch C of 0.13, `?v=d` sketch D of 0.14, `?v=e` sketch
-E of 0.15 (D and E read their own tables, `log/sketch-copy-d.js`, `-e.js`);
-the five of 0.12 are set aside, kept for reference; `?at=` and `?demo=1` as
-in the lab. **Every word that flies over the journey is in ONE table,
-`lab/log/sketch-copy.js`** — the maths slams, the years and their headlines,
-the months, the days, the captions, the date at the end — each with its
-seconds and where and how it flies; the lead edits it there, and nothing
-textual is hard-coded in the sketch. It draws through the LENS
-(`lab/log/lens.js`): the board's 2D canvas uploaded each frame into one GPU
-pass that does the soft warm focus (mist, halo, lift, grain, a rare leak),
-the conception's light and the flash (a white band blowing out of the
-screen, burning out with the sunbeam, the colour flooding in under it), with
-the heavy lines instanced on the GPU under and over it
-(`lab/log/gpu-ink.js`); the lens's own renderer is WebGL 2 (a canvas →
-texture copy is cheap there and was not on WebGPU in the sandbox). The lens
-is made FIRST in `make()` and the board's first paint goes through it, so the
-page opens on the run's own look (the board's chalk dust showed for the
-seconds the rooms loaded, once). On a software GPU the lens draws at a
-smaller budget in a live run than pinned, so a seek-vs-run diff is taken
-with `?lensres=1` on both. The corner's switch reads v2 · v3 · next ·
-ARCHIVE: the archive is `/log`, everything the lab tried. It takes `/` when
-the lead says so; v3 keeps `/v3`.
+one) runs the same run to the label and then BREAKS DOWN where the dive
+would be (`BREAK`): the gif leaks into the seam, the label tears open onto
+the gif tiled across the board (`data/gifs.js` sheets drawn on the board),
+the verdict is lettered over it and held. **Every word that flies is in ONE
+table, `lab/log/sketch-copy.js`** — the run's has only the two captions and
+the three verdicts; a row says `when` it applies, `off` keeps a row without
+playing it; the lead edits words there, and nothing textual is hard-coded in
+the sketch. It draws through the LENS (`lab/log/lens.js`): the board's 2D
+canvas uploaded each frame into one GPU pass that does the soft warm focus
+(mist, halo, lift, grain, a rare leak), the conception's light and the flash
+(the `veil` a plain even mix to white), with the heavy lines instanced on the
+GPU under and over it (`lab/log/gpu-ink.js`); the lens's own renderer is
+WebGL 2 (a canvas → texture copy is cheap there and was not on WebGPU in the
+sandbox). The lens is made FIRST in `make()` and the board's first paint goes
+through it, so the page opens on the run's own look. On a software GPU the
+lens draws at a smaller budget in a live run than pinned, so a seek-vs-run
+diff is taken with `?lensres=1` on both. The corner's switch reads v2 · v3 ·
+next · ARCHIVE: the archive is `/log`, everything the lab tried. It takes `/`
+when the lead says so; v3 keeps `/v3`.
 
 Everything the lab tried is the ARCHIVE: **`/log`** indexes the blackboard
 sketches (`lab/log-*.js` on the shared kit `lab/log/`, a 2D canvas over the

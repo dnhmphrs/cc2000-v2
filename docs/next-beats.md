@@ -1,6 +1,22 @@
-# The run at `/next` (cut H), timed, and how it hangs together
+# The run at `/next` (cut K), timed, and how it hangs together
 
-Version 0.18. The run is 54 s; `?at=` is seconds ÷ 54. Every number below is
+Version 0.20: cut K, clean until the room. The run is 54 s; `?at=` is seconds ÷ 54.
+
+| part            | from | to   | what happens                                                                                                                                                                                                                                  |
+| --------------- | ---- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Title           | 0    | 5.1  | the terminal types the title                                                                                                                                                                                                                  |
+| Entry           | 5.4  | 15.3 | the double helix drawn as the date is typed; the spice asked                                                                                                                                                                                  |
+| Compile         | 15.3 | 22.2 | COMPILING USER GENETICS: the reading frame 16.0 – 18.3, each ring a circle contracted by a digit of the date flashed in gold (I3), the strand onto the axis 18.7 – 19.9, the rope, the body; alive at 22.2                                    |
+| Swim            | 22.2 | 28.4 | SIMULATING CONCEPTION (to 41.2); the swimmer sets off at 22.5, the lens round behind 22.6 – 25.2, onto the axis 25.6 – 28.4; the GROOVE sketched in turn by turn 23.1 – 26.2 (I5), turning under the stylus; nothing lettered, nothing flying |
+| The groove      | 28.4 | 41.0 | the stylus tracks in; the glint at the apex grows into the LABEL 38.6 – 41.0, the spindle hole dark in it; no date                                                                                                                            |
+| The dive        | 41.9 | 42.5 | through the hole: it widens past the board, the white torn off the room                                                                                                                                                                       |
+| The landing     | 42.2 | 44.4 | the lens to rest inside the last room in chalk; the screen on 43.0 – 43.4, the record up 43.4 – 43.9, the arm 43.9 – 44.5                                                                                                                     |
+| The needle drop | 44.6 | 47.7 | the flash off the screen, the colour under it 44.6 – 45.1, the veil lifting; the song and its artist lettered ON THE SCREEN from 47.0 as the record dims                                                                                      |
+| The hold        | 47.7 | 54   | the run holds; PLAY / AGAIN on the glass and the embed in it; AGAIN: the screen dark, the dolly through the glass to the next title                                                                                                           |
+
+The five endings beside it (`?v=k1` … `k5`, `docs/explore-12.md`) change only what happens from 41.9 on. Cut H's table, as it was, follows.
+
+Cut H (0.18, now `?v=h`). The run is 54 s; `?at=` is seconds ÷ 54. Every number below is
 the beat table `B` in `src/lib/lab/flow-strand-sketch.js` or a row of
 `src/lib/lab/log/sketch-copy.js` (the words, editable there).
 

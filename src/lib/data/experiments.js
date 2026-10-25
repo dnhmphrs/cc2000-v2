@@ -638,6 +638,36 @@ export const FLOWS = [
 		what: 'the calculator a cutting lathe and a gramophone (/next?v=i5): the digits the harmonics of one wave, the spice how deep the cutter bites, the swimmer that profile turned on the lathe — the stylus; the tunnel ONE GROOVE, a turn a year, the years riding the turns; the label at the apex with the spindle hole dark in it and the date under it; through the hole into the room, a record turning on the monitor, the arm swings in and THE NEEDLE DROP is the flash; a verdict pressed with the gif, the needle skips'
 	},
 	{
+		sketch: 'flow-strand-sketch-k1',
+		name: 'Ending · K1 the needle drop, cleaned',
+		what: "the run's ending made clean (/next?v=k1): the needle drop makes a short, even white — no rays, no burn, no rings of light — and the colour is simply there as the white lifts in one even fade, the glow gone in a second, the room still"
+	},
+	{
+		sketch: 'flow-strand-sketch-k2',
+		name: 'Ending · K2 the iris',
+		what: 'no flash (/next?v=k2): the spindle hole is a porthole onto the room already in colour; as it widens the colour room is seen through it, the chalk tunnel outside, the hole takes the frame and the lens lands; the monitor warms on softly and the song is on it'
+	},
+	{
+		sketch: 'flow-strand-sketch-k3',
+		name: 'Ending · K3 the screen’s light',
+		what: "the monitor does the reveal (/next?v=k3): at the needle drop the screen brightens to a soft warm glow and the room's colour is carried out of the glass inside it as a radial wipe, no white over the board; the glow draws back into the screen and the song is on it"
+	},
+	{
+		sketch: 'flow-strand-sketch-k4',
+		name: 'Ending · K4 the cut',
+		what: 'hard and simple (/next?v=k4): the hole is dark, it swallows the frame to black, a quarter second of black, and the room is there in colour with the monitor dark; the CRT switches on — a dot drawn into a line, the line opening into the picture — and the song is on it; no flash, no record'
+	},
+	{
+		sketch: 'flow-strand-sketch-k5',
+		name: 'Ending · K5 the develop',
+		what: 'the white as a sheet of paper (/next?v=k5): the needle drop takes the board to an even white, the room develops on it like a print — the chalk lines first as ink, then the flat colours painted in cel by cel (the wall, the poster, the clock, the desk, the bed, the screen last) — the record on the glass, the song; log/k5-fall.js'
+	},
+	{
+		sketch: 'flow-strand-sketch-meg',
+		name: 'Machine · the MEG',
+		what: "for the lead's own humour (/next?v=meg): after the date and the spice the Conception Calculator 2000 is a piece of medical equipment — STANDBY · PRESS ANY KEY, a self-test, STEP 1 READING MEG (the sensor cap, eight channel traces), CALIBRATING, THINK ABOUT YOUR FATHER'S SPERM (signal A captured), NOW THINK ABOUT YOUR PARENTS HAVING SEX (every channel saturates, signal B), the spectrum, REVERSE-ENGINEERING SPERM FROM SIGNAL (the body written from it), RECONSTRUCTING THE EVENT — and the run's own journey and end, 77 s; table log/sketch-copy-meg.js, helpers log/meg-signal.js"
+	},
+	{
 		sketch: 'flow-strand-sketch-h',
 		name: 'Cut · H',
 		what: 'the run of 0.18, kept (/next?v=h): the parents’ conversation alone in the tunnel, one exchange at a time, the room grown from a speck through the porthole, the flash straight off the date on the band, the song on the screen; table log/sketch-copy-h.js'
