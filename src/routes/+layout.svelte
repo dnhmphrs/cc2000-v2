@@ -19,10 +19,12 @@
 	$: onLab = !MAIN && /^\/(lab|v4|log|eva)(\/|$)/.test($page.url.pathname);
 	// The board's routes open on the board's own warm dark (see app.html,
 	// which sets it before the first paint); the run keeps its blue-black.
-	$: onBoard = MAIN || onLab || /^\/(flows|cut|next)(\/|$)/.test($page.url.pathname);
+	$: onRun = MAIN || /^\/next(\/|$)/.test($page.url.pathname);
+	$: onBoard = onRun || onLab || /^\/(flows|cut)(\/|$)/.test($page.url.pathname);
 	$: if (typeof document !== 'undefined') {
 		const root = document.documentElement;
-		const ground = onBoard ? '#151515' : '';
+		// (the run's ground is the board's dark through the lens, see app.html)
+		const ground = onRun ? '#1b1917' : onBoard ? '#151515' : '';
 		if (root.style.getPropertyValue('--bg') !== ground) {
 			root.style.background = ground || '#090b14';
 			if (ground) root.style.setProperty('--bg', ground);

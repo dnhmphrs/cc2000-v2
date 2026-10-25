@@ -489,8 +489,10 @@ export function reelTag(s) {
 	REEL = s ?? '';
 }
 export function tag(ctx, w, h, s) {
-	// The next run's own page (routes/next) is the run, not a sketch: no tag.
+	// The next run's own page (routes/next) is the run, not a sketch: no tag;
+	// nor on the main site, which is the run alone (app.html's data-site).
 	if (typeof location !== 'undefined' && location.pathname.startsWith('/next')) return;
+	if (typeof document !== 'undefined' && document.documentElement.dataset.site === 'main') return;
 	ctx.save();
 	ctx.font = `11px ${TECH_FONT}`;
 	ctx.fillStyle = 'rgba(236, 230, 218, 0.4)';

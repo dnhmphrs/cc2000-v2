@@ -21,9 +21,9 @@ ok('/ answers', r?.status() === 200);
 const html = await p.content();
 ok('the shell is the main site', /data-site="main"/.test(html));
 ok(
-	'the ground is the board’s dark before any script',
+	'the ground is the run’s dark before any script',
 	(await p.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)) ===
-		'rgb(21, 21, 21)'
+		'rgb(27, 25, 23)'
 );
 ok('no run switch in the corner', (await p.$$('nav.version')).length === 0);
 ok('a build label in the corner', (await p.$$('span.build')).length === 1);

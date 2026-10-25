@@ -18,10 +18,18 @@
 		     (data-site, written by hooks.server.js) every page is the run on
 		     the board, so it is always the board's dark. -->
 		<script>
+			// THE RUN's ground is the board's dark THROUGH THE LENS (log/lens.js:
+			// the darks lifted a hair, warm — rgb(27, 25, 23)), so the main
+			// site and /next open on that and the lens's first frame changes
+			// nothing; the lab and the reels, which draw the board bare, open
+			// on the board's own #151515.
 			if (
 				document.documentElement.dataset.site === 'main' ||
-				/^\/(lab|v4|log|eva|flows|cut|next)(\/|$)/.test(location.pathname)
+				/^\/next(\/|$)/.test(location.pathname)
 			) {
+				document.documentElement.style.background = '#1b1917';
+				document.documentElement.style.setProperty('--bg', '#1b1917');
+			} else if (/^\/(lab|v4|log|eva|flows|cut)(\/|$)/.test(location.pathname)) {
 				document.documentElement.style.background = '#151515';
 				document.documentElement.style.setProperty('--bg', '#151515');
 			}

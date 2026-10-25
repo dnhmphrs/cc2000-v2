@@ -120,10 +120,11 @@
 				if (at === null) sketch.update(dt);
 				sketch.render();
 				const e = at === null && !!sketch.ended?.();
-				if (e !== ended) {
-					ended = e;
-					song = e ? (sketch.song?.() ?? null) : null;
-				}
+				if (e !== ended) ended = e;
+				// the song, the moment the sketch names it (the title on the
+				// screen): the embed comes up then, and goes with AGAIN
+				const sg = at === null ? (sketch.song?.() ?? null) : null;
+				if ((sg?.uri ?? null) !== (song?.uri ?? null)) song = sg;
 				if (e) {
 					const r = sketch.screen?.() ?? null;
 					if (r && r[2] - r[0] > 60 && r[3] - r[1] > 40) {
@@ -171,7 +172,7 @@
 		width: 100vw;
 		height: 100vh;
 		display: block;
-		background: #151515; /* the board's ground (log/board.js PAL.ground) */
+		background: #1b1917; /* the board's ground through the lens (app.html) */
 	}
 	.end {
 		position: fixed;
