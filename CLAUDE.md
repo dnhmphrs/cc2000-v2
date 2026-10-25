@@ -95,8 +95,14 @@ every other `+page.js`; `/v2`, `/v3` and `/eva` are not prerendered there),
 the layout shows `components/Build.svelte` (the label) instead of the
 corner's switch and no lab bar, and the shell's `<html data-site="main">`
 (written by the hook, read by `app.html`'s inline script) makes the first
-paint the board's own dark — the "colour change on load" was the page's
-blue-black showing until the board painted. On `dev`: `/` is v3 as before,
+paint THE RUN'S OWN GROUND — the board's dark through the lens, rgb(27, 25,
+23), `#1b1917` — so nothing changes colour when the lens's first frame
+lands. THE LOAD IS ONE DARK: the run clears the board to its ground and
+HIDES it (no chalk dust, no tag) while the rooms load and the lens is
+built, shows the lens's canvas only after its first frame, and the lens's
+light leak is off (`look.leak 0`) — the "many layers of different noise
+effects turning on" were the board's dust, then the lens's grain, then its
+leak, each coming on in turn. On `dev`: `/` is v3 as before,
 `/v2`, `/next` with every variant, the lab, the reels, the index, the
 switch. To build and check the main site locally:
 

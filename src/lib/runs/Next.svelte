@@ -171,7 +171,7 @@
 		width: 100vw;
 		height: 100vh;
 		display: block;
-		background: #151515; /* the board's ground (log/board.js PAL.ground) */
+		background: #1b1917; /* the board's ground through the lens (app.html) */
 	}
 	.end {
 		position: fixed;

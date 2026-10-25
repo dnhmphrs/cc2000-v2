@@ -628,8 +628,14 @@ export default async function make({ THREE, at }) {
 		at === null && q.get('demo') !== '1' && /^\/(lab|next)(\/|$)/.test(location.pathname);
 	const board = getBoard();
 	const time = clock(SECONDS, at);
-	clearBoard(board);
-	tag(board.ctx, board.w, board.h, 'flow-strand-sketch · loading the rooms');
+	// (L) A CLEAN LOAD: nothing paints until the run's own first frame. The
+	// board is cleared to its ground and HIDDEN (no chalk dust, no tag) while
+	// the rooms load and the lens is built, so the page is its one dark —
+	// app.html's — from the first byte to the lens's first frame; the lens's
+	// canvas is shown after that frame (render), never before. There were
+	// the board's dust, then the lens's grain, then its leak, each coming on
+	// in turn — "many layers of different noise effects" (the lead).
+	clearBoard(board, { chalkDust: false, shown: false });
 	const [art] = await Promise.all([
 		loadRooms({ chalk: true }),
 		document.fonts.load(`400 24px ${TECH_FONT}`).catch(() => null),
@@ -661,13 +667,19 @@ export default async function make({ THREE, at }) {
 	// it was.
 	const inside = q.has('inside') ? clamp(Number(q.get('inside')) || 0, 0, 0.9) : INSIDE;
 	// ?look=halo:0.2,grain:0 — the lens's numbers (log/lens.js LENS), to try.
-	const look = Object.fromEntries(
-		(q.get('look') ?? '')
-			.split(',')
-			.map((kv) => kv.split(':'))
-			.filter(([k, v]) => k && v !== undefined && Number.isFinite(Number(v)))
-			.map(([k, v]) => [k, Number(v)])
-	);
+	const look = {
+		// (L) no leak: the rare light drifting in at an edge read as one more
+		// effect switching on; the mist, the halo, the lift and the grain are
+		// the fuzz, and they are on from the first frame
+		leak: 0,
+		...Object.fromEntries(
+			(q.get('look') ?? '')
+				.split(',')
+				.map((kv) => kv.split(':'))
+				.filter(([k, v]) => k && v !== undefined && Number.isFinite(Number(v)))
+				.map(([k, v]) => [k, Number(v)])
+		)
+	};
 
 	// ── What the answers settle (cached by the answers and the board) ────────
 	let S = null;
@@ -2145,8 +2157,9 @@ export default async function make({ THREE, at }) {
 		window.__prof?.end();
 	}
 	// The fuzz over the frame: the lens on the GPU, or the canvas grain.
+	let lensShown = false;
 	function fuzz(ctx, w, h, secs) {
-		if (lens)
+		if (lens) {
 			lens.frame({
 				secs,
 				look,
@@ -2156,7 +2169,12 @@ export default async function make({ THREE, at }) {
 				under: gUnder?.count ? (r, o) => gUnder.draw(r, { w, h, dpr: o.dpr }) : null,
 				over: gOver?.count ? (r, o) => gOver.draw(r, { w, h, dpr: o.dpr }) : null
 			});
-		else grain(ctx, w, h, secs);
+			// (L) the lens's canvas shown once its first frame is drawn
+			if (!lensShown && board.lens) {
+				board.lens.style.visibility = '';
+				lensShown = true;
+			}
+		} else grain(ctx, w, h, secs);
 	}
 
 	// The swimmer's lines in the hand: on the screen's own noise (it holds
