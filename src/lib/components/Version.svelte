@@ -4,19 +4,28 @@
 	import { resolve } from '$app/paths';
 
 	// ── Which run, and which build ───────────────────────────────────────────
-	// Small, in the top left corner, on every page: a switch between the two
-	// runs — v2, the WebGL run (runs/V2.svelte, /v2), and v3, the run the site
-	// is (runs/V3.svelte, / and /v3) — and the build: the package's number and
-	// the commit it came from (vite.config.js), so an update can be told from
-	// the one before it at a glance. Over the raster and the verdict.
+	// Small, in the top left corner, on every page: a switch between the runs
+	// — v2, the WebGL run (runs/V2.svelte, /v2), v3, the run the site is
+	// (runs/V3.svelte, / and /v3), and next, the run the lab found
+	// (runs/Next.svelte, /next) — then the ARCHIVE, everything the lab tried
+	// (/log, which opens the lab's sketches, the flows and the reels), and the
+	// build: the package's number and the commit it came from
+	// (vite.config.js), so an update can be told from the one before it at a
+	// glance. Over the raster and the verdict.
 	//
 	// The switch RELOADS rather than navigating in place: each run mounts its
 	// own Stage and names its scenes its own way (director.setRun), and a
 	// fresh page is the one way to be sure nothing of the other is left.
 	const RUNS = [
 		{ name: 'v2', href: '/v2', on: (p) => p.startsWith('/v2') },
-		{ name: 'v3', href: '/v3', on: (p) => p === '/' || p.startsWith('/v3') }
+		{ name: 'v3', href: '/v3', on: (p) => p === '/' || p.startsWith('/v3') },
+		{ name: 'next', href: '/next', on: (p) => p.startsWith('/next') }
 	];
+	const ARCHIVE = {
+		name: 'archive',
+		href: '/log',
+		on: (p) => /^\/(log|lab|v4|cut|flows|eva)(\/|$)/.test(p)
+	};
 	$: path = $page.url.pathname;
 </script>
 
@@ -29,6 +38,13 @@
 			aria-current={run.on(path) ? 'page' : undefined}>{run.name}</a
 		>
 	{/each}
+	<a
+		href={resolve(ARCHIVE.href)}
+		data-sveltekit-reload
+		class="archive"
+		class:on={ARCHIVE.on(path)}
+		aria-current={ARCHIVE.on(path) ? 'page' : undefined}>{ARCHIVE.name}</a
+	>
 	<span class="build" aria-hidden="true">{version}</span>
 </nav>
 
@@ -64,6 +80,9 @@
 	a.on {
 		opacity: 0.9;
 		border-bottom-color: currentColor;
+	}
+	.archive {
+		margin-left: 0.4em;
 	}
 	.build {
 		opacity: 0.4;

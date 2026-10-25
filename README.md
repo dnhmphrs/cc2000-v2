@@ -17,9 +17,22 @@ builds on `nodejs22.x`, pinned in `vite.config.js`).
 
 ---
 
-## Two runs
+## Two sites
 
-The site keeps two versions of the run, side by side. The switch in the top
+One repo builds two sites (`vite.config.js`, `src/lib/site.js`). **main** —
+the `main` branch's deploy, the site — is THE RUN ALONE: the sketch
+(`src/lib/lab/flow-strand-sketch.js`, `runs/Next.svelte`) at `/`, every
+other path a 404, nothing in the corner but a small build label. **dev** —
+`dev`'s preview, and any local build — is everything below: the runs, the
+next run with all its variants at `/next`, the lab and the archive. Decided
+at build time from `SITE=main|dev`, or Vercel's environment (Production is
+main, Preview is dev). `SITE=main npm run build` and
+`node scripts/verify-main.mjs` check the main site locally; CLAUDE.md has
+the detail.
+
+## Two runs (dev)
+
+The dev site keeps two versions of the run, side by side. The switch in the top
 left corner of every page moves between them, next to the build it is (the
 package's version and the commit, `components/Version.svelte`).
 
@@ -44,10 +57,14 @@ rooms appearing, and some play with the clopen geometry
 (`docs/explore-04.md`); and the third round, Einstein meets Gödel — his
 rotating universe where time closes up, the closed universes from inside,
 coordinate charts, more rooms out of the dot, and moving through rooms in
-other geometries (`docs/explore-05.md`). `/log` lists every experiment there
-has been, `/cut` plays
-one of each beat end to end in the run's order, and a small bar in the corner
-of any of them steps to the next.
+other geometries (`docs/explore-05.md`); and the fourth, the v4 flows — whole
+runs on the board, each a different answer to the same brief, at **`/flows`**
+— with one-offs on tame geometry, abelian varieties and the Kummer surface,
+more rooms out of the geometry, the other spherical space forms from inside
+and maps on the torus (`docs/explore-06.md`). `/log` lists every experiment there has been, `/cut`
+plays every variant of every beat end to end in the run's order (fifteen
+minutes; ← and → step between beats, and `/v4?chain=one` is the short cut,
+one of each), and a small bar in the corner of any of them steps to the next.
 
 ### v3
 

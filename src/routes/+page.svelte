@@ -1,9 +1,10 @@
 <script>
-	import V3 from '$lib/runs/V3.svelte';
+	import { MAIN } from '$lib/site.js';
 
-	// The site: the run as it is — v3 (runs/V3.svelte), which is also at /v3,
-	// the address it keeps when the next run takes this one. v2 is at /v2.
-	// The corner switches between them (components/Version.svelte).
+	// The site: on main, the run — runs/Next.svelte with `only`, the one
+	// scene it has; on dev, v3 (runs/V3.svelte, also at /v3) as it was, with
+	// v2 at /v2 and the next run at /next. Which is decided in +page.js.
+	export let data;
 </script>
 
-<V3 />
+<svelte:component this={data.Run} only={MAIN} />

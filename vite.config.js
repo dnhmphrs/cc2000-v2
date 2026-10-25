@@ -21,6 +21,17 @@ const commit = (() => {
 	}
 })();
 
+// WHICH SITE. One repo, two sites: `main` — the site, the run and nothing
+// else (see src/lib/site.js) — and `dev`, everything (the runs, the lab, the
+// archive, every variant). Decided at build time: SITE=main|dev in the
+// environment, else Vercel's own — a Production deploy (the main branch) is
+// main, a Preview (dev's) is dev — else dev. Baked in as __SITE__.
+const SITE =
+	process.env.SITE ??
+	(process.env.VERCEL_ENV === 'production' || process.env.VERCEL_GIT_COMMIT_REF === 'main'
+		? 'main'
+		: 'dev');
+
 // The whole SvelteKit configuration lives here now (Kit 2.63+ takes it as
 // options to the plugin; there is no svelte.config.js). Two things to know:
 //
@@ -36,6 +47,7 @@ const commit = (() => {
 //   move to runes is its own change, made file by file, not a switch thrown
 //   over forty components at once.
 export default defineConfig({
+	define: { __SITE__: JSON.stringify(SITE) },
 	plugins: [
 		sveltekit({
 			adapter: adapter({ runtime: 'nodejs22.x' }),

@@ -14,7 +14,7 @@ export default defineConfig([
 	prettier,
 	svelte.configs.prettier,
 	{
-		languageOptions: { globals: { ...globals.browser, ...globals.node } }
+		languageOptions: { globals: { ...globals.browser, ...globals.node, __SITE__: 'readonly' } }
 	},
 	{
 		files: ['**/*.svelte', '**/*.svelte.js'],

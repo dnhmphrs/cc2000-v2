@@ -78,6 +78,35 @@ Write scratch scripts and screenshots to the scratchpad, never into `scripts/`.
 A script living there cannot resolve the project's `node_modules`, so import by
 absolute path: `from '/home/user/cc2000-v2/node_modules/playwright/index.mjs'`.
 
+## Two sites from one repo: `main` is the run alone, `dev` is everything
+
+The site is the run and nothing else — the lead: one scene, no v2, no v3,
+no lab, no archive, no switch, "nothing in the top left hand corner other
+than a small version label", and a clean, fast, reliable load. The dev site
+keeps everything, so the variants and the archive go on being registered and
+looked at. One repo, one branch flow, decided AT BUILD TIME
+(`vite.config.js`, baked in as `__SITE__`; `src/lib/site.js` reads it):
+`SITE=main` or `SITE=dev` in the environment, else Vercel's own — a
+Production deploy (the `main` branch) is `main`, a Preview (`dev`'s) is
+`dev` — else `dev`. On `main`: `/` is the run (`routes/+page.js` loads
+`runs/Next.svelte` with `only`, which ignores `?v=`), every other path is a
+404 at the server (`src/hooks.server.js`) and at the route (`gate()` in
+every other `+page.js`; `/v2`, `/v3` and `/eva` are not prerendered there),
+the layout shows `components/Build.svelte` (the label) instead of the
+corner's switch and no lab bar, and the shell's `<html data-site="main">`
+(written by the hook, read by `app.html`'s inline script) makes the first
+paint the board's own dark — the "colour change on load" was the page's
+blue-black showing until the board painted. On `dev`: `/` is v3 as before,
+`/v2`, `/next` with every variant, the lab, the reels, the index, the
+switch. To build and check the main site locally:
+
+    SITE=main npm run build && npx vite preview --port 4175
+    BASE=http://localhost:4175 node scripts/verify-main.mjs
+
+`scripts/verify.mjs` (the dev lanes) stays what it was; both are run before
+a push. If Vercel's system variables are not exposed to the build, set
+`SITE=main` on the Production environment there.
+
 ## Two runs: v3 at `/` and `/v3`, v2 at `/v2`
 
 The site keeps two runs, each gathered into one component: **v3**
@@ -89,13 +118,100 @@ its own way (`director.setRun`) — beside the build number. Everything below is
 v3 unless it says v2. The README is lean on purpose; the long design history
 of v2 is `docs/design-notes.md`.
 
-The NEXT run is being looked for, not built: **`/log`** indexes the blackboard
+**The next run is at `/next`** (`runs/Next.svelte`): the board flow the lead
+picked, strand's journey in the sketchy hand (`lab/flow-strand-sketch.js`,
+its header the map), out of the lab in a plain environment of its own — one
+canvas, one WebGPURenderer, the run answered by hand, no lab bar and no
+sketch tags (`board.js tag` stays silent there). ON THE MAIN SITE IT IS `/`
+AND THE ONLY PAGE (see "Two sites" above). `?v=<name>` plays a variant
+`flow-strand-sketch-<name>.js` (on dev only): the run itself is the newest
+cut — L (0.21, `?v=l` is an alias of it), CLEAN UNTIL THE ROOM: the entry
+(the title, the date and the spice typed into the double helix), COMPILING
+USER GENETICS (the amino-acid generator: the reading frame over the helix,
+the body written codon by codon, each ring's own shape flashed in gold —
+`log/body.js codonSection`), SIMULATING CONCEPTION: the swim into ONE GROOVE
+(I5's: a helix down the cone turning under the stylus, nothing lettered on
+it, its turns JOINED — the hand's wobble is one noise along the whole
+groove, `sketchTurn`), about nine and a half turns to the LABEL at the apex
+— a white disc with the spindle hole dark in it, no date — and THE IRIS
+(K2): the hole opens onto the last room ALREADY IN COLOUR, no flash, the
+lens falls on into it and comes to rest, the monitor switches on softly; no
+date, no maths, no conversation anywhere on the fly-in. THE OUTPUT IS ON THE
+COMPUTER SCREEN: the song and its artist lettered on the glass
+(`screenWords`), the page's PLAY / AGAIN a strip of keys along the glass's
+bottom (`sketch.screen()` gives it the glass each frame, so they follow the
+room as it sways after the pointer), and Spotify's embed a horizontal bar in
+the top left corner. The run HOLDS on its last frame (`sketch.ended()`; the
+room sways and boils on); AGAIN (`.again()`) dollies the lens on THROUGH the
+dark glass — the hold's clock kept running so the sway and the parallax go
+on — until the glass covers the board (`covers`), and that dark is what the
+next title types on: no fade; PLAY (`.song()`) opens the embed. The endings
+of round K sit beside it on cut K's base (`docs/explore-12.md`): `?v=k` cut
+K itself (the record and the needle drop), `?v=k1` the needle drop cleaned,
+`?v=k2` the iris as it was picked, `?v=k3` the screen's light (`log/fall.js
+reveal`), `?v=k4` the cut, `?v=k5` the develop (`log/k5-fall.js`). `?v=m`
+is THE MACHINE (M), for the lead's own humour: after the date and the spice
+a faux clinical procedure in six steps — the sensor cap, the traces, THINK
+ABOUT YOUR FATHER'S SPERM, NOW THINK ABOUT YOUR PARENTS HAVING SEX, the
+sperm reverse-engineered from the signal — then cut K's journey
+(`log/sketch-copy-m.js`, `log/meg-signal.js`, on I2's `log/i2-meg.js`).
+Earlier cuts are kept: `?v=h` cut H of 0.18 (the parents' conversation
+alone in the tunnel, the flash straight off the date; table
+`log/sketch-copy-h.js`), `?v=g` cut G (tunnel B with the tesseract and the
+questions that veer the swimmer, `log/sketch-copy-g.js`), `?v=j` cut J (the
+conversation over five rooms, `log/sketch-copy-j.js`), round I's five
+explorations with H's length (`?v=i1` the wave, `?v=i2` the MEG, `?v=i3` the
+light cone, `?v=i4` the narrative, `?v=i5` the lathe and the record;
+`docs/explore-11.md`), `?v=a` the original sketch of 0.10, `?v=b` sketch A's
+tuned 0.11, `?v=c` sketch C of 0.13, `?v=d` sketch D of 0.14, `?v=e` sketch E
+of 0.15 (each with its own table, `log/sketch-copy-<v>.js`); the five of 0.12
+are set aside, kept for reference; `?at=` and `?demo=1` as in the lab.
+`docs/next-beats.md` times the run. A birthday the archive cannot answer for
+(`functions/answer.js resolve` → `edge`; `?edge=past|future|unknown` forces
+one) runs the same run to the label and then BREAKS DOWN where the dive
+would be (`BREAK`): the gif leaks into the seam, the label tears open onto
+the gif tiled across the board (`data/gifs.js` sheets drawn on the board),
+the verdict is lettered over it and held. **Every word that flies is in ONE
+table, `lab/log/sketch-copy.js`** — the run's has only the two captions and
+the three verdicts; a row says `when` it applies, `off` keeps a row without
+playing it; the lead edits words there, and nothing textual is hard-coded in
+the sketch. It draws through the LENS (`lab/log/lens.js`): the board's 2D
+canvas uploaded each frame into one GPU pass that does the soft warm focus
+(mist, halo, lift, grain, a rare leak), the conception's light and the flash
+(the `veil` a plain even mix to white), with the heavy lines instanced on the
+GPU under and over it (`lab/log/gpu-ink.js`); the lens's own renderer is
+WebGL 2 (a canvas → texture copy is cheap there and was not on WebGPU in the
+sandbox). The lens is made FIRST in `make()` and the board's first paint goes
+through it, so the page opens on the run's own look. On a software GPU the
+lens draws at a smaller budget in a live run than pinned, so a seek-vs-run
+diff is taken with `?lensres=1` on both. The corner's switch reads v2 · v3 ·
+next · ARCHIVE: the archive is `/log`, everything the lab tried. It takes `/`
+when the lead says so; v3 keeps `/v3`.
+
+Everything the lab tried is the ARCHIVE: **`/log`** indexes the blackboard
 sketches (`lab/log-*.js` on the shared kit `lab/log/`, a 2D canvas over the
-page, not the Stage — `docs/explore-03.md`, `-04`, `-05`), and
-`/v4?chain=log`, `?chain=clopen` and `?chain=play` play one variant of each,
-and **`/cut`** (`?chain=all`) is THE CUT: everything there is, one variant of
-each beat in the run's order, the variant each beat's `cut` names in the
-registry, so a beat that lands in the registry is in the cut. A
+page, not the Stage — `docs/explore-03.md` to `-06`). **`/flows`**
+(`?chain=flows`) plays the v4 FLOWS: whole runs on the board, one answer each
+to the same brief (the terminal without its command, the questions in the
+flow's own geometry, the swimmer hidden until the flash, one to three beats
+from the last answer to the room), listed in the registry's `FLOWS`, to mix
+and match from; they share the kit's `helix.js` (the swimmer as a helix turning
+on its own axis), `log-dawn.js makeTerminal` and `log-orb.js drawPrompt`.
+The rooms are the 2D drawings — the lead looked at the SOLID room (the 90s
+room rebuilt in 3D: `lab/solid/`, the sketch `log-solid`, seven loops round
+it on the blue, and `?ink=1` its ink mode: the board's dark, chalk lines, no
+colour) and is sticking to 2D; it stays an exploration in the lab and the
+cut, and `flow-dodeca?end=solid` shows the one way it was tried in a flow
+(the chalk pane handed to the ink model without a seam by
+`solid/flowroom.js`; a flow that renders three.js under the board gets a
+`renderer` from the reel and the lab and clears the board over it).
+`/v4?chain=log` and `?chain=clopen` play one variant of each of a round's
+beats, `?chain=play` the five clopen films as one loop, and **`/cut`**
+(`?chain=all`) is THE CUT: everything there is, EVERY variant of every beat in
+the run's order, the short cut's first in each beat, so a sketch or a variant
+that lands in the registry is in the cut — eighteen minutes, and ← and → step
+between beats; `?chain=one` is the short cut, one of each, the variant each
+beat's `cut` names in the registry. A
 log sketch reads its variant from `?v=`, or from the reel (`pickVariant` round
 its `make()`). EVERY experiment is listed once, in `data/experiments.js` — the
 board's beats and variants in the run's order, the reels, the rounds before
@@ -106,7 +222,9 @@ board's canvas) steps through; a new sketch or variant goes in that list or it
 is nowhere. The kit is `board.js` (the board, views, strokes, maths type,
 the clock), `space.js` (the lens, keyframed paths, a depth buffer for hidden
 lines, 3D lines), `ink.js` (the orb, lit points, the lecture), `rooms.js` (the
-bedrooms on the board), `plate.js` and `sperm.js`; use it rather than copying
+bedrooms on the board), `helix.js` (the swimmer, a helix turning on its axis),
+`plate.js` and `sperm.js` (the old flat spiral swimmer; the lead asked for the
+helix instead); use it rather than copying
 a sketch's own helpers. `/lab` finds sketches by a glob, and in
 dev fetches one the glob does not know by its path — the dev server here does
 not see files added after it started — so a new file in `src/lib/lab/` is
