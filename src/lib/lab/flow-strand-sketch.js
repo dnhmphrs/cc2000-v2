@@ -249,7 +249,7 @@ export const meta = {
 };
 
 // ── The beats ────────────────────────────────────────────────────────────────
-const SECONDS = 52;
+const SECONDS = 58;
 const TERM = makeTerminal(0.8, { cmd: false, align: 'center' });
 const FREEZE = TERM.stop + 0.2; // ≈ 5.14
 const { q1: Q1, wait1: W1, e1: E1, q2: Q2, wait2: W2, e2: E2 } = EPICYCLE.beats;
@@ -277,7 +277,7 @@ const B = {
 	contour: [21.2, 22.1],
 	life: 22.2,
 	// ── the journey (this variant's) ──
-	conception: [22.6, 29.6], // the caption
+	conception: [22.6, 35.6], // the caption
 	boil: [22.2, 23.6], // the hand comes into the lines
 	swim: 22.5,
 	behind: [22.6, 25.2], // the lens round behind the swimmer
@@ -286,17 +286,17 @@ const B = {
 	lines: [24.2, 27.2], // the speed lines come
 	glint: [24.0, 26.0], // the light at the end of it
 	premise: [27.2, 28.75], // the slam: the birth date − 266 DAYS
-	count: [28.7, 35.0], // 266 → 0, struck one by one
-	seam: [32.6, 35.0], // the tunnel narrowed into the band
-	conceived: [35.0, 36.8], // the conception date on the band
-	dive: [36.8, 37.7], // the band opens round the swimmer, onto the rooms
-	fall: [36.8, 42.0],
-	land: [40.0, 42.0],
-	screen: [41.0, 42.1], // the last screen switched on
-	colour: [42.9, 43.4], // the room's colour, flooded under the white
-	aim: [40.2, 42.2],
-	hit: 42.2, // the conception, straight after the landing
-	push: [42.3, 45.3],
+	count: [28.7, 41.0], // 266 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
+	seam: [38.6, 41.0], // the tunnel narrowed into the band
+	conceived: [41.0, 42.8], // the conception date on the band
+	dive: [42.4, 43.4], // the band and the date FADE (no tear): the swim goes on into the room as its own beat
+	fall: [42.8, 48.0],
+	land: [46.0, 48.0],
+	screen: [47.0, 48.1], // the last screen switched on
+	colour: [48.9, 49.4], // the room's colour, flooded under the white
+	aim: [46.2, 48.2],
+	hit: 48.2, // the conception, straight after the landing
+	push: [48.3, 51.3],
 	out: [99, 100] // (never: the run HOLDS on its last frame; `again` restarts it)
 };
 // THE BREAKDOWN (a verdict: a birthday the archive cannot answer for). The
@@ -306,7 +306,7 @@ const B = {
 // (strip), the band tears open as it would for the dive but onto the gif
 // tiled across the board rather than the rooms (spread), and the verdict is
 // lettered over the tiles (verdict) and held (end; AGAIN on the page).
-const BREAK = { strip: [37.0, 37.8], spread: [37.8, 40.2], verdict: 40.4, end: 46 };
+const BREAK = { strip: [43.0, 43.8], spread: [43.8, 46.2], verdict: 46.4, end: 52 };
 const endAt = (edge) => (edge ? BREAK.end : SECONDS);
 // AGAIN: the song and the date fade (words), the monitor goes dark
 // (screen), and the lens dollies on through the glass — the fall's own
@@ -505,6 +505,7 @@ const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05 };
 // The fall: eleven crossings (twelve rooms, the answer's last) at strand's
 // pace, so the rooms rush (a crossing every ~1.4 s, at 0.5–1 e-folds a second).
 const FALL_X = 0; // no crossings: the room through the band is the last
+const ROOM_AT_BAND = 0.3; // the room this much of the board tall at the dive (firstRoom; the fall's start)
 const INSIDE = 0.12; // the fall stops inside the last room (?inside=: this far into its glass)
 const FILL = { w: 1.5, h: 0.92 }; // … where the room is this many boards wide, and at least this tall
 const FALL_PACE = { n: 512, c: 0.55 };
@@ -663,7 +664,7 @@ export default async function make({ THREE, at }) {
 		// counts back from it in e-folds rather than going nowhere)
 		const g0 = makeFall({ art, order, beats: fb, inside: 0.5 }).geometry(w, h);
 		const X0 = g0.levels[0].X;
-		const far = g0.plate / (0.3 * h);
+		const far = g0.plate / (ROOM_AT_BAND * h);
 		const z0 = far > 1 ? clamp(Math.log(far) / Math.log(X0), -2, -0.05) : -0.05;
 		// Inside: how far into the last room's glass the lens stops — so the
 		// room is FILL.w times the board's width (the monitor at the middle,
@@ -1205,7 +1206,9 @@ export default async function make({ THREE, at }) {
 		// (on a verdict the band opens for the breakdown instead of the dive —
 		// slower, onto the gif, no hole — and its white goes as the strip comes)
 		const edge = !!st.F?.edge;
-		const open = edge ? smooth(span(t, ...BREAK.spread)) : smooth(span(t, ...B.dive));
+		// (on a song's run the band does not open at all: it fades, and the
+		// room it hung in front of goes on growing)
+		const open = edge ? smooth(span(t, ...BREAK.spread)) : 0;
 		const hb0 = lerp(lerp(1.2, 0.012 * h, m), st.bandHold, hold);
 		return {
 			m,
@@ -1213,13 +1216,13 @@ export default async function make({ THREE, at }) {
 			hb: hb0 + (0.9 * h - hb0) * Math.pow(open, 1.6),
 			open,
 			hot: smooth(span(t, B.seam[0] + 0.4, B.seam[1])),
-			white: edge ? 1 - smooth(span(t, ...BREAK.strip)) : 1 - smooth(span(open, 0.36, 0.6)),
+			white: edge ? 1 - smooth(span(t, ...BREAK.strip)) : 1 - smooth(span(t, ...B.dive)),
 			glint: smooth(span(t, ...B.glint)) * (1 - open),
 			// The hole the swimmer punches through it at the dive: from its
 			// nose at the vanishing point, out past the board's edges in
 			// ~0.35 s (11 e-folds a second), so the white is torn off the room
 			// rather than faded to grey over it.
-			hole: !edge && t > B.dive[0] ? 0.01 * h * Math.exp(11 * (t - B.dive[0])) : 0,
+			hole: 0,
 			tau: Math.max(0, t - (edge ? BREAK.strip[0] : B.dive[0]))
 		};
 	}
@@ -1338,7 +1341,7 @@ export default async function make({ THREE, at }) {
 		}
 		// Flecks along its edges, the reference's: little white squiggles off
 		// the seam, a fresh set each drawing.
-		const fl = smooth(span(band.m, 0.5, 1)) * (1 - band.open);
+		const fl = smooth(span(band.m, 0.5, 1)) * (1 - band.open) * band.white;
 		if (fl > 0.02) {
 			const n = Math.round(14 + (10 * w) / 1280);
 			for (let i = 0; i < 2 * n; i++) {
@@ -1559,7 +1562,8 @@ export default async function make({ THREE, at }) {
 		const s = come * gone;
 		if (s <= 0.004) return;
 		const peak =
-			smooth(span(t, B.count[0] + 0.6, B.count[0] + 1.8)) * (1 - smooth(span(t, 33.5, 35))) +
+			smooth(span(t, B.count[0] + 0.6, B.count[0] + 1.8)) *
+				(1 - smooth(span(t, B.seam[0] + 0.9, B.seam[1]))) +
 			smooth(span(t, B.dive[0], B.dive[0] + 0.3)) *
 				(1 - smooth(span(t, B.dive[1], B.dive[1] + 2.5)));
 		const seam = band && band.m > 0.05 ? { W: Math.min(band.W, 0.6 * w), hb: band.hb } : null;
@@ -1738,13 +1742,12 @@ export default async function make({ THREE, at }) {
 		const dive = st.F.edge ? BREAK.spread : B.dive;
 		if (t < tw || t > dive[1] + 0.2) return;
 		const H = figH(w, h);
-		const burst = Math.max(0, t - dive[0]);
+		// (the date fades with the band on a song's run; on a verdict it bursts
+		// out as the band tears open for the breakdown)
+		const burst = st.F.edge ? Math.max(0, t - dive[0]) : 0;
 		const grow = Math.exp(3.2 * burst);
-		const a = 1 - smooth(span(burst, 0.08, 0.42));
-		// The date itself keeps its full ink while it bursts: the hole eats it
-		// from the middle out (it is clipped to the white that is left), so it
-		// never sits half-faded, grey, on the white.
-		const aD = 1 - smooth(span(burst, 0.3, 0.42));
+		const a = st.F.edge ? 1 - smooth(span(burst, 0.08, 0.42)) : 1 - smooth(span(t, ...dive));
+		const aD = st.F.edge ? 1 - smooth(span(burst, 0.3, 0.42)) : a;
 		if (aD <= 0.01) return;
 		const ws = Math.min(0.04 * H, (0.8 * w) / measure(calc.working + calc.landed)) * grow;
 		const wy = O[1] - band.hb - 0.55 * ws - 0.02 * H;
@@ -2083,8 +2086,11 @@ export default async function make({ THREE, at }) {
 		if (live) remember(hand, t);
 		const st = settled(w, h);
 		lastGlass = null;
-		// (a verdict never falls: the tunnel stays, and breaks down)
-		if (t < B.fall[0] || st.F.edge) world(ctx, w, h, t, hand, st);
+		// (a verdict never falls: the tunnel stays, and breaks down; and once
+		// AGAIN's dark is down nothing of the scene is drawn under it)
+		if (exit && exitFade() > 0.995) {
+			/* the dark alone */
+		} else if (t < B.fall[0] || st.F.edge) world(ctx, w, h, t, hand, st);
 		else fallen(ctx, w, h, t, st);
 		// The captions at the terminal's size, and at least 15 px on a phone.
 		const size = Math.max(captionSize(w, h), Math.min(15, 0.04 * Math.min(w, h)));
@@ -2199,8 +2205,16 @@ export default async function make({ THREE, at }) {
 		// 0.15 of the board tall by the dive. No scaling of its own (there was
 		// one, and it read as the room being brought in — the lead).
 		if (t < B.onAxis[1]) return;
-		const zeta = g.zetaOf(tf);
-		const ph = g.plate / Math.pow(g.levels[0].X, zeta); // the plate's height on the board
+		// Its size on the board grows STEADILY, to be seen the whole way: from
+		// a speck of two pixels when the lens locks on to ROOM_AT_BAND of the
+		// board at the dive, as the square of the time (a constant zoom rate
+		// is exponential — nothing, nothing, then all at once — and read as
+		// the room being brought in at the end); the fall carries on from the
+		// size it reaches. ζ is read back off the size.
+		const u = span(t, B.onAxis[1], B.fall[0]);
+		const ph = lerp(2, ROOM_AT_BAND * h, u * u);
+		const X0 = g.levels[0].X;
+		const zeta = Math.log(g.plate / ph) / Math.log(X0);
 		if (ph < 1.5) return;
 		// THE PORTHOLE. The room is not a rectangle laid on the spiral: it is
 		// seen through a circle at the apex — the far end of the tunnel, a
@@ -2230,7 +2244,7 @@ export default async function make({ THREE, at }) {
 			ctx.restore();
 		}
 		// the rim
-		if (ph > 6) {
+		if (ph > 1.5) {
 			ctx.save();
 			port();
 			ctx.strokeStyle = PAL.chalk;
@@ -2438,7 +2452,8 @@ export default async function make({ THREE, at }) {
 			tilesAlpha: 0.5,
 			// AGAIN: the screen off, and the dolly on through the glass
 			screenOff: exit ? smooth(span(exit.s, ...EXIT.screen)) : 0,
-			zeta: exit ? g.L + lerp(st.deep, 0.9, fly) : null,
+			// (never as far as the screen's plane: past it the wall behind showed)
+			zeta: exit ? g.L + lerp(st.deep, 0.7, fly) : null,
 			colourAlong: false,
 			dust: null,
 			reveal: null
@@ -2458,6 +2473,7 @@ export default async function make({ THREE, at }) {
 		// The swimmer goes into the band's flash and is gone (the lead): none
 		// in the room, none in AGAIN's dolly through the glass.
 		const alpha = exit ? 0 : 1 - smooth(span(t, ...B.dive));
+		// (the band's fade is the swimmer's: it is gone with the flash)
 		if (alpha > 0.01) {
 			const drop = smooth(span(t, B.fall[0] + 0.5, B.fall[0] + 4));
 			const back = lerp(1, 1.6, drop) * lerp(1, 2.6, aim * aim);

@@ -500,6 +500,7 @@ const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05 };
 // The fall: eleven crossings (twelve rooms, the answer's last) at strand's
 // pace, so the rooms rush (a crossing every ~1.4 s, at 0.5–1 e-folds a second).
 const FALL_X = 5; // crossings before the answer’s room (was 11: too many, too fast — the lead)
+const ROOM_AT_BAND = 0.3; // the room this much of the board tall at the dive (firstRoom; the fall's start)
 const INSIDE = 0.12; // the fall stops inside the last room (?inside=: this far into its glass)
 const FILL = { w: 1.5, h: 0.92 }; // … where the room is this many boards wide, and at least this tall
 const FALL_PACE = { n: 512, c: 0.55 };
@@ -658,7 +659,7 @@ export default async function make({ THREE, at }) {
 		// counts back from it in e-folds rather than going nowhere)
 		const g0 = makeFall({ art, order, beats: fb, inside: 0.5 }).geometry(w, h);
 		const X0 = g0.levels[0].X;
-		const far = g0.plate / (0.3 * h);
+		const far = g0.plate / (ROOM_AT_BAND * h);
 		const z0 = far > 1 ? clamp(Math.log(far) / Math.log(X0), -2, -0.05) : -0.05;
 		// Inside: how far into the last room's glass the lens stops — so the
 		// room is FILL.w times the board's width (the monitor at the middle,
@@ -2078,8 +2079,11 @@ export default async function make({ THREE, at }) {
 		if (live) remember(hand, t);
 		const st = settled(w, h);
 		lastGlass = null;
-		// (a verdict never falls: the tunnel stays, and breaks down)
-		if (t < B.fall[0] || st.F.edge) world(ctx, w, h, t, hand, st);
+		// (a verdict never falls: the tunnel stays, and breaks down; and once
+		// AGAIN's dark is down nothing of the scene is drawn under it)
+		if (exit && exitFade() > 0.995) {
+			/* the dark alone */
+		} else if (t < B.fall[0] || st.F.edge) world(ctx, w, h, t, hand, st);
 		else fallen(ctx, w, h, t, st);
 		// The captions at the terminal's size, and at least 15 px on a phone.
 		const size = Math.max(captionSize(w, h), Math.min(15, 0.04 * Math.min(w, h)));
@@ -2194,8 +2198,16 @@ export default async function make({ THREE, at }) {
 		// 0.15 of the board tall by the dive. No scaling of its own (there was
 		// one, and it read as the room being brought in — the lead).
 		if (t < B.onAxis[1]) return;
-		const zeta = g.zetaOf(tf);
-		const ph = g.plate / Math.pow(g.levels[0].X, zeta); // the plate's height on the board
+		// Its size on the board grows STEADILY, to be seen the whole way: from
+		// a speck of two pixels when the lens locks on to ROOM_AT_BAND of the
+		// board at the dive, as the square of the time (a constant zoom rate
+		// is exponential — nothing, nothing, then all at once — and read as
+		// the room being brought in at the end); the fall carries on from the
+		// size it reaches. ζ is read back off the size.
+		const u = span(t, B.onAxis[1], B.fall[0]);
+		const ph = lerp(2, ROOM_AT_BAND * h, u * u);
+		const X0 = g.levels[0].X;
+		const zeta = Math.log(g.plate / ph) / Math.log(X0);
 		if (ph < 1.5) return;
 		// THE PORTHOLE. The room is not a rectangle laid on the spiral: it is
 		// seen through a circle at the apex — the far end of the tunnel, a
@@ -2225,7 +2237,7 @@ export default async function make({ THREE, at }) {
 			ctx.restore();
 		}
 		// the rim
-		if (ph > 6) {
+		if (ph > 1.5) {
 			ctx.save();
 			port();
 			ctx.strokeStyle = PAL.chalk;
@@ -2433,7 +2445,8 @@ export default async function make({ THREE, at }) {
 			tilesAlpha: 0.5,
 			// AGAIN: the screen off, and the dolly on through the glass
 			screenOff: exit ? smooth(span(exit.s, ...EXIT.screen)) : 0,
-			zeta: exit ? g.L + lerp(st.deep, 0.9, fly) : null,
+			// (never as far as the screen's plane: past it the wall behind showed)
+			zeta: exit ? g.L + lerp(st.deep, 0.7, fly) : null,
 			colourAlong: false,
 			dust: null,
 			reveal: null

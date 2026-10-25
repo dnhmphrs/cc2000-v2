@@ -14,12 +14,16 @@
 //         them (the `years` row below)
 //   32.6 – 35.0  the tunnel narrows into the band; 35.0 the date on it,
 //         ringed 35.6; 36.8 the dive through it
-//   NO TUNNEL B (cut G, kept at ?v=g, has it — log/sketch-copy-g.js has its
-//   questions): the room through the band is the last — the swimmer gone
-//   into the band's flash — and the lens comes to rest in it 36.8 – 42.0
-//   41.0  the last screen lights; 42.2 the sun; the colour under its white;
-//         44.0 the song and the date, held on the screen; the run holds at
-//         52 (AGAIN on the page takes it from the top)
+//   28.7 – 41.0  the count, spaced out, the OBSERVATIONS about the parents
+//         between the numbers (29.8, 32.8, 35.8, 38.6); the band 38.6 – 41;
+//         the date on it 41.0, ringed 41.6; 42.4 – 43.4 the band, the date
+//         and the swimmer fade
+//   NO TUNNEL B (cut G, kept at ?v=g, has it — log/sketch-copy-g.js): the
+//   room through the band is the last, grown steadily from a speck since
+//   28.4, and the lens comes to rest in it 42.8 – 48.0
+//   47.0  the last screen lights; 48.2 the sun; the colour under its white;
+//         50.0 the song and the date, held on the screen; the run holds at
+//         58 (AGAIN on the page takes it from the top)
 //   A VERDICT (a birthday the archive cannot answer for): the date found as
 //         on any run, then at 37.0 THE BREAKDOWN where the dive would be —
 //         the gif in the band, the band torn open onto the gif tiled across
@@ -106,7 +110,60 @@
 export const NOW = 2026; // the year the years count back from
 
 export const COPY = [
-	{ when: 'edge', caption: 'SIGNAL LOST', at: 37.4, until: 46 },
+	{ when: 'edge', caption: 'SIGNAL LOST', at: 43.4, until: 52 },
+
+	// ── TUNNEL A, between the numbers: OBSERVATIONS about the parents — the
+	// specifics of their evening, which the machine has no business knowing
+	// (the lists below, picked by the date, so a date always gets the same
+	// evening), spaced out down the tunnel ──
+	{
+		when: 'song',
+		at: 29.8,
+		out: 32.0,
+		x: 0,
+		y: -0.27,
+		lines: [
+			{ text: 'WHERE WERE THEY', size: 0.036 },
+			{ text: '{where}', size: 0.062, write: [30.1, 30.45] }
+		],
+		marks: [{ line: 1, at: 30.8, kind: 'circle', pad: 0.3 }]
+	},
+	{
+		when: 'song',
+		at: 32.8,
+		out: 35.0,
+		x: 0,
+		y: 0.26,
+		lines: [
+			{ text: 'THE LIGHTS  ·  THE DOOR', size: 0.036 },
+			{ text: '{lights}  ·  {door}', size: 0.058, write: [33.1, 33.5] }
+		],
+		marks: [{ line: 1, text: '{lights}', at: 33.8, kind: 'circle', pad: 0.3 }]
+	},
+	{
+		when: 'song',
+		at: 35.8,
+		out: 38.0,
+		x: 0,
+		y: -0.27,
+		lines: [
+			{ text: 'WHAT MUM WORE', size: 0.036 },
+			{ text: '{mum}', size: 0.062, write: [36.1, 36.5] }
+		],
+		marks: [{ line: 1, at: 36.8, kind: 'circle', pad: 0.3 }]
+	},
+	{
+		when: 'song',
+		at: 38.6,
+		out: 40.6,
+		x: 0,
+		y: 0.26,
+		lines: [
+			{ text: 'WHAT DAD SAID', size: 0.036 },
+			{ text: '{said}', size: 0.062, write: [38.9, 39.3] }
+		],
+		marks: [{ line: 1, at: 39.6, kind: 'circle', pad: 0.3 }]
+	},
 
 	// ── THE VERDICTS (functions/answer.js: a birthday the archive cannot
 	// answer for; ?edge=past|future|unknown forces one). The date is found as
@@ -116,61 +173,61 @@ export const COPY = [
 	// in the original site's words ──
 	{
 		when: 'past',
-		at: 40.4,
+		at: 46.4,
 		out: 200,
 		hold: true,
 		x: 0,
 		y: 0,
 		lines: [
 			{ text: 'NO SIGNAL BEFORE 1958', size: 0.066 },
-			{ text: 'YOU WERE BORN IN THE TIME OF DINOSAURS', size: 0.038, write: [40.9, 41.6] },
-			{ text: 'THERE WAS NO MUSIC', size: 0.038, write: [41.7, 42.1] }
+			{ text: 'YOU WERE BORN IN THE TIME OF DINOSAURS', size: 0.038, write: [46.9, 47.6] },
+			{ text: 'THERE WAS NO MUSIC', size: 0.038, write: [47.7, 48.1] }
 		],
-		marks: [{ line: 0, at: 41.5, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 47.5, kind: 'circle', pad: 0.3 }]
 	},
 	{
 		when: 'future',
-		at: 40.4,
+		at: 46.4,
 		out: 200,
 		hold: true,
 		x: 0,
 		y: 0,
 		lines: [
 			{ text: 'NO SIGNAL YET', size: 0.066 },
-			{ text: 'YOU WERE BORN IN THE AFTER TIME', size: 0.038, write: [40.9, 41.5] },
-			{ text: 'CONCEIVED TO BABY, BY JUSTIN BIEBER', size: 0.038, write: [41.6, 42.2] }
+			{ text: 'YOU WERE BORN IN THE AFTER TIME', size: 0.038, write: [46.9, 47.5] },
+			{ text: 'CONCEIVED TO BABY, BY JUSTIN BIEBER', size: 0.038, write: [47.6, 48.2] }
 		],
-		marks: [{ line: 0, at: 41.5, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 47.5, kind: 'circle', pad: 0.3 }]
 	},
 	{
 		when: 'unknown',
-		at: 40.4,
+		at: 46.4,
 		out: 200,
 		hold: true,
 		x: 0,
 		y: 0,
 		lines: [
 			{ text: 'OVERHEATED', size: 0.066 },
-			{ text: 'YOUR MOMENT WAS TOO HOT TO CALCULATE', size: 0.038, write: [40.9, 41.6] },
-			{ text: 'YOUR PARENTS FUCK', size: 0.042, write: [41.7, 42.1] }
+			{ text: 'YOUR MOMENT WAS TOO HOT TO CALCULATE', size: 0.038, write: [46.9, 47.6] },
+			{ text: 'YOUR PARENTS FUCK', size: 0.042, write: [47.7, 48.1] }
 		],
-		marks: [{ line: 0, at: 41.5, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 47.5, kind: 'circle', pad: 0.3 }]
 	},
 
 	// ── the end: the song and the date on the lit room, held ──
 	{
 		when: 'song',
-		at: 44.0,
+		at: 50.0,
 		out: 200,
 		hold: true,
 		x: 0,
 		y: -0.05,
 		lines: [
 			{ text: '{title}', size: 0.072 },
-			{ text: '{artist}', size: 0.044, write: [44.5, 45.0] },
-			{ text: '{conception}', size: 0.04, write: [45.1, 45.5] }
+			{ text: '{artist}', size: 0.044, write: [50.5, 51.0] },
+			{ text: '{conception}', size: 0.04, write: [51.1, 51.5] }
 		],
-		marks: [{ line: 0, at: 45.0, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 51.0, kind: 'circle', pad: 0.3 }]
 	}
 ];
 
