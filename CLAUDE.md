@@ -91,18 +91,30 @@ of v2 is `docs/design-notes.md`.
 
 **The next run is at `/next`** (`runs/Next.svelte`): the board flow the lead
 picked, strand's journey in the sketchy hand (`lab/flow-strand-sketch.js`,
-docs/explore-10.md), out of the lab in a plain environment of its own — one
-canvas, one WebGPURenderer, the run answered by hand, no lab bar and no
-sketch tags (`board.js tag` stays silent there). `?v=<name>` plays a variant
-`flow-strand-sketch-<name>.js`; `?at=` and `?demo=1` as in the lab. It
-draws through the LENS (`lab/log/lens.js`): the board's 2D canvas uploaded
-each frame into one GPU pass that does the soft warm focus (mist, halo, lift,
-grain, a rare leak) and the conception's light, with the heavy lines
-instanced on the GPU under and over it (`lab/log/gpu-ink.js`); the lens's own
-renderer is WebGL 2 (a canvas → texture copy is cheap there and was not on
-WebGPU in the sandbox). The corner's switch reads v2 · v3 · next · ARCHIVE:
-the archive is `/log`, everything the lab tried. It takes `/` when the lead
-says so; v3 keeps `/v3`.
+its header the map; docs/explore-10.md the round it came from), out of the
+lab in a plain environment of its own — one canvas, one WebGPURenderer, the
+run answered by hand, no lab bar and no sketch tags (`board.js tag` stays
+silent there). `?v=<name>` plays a variant `flow-strand-sketch-<name>.js`
+(the five of 0.12 are set aside, kept for reference); `?at=` and `?demo=1`
+as in the lab. **Every word that flies over the journey is in ONE table,
+`lab/log/sketch-copy.js`** — the maths slams, the years and their headlines,
+the months, the days, the captions, the date at the end — each with its
+seconds and where and how it flies; the lead edits it there, and nothing
+textual is hard-coded in the sketch. It draws through the LENS
+(`lab/log/lens.js`): the board's 2D canvas uploaded each frame into one GPU
+pass that does the soft warm focus (mist, halo, lift, grain, a rare leak),
+the conception's light and the flash (a white band blowing out of the
+screen, burning out with the sunbeam, the colour flooding in under it), with
+the heavy lines instanced on the GPU under and over it
+(`lab/log/gpu-ink.js`); the lens's own renderer is WebGL 2 (a canvas →
+texture copy is cheap there and was not on WebGPU in the sandbox). The lens
+is made FIRST in `make()` and the board's first paint goes through it, so the
+page opens on the run's own look (the board's chalk dust showed for the
+seconds the rooms loaded, once). On a software GPU the lens draws at a
+smaller budget in a live run than pinned, so a seek-vs-run diff is taken
+with `?lensres=1` on both. The corner's switch reads v2 · v3 · next ·
+ARCHIVE: the archive is `/log`, everything the lab tried. It takes `/` when
+the lead says so; v3 keeps `/v3`.
 
 Everything the lab tried is the ARCHIVE: **`/log`** indexes the blackboard
 sketches (`lab/log-*.js` on the shared kit `lab/log/`, a 2D canvas over the

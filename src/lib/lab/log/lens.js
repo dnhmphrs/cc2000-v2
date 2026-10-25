@@ -57,9 +57,12 @@
 //            quarter size — with a sunburst through them, each ray its own
 //            warm hue), core, rings (log-polar rings drifting out, at
 //            `phase`), turn (the sunburst's), bloom (a disc of white out of
-//            it, this far, bloomSoft its edge), burnA (the white burning
-//            out: a colour-dodge by this level everywhere), burnB (… and this
-//            much more near the light, falling off over burnR) }
+//            it, this far, bloomSoft its edge), band (the white as a BAND
+//            out of it instead — a flash across the board: [halfWidth,
+//            halfHeight] in CSS px, bandSoft its edge; Akira's), burnA (the
+//            white burning out: a colour-dodge by this level everywhere),
+//            burnB (… and this much more near the light, falling off over
+//            burnR) }
 //   lens.renderer, lens.canvas, lens.software, lens.res
 //
 // Colours are the board's own display values: the renderer's output is set
@@ -90,7 +93,8 @@ import {
 	exp,
 	length,
 	atan,
-	log
+	log,
+	abs
 } from 'three/tsl';
 import { PAL, TAU } from './board.js';
 import { grain } from './grain.js';
@@ -215,6 +219,9 @@ function buildLens({ THREE, renderer, board, canvas }) {
 		lightTurn: uniform(0), // the sunburst's turn
 		bloomReach: uniform(-1), // the white's disc out of the light, lens px
 		bloomSoft: uniform(1),
+		bandX: uniform(-1), // … or the white as a band about it: its half-width
+		bandY: uniform(-1), // and half-height, lens px (a flash across the board)
+		bandSoft: uniform(1),
 		burnA: uniform(0), // the white burning out: its level everywhere
 		burnB: uniform(0), // … and more of it near the light
 		burnR: uniform(1)
@@ -465,12 +472,19 @@ function buildLens({ THREE, renderer, board, canvas }) {
 				// first, the room's lights last), the edges first and the light
 				// last — with a thin veil of it over the first instants.
 				const bloom = clamp(u.bloomReach.sub(r).div(u.bloomSoft), 0, 1);
+				// … or a band: the flash blowing out of the screen across the
+				// board, its width first and then its height, soft-edged
+				const band = clamp(
+					min(u.bandX.sub(abs(dv.x)), u.bandY.sub(abs(dv.y))).div(u.bandSoft),
+					0,
+					1
+				);
 				const burn = clamp(
 					u.burnA.add(u.burnB.mul(exp(r.div(u.burnR).mul(r.div(u.burnR)).negate()))),
 					0,
 					1
 				);
-				const wl = max(bloom, burn);
+				const wl = max(max(bloom, band), burn);
 				const dodged = min(col.div(max(float(1).sub(wl), 1e-3)), 1);
 				const veil = wl
 					.mul(wl)
@@ -615,6 +629,7 @@ function buildLens({ THREE, renderer, board, canvas }) {
 				(light.core ?? 0) > 0.001 ||
 				(light.rings ?? 0) > 0.001 ||
 				(light.bloom ?? -1) > 0 ||
+				(light.band?.[0] ?? -1) > 0 ||
 				(light.burnA ?? 0) > 0.002 ||
 				(light.burnB ?? 0) > 0.002)
 				? light
@@ -629,6 +644,9 @@ function buildLens({ THREE, renderer, board, canvas }) {
 			u.lightTurn.value = L.turn ?? 0;
 			u.bloomReach.value = (L.bloom ?? -1) * dpr;
 			u.bloomSoft.value = Math.max(1, (L.bloomSoft ?? 100) * dpr);
+			u.bandX.value = (L.band?.[0] ?? -1) * dpr;
+			u.bandY.value = (L.band?.[1] ?? -1) * dpr;
+			u.bandSoft.value = Math.max(1, (L.bandSoft ?? 40) * dpr);
 			u.burnA.value = L.burnA ?? 0;
 			u.burnB.value = L.burnB ?? 0;
 			u.burnR.value = Math.max(1, (L.burnR ?? 200) * dpr);
