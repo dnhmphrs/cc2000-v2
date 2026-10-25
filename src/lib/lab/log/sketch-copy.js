@@ -24,9 +24,11 @@
 //   52.4  the last screen lights; 53.7 the sun; 55.0 – 58.8 the colour fades
 //         in under it; 55.3 the song and the date, held on the screen; the
 //         run holds at 62 (AGAIN on the page takes it from the top)
-//   A VERDICT (a birthday the archive cannot answer for): the same run, the
-//         search failing over the rooms (40.1 – 44.6), the room left in
-//         chalk, the verdict's gif on its screen and the verdict held there
+//   A VERDICT (a birthday the archive cannot answer for): the date found as
+//         on any run, then at 37.0 THE BREAKDOWN where the dive would be —
+//         the gif in the band, the band torn open onto the gif tiled across
+//         the board (37.8 – 40.2), the verdict lettered over it 40.4 and
+//         held; the run holds at 46
 //
 // A ROW is one thing that flies. Its fields:
 //   at      the second it leaves the vanishing point (a slam pops in over
@@ -55,6 +57,7 @@
 //   hold    a slam that stays put instead of flying on out — it fades at
 //           `out` (the date at the end, held for the flash to take it)
 //   color   a slam's ink, if not the hand's white (e.g. '#1d1612' dark)
+//   off     true: the row is kept but not played (a quick way to try without)
 //   when    'song': only on a run with a song; 'edge': only on a verdict;
 //           'past' | 'future' | 'unknown': only on that verdict; left out,
 //           on every run
@@ -107,7 +110,8 @@ export const COPY = [
 	// the machine's status line over the second tunnel, typed at the bottom
 	// (the first two, COMPILING USER GENETICS and SIMULATING CONCEPTION, are
 	// the sketch's own, log/caption.js)
-	{ caption: 'COMPUTING SOUNDTRACK', at: 38.0, until: 48.5 },
+	{ when: 'song', caption: 'COMPUTING SOUNDTRACK', at: 38.0, until: 48.5 },
+	{ when: 'edge', caption: 'SIGNAL LOST', at: 37.4, until: 46 },
 
 	// ── TUNNEL A. The sum before the count: the birthday, and the machine
 	// seen computing — dumb mod arithmetic on it, struck through as it goes
@@ -128,28 +132,32 @@ export const COPY = [
 	// the years back from now to the birth year, in the cloud with the count
 	// (every: 0 — no headlines; 2 flies one with every second year, from
 	// HEADLINES)
-	{ stream: 'years', at: 29.0, out: 32.8, slow: 2.2, fast: 10, every: 0 },
+	// (OFF: with the count and the months it was too much — the lead)
+	{ off: true, stream: 'years', at: 29.0, out: 32.8, slow: 2.2, fast: 10, every: 0 },
 
 	// ── TUNNEL B: the song worked out over the rooms, in chalk — from what
 	// the machine has no business knowing about that evening (the lists
 	// below, picked by the date, so a date always gets the same evening).
 	// The parents' steaminess, read off the lever, is a chart position
 	{
-		at: 38.3,
-		out: 40.3,
+		when: 'song',
+		at: 38.6,
+		out: 40.6,
 		x: 0,
 		y: -0.27,
 		lines: [
 			{ text: 'STEAMINESS  {spice} / 10', size: 0.05 },
-			{ text: '⇒  CHART POSITION  {spice}', size: 0.046, write: [38.8, 39.15] }
+			{ text: '⇒  CHART POSITION  {spice}', size: 0.046, write: [39.1, 39.45] }
 		],
 		marks: [
-			{ line: 0, text: '{spice} / 10', at: 39.4 },
-			{ line: 1, text: '{spice}', at: 39.7, kind: 'circle' }
+			{ line: 0, text: '{spice} / 10', at: 39.7 },
+			{ line: 1, text: '{spice}', at: 40.0, kind: 'circle' }
 		]
 	},
 	// where, and the lights
+	// (OFF: four rows over the rooms were too much — the lead; two play)
 	{
+		off: true,
 		when: 'song',
 		at: 40.1,
 		out: 42.1,
@@ -167,21 +175,23 @@ export const COPY = [
 	// what mum wore, what dad had done
 	{
 		when: 'song',
-		at: 41.9,
-		out: 43.9,
+		at: 42.0,
+		out: 44.0,
 		x: 0,
 		y: -0.27,
 		lines: [
 			{ text: 'MUM WORE {mum}', size: 0.046 },
-			{ text: 'DAD {dad}', size: 0.046, write: [42.4, 42.85] }
+			{ text: 'DAD {dad}', size: 0.046, write: [42.5, 42.95] }
 		],
 		marks: [
-			{ line: 0, text: '{mum}', at: 43.0 },
-			{ line: 1, text: '{dad}', at: 43.3, kind: 'circle' }
+			{ line: 0, text: '{mum}', at: 43.1 },
+			{ line: 1, text: '{dad}', at: 43.4, kind: 'circle' }
 		]
 	},
 	// what was said, and the precautions
+	// (OFF: four rows over the rooms were too much — the lead; two play)
 	{
+		off: true,
 		when: 'song',
 		at: 43.7,
 		out: 45.5,
@@ -197,124 +207,52 @@ export const COPY = [
 		]
 	},
 	// ── THE VERDICTS (functions/answer.js: a birthday the archive cannot
-	// answer for; ?edge=past|future|unknown forces one). Over the rooms the
-	// machine's search fails in the same chalk; the room stays chalk at the
-	// end, the verdict's gif plays on its screen and the verdict is held
-	// there, in the original site's words ──
+	// answer for; ?edge=past|future|unknown forces one). The date is found as
+	// on any run; then, where the dive would be, THE BREAKDOWN (the sketch's
+	// BREAK): the gif leaks into the band, the band tears open onto the gif
+	// tiled across the board, and the verdict is lettered over it and held,
+	// in the original site's words ──
 	{
 		when: 'past',
-		at: 40.1,
-		out: 42.3,
-		x: 0,
-		y: 0.26,
-		lines: [
-			{ text: 'ARCHIVE: 1958 → 2023', size: 0.046 },
-			{ text: '{cyyyy} < 1958   ⇒   NO SIGNAL', size: 0.044, write: [40.6, 41.0] }
-		],
-		marks: [{ line: 1, text: '{cyyyy} < 1958', at: 41.3 }]
-	},
-	{
-		when: 'past',
-		at: 42.3,
-		out: 44.6,
-		x: 0,
-		y: -0.27,
-		lines: [
-			{ text: 'BEFORE THE BROADCAST RECORD', size: 0.046 },
-			{ text: 'THE TIME OF DINOSAURS', size: 0.05, write: [42.8, 43.2] }
-		],
-		marks: [{ line: 1, at: 43.6, kind: 'circle' }]
-	},
-	{
-		when: 'future',
-		at: 40.1,
-		out: 42.3,
-		x: 0,
-		y: 0.26,
-		lines: [
-			{ text: 'ARCHIVE: 1958 → 2023', size: 0.046 },
-			{ text: '{cyyyy} > 2023   ⇒   NO SIGNAL YET', size: 0.044, write: [40.6, 41.0] }
-		],
-		marks: [{ line: 1, text: '{cyyyy} > 2023', at: 41.3 }]
-	},
-	{
-		when: 'future',
-		at: 42.3,
-		out: 44.6,
-		x: 0,
-		y: -0.27,
-		lines: [
-			{ text: 'THE AFTER TIME', size: 0.05 },
-			{ text: 'ONE RECORD REMAINS, BY ORDER OF THE COUNCIL', size: 0.04, write: [42.8, 43.3] }
-		],
-		marks: [{ line: 0, at: 43.6, kind: 'circle' }]
-	},
-	{
-		when: 'unknown',
-		at: 40.1,
-		out: 42.3,
-		x: 0,
-		y: 0.26,
-		lines: [
-			{ text: 'CHART WEEK {chart}: NOTHING', size: 0.046 },
-			{ text: 'SERVER TEMPERATURE: RISING', size: 0.044, write: [40.6, 41.0] }
-		],
-		marks: [{ line: 0, text: 'NOTHING', at: 41.3, kind: 'circle' }]
-	},
-	{
-		when: 'unknown',
-		at: 42.3,
-		out: 44.6,
-		x: 0,
-		y: -0.27,
-		lines: [
-			{ text: 'TOO HOT TO CALCULATE', size: 0.05 },
-			{ text: 'ALGORITHM: OVERHEATED', size: 0.044, write: [42.8, 43.2] }
-		],
-		marks: [{ line: 0, at: 43.6 }]
-	},
-	// the verdict, held on the screen (the gif under it)
-	{
-		when: 'past',
-		at: 55.3,
+		at: 40.4,
 		out: 200,
 		hold: true,
 		x: 0,
-		y: -0.05,
+		y: 0,
 		lines: [
-			{ text: 'NO SIGNAL BEFORE 1958', size: 0.062 },
-			{ text: 'YOU WERE BORN IN THE TIME OF DINOSAURS', size: 0.036, write: [55.8, 56.4] },
-			{ text: 'THERE WAS NO MUSIC', size: 0.036, write: [56.5, 56.9] }
+			{ text: 'NO SIGNAL BEFORE 1958', size: 0.066 },
+			{ text: 'YOU WERE BORN IN THE TIME OF DINOSAURS', size: 0.038, write: [40.9, 41.6] },
+			{ text: 'THERE WAS NO MUSIC', size: 0.038, write: [41.7, 42.1] }
 		],
-		marks: [{ line: 0, at: 56.3, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 41.5, kind: 'circle', pad: 0.3 }]
 	},
 	{
 		when: 'future',
-		at: 55.3,
+		at: 40.4,
 		out: 200,
 		hold: true,
 		x: 0,
-		y: -0.05,
+		y: 0,
 		lines: [
-			{ text: 'NO SIGNAL YET', size: 0.062 },
-			{ text: 'YOU WERE BORN IN THE AFTER TIME', size: 0.036, write: [55.8, 56.4] },
-			{ text: 'CONCEIVED TO BABY, BY JUSTIN BIEBER', size: 0.036, write: [56.5, 57.0] }
+			{ text: 'NO SIGNAL YET', size: 0.066 },
+			{ text: 'YOU WERE BORN IN THE AFTER TIME', size: 0.038, write: [40.9, 41.5] },
+			{ text: 'CONCEIVED TO BABY, BY JUSTIN BIEBER', size: 0.038, write: [41.6, 42.2] }
 		],
-		marks: [{ line: 0, at: 56.3, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 41.5, kind: 'circle', pad: 0.3 }]
 	},
 	{
 		when: 'unknown',
-		at: 55.3,
+		at: 40.4,
 		out: 200,
 		hold: true,
 		x: 0,
-		y: -0.05,
+		y: 0,
 		lines: [
-			{ text: 'OVERHEATED', size: 0.062 },
-			{ text: 'YOUR MOMENT WAS TOO HOT TO CALCULATE', size: 0.036, write: [55.8, 56.4] },
-			{ text: 'YOUR PARENTS FUCK', size: 0.04, write: [56.5, 56.9] }
+			{ text: 'OVERHEATED', size: 0.066 },
+			{ text: 'YOUR MOMENT WAS TOO HOT TO CALCULATE', size: 0.038, write: [40.9, 41.6] },
+			{ text: 'YOUR PARENTS FUCK', size: 0.042, write: [41.7, 42.1] }
 		],
-		marks: [{ line: 0, at: 56.3, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 41.5, kind: 'circle', pad: 0.3 }]
 	},
 
 	// ── the end: the song and the date on the lit room, held (the run holds

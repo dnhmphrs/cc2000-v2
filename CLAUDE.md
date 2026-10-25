@@ -102,10 +102,11 @@ HELD — the run stops on its last frame and the page offers AGAIN and PLAY
 (Spotify's embed of the track; `sketch.ended()`, `.song()`, `.again()`);
 `docs/next-beats.md` times it. A birthday the archive cannot answer for
 (`functions/answer.js resolve` → `edge`; `?edge=past|future|unknown` forces
-one) runs the same run with the search failing over the rooms and ends in
-chalk on the verdict's gif in the last screen (`data/gifs.js` sheets drawn on
-the board) with the verdict held over it; the rows of the copy table say
-`when` they apply. `?v=a` is the original sketch of 0.10, `?v=b` sketch A's
+one) runs the same run to the date on the band and then BREAKS DOWN where
+the dive would be (`BREAK`): the gif leaks into the seam, the band tears open
+onto the gif tiled across the board (`data/gifs.js` sheets drawn on the
+board), the verdict is lettered over it and held; the rows of the copy table
+say `when` they apply, and `off` keeps a row without playing it. `?v=a` is the original sketch of 0.10, `?v=b` sketch A's
 tuned 0.11, `?v=c` sketch C of 0.13, `?v=d` sketch D of 0.14, `?v=e` sketch
 E of 0.15 (D and E read their own tables, `log/sketch-copy-d.js`, `-e.js`);
 the five of 0.12 are set aside, kept for reference; `?at=` and `?demo=1` as

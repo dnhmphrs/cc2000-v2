@@ -289,6 +289,15 @@ const B = {
 	push: [53.8, 56.8], // the lens in on the last room, to near full size
 	out: [99, 100] // (never: the run HOLDS on its last frame; `again` restarts it)
 };
+// THE BREAKDOWN (a verdict: a birthday the archive cannot answer for). The
+// date is found as on any run; then, where the dive would be, the machine
+// breaks down instead — the same for the three verdicts, each with its own
+// gif: the band's white jams and the gif leaks into the seam as a strip
+// (strip), the band tears open as it would for the dive but onto the gif
+// tiled across the board rather than the rooms (spread), and the verdict is
+// lettered over the tiles (verdict) and held (end; AGAIN on the page).
+const BREAK = { strip: [37.0, 37.8], spread: [37.8, 40.2], verdict: 40.4, end: 46 };
+const endAt = (edge) => (edge ? BREAK.end : SECONDS);
 
 // THE FLASH: the band in the last screen blowing out — across the board's
 // width in 0.06 s, then its height by 0.13 s — then strand's white
@@ -716,7 +725,8 @@ export default async function make({ THREE, at }) {
 		}
 		const efolds = (t) => {
 			if (t <= B.swim) return 0;
-			const f = (t - B.swim) / DT;
+			// (held at the table's end: on a verdict the tunnel jams there)
+			const f = Math.min(N, (t - B.swim) / DT);
 			const i = Math.min(N - 1, Math.floor(f));
 			return lerp(E[i], E[i + 1], f - i);
 		};
@@ -1168,7 +1178,10 @@ export default async function make({ THREE, at }) {
 	function bandAt(t, w, h, st) {
 		const m = smooth(span(t, ...B.seam));
 		const hold = smooth(span(t, B.conceived[0] - 0.15, B.conceived[0] + 0.3));
-		const open = smooth(span(t, ...B.dive));
+		// (on a verdict the band opens for the breakdown instead of the dive —
+		// slower, onto the gif, no hole — and its white goes as the strip comes)
+		const edge = !!st.F?.edge;
+		const open = edge ? smooth(span(t, ...BREAK.spread)) : smooth(span(t, ...B.dive));
 		const hb0 = lerp(lerp(1.2, 0.012 * h, m), st.bandHold, hold);
 		return {
 			m,
@@ -1176,14 +1189,14 @@ export default async function make({ THREE, at }) {
 			hb: hb0 + (0.9 * h - hb0) * Math.pow(open, 1.6),
 			open,
 			hot: smooth(span(t, B.seam[0] + 0.4, B.seam[1])),
-			white: 1 - smooth(span(open, 0.36, 0.6)),
+			white: edge ? 1 - smooth(span(t, ...BREAK.strip)) : 1 - smooth(span(open, 0.36, 0.6)),
 			glint: smooth(span(t, ...B.glint)) * (1 - open),
 			// The hole the swimmer punches through it at the dive: from its
 			// nose at the vanishing point, out past the board's edges in
 			// ~0.35 s (11 e-folds a second), so the white is torn off the room
 			// rather than faded to grey over it.
-			hole: t > B.dive[0] ? 0.01 * h * Math.exp(11 * (t - B.dive[0])) : 0,
-			tau: Math.max(0, t - B.dive[0])
+			hole: !edge && t > B.dive[0] ? 0.01 * h * Math.exp(11 * (t - B.dive[0])) : 0,
+			tau: Math.max(0, t - (edge ? BREAK.strip[0] : B.dive[0]))
 		};
 	}
 	// The hole's ragged edge (re-drawn each drawing) as a subpath: wider than
@@ -1697,9 +1710,10 @@ export default async function make({ THREE, at }) {
 		const c0 = B.conceived[0];
 		const calc = st.calc;
 		const tw = COUNT.T[calc.lastJ0] - 0.35;
-		if (t < tw || t > B.dive[1] + 0.2) return;
+		const dive = st.F.edge ? BREAK.spread : B.dive;
+		if (t < tw || t > dive[1] + 0.2) return;
 		const H = figH(w, h);
-		const burst = Math.max(0, t - B.dive[0]);
+		const burst = Math.max(0, t - dive[0]);
 		const grow = Math.exp(3.2 * burst);
 		const a = 1 - smooth(span(burst, 0.08, 0.42));
 		// The date itself keeps its full ink while it bursts: the hole eats it
@@ -1798,10 +1812,14 @@ export default async function make({ THREE, at }) {
 		countdown(ink, w, h, t, O, st, bo);
 	}
 
-	// A verdict's gif on the last screen (the original site's three: the
-	// dinosaurs, the After Time, the servers overheating — static/gifs, baked
-	// into sheets by scripts/gifs.mjs), playing on the run's own clock, cut
-	// to the glass and covering it; it comes up as the white burns out.
+	// THE BREAKDOWN'S GIF (the original site's three: the dinosaurs, the
+	// After Time, the servers overheating — static/gifs, baked into sheets by
+	// scripts/gifs.mjs), on the run's own clock. It leaks into the band as a
+	// STRIP (the band's white gone, the gif through the seam), and as the band
+	// tears open it is TILED across what opens — the original error page's
+	// frame — each tile a little out of step with the next, the whole lot
+	// jolting sideways now and then (the signal breaking up); it dims as the
+	// verdict is lettered over it.
 	const GIF_OF = { past: 'the-past', future: 'the-future', unknown: '500' };
 	const gifImg = {};
 	for (const k of Object.values(GIF_OF)) {
@@ -1809,25 +1827,57 @@ export default async function make({ THREE, at }) {
 		im.src = GIFS[k].src;
 		gifImg[k] = im;
 	}
-	function drawGif(ctx, box, edge, secs, a) {
-		const name = GIF_OF[edge];
+	function breakdown(ctx, w, h, t, O, band, st) {
+		const name = GIF_OF[st.F.edge];
 		const G = GIFS[name];
 		const im = gifImg[name];
-		if (!G || !im?.complete || !im.naturalWidth || a <= 0.01) return;
-		const f = Math.floor(secs * G.fps) % G.frames;
-		const sx = (f % G.cols) * G.w;
-		const sy = Math.floor(f / G.cols) * G.h;
-		const bw = box[2] - box[0];
-		const bh = box[3] - box[1];
-		const sc = Math.max(bw / G.w, bh / G.h);
-		const dw = G.w * sc;
-		const dh = G.h * sc;
+		const a0 = smooth(span(t, ...BREAK.strip));
+		if (!G || !im?.complete || !im.naturalWidth || a0 <= 0.01) return;
+		const dim = lerp(1, 0.5, smooth(span(t, BREAK.verdict - 0.3, BREAK.verdict + 0.8)));
+		const hb = Math.max(2, band.hb);
+		const y0 = O[1] - hb;
+		const y1 = O[1] + hb;
+		// the tiles: a quarter of the board tall, laid from the seam outward
+		const th = 0.26 * h;
+		const tw = (th * G.w) / G.h;
+		const jolt =
+			rand(Math.floor(t * 12), 0, 61) < 0.12
+				? (2 * rand(Math.floor(t * 12), 0, 62) - 1) * 0.35 * tw
+				: 0;
 		ctx.save();
-		ctx.globalAlpha = a;
+		ctx.globalAlpha = a0 * dim;
 		ctx.beginPath();
-		ctx.rect(box[0], box[1], bw, bh);
+		ctx.rect(0, y0, w, y1 - y0);
 		ctx.clip();
-		ctx.drawImage(im, sx, sy, G.w, G.h, box[0] + (bw - dw) / 2, box[1] + (bh - dh) / 2, dw, dh);
+		const rows = Math.ceil(h / th) + 1;
+		const cols = Math.ceil(w / tw) + 2;
+		for (let j = -rows; j <= rows; j++) {
+			// the seam's own row sits centred on it; the rows above and below
+			// alternate direction a little, as a jammed picture rolls
+			const ty = O[1] - th / 2 + j * th;
+			if (ty > y1 || ty + th < y0) continue;
+			const roll = ((j % 2 === 0 ? 1 : -1) * 0.07 * tw * (secsNow % 60)) % tw;
+			for (let i = -1; i < cols; i++) {
+				const tx = (i - 1) * tw + roll + jolt + ((0.5 * w) % tw);
+				if (tx > w || tx + tw < 0) continue;
+				const stutter = Math.floor(3 * rand(i + 100 * j, 0, 63));
+				const f = (Math.floor(secsNow * G.fps) + stutter) % G.frames;
+				const sx = (f % G.cols) * G.w;
+				const sy = Math.floor(f / G.cols) * G.h;
+				ctx.drawImage(im, sx, sy, G.w, G.h, tx, ty, tw, th);
+			}
+		}
+		// the verdict's own dark under its lettering, so it reads over the tiles
+		const vd = smooth(span(t, BREAK.verdict - 0.2, BREAK.verdict + 0.9));
+		if (vd > 0.01) {
+			const g = ctx.createRadialGradient(O[0], O[1], 0, O[0], O[1], 0.55 * Math.hypot(w, h));
+			g.addColorStop(0, `rgba(21, 21, 21, ${0.78 * vd})`);
+			g.addColorStop(0.45, `rgba(21, 21, 21, ${0.5 * vd})`);
+			g.addColorStop(1, 'rgba(21, 21, 21, 0)');
+			ctx.globalAlpha = 1;
+			ctx.fillStyle = g;
+			ctx.fillRect(0, 0, w, h);
+		}
 		ctx.restore();
 	}
 	let secsNow = 0; // the fuzz's clock this frame (real seconds live)
@@ -1899,10 +1949,7 @@ export default async function make({ THREE, at }) {
 			(t < HOLD
 				? lerp(0.45 * pre * pre, 1, rise)
 				: (0.62 + 0.38 * Math.exp(-after / 2.6)) * breath) * out;
-		// (on a verdict the core sits lower once the white has burnt out, so
-		// the gif on the screen reads through it)
-		const cf = S?.F?.edge ? 0.14 : 0.38;
-		const core = (t < HOLD ? lerp(0.3 * pre, 1, rise) : cf + 0.5 * Math.exp(-after / 1.8)) * out;
+		const core = (t < HOLD ? lerp(0.3 * pre, 1, rise) : 0.38 + 0.5 * Math.exp(-after / 1.8)) * out;
 		const rings =
 			(0.3 * smooth(span(t, H - 0.7, H)) * (1 - smooth(span(t, H + 0.4, H + 2.2))) +
 				0.1 * smooth(span(t, H + 1.5, H + 3))) *
@@ -1960,7 +2007,8 @@ export default async function make({ THREE, at }) {
 		if (live) remember(hand, t);
 		const st = settled(w, h);
 		lastGlass = null;
-		if (t < B.fall[0]) world(ctx, w, h, t, hand, st);
+		// (a verdict never falls: the tunnel stays, and breaks down)
+		if (t < B.fall[0] || st.F.edge) world(ctx, w, h, t, hand, st);
 		else fallen(ctx, w, h, t, st);
 		// The captions at the terminal's size, and at least 15 px on a phone.
 		const size = Math.max(captionSize(w, h), Math.min(15, 0.04 * Math.min(w, h)));
@@ -1978,8 +2026,9 @@ export default async function make({ THREE, at }) {
 		});
 		{
 			const size = Math.max(captionSize(w, h), Math.min(15, 0.04 * Math.min(w, h)));
+			const edge = st.F.edge;
 			for (const c of COPY)
-				if (c.caption)
+				if (c.caption && !c.off && !(c.when === 'song' && edge) && !(c.when === 'edge' && !edge))
 					caption(ctx, w, h, c.caption, t, { at: c.at, until: c.until, align: 'center', size });
 		}
 		prof('captions');
@@ -2111,7 +2160,7 @@ export default async function make({ THREE, at }) {
 			rings(ink, t, w, h, cam, st, bo, band, O);
 			ink.flush(ctx);
 			prof('rings');
-			firstRoom(ctx, w, h, t, st, O, bo);
+			if (!st.F.edge) firstRoom(ctx, w, h, t, st, O, bo);
 			prof('rooms');
 			rush(ctx, w, h, t, O, bo, band, false);
 		}
@@ -2207,6 +2256,7 @@ export default async function make({ THREE, at }) {
 			const inkD = makeInk();
 			prof('frame');
 			drawBand(ctx, ink, w, h, O, band, bo);
+			if (st.F.edge) breakdown(ctx, w, h, t, O, band, st);
 			prof('band');
 			conceivedDate(inkD, ink, t, w, h, O, st, bo, band);
 			inkD.flush(ctx);
@@ -2332,8 +2382,6 @@ export default async function make({ THREE, at }) {
 		prof('date');
 		// The last screen switched on.
 		if (cam.glass) screenBand(ctx, cam.glass, smooth(span(t, ...B.screen)), bo);
-		if (cam.glass && st.F.edge)
-			drawGif(ctx, cam.glass, st.F.edge, secsNow, smooth(span(t, B.hit + 1.4, B.hit + 3.2)));
 		prof('band');
 		figures(ink, w, h, t, O, st, bo);
 		ink.flush(ctx);
@@ -2346,10 +2394,10 @@ export default async function make({ THREE, at }) {
 		// The run HOLDS on its last frame (the clock is not stepped past the
 		// end, so it never comes round); `again` takes it from the top.
 		update: (dt) => {
-			if (time.t >= SECONDS) return;
+			if (time.t >= endAt(S?.F?.edge)) return;
 			answers.step(time, dt);
 		},
-		ended: () => time.t >= SECONDS,
+		ended: () => time.t >= endAt(S?.F?.edge),
 		again: () => {
 			answers.restart();
 			time.seek(0);
@@ -2413,6 +2461,7 @@ function wordsOf(F) {
 	for (const row of COPY) {
 		// `when`: 'song' only on a run with a song, 'edge' only on a verdict,
 		// 'past' | 'future' | 'unknown' only on that one; none, always.
+		if (row.off) continue;
 		const want = row.when;
 		if (want === 'song' && F.edge) continue;
 		if (want === 'edge' && !F.edge) continue;
