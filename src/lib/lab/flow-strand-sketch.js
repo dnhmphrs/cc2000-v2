@@ -299,8 +299,8 @@ const B = {
 const BREAK = { strip: [37.0, 37.8], spread: [37.8, 40.2], verdict: 40.4, end: 46 };
 const endAt = (edge) => (edge ? BREAK.end : SECONDS);
 // AGAIN: the song and the date fade (words), the monitor goes dark
-// (screen), the swimmer comes back and the lens dollies on through the
-// glass after it — the fall's own lens, on into the last room (fly), the
+// (screen), and the lens dollies on through the glass — the fall's own
+// lens, on into the last room (fly), no swimmer in it — the
 // room's depths parting as they do — and the picture goes to the board's
 // dark, which the next run's title types on (len): one loop, no cut. The
 // parallax on the landed room: the lens nudged by the pointer, by PARALLAX
@@ -2179,8 +2179,15 @@ export default async function make({ THREE, at }) {
 	function firstRoom(ctx, w, h, t, st, O, bo) {
 		const g = st.geo;
 		const tf = st.efolds(t) - st.efolds(B.fall[0]);
-		const zeta = g.zetaOf(tf);
-		if (g.plate / Math.pow(g.levels[0].X, zeta) < 2.5) return;
+		// Not before the lens is locked on the tunnel's axis (B.onAxis): until
+		// then tunnel B is nowhere to be seen; then the room comes out of the
+		// vanishing point in perspective — scaled up from nothing over 1.2 s
+		// (so many e-folds further off), growing on at the tunnel's rate.
+		const k = smooth(span(t, B.onAxis[1], B.onAxis[1] + 1.2));
+		if (k <= 0.001) return;
+		const X0 = g.levels[0].X;
+		const zeta = g.zetaOf(tf) - Math.log(k) / Math.log(X0);
+		if (g.plate / Math.pow(X0, zeta) < 2.5) return;
 		const keep = g.zetaAt;
 		g.zetaAt = () => zeta;
 		try {
@@ -2382,7 +2389,7 @@ export default async function make({ THREE, at }) {
 		const cam = st.fall.draw(roomPen(O, zf, bo, calm), w, h, tf, {
 			origin: O,
 			// the lens leans after the swimmer's veer, and after the pointer
-			nudge: [nd[0] + 0.05 * veer[0], nd[1] + 0.03 * veer[1]],
+			nudge: [nd[0] + 0.08 * veer[0], nd[1] + 0.05 * veer[1]],
 			// the tesseract: every room repeated two plates out each way
 			tiles: 2,
 			tilesAlpha: 0.5,
@@ -2405,9 +2412,9 @@ export default async function make({ THREE, at }) {
 			gy = (cam.glass[1] + cam.glass[3]) / 2;
 			lastGlass = cam.glass;
 		}
-		const alpha = exit
-			? smooth(span(exit.s, EXIT.fly[0], EXIT.fly[0] + 0.5)) * (1 - exitFade())
-			: 1 - smooth(span(t, B.hit - 0.15, B.hit));
+		// (none in AGAIN's dolly through the glass: the lead wants no swimmer
+		// as the experience restarts)
+		const alpha = exit ? 0 : 1 - smooth(span(t, B.hit - 0.15, B.hit));
 		if (alpha > 0.01) {
 			const drop = smooth(span(t, B.fall[0] + 0.5, B.fall[0] + 4));
 			const back = lerp(1, 1.6, drop) * lerp(1, 2.6, aim * aim);
@@ -2426,8 +2433,8 @@ export default async function make({ THREE, at }) {
 			// opens round the vanishing point, so the nose goes into it.
 			const off = mul3(OFF, 1 - smooth(span(t, B.fall[0] + 0.6, B.fall[0] + 2.6)));
 			// … and the veer: off its line and leaning into the turn
-			const at = add3(off, [0, 1.3 * veer[1], 1.3 * veer[0]]);
-			const dir = norm(add3(DIR_C, [0, 0.2 * veer[1], 0.2 * veer[0]]));
+			const at = add3(off, [0, 2.2 * veer[1], 2.2 * veer[0]]);
+			const dir = norm(add3(DIR_C, [0, 0.32 * veer[1], 0.32 * veer[0]]));
 			const pose = { at, dir, up: [0, 0, 1], scale: exit ? lerp(1, 0.55, fly) : 1 };
 			const hd = swimmerHand(ctx, t, bo);
 			ctx.save();

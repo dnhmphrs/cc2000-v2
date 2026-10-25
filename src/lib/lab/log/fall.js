@@ -651,42 +651,49 @@ function drawFall(
 				width: 1.8,
 				alpha: 0.9
 			});
-		// THE TESSERACT: the room repeated round itself, a plate over each
-		// way, mirrored turn and turn about (as its wallpaper is), fainter —
-		// its screens dark (no glass hole: the ground shows), the real room
-		// the one in the middle; the lines under the board show through.
+	};
+
+	// THE TESSERACT: the room repeated round itself, a plate over each way,
+	// mirrored turn and turn about (as its wallpaper is), fainter — its
+	// screens dark (no glass hole: the ground shows), the real room the one
+	// in the middle; the lines under the board show through. Drawn for the
+	// level the lens is in AND the few behind it, deeper first and fainter
+	// with depth, so the corridor is lined with rooms to every side at every
+	// depth — the real chain drawn over them down the middle.
+	const drawTiles = (k, box, am) => {
+		const lv = levels[k];
+		const T0 = plane(lv, 0);
+		if (!T0) return;
 		const R = opts.tiles ?? 0;
-		if (R > 0 && T0) {
-			const ta = opts.tilesAlpha ?? 0.55;
-			for (let j = -R; j <= R; j++)
-				for (let i = -R; i <= R; i++) {
-					if (!i && !j) continue;
-					const dx = i * PLATE.W;
-					const dy = j * PLATE.H;
-					const fb = boxOf(T0, dx, dy, PLATE.W, PLATE.H);
-					const fr = meet(box, fb);
-					if (empty(fr) || fb[2] - fb[0] < 10) continue;
-					const cx = (fb[0] + fb[2]) / 2;
-					const cy = (fb[1] + fb[3]) / 2;
-					ctx.save();
-					ctx.globalAlpha *= ta;
-					clipBox(fr);
-					if (i % 2) {
-						ctx.translate(cx, 0);
-						ctx.scale(-1, 1);
-						ctx.translate(-cx, 0);
-					}
-					if (j % 2) {
-						ctx.translate(0, cy);
-						ctx.scale(1, -1);
-						ctx.translate(0, -cy);
-					}
-					for (const key of ['bg', 'poster', 'clock', 'screen', 'desk', 'bed'])
-						layer(lv, key, k, fr, [dx, dy]);
-					ctx.restore();
-					stroke(ctx, corners(fb), { color: PAL.chalk, width: 1.4, alpha: 0.7 * ta });
+		const ta = (opts.tilesAlpha ?? 0.55) * am;
+		for (let j = -R; j <= R; j++)
+			for (let i = -R; i <= R; i++) {
+				if (!i && !j) continue;
+				const dx = i * PLATE.W;
+				const dy = j * PLATE.H;
+				const fb = boxOf(T0, dx, dy, PLATE.W, PLATE.H);
+				const fr = meet(box, fb);
+				if (empty(fr) || fb[2] - fb[0] < 10) continue;
+				const cx = (fb[0] + fb[2]) / 2;
+				const cy = (fb[1] + fb[3]) / 2;
+				ctx.save();
+				ctx.globalAlpha *= ta;
+				clipBox(fr);
+				if (i % 2) {
+					ctx.translate(cx, 0);
+					ctx.scale(-1, 1);
+					ctx.translate(-cx, 0);
 				}
-		}
+				if (j % 2) {
+					ctx.translate(0, cy);
+					ctx.scale(1, -1);
+					ctx.translate(0, -cy);
+				}
+				for (const key of ['bg', 'poster', 'clock', 'screen', 'desk', 'bed'])
+					layer(lv, key, k, fr, [dx, dy]);
+				ctx.restore();
+				stroke(ctx, corners(fb), { color: PAL.chalk, width: 1.4, alpha: 0.7 * ta });
+			}
 	};
 
 	// Which level the lens is in: every glass it has passed is dropped.
@@ -696,6 +703,9 @@ function drawFall(
 		if (cam.z <= lv.O[2] + lv.s * lv.glass.z + K.nearZ * cam.s) base = k + 1;
 		else break;
 	}
+	if ((opts.tiles ?? 0) > 0)
+		for (let k = Math.min(L, base + 3); k >= base; k--)
+			drawTiles(k, [0, 0, w, h], Math.pow(0.72, k - base));
 	drawLevel(base, [0, 0, w, h]);
 	swimmer(ctx, geo, cam, project, t, glassAt, base, B);
 	return glassAt;
