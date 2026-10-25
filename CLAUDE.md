@@ -132,20 +132,26 @@ the body written codon by codon, each ring's own shape flashed in gold —
 `log/body.js codonSection`), SIMULATING CONCEPTION: the swim into ONE GROOVE
 (I5's: a helix down the cone turning under the stylus, nothing lettered on
 it, its turns JOINED — the hand's wobble is one noise along the whole
-groove, `sketchTurn`), about nine and a half turns to the LABEL at the apex
-— a white disc with the spindle hole dark in it, no date — and THE IRIS
-(K2): the hole opens onto the last room ALREADY IN COLOUR, no flash, the
-lens falls on into it and comes to rest, the monitor switches on softly; no
-date, no maths, no conversation anywhere on the fly-in. THE OUTPUT IS ON THE
-COMPUTER SCREEN: the song and its artist lettered on the glass
-(`screenWords`), the page's PLAY / AGAIN a strip of keys along the glass's
-bottom (`sketch.screen()` gives it the glass each frame, so they follow the
-room as it sways after the pointer), and Spotify's embed a horizontal bar in
-the top left corner. The run HOLDS on its last frame (`sketch.ended()`; the
-room sways and boils on); AGAIN (`.again()`) dollies the lens on THROUGH the
-dark glass — the hold's clock kept running so the sway and the parallax go
-on — until the glass covers the board (`covers`), and that dark is what the
-next title types on: no fade; PLAY (`.song()`) opens the embed. The endings
+groove, `sketchTurn`), about nine and a half turns to the PORTHOLE at the
+apex — a circle onto the last room, in colour from its first pixel, grown
+steadily from a speck (`portR`; NOTHING of a record: no label, no disc, no
+spindle, no flecks — the lead saw a CD and wanted it gone) — and THE IRIS
+(K2): the dive widens the porthole at one rate in e-folds past the board,
+no flash, the lens falls on into the room and comes to rest, the monitor
+switches on softly; no date, no maths, no conversation anywhere on the
+fly-in. THE OUTPUT IS ON THE COMPUTER SCREEN: the song and its artist
+lettered on the glass ON A GRID — capitals, one character a cell,
+monospace, wrapped at the words and sized to fit the glass, so a long title
+wraps rather than shrinking (`screenWords`, `gridFit`) — and the page's
+AGAIN a key at the glass's bottom (`sketch.screen()` gives it the glass each
+frame, so it follows the room as it sways after the pointer); Spotify's
+embed is there from the final scene on, a compact bar (352 × 152, the
+artwork showing) in the top left corner, no PLAY key. The run HOLDS on its
+last frame (`sketch.ended()`; the room sways and boils on); AGAIN
+(`.again()`) dollies the lens on THROUGH the dark glass — slowly, the hold's
+clock kept running so the sway and the parallax go on — until the glass
+covers the board (`covers`), and that dark is what the next title types on:
+no fade. The endings
 of round K sit beside it on cut K's base (`docs/explore-12.md`): `?v=k` cut
 K itself (the record and the needle drop), `?v=k1` the needle drop cleaned,
 `?v=k2` the iris as it was picked, `?v=k3` the screen's light (`log/fall.js
