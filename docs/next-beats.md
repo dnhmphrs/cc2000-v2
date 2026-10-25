@@ -1,6 +1,6 @@
 # The run at `/next` (cut H), timed, and how it hangs together
 
-Version 0.18. The run is 54 s; `?at=` is seconds ÷ 54. The run is 62 s; `?at=` is seconds ÷ 62. Every number below is
+Version 0.18. The run is 54 s; `?at=` is seconds ÷ 54. Every number below is
 the beat table `B` in `src/lib/lab/flow-strand-sketch.js` or a row of
 `src/lib/lab/log/sketch-copy.js` (the words, editable there).
 
@@ -13,7 +13,6 @@ the beat table `B` in `src/lib/lab/flow-strand-sketch.js` or a row of
 | Compile                        | 15.3 | 22.2 | 7 s             | COMPILING USER GENETICS: the reading frame 5′ → 3′ 16.0 – 18.3 (quicker than it was, slower than 17.8), the strand closes onto the axis 18.7 – 19.9, the rope down the tail, the body 20.4 – 22; alive at 22.2                                                                                                                                                                                                                                                                                     |
 | Swim                           | 22.2 | 28.7 | 6.5 s           | the hand comes into the lines; the swimmer sets off at 22.5; the lens round behind it 22.6 – 25.2, onto the axis 25.6 – 28.4; the rings sketched in 23.1 – 26.2, the speed lines from 24.2, the glint 24 – 26                                                                                                                                                                                                                                                                                      |
 | **Tunnel A: the conversation** | 28.7 | 42.2 | 13.5 s          | nothing flying but the words: in the middle, one exchange at a time, the evening in the parents' own words — lights on or off 29.0, what are you wearing 31.4, what did you say 33.8, how long have we got / 266 days 36.2, what music do you want / put on that song that gets me in the mood 38.4, above the middle so the room grows beneath them; the room a speck at the apex from 28.4, grown steadily; the tunnel narrows into the band 38.6 – 41.0; the date on the band 41.0, ringed 41.6 |
-| The dive                       | 36.8 | 37.7 | 1 s             | the hole punched through the band, the date bursting out, the first room through it                                                                                                                                                                                                                                                                                                                                                                                                                |
 | **The flash, off the date**    | 42.2 | 45.1 | 3 s             | no beat between: the white blooms straight off the date on the band (the band, the date and the swimmer go under it), the lens lands in the last room under the white (42.2 – 44.4), and the veil lifts off the room landed and in colour                                                                                                                                                                                                                                                          |
 | The colour                     | 43.0 | 43.5 | under the white | the last room floods to full colour while the white covers everything; the song, its artist and the date held on the screen from 45.0                                                                                                                                                                                                                                                                                                                                                              |
 | The room                       | 47   | 54   | 7 s             | the glow goes altogether and the boil nearly stills; the run HOLDS at 54 — the room sways on, the depths part after the pointer; PLAY opens the song on Spotify; AGAIN: the words fade, the monitor goes dark, the lens dollies on through the glass, short of the screen's plane (no swimmer), to the dark the next title types on                                                                                                                                                                |
@@ -28,6 +27,16 @@ gathers speed: the swim's own pace, the zoom at the fall's opening rate from
 last room. Nothing stops or restarts at the dive; the first room is the speck
 in the glint from ~29 s, growing at the tunnel's rate, so what the band opens
 on is the room the swimmer has been swimming at all along.
+
+**Cut J (`?v=j`) puts the conversation over the rooms.** The same words
+as the run's, but tunnel A is the original 0.11 tunnel (the count 28.7 – 35,
+the band, the date on it at 36.8) and the dive opens onto tunnel B as it first
+was — the fall through five rooms, 36.8 – 53.6, with no tesseract — the rooms
+hung at a slight roll that turns as the lens falls (the way v3's kaleido
+turned the archive going down the decades), and the five exchanges over them
+at 38.4, 41.0, 43.6, 46.2 and 48.8, the last over the last room; landing
+51.6 – 53.6, the flash at 53.7, the song held from 55.3. Its table is
+`log/sketch-copy-j.js`; the run is 62 s there.
 
 **Two tunnels, two questions.** Tunnel A answers WHEN: no slam opens it (the
 266 days gave the trick away; a mod sum in its place was worse) — the mass

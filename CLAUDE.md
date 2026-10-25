@@ -100,7 +100,10 @@ the band, the date, the dive; the first room a speck swum up on slowly from
 the moment the lens is on axis, `origin` locking it to the tunnel's apex) and
 through the band THE LAST ROOM, no tunnel B (cut G, with the tesseract of
 rooms — `fall.js tiles` — and the questions that veer the swimmer, is kept at
-`?v=g`, its table `log/sketch-copy-g.js`); a slow sun, the song named on the
+`?v=g`, its table `log/sketch-copy-g.js`; cut J, `?v=j`, is the
+conversation done over the rooms instead — tunnel A as the original, the
+fall through five rooms with no tesseract, the rooms hung at a slight roll,
+the exchanges over them — table `log/sketch-copy-j.js`); a slow sun, the song named on the
 screen and HELD — the run stops on its last frame (the room sways and boils
 on) and the page offers AGAIN (the lens dollies on through the dark glass,
 `fall.js zeta`) and PLAY (Spotify's embed of the track; `sketch.ended()`,

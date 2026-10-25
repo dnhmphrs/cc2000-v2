@@ -613,6 +613,11 @@ export const FLOWS = [
 		what: 'kept beside the next run (/next?v=d): 0.14 — one tunnel in two parts, the maths quickening into the mass of dates and the date found in the middle of the board; the slot, the rooms with a glimpse of their colour, the song computed over them, the band flash, the song named'
 	},
 	{
+		sketch: 'flow-strand-sketch-j',
+		name: 'Cut · J',
+		what: 'the conversation over the rooms (/next?v=j): tunnel A as the original (the count, the band, the date, the dive), then the fall through five rooms as tunnel B first was — no tesseract — the rooms hung at a slight roll that turns as you fall, and the exchanges over them (lights on or off, what are you wearing, what did you say, how long have we got, what music do you want), the last over the last room; the flash, the song'
+	},
+	{
 		sketch: 'flow-strand-sketch-g',
 		name: 'Cut · G',
 		what: 'kept beside the run (/next?v=g): the run with tunnel B — five rooms inside the slot, each repeated round itself at every depth (a tesseract), the questions over them (where, the lights, what mum wore, what dad said) each turning the swimmer, the lens to rest in the last, the sun, the song'
