@@ -151,9 +151,19 @@ monospace, wrapped at the words and sized to fit the glass, so a long title
 wraps rather than shrinking (`screenWords`, `gridFit`) — and the page's
 AGAIN a key at the glass's bottom (`sketch.screen()` gives it the glass each
 frame, so it follows the room as it sways after the pointer); Spotify's
-embed is there from the final scene on, a compact bar (352 × 152, the
-artwork showing) in the top left corner, no PLAY key. The run HOLDS on its
-last frame (`sketch.ended()`; the room sways and boils on); AGAIN
+embed comes up the moment the title is on the screen (`song()` is null
+before it), a compact bar (352 × 152, the artwork showing) in the top left
+corner, no PLAY key. THE LANDED ROOM IS THE PAGE'S AT ONCE: `ended()` is
+true from the moment the lens is at rest (the AGAIN key; the clock runs on
+to 52 and holds, nothing of the picture changing with it), and the room
+stays as it lands — warm, active, a little bouncy, the boil never calmed,
+the pointer's parallax on it; the monitor's glass is the ground, never the
+spiral through it (`glassDark`). A PERSON IS ALWAYS THERE on the main site:
+`live` is true there whatever the query, so the date and the spice are
+theirs to type and the scripted hand never fills them in (`?demo=1` is the
+lab's and the reels' tool). The 90s poster and clock sit exactly where the
+artist's composite has them (`data/roomElements.js`, fitted to
+`static/90s_Illustration.jpg`), so the wall's tape marks are covered. AGAIN
 (`.again()`) dollies the lens on THROUGH the dark glass — slowly, the hold's
 clock kept running so the sway and the parallax go on — until the glass
 covers the board (`covers`), and that dark is what the next title types on:

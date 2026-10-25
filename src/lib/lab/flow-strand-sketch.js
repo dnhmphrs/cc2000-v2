@@ -624,8 +624,15 @@ const spreadX = (w, h) => clamp(w / h, 0.75, 1.5);
 export default async function make({ THREE, at }) {
 	const q = new URLSearchParams(location.search);
 	const forced = DECADES.includes(q.get('decade')) ? q.get('decade') : null;
+	// LIVE means a person is there — the date and the spice are theirs to type,
+	// never filled in for them: the lab and /next unpinned, and THE MAIN SITE
+	// always (the scripted hand is a tool for the lab's pins and the reels;
+	// on the site it filled the form in by itself — the lead: "this should
+	// never happen. manual only").
+	const main = typeof document !== 'undefined' && document.documentElement.dataset.site === 'main';
 	const live =
-		at === null && q.get('demo') !== '1' && /^\/(lab|next)(\/|$)/.test(location.pathname);
+		at === null &&
+		(main || (q.get('demo') !== '1' && /^\/(lab|next)(\/|$)/.test(location.pathname)));
 	const board = getBoard();
 	const time = clock(SECONDS, at);
 	// (L) A CLEAN LOAD: nothing paints until the run's own first frame. The
@@ -2278,7 +2285,7 @@ export default async function make({ THREE, at }) {
 		try {
 			// (locked to the tunnel's apex O, where the rings' centre is)
 			// (K2: in colour inside the spindle hole only, chalk outside it)
-			st.fall.draw(roomPen(O, tf, bo), w, h, t, {
+			const camR = st.fall.draw(roomPen(O, tf, bo), w, h, t, {
 				origin: O,
 				colourAlong: false,
 				dust: null,
@@ -2286,6 +2293,9 @@ export default async function make({ THREE, at }) {
 				// the hole so the rim's wobble never shows chalk)
 				reveal: () => ({ cx: O[0], cy: O[1], r: 1.06 * R, wob: 0, feather: 0.03 })
 			});
+			// (L) the monitor's glass is the ground, dark — never the spiral
+			// seen through it (the fall leaves the glass clear)
+			if (camR?.glass) glassDark(ctx, camR.glass);
 		} finally {
 			g.zetaAt = keep;
 			ctx.restore();
@@ -2455,6 +2465,14 @@ export default async function make({ THREE, at }) {
 	// cream light (the tube warming up: dim and amber first, then white;
 	// the corners a touch darker), breathing very slightly on the hold's
 	// clock, and a faint glow out past the frame onto the room.
+	function glassDark(ctx, glass) {
+		const [x0, y0, x1, y1] = glass;
+		if (x1 - x0 < 1 || y1 - y0 < 1) return;
+		ctx.save();
+		ctx.fillStyle = PAL.ground;
+		ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+		ctx.restore();
+	}
 	function screenOn(ctx, glass, k, tf) {
 		if (k <= 0.003) return;
 		const [x0, y0, x1, y1] = glass;
@@ -2598,7 +2616,9 @@ export default async function make({ THREE, at }) {
 		const opening = t < B.dive[1];
 		// The boil eases off the coloured room after the flash — nearly still,
 		// so the room is seen as drawn rather than being worked over.
-		const calm = lerp(1, 0.08, smooth(span(t, B.land[1], B.land[1] + 2)));
+		// (L: the landed room stays as it lands — warm, active, a little bouncy
+		// — the lead; it was calmed to a near-still and read as frozen)
+		const calm = 1;
 		let band = null;
 		// The vanishing point IS the tunnel's apex, projected by the chase's
 		// lens, all the way down (the fall is given it as its origin, so the
@@ -2736,6 +2756,9 @@ export default async function make({ THREE, at }) {
 		// embed on the same glass: `screen()`).
 		if (cam.glass) {
 			const off = exit ? smooth(span(exit.s, ...EXIT.screen)) : 0;
+			// (L) the glass is the ground, dark, under the screen's light: the
+			// spiral under the board never shows through the monitor
+			glassDark(ctx, cam.glass);
 			screenOn(ctx, cam.glass, smooth(span(t, ...B.on)) * (1 - off), tf);
 			screenWords(ctx, cam.glass, t, st, bo, 1 - off);
 		}
@@ -2763,7 +2786,10 @@ export default async function make({ THREE, at }) {
 			if (time.t >= endAt(S?.F?.edge)) return;
 			answers.step(time, dt);
 		},
-		ended: () => !exit && time.t >= endAt(S?.F?.edge),
+		// The scene is the page's as soon as the lens is at rest in it (the
+		// AGAIN key); on a verdict, once the verdict is up. The clock runs on
+		// to the end and holds; nothing of the picture changes with it.
+		ended: () => !exit && time.t >= (S?.F?.edge ? BREAK.verdict : B.on[1]),
 		// From the top — through the monitor when there is one to fly into
 		// (a song's end), straight to the title on a verdict.
 		again: () => {
@@ -2775,7 +2801,11 @@ export default async function make({ THREE, at }) {
 			}
 		},
 		// The song (or the verdict) of the run, for the page's player.
-		song: () => (S ? { title: S.F.title, artist: S.F.artist, uri: S.F.uri, edge: S.F.edge } : null),
+		// (the embed comes up with the title on the screen, and goes with AGAIN)
+		song: () =>
+			S && !exit && time.t >= (S.F.edge ? BREAK.verdict : B.song[0])
+				? { title: S.F.title, artist: S.F.artist, uri: S.F.uri, edge: S.F.edge }
+				: null,
 		// The monitor's glass on the board this frame, CSS px [x0, y0, x1, y1],
 		// once the lens has landed — where the page puts the output.
 		screen: () => (lastGlass && time.t >= B.hit && !exit ? [...lastGlass] : null),

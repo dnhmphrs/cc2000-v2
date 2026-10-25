@@ -99,11 +99,17 @@ export const LAYERS = [
 		width: 0.26,
 		opacity: 1.0,
 		port: { x: 0.3, y: 0.66, width: 0.46 },
-		// The 90s wall is drawn with the poster's own corner on it: a vertical
-		// edge at 0.14 of the width and an L at 0.81, bottom at 0.52 of the height.
+		// The 90s wall is drawn with the poster's own edges on it (the tape
+		// marks), so the sprite must sit EXACTLY where the artist's composite
+		// (static/90s_Illustration.jpg) has it: the sprite fitted to the
+		// composite by least difference lands at (1973, 0) of 3840 × 2160 at
+		// its own 1180 × 1176 — the bg covers the plate at its height, so a
+		// composite px is H/2160 plate units: centre (643, 492) px off the
+		// middle → x 0.368, y 0.456; width 1180 px → 0.338 of W. It was
+		// 0.24 wide at (0.38, 0.42), and the marks showed past it (the lead).
 		// The 50s is read off the artist's own composite — see THE 50s below.
 		by: {
-			'90s': { x: 0.38, y: 0.42, width: 0.24 },
+			'90s': { x: 0.368, y: 0.456, width: 0.338 },
 			'50s': { x: 0.442, y: 0.5, width: 0.22 }
 		}
 	},
@@ -125,7 +131,9 @@ export const LAYERS = [
 		// 0.13 is a big clock, and next to the scuffed one it reads as a different
 		// object rather than the same one in a different room.
 		by: {
-			'90s': { x: -0.17, y: 0.74, width: 0.115 },
+			// (the 90s read off the composite the same way: the 334 × 338 sprite
+			// fits at (1399, 84) exactly — centre (−354, 827) px off the middle)
+			'90s': { x: -0.203, y: 0.766, width: 0.0956 },
 			'50s': { x: -0.202, y: 0.757, width: 0.118 },
 			'60s': { x: -0.125, y: 0.762, width: 0.115 },
 			'10s': { x: -0.22, y: 0.75, width: 0.115 }
