@@ -142,7 +142,11 @@ groove, `sketchTurn`), about nine and a half turns to the PORTHOLE at the
 apex — a circle onto the last room, in colour from its first pixel, grown
 steadily from a speck (`portR`; NOTHING of a record: no label, no disc, no
 spindle, no flecks — the lead saw a CD and wanted it gone) — and THE IRIS
-(K2): the dive widens the porthole at one rate in e-folds past the board,
+(K2, straightened): the porthole is the circle INSIDE the room's plate
+(`holeR`, `plateH`), growing with the plate through the fall — the swim's
+steady law to the fall, the fall's own zoom after — so the plate's corners
+never show in the tunnel (the rectangle popped through the spiral, once),
+and it is let past the board only once the plate covers it (`S.tCover`);
 no flash, the lens falls on into the room and comes to rest, the monitor
 switches on softly; no date, no maths, no conversation anywhere on the
 fly-in. THE OUTPUT IS ON THE COMPUTER SCREEN: the song and its artist
@@ -157,8 +161,8 @@ corner, no PLAY key. THE LANDED ROOM IS THE PAGE'S AT ONCE: `ended()` is
 true from the moment the lens is at rest (the AGAIN key; the clock runs on
 to 52 and holds, nothing of the picture changing with it), and the room
 stays as it lands — warm, active, a little bouncy, the boil never calmed,
-the pointer's parallax on it; the monitor's glass is the ground, never the
-spiral through it (`glassDark`). A PERSON IS ALWAYS THERE on the main site:
+the pointer's parallax on it; the monitor's glass is the pale screen the artist
+drew, never the spiral through it and never a black square (`glassBase`). A PERSON IS ALWAYS THERE on the main site:
 `live` is true there whatever the query, so the date and the spice are
 theirs to type and the scripted hand never fills them in (`?demo=1` is the
 lab's and the reels' tool). The 90s poster and clock sit exactly where the

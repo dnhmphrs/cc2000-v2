@@ -667,7 +667,7 @@ export default async function make({ THREE, at }) {
 	const gOver = gpuInk ? makeGpuInk({ THREE }) : null;
 	const inkFor = (g) => (g ? g.ink() : makeInk());
 	// The board is clear (not the ground) while the rings show under it.
-	const ringsShow = (t) => gUnder && t > B.tunnel[0] - 0.15 && t < B.land[0] + 0.7;
+	const ringsShow = (t) => gUnder && t > B.tunnel[0] - 0.15 && t < (S?.tCover ?? B.land[0]) + 0.7;
 	// The fall comes to rest INSIDE the last room (log/fall.js `inside`: this
 	// far on into its glass), the room past the board's edges, before the
 	// light; ?inside=0 lands at the plate and pushes in after the flash, as
@@ -816,6 +816,19 @@ export default async function make({ THREE, at }) {
 			return lerp(E[i], E[i + 1], f - i);
 		};
 		S = { key, bases, spec, body, decade, fall, geo, rc, efolds, calc, F, words, order, deep };
+		// (L) when the fall's plate first covers the board — the porthole,
+		// the plate's inscribed circle until then, is let past the board
+		{
+			let tc = B.land[1];
+			for (let tt = B.fall[0]; tt <= B.land[1] + 1; tt += 0.02) {
+				const ph = geo.plate * Math.pow(geo.levels[0].X, -geo.zetaAt(tt));
+				if (ph >= 1.02 * h && ph * PHI >= 1.02 * w) {
+					tc = tt;
+					break;
+				}
+			}
+			S.tCover = tc;
+		}
 		// The nearest ring as the tunnel is sketched in (the rings are drawn
 		// in from it, near to far).
 		const zL0 = Z_NOSE0 * Math.exp(-efolds(B.tunnel[0])) + 60;
@@ -1274,6 +1287,17 @@ export default async function make({ THREE, at }) {
 		const u = span(t, B.onAxis[1], B.fall[0]);
 		return 0.5 * lerp(2, ROOM_AT_BAND * h, u * u);
 	};
+	// The plate's height on the board as the fall draws it (its one level).
+	const plateH = (t, g) => g.plate * Math.pow(g.levels[0].X, -g.zetaAt(t));
+	function holeR(t, w, h, st) {
+		if (t < B.onAxis[1]) return 0;
+		if (t < B.fall[0]) return 0.98 * portR(t, h);
+		const g = st.geo;
+		const r = 0.49 * plateH(t, g);
+		const tc = st.tCover;
+		if (t < tc) return r;
+		return lerp(r, 1.3 * Math.hypot(w, h), smooth(span(t, tc, tc + 0.5)));
+	}
 	function bandAt(t, w, h, st) {
 		const m = smooth(span(t, ...B.seam));
 		const hold = smooth(span(t, B.conceived[0] - 0.15, B.conceived[0] + 0.3));
@@ -1302,15 +1326,13 @@ export default async function make({ THREE, at }) {
 			// (the room seen through it), and at the dive the stylus goes
 			// through it — it widens out past the board's edges in ~0.5 s, the
 			// white torn off the room, never faded to grey over it.
-			// (L: no label, no spindle — the HOLE is the porthole itself, and at
-			// the dive THE IRIS: widened at one rate in e-folds of its radius,
-			// past the board's corners by B.dive's end)
-			hole: edge
-				? 0
-				: portR(t, h) > 0.75
-					? portR(t, h) *
-						Math.pow((1.3 * Math.hypot(w, h)) / portR(t, h), smooth(span(tau, 0, B.iris)))
-					: 0,
+			// (L: no label, no spindle — the HOLE is the porthole itself: the
+			// circle inside the room's plate, growing with it — the swim's
+			// steady law to the fall, the fall's own zoom after — so the
+			// plate's corners are never seen in the tunnel (the rectangle
+			// popped through the spiral — the lead); released past the board
+			// once the plate covers it)
+			hole: edge ? 0 : holeR(t, w, h, st),
 			tau
 		};
 	}
@@ -2271,8 +2293,7 @@ export default async function make({ THREE, at }) {
 		// (L) It stays a circle to the dive, and the dive widens it: THE IRIS
 		// (bandAt's hole), the colour room growing in it, the chalk tunnel
 		// outside, until it has taken the frame.
-		const band = bandAt(t, w, h, st);
-		const R = band.hole > 0 ? band.hole : 0.5 * ph;
+		const R = 0.49 * ph;
 		const port = () => {
 			ctx.beginPath();
 			holePath(ctx, w, h, O, R, bo);
@@ -2293,9 +2314,9 @@ export default async function make({ THREE, at }) {
 				// the hole so the rim's wobble never shows chalk)
 				reveal: () => ({ cx: O[0], cy: O[1], r: 1.06 * R, wob: 0, feather: 0.03 })
 			});
-			// (L) the monitor's glass is the ground, dark — never the spiral
-			// seen through it (the fall leaves the glass clear)
-			if (camR?.glass) glassDark(ctx, camR.glass);
+			// (L) the monitor's glass as drawn — never the spiral seen through
+			// it (the fall leaves the glass clear)
+			if (camR?.glass) glassBase(ctx, camR.glass);
 		} finally {
 			g.zetaAt = keep;
 			ctx.restore();
@@ -2465,11 +2486,16 @@ export default async function make({ THREE, at }) {
 	// cream light (the tube warming up: dim and amber first, then white;
 	// the corners a touch darker), breathing very slightly on the hold's
 	// clock, and a faint glow out past the frame onto the room.
-	function glassDark(ctx, glass) {
+	// The monitor's glass as the artist drew it — the pale blue-white of the
+	// screen in static/90s_Illustration.jpg, rgb(204, 219, 248) — under the
+	// screen's light; never the spiral under the board through it, and never
+	// the board's dark (a black square on the coloured room — the lead).
+	const GLASS = '#ccdbf8';
+	function glassBase(ctx, glass) {
 		const [x0, y0, x1, y1] = glass;
 		if (x1 - x0 < 1 || y1 - y0 < 1) return;
 		ctx.save();
-		ctx.fillStyle = PAL.ground;
+		ctx.fillStyle = GLASS;
 		ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
 		ctx.restore();
 	}
@@ -2613,13 +2639,16 @@ export default async function make({ THREE, at }) {
 		const g = st.geo;
 		const zf = g.efolds(t);
 		const bo = boilAt(t);
-		const opening = t < B.dive[1];
+		// (L) the tunnel is drawn round the room until the porthole has passed
+		// the board's corners (bandAt's hole)
+		const band0 = bandAt(t, w, h, st);
+		const opening = band0.hole > 0 && band0.hole < 1.2 * Math.hypot(w, h);
 		// The boil eases off the coloured room after the flash — nearly still,
 		// so the room is seen as drawn rather than being worked over.
 		// (L: the landed room stays as it lands — warm, active, a little bouncy
 		// — the lead; it was calmed to a near-still and read as frozen)
 		const calm = 1;
-		let band = null;
+		let band = band0;
 		// The vanishing point IS the tunnel's apex, projected by the chase's
 		// lens, all the way down (the fall is given it as its origin, so the
 		// rooms are locked to the rings' centre; the fall's own sway rides on
@@ -2633,7 +2662,6 @@ export default async function make({ THREE, at }) {
 		if (opening) {
 			// The tunnel, still, outside the opening band: its rings pushed off
 			// the board by the band's edges.
-			band = bandAt(t, w, h, st);
 			Z.reset(w, h);
 			const ink = inkFor(gUnder);
 			rings(ink, t, w, h, camT, st, bo, band, O);
@@ -2654,7 +2682,7 @@ export default async function make({ THREE, at }) {
 		const fly = exit ? smooth(span(exit.s, ...EXIT.fly)) : 0;
 		// (L) while the iris opens the room is clipped to the hole: the colour
 		// disc in the chalk tunnel, nothing of the plate outside it
-		const inHole = opening && band && band.hole > 0 && band.hole < 1.2 * Math.hypot(w, h);
+		const inHole = opening;
 		if (inHole) {
 			ctx.save();
 			ctx.beginPath();
@@ -2680,7 +2708,18 @@ export default async function make({ THREE, at }) {
 			// once it has taken the frame (the flood, long done)
 			reveal: opening ? iris(band, O) : null
 		});
-		if (inHole) ctx.restore();
+		if (inHole) {
+			ctx.restore();
+			// the porthole's rim, as firstRoom draws it, let go past the board
+			ctx.save();
+			ctx.beginPath();
+			holePath(ctx, w, h, O, band.hole, bo);
+			ctx.strokeStyle = PAL.chalk;
+			ctx.lineWidth = 1.3 * Math.sqrt(h / 800);
+			ctx.globalAlpha = 0.7 * (1 - smooth(span(band.hole, 0.5 * h, 0.8 * h)));
+			ctx.stroke();
+			ctx.restore();
+		}
 		prof('rooms');
 
 		// The swimmer, the chase's own picture, at the vanishing point; on into
@@ -2756,9 +2795,9 @@ export default async function make({ THREE, at }) {
 		// embed on the same glass: `screen()`).
 		if (cam.glass) {
 			const off = exit ? smooth(span(exit.s, ...EXIT.screen)) : 0;
-			// (L) the glass is the ground, dark, under the screen's light: the
-			// spiral under the board never shows through the monitor
-			glassDark(ctx, cam.glass);
+			// (L) the glass as drawn, under the screen's light: the spiral under
+			// the board never shows through the monitor
+			glassBase(ctx, cam.glass);
 			screenOn(ctx, cam.glass, smooth(span(t, ...B.on)) * (1 - off), tf);
 			screenWords(ctx, cam.glass, t, st, bo, 1 - off);
 		}
