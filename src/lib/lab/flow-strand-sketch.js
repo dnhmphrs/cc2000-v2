@@ -214,6 +214,7 @@ import { makeFall, orderOf } from './log/fall.js';
 import { DECADES, loadRooms, decadeOfDate, PLATE } from './log/rooms.js';
 import { COPY, HEADLINES, NOW, fieldsOf, fill } from './log/sketch-copy.js';
 import { resolve } from '../functions/answer.js';
+import { GIFS } from '../data/gifs.js';
 import {
 	HAND,
 	boilOf,
@@ -234,7 +235,7 @@ const prof = (n) => window.__prof?.mark(n);
 
 export const meta = {
 	title:
-		'strand · sketch E — the original tunnel; months and years in the cloud; the slot kept through the rooms, the song computed over them; a slow holy sun, the colour fading in out of it'
+		'strand · sketch F — the tunnel with its sum, the slot kept, the evening worked out over the rooms, the slow sun, the song named on the screen and held; the three verdicts on it; again'
 };
 
 // ── The beats ────────────────────────────────────────────────────────────────
@@ -258,12 +259,12 @@ const B = {
 	asked: [14.7, 15.3], // the questions go (before the caption types over the slider's row)
 	genetics: [15.3, 22.3], // the caption
 	view: [15.0, 16.2], // the lens comes to the reading
-	read: [16.0, 17.8], // the frame 5′ → 3′ (quicker: it read as sluggish)
-	axis: [18.2, 19.4], // the strand closes onto the axis
-	rope: [18.5, 20.0], // the backbones twist down the tail
-	back: [18.4, 20.2], // the lens draws back to the whole body
-	gens: [20.0, 21.2],
-	contour: [21.0, 22.0],
+	read: [16.0, 18.3], // the frame 5′ → 3′ (quicker than 19.6; 17.8 was too quick)
+	axis: [18.7, 19.9], // the strand closes onto the axis
+	rope: [19.0, 20.5], // the backbones twist down the tail
+	back: [18.9, 20.7], // the lens draws back to the whole body
+	gens: [20.4, 21.5],
+	contour: [21.2, 22.1],
 	life: 22.2,
 	// ── the journey (this variant's) ──
 	conception: [22.6, 29.6], // the caption
@@ -286,7 +287,7 @@ const B = {
 	aim: [51.8, 53.7], // the swimmer on into the last glass
 	hit: 53.7, // the flash
 	push: [53.8, 56.8], // the lens in on the last room, to near full size
-	out: [60.6, 62]
+	out: [99, 100] // (never: the run HOLDS on its last frame; `again` restarts it)
 };
 
 // THE FLASH: the band in the last screen blowing out — across the board's
@@ -475,8 +476,8 @@ const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05 };
 // The fall: eleven crossings (twelve rooms, the answer's last) at strand's
 // pace, so the rooms rush (a crossing every ~1.4 s, at 0.5–1 e-folds a second).
 const FALL_X = 11;
-const INSIDE = 0.4; // the fall stops inside the last room (?inside=: this far into its glass)
-const FILL = { w: 3.1, h: 1.15 }; // … where the room is this many boards wide, and at least this tall
+const INSIDE = 0.22; // the fall stops inside the last room (?inside=: this far into its glass)
+const FILL = { w: 2.1, h: 1.0 }; // … where the room is this many boards wide, and at least this tall
 const FALL_PACE = { n: 512, c: 0.55 };
 
 // ── The count ────────────────────────────────────────────────────────────────
@@ -611,9 +612,15 @@ export default async function make({ THREE, at }) {
 		const decade = forced ?? decadeOfDate(ans.date);
 		const order = orderOf(decade, FALL_X);
 		const calc = calcOf(ans.date);
-		const F = fieldsOf(ans.date, songOf(ans));
+		const F = fieldsOf(ans.date, songOf(ans, q.get('edge')));
 		const words = wordsOf(F);
-		const fb = { fall: B.fall, land: B.land, colour: B.colour, push: B.push, swim: [-2, -1] };
+		const fb = {
+			fall: B.fall,
+			land: B.land,
+			colour: F.edge ? [999, 1000] : B.colour,
+			push: B.push,
+			swim: [-2, -1]
+		};
 		// The last room ends near full size: the lens pushed in on it after the
 		// flash, to 0.94 of the board's height (an upright board crops its
 		// sides rather than leave it small).
@@ -713,7 +720,7 @@ export default async function make({ THREE, at }) {
 			const i = Math.min(N - 1, Math.floor(f));
 			return lerp(E[i], E[i + 1], f - i);
 		};
-		S = { key, bases, spec, body, decade, fall, geo, rc, efolds, calc, words, order, deep };
+		S = { key, bases, spec, body, decade, fall, geo, rc, efolds, calc, F, words, order, deep };
 		// The nearest ring as the tunnel is sketched in (the rings are drawn
 		// in from it, near to far).
 		const zL0 = Z_NOSE0 * Math.exp(-efolds(B.tunnel[0])) + 60;
@@ -1791,6 +1798,40 @@ export default async function make({ THREE, at }) {
 		countdown(ink, w, h, t, O, st, bo);
 	}
 
+	// A verdict's gif on the last screen (the original site's three: the
+	// dinosaurs, the After Time, the servers overheating — static/gifs, baked
+	// into sheets by scripts/gifs.mjs), playing on the run's own clock, cut
+	// to the glass and covering it; it comes up as the white burns out.
+	const GIF_OF = { past: 'the-past', future: 'the-future', unknown: '500' };
+	const gifImg = {};
+	for (const k of Object.values(GIF_OF)) {
+		const im = new Image();
+		im.src = GIFS[k].src;
+		gifImg[k] = im;
+	}
+	function drawGif(ctx, box, edge, secs, a) {
+		const name = GIF_OF[edge];
+		const G = GIFS[name];
+		const im = gifImg[name];
+		if (!G || !im?.complete || !im.naturalWidth || a <= 0.01) return;
+		const f = Math.floor(secs * G.fps) % G.frames;
+		const sx = (f % G.cols) * G.w;
+		const sy = Math.floor(f / G.cols) * G.h;
+		const bw = box[2] - box[0];
+		const bh = box[3] - box[1];
+		const sc = Math.max(bw / G.w, bh / G.h);
+		const dw = G.w * sc;
+		const dh = G.h * sc;
+		ctx.save();
+		ctx.globalAlpha = a;
+		ctx.beginPath();
+		ctx.rect(box[0], box[1], bw, bh);
+		ctx.clip();
+		ctx.drawImage(im, sx, sy, G.w, G.h, box[0] + (bw - dw) / 2, box[1] + (bh - dh) / 2, dw, dh);
+		ctx.restore();
+	}
+	let secsNow = 0; // the fuzz's clock this frame (real seconds live)
+
 	// The last screen: a white line across the glass opening to fill it, the
 	// tube switched on, glowing out over the room.
 	function screenBand(ctx, box, k, bo) {
@@ -1858,7 +1899,10 @@ export default async function make({ THREE, at }) {
 			(t < HOLD
 				? lerp(0.45 * pre * pre, 1, rise)
 				: (0.62 + 0.38 * Math.exp(-after / 2.6)) * breath) * out;
-		const core = (t < HOLD ? lerp(0.3 * pre, 1, rise) : 0.38 + 0.5 * Math.exp(-after / 1.8)) * out;
+		// (on a verdict the core sits lower once the white has burnt out, so
+		// the gif on the screen reads through it)
+		const cf = S?.F?.edge ? 0.14 : 0.38;
+		const core = (t < HOLD ? lerp(0.3 * pre, 1, rise) : cf + 0.5 * Math.exp(-after / 1.8)) * out;
 		const rings =
 			(0.3 * smooth(span(t, H - 0.7, H)) * (1 - smooth(span(t, H + 0.4, H + 2.2))) +
 				0.1 * smooth(span(t, H + 1.5, H + 3))) *
@@ -1899,6 +1943,7 @@ export default async function make({ THREE, at }) {
 		// The fuzz's clock: real seconds live (it keeps moving while the run
 		// waits at a question), exactly t pinned, in the demo, in a reel.
 		const secs = hand.secs;
+		secsNow = secs;
 		answers.slider(entry.hit);
 		if (window.__lab) {
 			window.__lab.t = t;
@@ -2287,6 +2332,8 @@ export default async function make({ THREE, at }) {
 		prof('date');
 		// The last screen switched on.
 		if (cam.glass) screenBand(ctx, cam.glass, smooth(span(t, ...B.screen)), bo);
+		if (cam.glass && st.F.edge)
+			drawGif(ctx, cam.glass, st.F.edge, secsNow, smooth(span(t, B.hit + 1.4, B.hit + 3.2)));
 		prof('band');
 		figures(ink, w, h, t, O, st, bo);
 		ink.flush(ctx);
@@ -2296,7 +2343,19 @@ export default async function make({ THREE, at }) {
 	return {
 		info,
 		seek: (x) => time.seek(x),
-		update: (dt) => answers.step(time, dt),
+		// The run HOLDS on its last frame (the clock is not stepped past the
+		// end, so it never comes round); `again` takes it from the top.
+		update: (dt) => {
+			if (time.t >= SECONDS) return;
+			answers.step(time, dt);
+		},
+		ended: () => time.t >= SECONDS,
+		again: () => {
+			answers.restart();
+			time.seek(0);
+		},
+		// The song (or the verdict) of the run, for the page's player.
+		song: () => (S ? { title: S.F.title, artist: S.F.artist, uri: S.F.uri, edge: S.F.edge } : null),
 		render,
 		resize() {
 			S = null;
@@ -2317,11 +2376,14 @@ export default async function make({ THREE, at }) {
 // spice's position in the week the conception falls in. A birthday the
 // archive cannot answer for ({edge}: 'past', 'future' or 'unknown') has no
 // song yet — its words are blank until the error flows are drawn in.
-function songOf(ans) {
+const EDGES = ['past', 'future', 'unknown'];
+function songOf(ans, forcedEdge = null) {
 	const b = birthOf(ans.date);
 	const p2 = (x) => String(x).padStart(2, '0');
 	const spice = clamp(Math.round(Number(ans.spice) || 1), 1, 10);
-	const r = resolve(`${b.y}-${p2(b.m)}-${p2(b.d)}`, spice);
+	const r = EDGES.includes(forcedEdge)
+		? { edge: forcedEdge }
+		: resolve(`${b.y}-${p2(b.m)}-${p2(b.d)}`, spice);
 	const up = (s) =>
 		String(s ?? '')
 			.toUpperCase()
@@ -2332,6 +2394,7 @@ function songOf(ans) {
 		edge: r.edge ?? null,
 		title: r.track ? up(r.track.title) : '',
 		artist: r.track ? up(r.track.artist) : '',
+		uri: r.track?.spotify_uri ?? null,
 		chart: r.conceived ? `${cd} · ${cm} · ${cy}` : ''
 	};
 }
@@ -2348,6 +2411,12 @@ function wordsOf(F) {
 	const streams = [];
 	let seed = 100;
 	for (const row of COPY) {
+		// `when`: 'song' only on a run with a song, 'edge' only on a verdict,
+		// 'past' | 'future' | 'unknown' only on that one; none, always.
+		const want = row.when;
+		if (want === 'song' && F.edge) continue;
+		if (want === 'edge' && !F.edge) continue;
+		if (EDGES.includes(want) && want !== F.edge) continue;
 		if (row.lines) {
 			const lines = row.lines.map((Ln) => ({
 				s: fill(Ln.text, F),

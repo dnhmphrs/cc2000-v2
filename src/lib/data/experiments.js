@@ -590,7 +590,7 @@ export const FLOWS = [
 	{
 		sketch: 'flow-strand-sketch',
 		name: 'Strand · sketch',
-		what: 'the next run (/next), sketch E: the original sketch’s tunnel (sketch B’s, 0.11) — the count of days struck off down the tunnel, the years back from now in the cloud with them, the rings drawn apart into the slot, the date on the white-hot band, the dive through it — and from there the slot KEPT through the rooms, the song worked out over them in chalk (the steaminess, where and the lights, what mum wore, what dad had done, what he said, the precautions — what it has no business knowing) and named where the date was once ringed; the end a slow holy sun — reds, golds, a little blue — that stays on the screen, the room’s colour fading in under it by depth, the song and the date held on it; the words in log/sketch-copy.js'
+		what: 'the next run (/next), sketch F: the 0.11 tunnel — the birthday and a dumb sum on it, the count of days struck off, the years in the cloud, the band, the date on it, the dive — then the slot KEPT through the rooms, the evening worked out over them in chalk (what the machine has no business knowing), the lens to rest in the last room, the slow holy sun, the colour fading in under it by depth, the song and its artist named only there and held; the run holds on its last frame (AGAIN and PLAY on the page, the song on Spotify); a birthday the archive cannot answer for fails the search over the rooms and ends on the verdict’s gif in the last screen; the words in log/sketch-copy.js'
 	},
 	{
 		sketch: 'flow-strand-sketch-a',
@@ -611,6 +611,11 @@ export const FLOWS = [
 		sketch: 'flow-strand-sketch-d',
 		name: 'Sketch · D',
 		what: 'kept beside the next run (/next?v=d): 0.14 — one tunnel in two parts, the maths quickening into the mass of dates and the date found in the middle of the board; the slot, the rooms with a glimpse of their colour, the song computed over them, the band flash, the song named'
+	},
+	{
+		sketch: 'flow-strand-sketch-e',
+		name: 'Sketch · E',
+		what: 'kept beside the next run (/next?v=e): 0.15 — the 0.11 tunnel without its sum, the slot kept through the rooms, the evening worked out over them, the song named over the rooms and again on the screen, the slow sun; a fade and round'
 	},
 	{
 		sketch: 'flow-strand-sketch-one',

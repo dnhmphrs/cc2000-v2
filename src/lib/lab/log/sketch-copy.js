@@ -8,7 +8,9 @@
 // THE RUN'S LANDMARKS (seconds; the sketch's beat table `B` has them all):
 //   22.2  the swimmer alive; 22.5 it sets off; 23.1 – 26.2 the tunnel's rings
 //         are sketched in round it, the speed lines from 24.2
-//   TUNNEL A — THE DATE (the sketch's own, exact: not in this table):
+//   TUNNEL A — THE DATE (the sketch's own, exact, but for the sum and the
+//   years, this table's):
+//   27.2 – 28.75 the sum: the birthday, and dumb mod arithmetic on it
 //   28.7 – 35.0  the count, 266 … 1, struck one by one, the months crossed
 //         off as they go — and the years back from now, in the cloud with
 //         them (the `years` row below)
@@ -16,10 +18,15 @@
 //         ringed 35.6; 36.8 the dive through it
 //   TUNNEL B — THE SONG (this table's rows):
 //   36.8 – 53.6  the rooms rush past inside the slot; over them the song is
-//         worked out from the date (38.3 – 47.6), the song itself where the
-//         original put the date up again and ringed it (45.3)
+//         worked out from what the machine has no business knowing about
+//         that evening (38.3 – 45.5); the song itself is NOT named here —
+//         only after the flash
 //   52.4  the last screen lights; 53.7 the sun; 55.0 – 58.8 the colour fades
-//         in under it; 55.3 the song and the date, held on the screen; 62
+//         in under it; 55.3 the song and the date, held on the screen; the
+//         run holds at 62 (AGAIN on the page takes it from the top)
+//   A VERDICT (a birthday the archive cannot answer for): the same run, the
+//         search failing over the rooms (40.1 – 44.6), the room left in
+//         chalk, the verdict's gif on its screen and the verdict held there
 //
 // A ROW is one thing that flies. Its fields:
 //   at      the second it leaves the vanishing point (a slam pops in over
@@ -48,10 +55,15 @@
 //   hold    a slam that stays put instead of flying on out — it fades at
 //           `out` (the date at the end, held for the flash to take it)
 //   color   a slam's ink, if not the hand's white (e.g. '#1d1612' dark)
+//   when    'song': only on a run with a song; 'edge': only on a verdict;
+//           'past' | 'future' | 'unknown': only on that verdict; left out,
+//           on every run
 //
 // TOKENS: {…} in any text is filled from the answers (fieldsOf below): the
 // date's parts, the number theory worked from them, and the song. They are:
 //   {birth}  14 · 02 · 1987      {dd} {mm} {yyyy} {yy}   its parts
+//   {dmy}    the eight digits as one number (14021987)   {m7} {m266}  it
+//            mod 7 and mod 266 (the dumb sum before the count)
 //   {conception}  24 · 05 · 1986  {weekday}  SUNDAY     (266 days before)
 //   {cdd} {cmm} {cyyyy}  the conception's parts
 //   Zeller's congruence for the conception's weekday —
@@ -97,9 +109,25 @@ export const COPY = [
 	// the sketch's own, log/caption.js)
 	{ caption: 'COMPUTING SOUNDTRACK', at: 38.0, until: 48.5 },
 
-	// ── TUNNEL A: the years back from now to the birth year, in the cloud
-	// with the count (every: 0 — no headlines; 2 flies one with every second
-	// year, from HEADLINES)
+	// ── TUNNEL A. The sum before the count: the birthday, and the machine
+	// seen computing — dumb mod arithmetic on it, struck through as it goes
+	{
+		at: 27.2,
+		out: 28.75,
+		x: 0,
+		y: -0.26,
+		lines: [
+			{ text: '{birth}', size: 0.075 },
+			{ text: '{dmy} mod 266 = {m266}   ·   {dmy} mod 7 = {m7}', size: 0.038, write: [27.5, 27.95] }
+		],
+		marks: [
+			{ line: 1, text: '{dmy} mod 266 = {m266}', at: 28.2 },
+			{ line: 1, text: '{dmy} mod 7 = {m7}', at: 28.45 }
+		]
+	},
+	// the years back from now to the birth year, in the cloud with the count
+	// (every: 0 — no headlines; 2 flies one with every second year, from
+	// HEADLINES)
 	{ stream: 'years', at: 29.0, out: 32.8, slow: 2.2, fast: 10, every: 0 },
 
 	// ── TUNNEL B: the song worked out over the rooms, in chalk — from what
@@ -122,6 +150,7 @@ export const COPY = [
 	},
 	// where, and the lights
 	{
+		when: 'song',
 		at: 40.1,
 		out: 42.1,
 		x: 0,
@@ -137,6 +166,7 @@ export const COPY = [
 	},
 	// what mum wore, what dad had done
 	{
+		when: 'song',
 		at: 41.9,
 		out: 43.9,
 		x: 0,
@@ -152,6 +182,7 @@ export const COPY = [
 	},
 	// what was said, and the precautions
 	{
+		when: 'song',
 		at: 43.7,
 		out: 45.5,
 		x: 0,
@@ -165,23 +196,133 @@ export const COPY = [
 			{ line: 1, text: '{contra}', at: 45.0, kind: 'circle' }
 		]
 	},
-	// THE SONG — where the original put the date up again and ringed it
+	// ── THE VERDICTS (functions/answer.js: a birthday the archive cannot
+	// answer for; ?edge=past|future|unknown forces one). Over the rooms the
+	// machine's search fails in the same chalk; the room stays chalk at the
+	// end, the verdict's gif plays on its screen and the verdict is held
+	// there, in the original site's words ──
 	{
-		at: 45.3,
-		out: 47.8,
+		when: 'past',
+		at: 40.1,
+		out: 42.3,
 		x: 0,
-		y: -0.25,
+		y: 0.26,
 		lines: [
-			{ text: '{title}', size: 0.08 },
-			{ text: '{artist}', size: 0.046, write: [45.8, 46.15] }
+			{ text: 'ARCHIVE: 1958 → 2023', size: 0.046 },
+			{ text: '{cyyyy} < 1958   ⇒   NO SIGNAL', size: 0.044, write: [40.6, 41.0] }
 		],
-		marks: [{ line: 0, at: 46.0, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 1, text: '{cyyyy} < 1958', at: 41.3 }]
+	},
+	{
+		when: 'past',
+		at: 42.3,
+		out: 44.6,
+		x: 0,
+		y: -0.27,
+		lines: [
+			{ text: 'BEFORE THE BROADCAST RECORD', size: 0.046 },
+			{ text: 'THE TIME OF DINOSAURS', size: 0.05, write: [42.8, 43.2] }
+		],
+		marks: [{ line: 1, at: 43.6, kind: 'circle' }]
+	},
+	{
+		when: 'future',
+		at: 40.1,
+		out: 42.3,
+		x: 0,
+		y: 0.26,
+		lines: [
+			{ text: 'ARCHIVE: 1958 → 2023', size: 0.046 },
+			{ text: '{cyyyy} > 2023   ⇒   NO SIGNAL YET', size: 0.044, write: [40.6, 41.0] }
+		],
+		marks: [{ line: 1, text: '{cyyyy} > 2023', at: 41.3 }]
+	},
+	{
+		when: 'future',
+		at: 42.3,
+		out: 44.6,
+		x: 0,
+		y: -0.27,
+		lines: [
+			{ text: 'THE AFTER TIME', size: 0.05 },
+			{ text: 'ONE RECORD REMAINS, BY ORDER OF THE COUNCIL', size: 0.04, write: [42.8, 43.3] }
+		],
+		marks: [{ line: 0, at: 43.6, kind: 'circle' }]
+	},
+	{
+		when: 'unknown',
+		at: 40.1,
+		out: 42.3,
+		x: 0,
+		y: 0.26,
+		lines: [
+			{ text: 'CHART WEEK {chart}: NOTHING', size: 0.046 },
+			{ text: 'SERVER TEMPERATURE: RISING', size: 0.044, write: [40.6, 41.0] }
+		],
+		marks: [{ line: 0, text: 'NOTHING', at: 41.3, kind: 'circle' }]
+	},
+	{
+		when: 'unknown',
+		at: 42.3,
+		out: 44.6,
+		x: 0,
+		y: -0.27,
+		lines: [
+			{ text: 'TOO HOT TO CALCULATE', size: 0.05 },
+			{ text: 'ALGORITHM: OVERHEATED', size: 0.044, write: [42.8, 43.2] }
+		],
+		marks: [{ line: 0, at: 43.6 }]
+	},
+	// the verdict, held on the screen (the gif under it)
+	{
+		when: 'past',
+		at: 55.3,
+		out: 200,
+		hold: true,
+		x: 0,
+		y: -0.05,
+		lines: [
+			{ text: 'NO SIGNAL BEFORE 1958', size: 0.062 },
+			{ text: 'YOU WERE BORN IN THE TIME OF DINOSAURS', size: 0.036, write: [55.8, 56.4] },
+			{ text: 'THERE WAS NO MUSIC', size: 0.036, write: [56.5, 56.9] }
+		],
+		marks: [{ line: 0, at: 56.3, kind: 'circle', pad: 0.3 }]
+	},
+	{
+		when: 'future',
+		at: 55.3,
+		out: 200,
+		hold: true,
+		x: 0,
+		y: -0.05,
+		lines: [
+			{ text: 'NO SIGNAL YET', size: 0.062 },
+			{ text: 'YOU WERE BORN IN THE AFTER TIME', size: 0.036, write: [55.8, 56.4] },
+			{ text: 'CONCEIVED TO BABY, BY JUSTIN BIEBER', size: 0.036, write: [56.5, 57.0] }
+		],
+		marks: [{ line: 0, at: 56.3, kind: 'circle', pad: 0.3 }]
+	},
+	{
+		when: 'unknown',
+		at: 55.3,
+		out: 200,
+		hold: true,
+		x: 0,
+		y: -0.05,
+		lines: [
+			{ text: 'OVERHEATED', size: 0.062 },
+			{ text: 'YOUR MOMENT WAS TOO HOT TO CALCULATE', size: 0.036, write: [55.8, 56.4] },
+			{ text: 'YOUR PARENTS FUCK', size: 0.04, write: [56.5, 56.9] }
+		],
+		marks: [{ line: 0, at: 56.3, kind: 'circle', pad: 0.3 }]
 	},
 
-	// ── the end: the song and the date on the lit room, held to the fade ──
+	// ── the end: the song and the date on the lit room, held (the run holds
+	// on its last frame; the song is named here and nowhere before) ──
 	{
+		when: 'song',
 		at: 55.3,
-		out: 61.6,
+		out: 200,
 		hold: true,
 		x: 0,
 		y: -0.05,
@@ -601,6 +742,9 @@ export function fieldsOf(digits, extra = {}) {
 		yyyy: String(b.y),
 		yy: pad2(yy),
 		conception: fmt(c.date),
+		dmy: b.d * 1000000 + b.m * 10000 + b.y,
+		m7: (b.d * 1000000 + b.m * 10000 + b.y) % 7,
+		m266: (b.d * 1000000 + b.m * 10000 + b.y) % 266,
 		cdd: pad2(c.date.d),
 		cmm: pad2(c.date.m),
 		cyyyy: String(c.date.y),

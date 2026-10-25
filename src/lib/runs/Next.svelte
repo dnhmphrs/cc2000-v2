@@ -21,6 +21,20 @@
 
 	let canvas;
 	let failed = '';
+	// The end: the run holds on its last frame and the page offers AGAIN and,
+	// when there is a song, PLAY — Spotify's embed of the track in a small
+	// popup over the room (a press is needed to play anything anyway).
+	let ended = false;
+	let song = null;
+	let player = false;
+	let run = null;
+	$: embed = song?.uri
+		? `https://open.spotify.com/embed/track/${song.uri.replace('spotify:track:', '')}?utm_source=generator&theme=0`
+		: '';
+	function again() {
+		player = false;
+		run?.again?.();
+	}
 
 	onMount(() => {
 		let renderer = null;
@@ -56,6 +70,7 @@
 			renderer.setClearColor(0x000000, 1);
 			const lane = renderer.backend.isWebGPUBackend ? 'webgpu' : 'webgl';
 			sketch = await make({ THREE, renderer, at });
+			run = sketch;
 			window.__lab = window.__next = { run: 'next', sketch: name, lane, at, ...sketch.info };
 			onResize = () => {
 				renderer.setSize(window.innerWidth, window.innerHeight);
@@ -69,6 +84,12 @@
 				last = now;
 				if (at === null) sketch.update(dt);
 				sketch.render();
+				const e = at === null && !!sketch.ended?.();
+				if (e !== ended) {
+					ended = e;
+					song = e ? (sketch.song?.() ?? null) : null;
+					if (!e) player = false;
+				}
 			});
 		})().catch((e) => {
 			failed = String(e?.message ?? e);
@@ -84,6 +105,27 @@
 
 <canvas bind:this={canvas}></canvas>
 {#if failed}<p class="failed">{failed}</p>{/if}
+{#if ended}
+	<div class="end">
+		{#if song?.uri}
+			<button type="button" on:click={() => (player = !player)}>{player ? 'close' : 'play'}</button>
+		{/if}
+		<button type="button" on:click={again}>again</button>
+	</div>
+	{#if player && embed}
+		<div class="player">
+			<iframe
+				title="{song.title} — {song.artist}"
+				src={embed}
+				width="352"
+				height="152"
+				frameborder="0"
+				allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+				loading="lazy"
+			></iframe>
+		</div>
+	{/if}
+{/if}
 
 <style>
 	canvas {
@@ -93,6 +135,45 @@
 		height: 100vh;
 		display: block;
 		background: #151515; /* the board's ground (log/board.js PAL.ground) */
+	}
+	.end {
+		position: fixed;
+		left: 50%;
+		bottom: 22px;
+		transform: translateX(-50%);
+		display: flex;
+		gap: 10px;
+	}
+	.end button {
+		font:
+			13px/1 ui-monospace,
+			monospace;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: #151515;
+		background: rgba(255, 230, 120, 0.92);
+		border: 0;
+		border-radius: 2px;
+		padding: 9px 14px;
+		cursor: pointer;
+	}
+	.end button:hover {
+		background: #ffe678;
+	}
+	.player {
+		position: fixed;
+		left: 50%;
+		bottom: 66px;
+		transform: translateX(-50%);
+		width: 352px;
+		max-width: calc(100vw - 32px);
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+	}
+	.player iframe {
+		display: block;
+		width: 100%;
 	}
 	.failed {
 		position: fixed;

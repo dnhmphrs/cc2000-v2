@@ -95,16 +95,21 @@ its header the map; docs/explore-10.md the round it came from), out of the
 lab in a plain environment of its own — one canvas, one WebGPURenderer, the
 run answered by hand, no lab bar and no sketch tags (`board.js tag` stays
 silent there). `?v=<name>` plays a variant `flow-strand-sketch-<name>.js`:
-the run itself is the newest sketch — E (0.15): the 0.11 tunnel (the count,
-the band, the dive) with the slot kept through the rooms, the song worked out
-over them and a slow sun at the end; `?v=a` is the original sketch of 0.10,
-`?v=b` sketch A's tuned 0.11, `?v=c` sketch C of 0.13 (one short tunnel),
-`?v=d` sketch D of 0.14 (the date, then the song; its table is
-`log/sketch-copy-d.js`); the five of 0.12 are set aside, kept for reference;
-`?at=` and `?demo=1` as in the lab. The song comes from
-`functions/answer.js resolve` into the copy's tokens ({title} {artist}
-{chart}); a birthday the archive cannot answer for leaves them blank — the
-three error flows (past, future, unknown) are not in this run yet. **Every word that flies over the journey is in ONE table,
+the run itself is the newest sketch — F (0.16): the 0.11 tunnel (the sum,
+the count, the band, the dive) with the slot kept through the rooms, the
+evening worked out over them, a slow sun, the song named on the screen and
+HELD — the run stops on its last frame and the page offers AGAIN and PLAY
+(Spotify's embed of the track; `sketch.ended()`, `.song()`, `.again()`);
+`docs/next-beats.md` times it. A birthday the archive cannot answer for
+(`functions/answer.js resolve` → `edge`; `?edge=past|future|unknown` forces
+one) runs the same run with the search failing over the rooms and ends in
+chalk on the verdict's gif in the last screen (`data/gifs.js` sheets drawn on
+the board) with the verdict held over it; the rows of the copy table say
+`when` they apply. `?v=a` is the original sketch of 0.10, `?v=b` sketch A's
+tuned 0.11, `?v=c` sketch C of 0.13, `?v=d` sketch D of 0.14, `?v=e` sketch
+E of 0.15 (D and E read their own tables, `log/sketch-copy-d.js`, `-e.js`);
+the five of 0.12 are set aside, kept for reference; `?at=` and `?demo=1` as
+in the lab. **Every word that flies over the journey is in ONE table,
 `lab/log/sketch-copy.js`** — the maths slams, the years and their headlines,
 the months, the days, the captions, the date at the end — each with its
 seconds and where and how it flies; the lead edits it there, and nothing

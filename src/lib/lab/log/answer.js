@@ -320,6 +320,10 @@ export function makeAnswers({ live = false, beats }) {
 		slider(fn) {
 			hit = fn;
 		},
+		// From the top: the typed date, the spice and the fields cleared.
+		restart() {
+			reset();
+		},
 		step(time, dt) {
 			clockRef = time;
 			if (live) {
