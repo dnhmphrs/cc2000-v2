@@ -94,8 +94,10 @@ picked, strand's journey in the sketchy hand (`lab/flow-strand-sketch.js`,
 its header the map; docs/explore-10.md the round it came from), out of the
 lab in a plain environment of its own — one canvas, one WebGPURenderer, the
 run answered by hand, no lab bar and no sketch tags (`board.js tag` stays
-silent there). `?v=<name>` plays a variant `flow-strand-sketch-<name>.js`
-(the five of 0.12 are set aside, kept for reference); `?at=` and `?demo=1`
+silent there). `?v=<name>` plays a variant `flow-strand-sketch-<name>.js`:
+`?v=a` is sketch as it was at 0.11 (two halves), `?v=b` the B round's one
+kept version (variant two without its opening slam); the five of 0.12 are
+set aside, kept for reference; `?at=` and `?demo=1`
 as in the lab. **Every word that flies over the journey is in ONE table,
 `lab/log/sketch-copy.js`** — the maths slams, the years and their headlines,
 the months, the days, the captions, the date at the end — each with its

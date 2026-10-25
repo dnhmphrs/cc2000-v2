@@ -1529,9 +1529,17 @@ export default async function make({ THREE, at }) {
 		if (g.plate / Math.pow(g.levels[0].X, zeta) < 2.5) return;
 		const keep = g.zetaAt;
 		g.zetaAt = () => zeta;
+		// The fall draws its nest about the board's middle; the tunnel's apex is
+		// off it while the lens comes round behind the swimmer and onto the
+		// axis — so the plate is carried to the apex (the vanishing point O),
+		// where the rings' centre is, and comes to the middle with it.
+		const pc = roomPen(O, tf, bo);
+		pc.save();
+		pc.translate(O[0] - w / 2, O[1] - h / 2);
 		try {
-			st.fall.draw(roomPen(O, tf, bo), w, h, t, { colourAlong: false, dust: null });
+			st.fall.draw(pc, w, h, t, { colourAlong: false, dust: null });
 		} finally {
+			pc.restore();
 			g.zetaAt = keep;
 		}
 	}

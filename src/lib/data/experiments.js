@@ -593,6 +593,16 @@ export const FLOWS = [
 		what: 'the next run (/next), in a shaky warm hand (Eva / Akira): one tunnel of hand-drawn rings and speed lines, the maths slammed up and struck out in red, the circle drawn out into a rectangle as the rooms begin and staying so, the years and their news, the months and the days flying out over the rooms, the lens to rest inside the last room, the date once, a white band blowing out of the screen into the sunbeam and the colour; every word in log/sketch-copy.js'
 	},
 	{
+		sketch: 'flow-strand-sketch-a',
+		name: 'Sketch · A',
+		what: 'kept beside the next run (/next?v=a): sketch as it was at 0.11 — the lens, the GPU ink, the landing inside the room; the journey in its two halves, the count, the band, the dive, the rooms, Zeller over them'
+	},
+	{
+		sketch: 'flow-strand-sketch-b',
+		name: 'Sketch · B',
+		what: 'the B round, one version kept (/next?v=b): variant two — every wrong sum a real date and the zoom flying into its decade, then the long way day by day to the date on the band — with its opening −266 DAYS slam taken out'
+	},
+	{
 		sketch: 'flow-strand-sketch-one',
 		name: 'Sketch · one',
 		what: 'set aside (0.12): the hand bad at maths through the decades — − 26.6 years, + 266 months, − 9 years, − 9 months (ten days early) — each scribbled out in its room; then the count day by day; the date only on the last screen'
