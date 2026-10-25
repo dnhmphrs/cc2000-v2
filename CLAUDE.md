@@ -146,17 +146,18 @@ spindle, no flecks — the lead saw a CD and wanted it gone) — and THE IRIS
 (`holeR`, `plateH`), growing with the plate through the fall — the swim's
 steady law to the fall, the fall's own zoom after — so the plate's corners
 never show in the tunnel (the rectangle popped through the spiral, once),
-and it is let past the board only once the plate covers it (`S.tCover`);
+and it is let past the board only once the plate covers it (`S.tCover`),
+eased over 1.2 s so the widening has no start to see;
 no flash, the lens falls on into the room and comes to rest, the monitor
 switches on softly; no date, no maths, no conversation anywhere on the
 fly-in. THE OUTPUT IS ON THE COMPUTER SCREEN: the song and its artist
-lettered on the glass ON A GRID — capitals, one character a cell,
-monospace, wrapped at the words and sized to fit the glass, so a long title
-wraps rather than shrinking (`screenWords`, `gridFit`) — and the page's
+lettered on the glass in the hand — capitals, WRAPPED at the words to the
+glass's width and sized to fit it, so a long title wraps rather than
+shrinking (`screenWords`, `wordsFit`; not a monospace grid) — and the page's
 AGAIN a key at the glass's bottom (`sketch.screen()` gives it the glass each
 frame, so it follows the room as it sways after the pointer); Spotify's
 embed comes up the moment the title is on the screen (`song()` is null
-before it), a compact bar (352 × 152, the artwork showing) in the top left
+before it), a compact bar (352 × 80) in the top left
 corner, no PLAY key. THE LANDED ROOM IS THE PAGE'S AT ONCE: `ended()` is
 true from the moment the lens is at rest (the AGAIN key; the clock runs on
 to 52 and holds, nothing of the picture changing with it), and the room
