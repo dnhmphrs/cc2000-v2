@@ -1,4 +1,4 @@
-// ── The copy of flow-strand-sketch-meg (THE MEG MACHINE): every word ────────
+// ── The copy of flow-strand-sketch-m (THE MEG MACHINE): every word ────────
 // The same table as log/sketch-copy.js (the run's; its header says how a row
 // is read, and lists the tokens), with the MEG machine's rows: the
 // Conception Calculator 2000 as a piece of medical equipment, straight-faced.

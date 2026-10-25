@@ -6,7 +6,7 @@
      WebGL run (config/palette.js), which showed as a yellowish black for as
      long as the warm-up took and then went blue as the canvas arrived. An
      inline style outranks the stylesheet, so this is the one that decides. -->
-<html lang="en" style="background: #090b14">
+<html lang="en" data-site="dev" style="background: #090b14">
 	<head>
 		<meta charset="utf-8" />
 		<!-- The board's routes (the lab, the reels, the index, the next run)
@@ -14,9 +14,14 @@
 		     colour their first frame paints, so loading them is one colour and
 		     no blue shows before it; the run at / and /v3 keeps its blue-black.
 		     Before the first paint, so it is the first paint; the layout keeps
-		     it in step on a client-side change of route. -->
+		     it in step on a client-side change of route. On the MAIN site
+		     (data-site, written by hooks.server.js) every page is the run on
+		     the board, so it is always the board's dark. -->
 		<script>
-			if (/^\/(lab|v4|log|eva|flows|cut|next)(\/|$)/.test(location.pathname)) {
+			if (
+				document.documentElement.dataset.site === 'main' ||
+				/^\/(lab|v4|log|eva|flows|cut|next)(\/|$)/.test(location.pathname)
+			) {
 				document.documentElement.style.background = '#151515';
 				document.documentElement.style.setProperty('--bg', '#151515');
 			}

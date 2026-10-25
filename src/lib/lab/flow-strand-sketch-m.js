@@ -1,4 +1,4 @@
-// ── Flow: flow-strand-sketch-meg — THE MEG MACHINE (?v=meg) ─────────────────
+// ── Flow: flow-strand-sketch-m (variant M) — THE MEG MACHINE (?v=meg) ─────────────────
 // The lead, for his own humour ("i just want to see it"): the calculator as
 // an actual (faux) clinical device. The entry is the run's (the title, the
 // date and the spice by hand, the strand); then THE MACHINE IS SWITCHED ON
@@ -22,7 +22,7 @@
 // journey and end exactly: the swim into the groove, the label, the hole,
 // the room, the needle drop, the song on the screen, the verdicts. All of
 // it 23 s longer than the run (MACHINE: the run's beats from the compile on
-// are shifted by it), 77 s. Every word in log/sketch-copy-meg.js; the signal,
+// are shifted by it), 77 s. Every word in log/sketch-copy-m.js; the signal,
 // the traces, the bars and the display's type in log/meg-signal.js.
 //
 // ── Flow: flow-strand-sketch — THE RUN (cut K): clean until the room ────────
@@ -271,7 +271,7 @@ import { makeGpuInk } from './log/gpu-ink.js';
 import { flash as burnOut } from './log/flash.js';
 import { makeFall, orderOf } from './log/fall.js';
 import { DECADES, loadRooms, decadeOfDate, PLATE } from './log/rooms.js';
-import { COPY, HEADLINES, NOW, fieldsOf, fill } from './log/sketch-copy-meg.js';
+import { COPY, HEADLINES, NOW, fieldsOf, fill } from './log/sketch-copy-m.js';
 import {
 	bandsOf,
 	signalOf,
@@ -721,7 +721,7 @@ export default async function make({ THREE, at }) {
 	const board = getBoard();
 	const time = clock(SECONDS, at);
 	clearBoard(board);
-	tag(board.ctx, board.w, board.h, 'flow-strand-sketch-meg · loading the rooms');
+	tag(board.ctx, board.w, board.h, 'flow-strand-sketch-m · loading the rooms');
 	const [art] = await Promise.all([
 		loadRooms({ chalk: true }),
 		document.fonts.load(`400 24px ${TECH_FONT}`).catch(() => null),
@@ -2436,7 +2436,7 @@ export default async function make({ THREE, at }) {
 		if (t < FREEZE) {
 			entry.reset();
 			TERM.draw(ctx, w, h, t / 10, t, t - 10);
-			tag(ctx, w, h, 'flow-strand-sketch-meg');
+			tag(ctx, w, h, 'flow-strand-sketch-m');
 			fuzz(ctx, w, h, secs, t);
 			window.__prof?.end();
 			return;
@@ -2484,7 +2484,7 @@ export default async function make({ THREE, at }) {
 			ctx.restore();
 		}
 		prof('out');
-		tag(ctx, w, h, 'flow-strand-sketch-meg');
+		tag(ctx, w, h, 'flow-strand-sketch-m');
 		fuzz(ctx, w, h, secs, t);
 		prof('grain');
 		window.__prof?.end();

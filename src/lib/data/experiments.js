@@ -590,7 +590,7 @@ export const FLOWS = [
 	{
 		sketch: 'flow-strand-sketch',
 		name: 'Strand · sketch',
-		what: 'the next run (/next), cut K: clean until the room — the date and the spice typed, COMPILING USER GENETICS (the double helix, the body written from it ring by ring, each ring a circle contracted by a digit of the date, flashed in gold), SIMULATING CONCEPTION: the swim into ONE GROOVE, a helix down the cone turning under the stylus, nothing lettered on it, to the label at the apex and the dive through its spindle hole into the last room; a record on the monitor, the arm swung in, the needle drop the flash; the room in colour and the song ON THE SCREEN with PLAY and AGAIN and the embed; a birthday the archive cannot answer for breaks down at the label onto the verdict’s gif; the words (two captions and the verdicts) in log/sketch-copy.js'
+		what: 'the next run (/next, and THE SITE at / on main), cut L: clean until the room — the date and the spice typed, COMPILING USER GENETICS (the double helix, the body written from it codon by codon, each ring flashed in gold), SIMULATING CONCEPTION: the swim into ONE GROOVE, a helix down the cone turning under the stylus, its turns joined, nothing lettered on it, to the label at the apex and THE IRIS: the spindle hole opens onto the last room already in colour, no flash, the lens falls on into it, the monitor switches on softly and the song is ON THE SCREEN with PLAY and AGAIN (the embed a bar in the top left); AGAIN dollies on through the dark glass until it covers the board, the room swaying all the way; a birthday the archive cannot answer for breaks down at the label onto the verdict’s gif; the words (two captions and the verdicts) in log/sketch-copy.js; ?v=l is this'
 	},
 	{
 		sketch: 'flow-strand-sketch-a',
@@ -638,6 +638,11 @@ export const FLOWS = [
 		what: 'the calculator a cutting lathe and a gramophone (/next?v=i5): the digits the harmonics of one wave, the spice how deep the cutter bites, the swimmer that profile turned on the lathe — the stylus; the tunnel ONE GROOVE, a turn a year, the years riding the turns; the label at the apex with the spindle hole dark in it and the date under it; through the hole into the room, a record turning on the monitor, the arm swings in and THE NEEDLE DROP is the flash; a verdict pressed with the gif, the needle skips'
 	},
 	{
+		sketch: 'flow-strand-sketch-k',
+		name: 'Cut · K',
+		what: 'the run of 0.20, kept (/next?v=k): I3’s sperm into I5’s groove, the record on the monitor and the needle drop as the flash; table log/sketch-copy-k.js'
+	},
+	{
 		sketch: 'flow-strand-sketch-k1',
 		name: 'Ending · K1 the needle drop, cleaned',
 		what: "the run's ending made clean (/next?v=k1): the needle drop makes a short, even white — no rays, no burn, no rings of light — and the colour is simply there as the white lifts in one even fade, the glow gone in a second, the room still"
@@ -663,9 +668,9 @@ export const FLOWS = [
 		what: 'the white as a sheet of paper (/next?v=k5): the needle drop takes the board to an even white, the room develops on it like a print — the chalk lines first as ink, then the flat colours painted in cel by cel (the wall, the poster, the clock, the desk, the bed, the screen last) — the record on the glass, the song; log/k5-fall.js'
 	},
 	{
-		sketch: 'flow-strand-sketch-meg',
-		name: 'Machine · the MEG',
-		what: "for the lead's own humour (/next?v=meg): after the date and the spice the Conception Calculator 2000 is a piece of medical equipment — STANDBY · PRESS ANY KEY, a self-test, STEP 1 READING MEG (the sensor cap, eight channel traces), CALIBRATING, THINK ABOUT YOUR FATHER'S SPERM (signal A captured), NOW THINK ABOUT YOUR PARENTS HAVING SEX (every channel saturates, signal B), the spectrum, REVERSE-ENGINEERING SPERM FROM SIGNAL (the body written from it), RECONSTRUCTING THE EVENT — and the run's own journey and end, 77 s; table log/sketch-copy-meg.js, helpers log/meg-signal.js"
+		sketch: 'flow-strand-sketch-m',
+		name: 'Machine · M, the MEG',
+		what: "for the lead's own humour (/next?v=m): after the date and the spice the Conception Calculator 2000 is a piece of medical equipment — STANDBY · PRESS ANY KEY, a self-test, STEP 1 READING MEG (the sensor cap, eight channel traces), CALIBRATING, THINK ABOUT YOUR FATHER'S SPERM (signal A captured), NOW THINK ABOUT YOUR PARENTS HAVING SEX (every channel saturates, signal B), the spectrum, REVERSE-ENGINEERING SPERM FROM SIGNAL (the body written from it), RECONSTRUCTING THE EVENT — and the run's own journey and end, 77 s; table log/sketch-copy-m.js, helpers log/meg-signal.js"
 	},
 	{
 		sketch: 'flow-strand-sketch-h',

@@ -70,7 +70,7 @@ copy of `fall.js` with one option).
   a half; the record on the glass, the song. `?wipe=0` fades each cel up
   instead of painting it across.
 
-## The MEG machine (`?v=meg`)
+## The MEG machine (`?v=m`)
 
 For the lead's own humour. After the date and the spice the Conception
 Calculator 2000 is a piece of medical equipment, straight-faced: STANDBY ·

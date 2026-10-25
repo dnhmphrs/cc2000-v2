@@ -1,3 +1,4 @@
+import { gate } from '$lib/site.js';
 import { redirect } from '@sveltejs/kit';
 
 // /cut — THE CUT: everything there is, every variant of every beat, in the
@@ -5,6 +6,7 @@ import { redirect } from '@sveltejs/kit';
 // ?chain=all; this is its address. (?chain=one is the short cut, one of
 // each: a different reel, not this one.)
 export function load() {
+	gate();
 	redirect(307, '/v4?chain=all');
 }
 export const ssr = false;

@@ -2,7 +2,9 @@
 	import './styles.css';
 	import { onMount } from 'svelte';
 	import Version from '$lib/components/Version.svelte';
+	import Build from '$lib/components/Build.svelte';
 	import LabBar from '$lib/components/LabBar.svelte';
+	import { MAIN } from '$lib/site.js';
 	import { page } from '$app/stores';
 	import { screenSize, aspect } from '$lib/store/store';
 	import { aspectKind, applyChassisVars, chassisCss } from '$lib/config';
@@ -14,10 +16,10 @@
 	// The experiments' bar, on the lab, the reels and the index only — here
 	// beside the run switch rather than in main, whose stacking context would
 	// put it under the blackboard sketches' own canvas.
-	$: onLab = /^\/(lab|v4|log|eva)(\/|$)/.test($page.url.pathname);
+	$: onLab = !MAIN && /^\/(lab|v4|log|eva)(\/|$)/.test($page.url.pathname);
 	// The board's routes open on the board's own warm dark (see app.html,
 	// which sets it before the first paint); the run keeps its blue-black.
-	$: onBoard = onLab || /^\/(flows|cut|next)(\/|$)/.test($page.url.pathname);
+	$: onBoard = MAIN || onLab || /^\/(flows|cut|next)(\/|$)/.test($page.url.pathname);
 	$: if (typeof document !== 'undefined') {
 		const root = document.documentElement;
 		const ground = onBoard ? '#151515' : '';
@@ -101,7 +103,11 @@
 <main>
 	<slot />
 </main>
-<Version />
+{#if MAIN}
+	<Build />
+{:else}
+	<Version />
+{/if}
 {#if onLab}
 	<LabBar />
 {/if}

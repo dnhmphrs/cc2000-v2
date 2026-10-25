@@ -17,9 +17,22 @@ builds on `nodejs22.x`, pinned in `vite.config.js`).
 
 ---
 
-## Two runs
+## Two sites
 
-The site keeps two versions of the run, side by side. The switch in the top
+One repo builds two sites (`vite.config.js`, `src/lib/site.js`). **main** —
+the `main` branch's deploy, the site — is THE RUN ALONE: the sketch
+(`src/lib/lab/flow-strand-sketch.js`, `runs/Next.svelte`) at `/`, every
+other path a 404, nothing in the corner but a small build label. **dev** —
+`dev`'s preview, and any local build — is everything below: the runs, the
+next run with all its variants at `/next`, the lab and the archive. Decided
+at build time from `SITE=main|dev`, or Vercel's environment (Production is
+main, Preview is dev). `SITE=main npm run build` and
+`node scripts/verify-main.mjs` check the main site locally; CLAUDE.md has
+the detail.
+
+## Two runs (dev)
+
+The dev site keeps two versions of the run, side by side. The switch in the top
 left corner of every page moves between them, next to the build it is (the
 package's version and the commit, `components/Version.svelte`).
 

@@ -78,6 +78,35 @@ Write scratch scripts and screenshots to the scratchpad, never into `scripts/`.
 A script living there cannot resolve the project's `node_modules`, so import by
 absolute path: `from '/home/user/cc2000-v2/node_modules/playwright/index.mjs'`.
 
+## Two sites from one repo: `main` is the run alone, `dev` is everything
+
+The site is the run and nothing else — the lead: one scene, no v2, no v3,
+no lab, no archive, no switch, "nothing in the top left hand corner other
+than a small version label", and a clean, fast, reliable load. The dev site
+keeps everything, so the variants and the archive go on being registered and
+looked at. One repo, one branch flow, decided AT BUILD TIME
+(`vite.config.js`, baked in as `__SITE__`; `src/lib/site.js` reads it):
+`SITE=main` or `SITE=dev` in the environment, else Vercel's own — a
+Production deploy (the `main` branch) is `main`, a Preview (`dev`'s) is
+`dev` — else `dev`. On `main`: `/` is the run (`routes/+page.js` loads
+`runs/Next.svelte` with `only`, which ignores `?v=`), every other path is a
+404 at the server (`src/hooks.server.js`) and at the route (`gate()` in
+every other `+page.js`; `/v2`, `/v3` and `/eva` are not prerendered there),
+the layout shows `components/Build.svelte` (the label) instead of the
+corner's switch and no lab bar, and the shell's `<html data-site="main">`
+(written by the hook, read by `app.html`'s inline script) makes the first
+paint the board's own dark — the "colour change on load" was the page's
+blue-black showing until the board painted. On `dev`: `/` is v3 as before,
+`/v2`, `/next` with every variant, the lab, the reels, the index, the
+switch. To build and check the main site locally:
+
+    SITE=main npm run build && npx vite preview --port 4175
+    BASE=http://localhost:4175 node scripts/verify-main.mjs
+
+`scripts/verify.mjs` (the dev lanes) stays what it was; both are run before
+a push. If Vercel's system variables are not exposed to the build, set
+`SITE=main` on the Production environment there.
+
 ## Two runs: v3 at `/` and `/v3`, v2 at `/v2`
 
 The site keeps two runs, each gathered into one component: **v3**
@@ -93,39 +122,41 @@ of v2 is `docs/design-notes.md`.
 picked, strand's journey in the sketchy hand (`lab/flow-strand-sketch.js`,
 its header the map), out of the lab in a plain environment of its own — one
 canvas, one WebGPURenderer, the run answered by hand, no lab bar and no
-sketch tags (`board.js tag` stays silent there). `?v=<name>` plays a variant
-`flow-strand-sketch-<name>.js`: the run itself is the newest cut — K (0.20),
-CLEAN UNTIL THE ROOM: the entry (the title, the date and the spice typed into
-the double helix), COMPILING USER GENETICS (the body written ring by ring,
-each ring a circle contracted by a digit of the date and flashed in gold —
-I3's generation, `log/i3-worldline.js`), SIMULATING CONCEPTION: the swim
-into ONE GROOVE (I5's: a helix down the cone turning under the stylus,
-nothing lettered on it), the LABEL at the apex — a white disc with the
-spindle hole dark in it, no date — and the dive through the hole into the
-last room; a record on the monitor, the arm swung in, the needle drop the
-flash, the room in colour; no date, no maths, no conversation anywhere on
-the fly-in. THE OUTPUT IS ON THE COMPUTER SCREEN: the song and its artist
-lettered on the glass as the record dims (`screenWords`), and the page puts
-PLAY / AGAIN as a strip of keys along the glass's bottom and Spotify's embed
-in the glass (`sketch.screen()` gives it the glass each frame, so it follows
-the room as it sways after the pointer). The run HOLDS on its last frame
-(`sketch.ended()`; the room sways and boils on); AGAIN (`.again()`) dollies
-the lens on through the dark glass into the next title; PLAY (`.song()`)
-opens the embed. The flash and the reveal are THE OPEN QUESTION — "the
-messiest and least clean part" — so five endings sit beside the run on the
-same base, `docs/explore-12.md` the round: `?v=k1` the needle drop cleaned
-(an even white, one even fade), `?v=k2` the iris (no flash: the hole opens
-onto the room already in colour), `?v=k3` the screen's light (the monitor's
-glow carries the colour out as a radial wipe, `log/fall.js reveal`), `?v=k4`
-the cut (black for a beat, then the room, the CRT switching on), `?v=k5` the
-develop (the white a sheet of paper the room is inked and painted on cel by
-cel, `log/k5-fall.js`). `?v=meg` is THE MACHINE, for the lead's own humour:
-after the date and the spice a faux clinical procedure in six steps — the
-sensor cap, the traces, THINK ABOUT YOUR FATHER'S SPERM, NOW THINK ABOUT YOUR
-PARENTS HAVING SEX, the sperm reverse-engineered from the signal — then the
-run's own journey (`log/sketch-copy-meg.js`, `log/meg-signal.js`, on I2's
-`log/i2-meg.js`). Earlier cuts are kept: `?v=h` cut H of 0.18 (the parents'
-conversation alone in the tunnel, the flash straight off the date; table
+sketch tags (`board.js tag` stays silent there). ON THE MAIN SITE IT IS `/`
+AND THE ONLY PAGE (see "Two sites" above). `?v=<name>` plays a variant
+`flow-strand-sketch-<name>.js` (on dev only): the run itself is the newest
+cut — L (0.21, `?v=l` is an alias of it), CLEAN UNTIL THE ROOM: the entry
+(the title, the date and the spice typed into the double helix), COMPILING
+USER GENETICS (the amino-acid generator: the reading frame over the helix,
+the body written codon by codon, each ring's own shape flashed in gold —
+`log/body.js codonSection`), SIMULATING CONCEPTION: the swim into ONE GROOVE
+(I5's: a helix down the cone turning under the stylus, nothing lettered on
+it, its turns JOINED — the hand's wobble is one noise along the whole
+groove, `sketchTurn`), about nine and a half turns to the LABEL at the apex
+— a white disc with the spindle hole dark in it, no date — and THE IRIS
+(K2): the hole opens onto the last room ALREADY IN COLOUR, no flash, the
+lens falls on into it and comes to rest, the monitor switches on softly; no
+date, no maths, no conversation anywhere on the fly-in. THE OUTPUT IS ON THE
+COMPUTER SCREEN: the song and its artist lettered on the glass
+(`screenWords`), the page's PLAY / AGAIN a strip of keys along the glass's
+bottom (`sketch.screen()` gives it the glass each frame, so they follow the
+room as it sways after the pointer), and Spotify's embed a horizontal bar in
+the top left corner. The run HOLDS on its last frame (`sketch.ended()`; the
+room sways and boils on); AGAIN (`.again()`) dollies the lens on THROUGH the
+dark glass — the hold's clock kept running so the sway and the parallax go
+on — until the glass covers the board (`covers`), and that dark is what the
+next title types on: no fade; PLAY (`.song()`) opens the embed. The endings
+of round K sit beside it on cut K's base (`docs/explore-12.md`): `?v=k` cut
+K itself (the record and the needle drop), `?v=k1` the needle drop cleaned,
+`?v=k2` the iris as it was picked, `?v=k3` the screen's light (`log/fall.js
+reveal`), `?v=k4` the cut, `?v=k5` the develop (`log/k5-fall.js`). `?v=m`
+is THE MACHINE (M), for the lead's own humour: after the date and the spice
+a faux clinical procedure in six steps — the sensor cap, the traces, THINK
+ABOUT YOUR FATHER'S SPERM, NOW THINK ABOUT YOUR PARENTS HAVING SEX, the
+sperm reverse-engineered from the signal — then cut K's journey
+(`log/sketch-copy-m.js`, `log/meg-signal.js`, on I2's `log/i2-meg.js`).
+Earlier cuts are kept: `?v=h` cut H of 0.18 (the parents' conversation
+alone in the tunnel, the flash straight off the date; table
 `log/sketch-copy-h.js`), `?v=g` cut G (tunnel B with the tesseract and the
 questions that veer the swimmer, `log/sketch-copy-g.js`), `?v=j` cut J (the
 conversation over five rooms, `log/sketch-copy-j.js`), round I's five

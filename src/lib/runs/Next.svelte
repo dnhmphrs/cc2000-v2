@@ -18,6 +18,12 @@
 	// is only the frame round it. window.__lab is set as the lab sets it (the
 	// sketches report into it and the shots tool waits on it).
 	const SKETCHES = import.meta.glob('/src/lib/lab/flow-strand-sketch*.js');
+	// The main site mounts this with `only` set: the run and nothing else —
+	// no ?v= (the run is the one scene it has), the glob never touched for
+	// another file.
+	export let only = false;
+	// ?v=l is the run itself (cut L is flow-strand-sketch.js).
+	const ALIAS = { l: '' };
 
 	let canvas;
 	let failed = '';
@@ -34,13 +40,11 @@
 	let screen = null;
 	const BAR = 30; // the buttons' strip at the glass's bottom
 	$: gw = screen ? Math.max(0, screen[2] - screen[0]) : 0;
-	$: gh = screen ? Math.max(0, screen[3] - screen[1]) : 0;
 	$: endStyle = screen
 		? `left:${screen[0]}px;top:${screen[3] - BAR}px;width:${gw}px;height:${BAR}px;bottom:auto;transform:none;`
 		: '';
-	$: playerStyle = screen
-		? `left:${screen[0]}px;top:${screen[1]}px;width:${gw}px;height:${Math.max(80, gh - BAR)}px;bottom:auto;transform:none;max-width:none;border-radius:0;`
-		: '';
+	// (the embed is a horizontal bar in the top left corner, under the
+	// version label — the lead; the keys and the song stay on the screen)
 	$: embed = song?.uri
 		? `https://open.spotify.com/embed/track/${song.uri.replace('spotify:track:', '')}?utm_source=generator&theme=0`
 		: '';
@@ -67,7 +71,8 @@
 			const q = new URLSearchParams(location.search);
 			const atRaw = q.get('at');
 			const at = atRaw === null || atRaw === '' ? null : Math.max(0, Math.min(1, Number(atRaw)));
-			const v = (q.get('v') ?? '').replace(/[^a-z0-9-]/g, '');
+			const v0 = only ? '' : (q.get('v') ?? '').replace(/[^a-z0-9-]/g, '');
+			const v = v0 in ALIAS ? ALIAS[v0] : v0;
 			const name = v ? `flow-strand-sketch-${v}` : 'flow-strand-sketch';
 			// The glob is fixed when the dev server first serves this page; a
 			// variant added since is fetched by its path, as the lab does.
@@ -150,12 +155,12 @@
 		<button type="button" on:click={again}>again</button>
 	</div>
 	{#if player && embed}
-		<div class="player" class:on={!!screen} style={playerStyle} use:portal>
+		<div class="player" use:portal>
 			<iframe
 				title="{song.title} — {song.artist}"
 				src={embed}
-				width={screen ? gw : 352}
-				height={screen ? Math.max(80, gh - BAR) : 152}
+				width="352"
+				height="80"
 				frameborder="0"
 				allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 				loading="lazy"
@@ -211,14 +216,15 @@
 		border-radius: 1px;
 	}
 	.player {
+		/* a horizontal bar, top left, under the corner's label */
 		position: fixed;
 		z-index: 30;
 		pointer-events: auto;
-		left: 50%;
-		bottom: 66px;
-		transform: translateX(-50%);
+		left: 10px;
+		top: 30px;
 		width: 352px;
-		max-width: calc(100vw - 32px);
+		max-width: calc(100vw - 20px);
+		height: 80px;
 		border-radius: 12px;
 		overflow: hidden;
 		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
@@ -227,12 +233,8 @@
 		display: block;
 		width: 100%;
 	}
-	.player.on {
-		box-shadow: none;
-		background: #121212;
-	}
-	.player.on iframe {
-		height: 100%;
+	.player iframe {
+		height: 80px;
 	}
 	.failed {
 		position: fixed;
