@@ -110,8 +110,9 @@ one) runs the same run to the date on the band and then BREAKS DOWN where
 the dive would be (`BREAK`): the gif leaks into the seam, the band tears open
 onto the gif tiled across the board (`data/gifs.js` sheets drawn on the
 board), the verdict is lettered over it and held; the rows of the copy table
-say `when` they apply, and `off` keeps a row without playing it. `?v=direct` is the run WITHOUT tunnel B (the band's flash the sunbeam's,
-the room through it the last; `log/sketch-copy-direct.js`); `?v=a` is the
+say `when` they apply, and `off` keeps a row without playing it. `?v=h` is CUT H, the run without tunnel B (G's tunnel A exactly, then the
+room through the band is the last, no tesseract, the sun straight after;
+`log/sketch-copy-h.js`); `?v=a` is the
 original sketch of 0.10, `?v=b` sketch A's tuned 0.11, `?v=c` sketch C of 0.13, `?v=d` sketch D of 0.14, `?v=e` sketch
 E of 0.15 (D and E read their own tables, `log/sketch-copy-d.js`, `-e.js`);
 the five of 0.12 are set aside, kept for reference; `?at=` and `?demo=1` as
