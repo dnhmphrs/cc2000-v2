@@ -8,9 +8,7 @@
 // THE RUN'S LANDMARKS (seconds; the sketch's beat table `B` has them all):
 //   22.2  the swimmer alive; 22.5 it sets off; 23.1 – 26.2 the tunnel's rings
 //         are sketched in round it, the speed lines from 24.2
-//   TUNNEL A — THE DATE (the sketch's own, exact, but for the sum and the
-//   years, this table's):
-//   27.2 – 28.75 the sum: the birthday, and dumb mod arithmetic on it
+//   TUNNEL A — THE DATE (the sketch's own, exact: not in this table):
 //   28.7 – 35.0  the count, 266 … 1, struck one by one, the months crossed
 //         off as they go — and the years back from now, in the cloud with
 //         them (the `years` row below)
@@ -113,22 +111,9 @@ export const COPY = [
 	{ when: 'song', caption: 'COMPUTING SOUNDTRACK', at: 38.0, until: 48.5 },
 	{ when: 'edge', caption: 'SIGNAL LOST', at: 37.4, until: 46 },
 
-	// ── TUNNEL A. The sum before the count: the birthday, and the machine
-	// seen computing — dumb mod arithmetic on it, struck through as it goes
-	{
-		at: 27.2,
-		out: 28.75,
-		x: 0,
-		y: -0.26,
-		lines: [
-			{ text: '{birth}', size: 0.075 },
-			{ text: '{dmy} mod 266 = {m266}   ·   {dmy} mod 7 = {m7}', size: 0.038, write: [27.5, 27.95] }
-		],
-		marks: [
-			{ line: 1, text: '{dmy} mod 266 = {m266}', at: 28.2 },
-			{ line: 1, text: '{dmy} mod 7 = {m7}', at: 28.45 }
-		]
-	},
+	// ── TUNNEL A is the sketch's own (the count, the months, the date on the
+	// band): no slam opens it — the 266 days gave the trick away, and the mod
+	// sum that stood in for it was just bad (the lead).
 	// the years back from now to the birth year, in the cloud with the count
 	// (every: 0 — no headlines; 2 flies one with every second year, from
 	// HEADLINES)

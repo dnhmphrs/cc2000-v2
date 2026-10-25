@@ -283,7 +283,7 @@ const B = {
 	fall: [36.8, 53.6],
 	land: [51.6, 53.6],
 	screen: [52.4, 53.62], // the band again: the last screen switched on
-	colour: [55.0, 58.8], // the room's colour fading in under the light, by depth (fall.js's flood: the bed first, the wall last)
+	colour: [53.8, 54.6], // the room's colour, flooded under the white (fall.js's flood, by depth) — so it comes back out of the flash ALREADY in full colour
 	aim: [51.8, 53.7], // the swimmer on into the last glass
 	hit: 53.7, // the flash
 	push: [53.8, 56.8], // the lens in on the last room, to near full size
@@ -485,8 +485,8 @@ const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05 };
 // The fall: eleven crossings (twelve rooms, the answer's last) at strand's
 // pace, so the rooms rush (a crossing every ~1.4 s, at 0.5–1 e-folds a second).
 const FALL_X = 11;
-const INSIDE = 0.22; // the fall stops inside the last room (?inside=: this far into its glass)
-const FILL = { w: 2.1, h: 1.0 }; // … where the room is this many boards wide, and at least this tall
+const INSIDE = 0.12; // the fall stops inside the last room (?inside=: this far into its glass)
+const FILL = { w: 1.5, h: 0.92 }; // … where the room is this many boards wide, and at least this tall
 const FALL_PACE = { n: 512, c: 0.55 };
 
 // ── The count ────────────────────────────────────────────────────────────────

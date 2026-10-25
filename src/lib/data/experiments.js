@@ -590,7 +590,7 @@ export const FLOWS = [
 	{
 		sketch: 'flow-strand-sketch',
 		name: 'Strand · sketch',
-		what: 'the next run (/next), sketch F: the 0.11 tunnel — the birthday and a dumb sum on it, the count of days struck off, the years in the cloud, the band, the date on it, the dive — then the slot KEPT through the rooms, the evening worked out over them in chalk (what the machine has no business knowing), the lens to rest in the last room, the slow holy sun, the colour fading in under it by depth, the song and its artist named only there and held; the run holds on its last frame (AGAIN and PLAY on the page, the song on Spotify); a birthday the archive cannot answer for breaks down at the band instead of diving — the gif in the seam, the band torn open onto the gif tiled across the board, the verdict over it; the words in log/sketch-copy.js'
+		what: 'the next run (/next), sketch F: the 0.11 tunnel — the count of days struck off, the months, the band, the date on it, the dive — then the slot KEPT through the rooms, the evening worked out over them in chalk (what the machine has no business knowing), the lens to rest in the last room, the slow holy sun, the room back out of it already in full colour, the song and its artist named only there and held; the run holds on its last frame (AGAIN and PLAY on the page, the song on Spotify); a birthday the archive cannot answer for breaks down at the band instead of diving — the gif in the seam, the band torn open onto the gif tiled across the board, the verdict over it; the words in log/sketch-copy.js'
 	},
 	{
 		sketch: 'flow-strand-sketch-a',
