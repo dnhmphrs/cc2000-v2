@@ -1294,9 +1294,13 @@ export default async function make({ THREE, at }) {
 		if (t < B.fall[0]) return 0.98 * portR(t, h);
 		const g = st.geo;
 		const r = 0.49 * plateH(t, g);
+		// … and once the plate covers the board, let past its corners — EASED
+		// (a smoothstep: no extra rate at its start), so the circle goes on
+		// at the plate's own pace and widens out of it, no jump (the tunnel
+		// "suddenly got out of the way" — the lead)
 		const tc = st.tCover;
 		if (t < tc) return r;
-		return lerp(r, 1.3 * Math.hypot(w, h), smooth(span(t, tc, tc + 0.5)));
+		return lerp(r, 1.3 * Math.hypot(w, h), smooth(span(t, tc, tc + 1.2)));
 	}
 	function bandAt(t, w, h, st) {
 		const m = smooth(span(t, ...B.seam));
@@ -2545,24 +2549,32 @@ export default async function make({ THREE, at }) {
 	}
 	// How far the song is up on the screen once the monitor is on.
 	const songUp = (t) => smooth(span(t, ...B.song));
-	// (L) THE SCREEN'S WORDS ON A GRID: the title and the artist in capitals,
-	// one character a cell, monospace, wrapped at the words to the columns
-	// the glass gives, at the largest size at which the whole block fits the
-	// glass — so a long title wraps rather than shrinking to nothing (the
-	// lead; temporary by his own account).
-	const CELL = { w: 0.78, h: 1.3, artist: 0.62, gap: 0.5 };
-	function wrapTo(str, cols) {
+	// (L) THE SCREEN'S WORDS: the title and the artist in capitals, in the
+	// hand, WRAPPED at the words to the glass's width and sized to the
+	// largest at which the whole block fits the glass — so a long title wraps
+	// rather than shrinking to nothing. (Not a monospace grid: the lead's own
+	// idea, and he took it back.)
+	const WORDS = { lineH: 1.3, artist: 0.62, gap: 0.5, fill: 0.86 };
+	function wrapTo(str, maxW) {
 		const lines = [];
 		let line = '';
 		for (const word of str.split(/\s+/).filter(Boolean)) {
-			if (word.length > cols) {
+			if (measure(word) > maxW) {
 				if (line) lines.push(line);
 				line = '';
-				for (let i = 0; i < word.length; i += cols) lines.push(word.slice(i, i + cols));
+				let chunk = '';
+				for (const ch of word) {
+					if (measure(chunk + ch) > maxW && chunk) {
+						lines.push(chunk);
+						chunk = '';
+					}
+					chunk += ch;
+				}
+				if (chunk) line = chunk;
 				continue;
 			}
 			if (!line) line = word;
-			else if (line.length + 1 + word.length <= cols) line += ' ' + word;
+			else if (measure(line + ' ' + word) <= maxW) line += ' ' + word;
 			else {
 				lines.push(line);
 				line = word;
@@ -2571,12 +2583,14 @@ export default async function make({ THREE, at }) {
 		if (line) lines.push(line);
 		return lines;
 	}
-	function gridFit(title, artist, gw, gh) {
-		for (let s = 0.2 * gh; s > 4; s *= 0.93) {
-			const sa = CELL.artist * s;
-			const tl = wrapTo(title, Math.max(1, Math.floor((0.88 * gw) / (CELL.w * s))));
-			const al = artist ? wrapTo(artist, Math.max(1, Math.floor((0.88 * gw) / (CELL.w * sa)))) : [];
-			const H = tl.length * CELL.h * s + (al.length ? CELL.gap * s + al.length * CELL.h * sa : 0);
+	function wordsFit(title, artist, gw, gh) {
+		for (let s = 0.22 * gh; s > 4; s *= 0.93) {
+			const sa = WORDS.artist * s;
+			const tl = wrapTo(title, (WORDS.fill * gw) / s);
+			const al = artist ? wrapTo(artist, (WORDS.fill * gw) / sa) : [];
+			const H =
+				tl.length * WORDS.lineH * s +
+				(al.length ? WORDS.gap * s + al.length * WORDS.lineH * sa : 0);
 			if (H <= 0.84 * gh) return { s, tl, al, H };
 		}
 		return null;
@@ -2593,43 +2607,41 @@ export default async function make({ THREE, at }) {
 		const title = (st.F.title || '').toUpperCase();
 		const artist = (st.F.artist || '').toUpperCase();
 		if (!title) return;
-		const fit = gridFit(title, artist, gw, gh);
+		const fit = wordsFit(title, artist, gw, gh);
 		if (!fit) return;
 		const { s, tl, al, H } = fit;
 		const ink = makeInk();
-		const row = (line, y, size, seed, alpha, upto) => {
-			const cw = CELL.w * size;
-			const n = line.length;
-			const shown = Math.floor(upto * n + 1e-6);
-			for (let j = 0; j < shown; j++) {
-				const ch = line[j];
-				if (ch === ' ') continue;
-				letter(ink, ch, cx + (j - (n - 1) / 2) * cw, y, size, {
-					seed: seed + 7 * j,
-					boil: bo,
-					alpha,
-					width: 0.12,
-					color: SCREEN_INK
-				});
-			}
-			return shown;
-		};
 		let y = cy - H / 2 + 0.95 * s;
 		tl.forEach((line, i) => {
-			row(line, y, s, 910 + 97 * i, up, 1);
-			y += CELL.h * s;
+			letter(ink, line, cx, y, s, {
+				seed: 910 + 97 * i,
+				boil: bo,
+				alpha: up,
+				width: 0.12,
+				color: SCREEN_INK
+			});
+			y += WORDS.lineH * s;
 		});
 		if (al.length) {
-			const sa = CELL.artist * s;
-			y += CELL.gap * s - (CELL.h - 0.95) * s + (CELL.h - 0.95) * sa;
-			// the artist written in character by character over B.artist
+			const sa = WORDS.artist * s;
+			y += WORDS.gap * s - (WORDS.lineH - 0.95) * s + (WORDS.lineH - 0.95) * sa;
+			// the artist written in over B.artist, line by line
 			const total = al.reduce((n, l) => n + l.length, 0);
-			let left = Math.floor(smooth(span(t, ...B.artist)) * total + 1e-6);
+			let left = smooth(span(t, ...B.artist)) * total;
 			const aa = up * smooth(span(t, B.artist[0], B.artist[0] + 0.4));
 			al.forEach((line, i) => {
-				const k = Math.max(0, Math.min(1, left / Math.max(1, line.length)));
-				left -= row(line, y, sa, 1300 + 97 * i, aa, k);
-				y += CELL.h * sa;
+				const upto = Math.max(0, Math.min(1, left / Math.max(1, line.length)));
+				left -= line.length;
+				if (upto > 0)
+					letter(ink, line, cx, y, sa, {
+						seed: 1300 + 97 * i,
+						boil: bo,
+						alpha: aa,
+						width: 0.11,
+						upto,
+						color: SCREEN_INK
+					});
+				y += WORDS.lineH * sa;
 			});
 		}
 		ink.flush(ctx);

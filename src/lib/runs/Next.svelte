@@ -156,7 +156,7 @@
 				title="{song.title} — {song.artist}"
 				src={embed}
 				width="352"
-				height="152"
+				height="80"
 				frameborder="0"
 				allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 				loading="lazy"
@@ -220,7 +220,7 @@
 		top: 30px;
 		width: 352px;
 		max-width: calc(100vw - 20px);
-		height: 152px; /* Spotify's compact embed: the art, the title, play */
+		height: 80px; /* Spotify's compact bar: the art small, the title, play */
 		border-radius: 12px;
 		overflow: hidden;
 		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
@@ -230,7 +230,7 @@
 		width: 100%;
 	}
 	.player iframe {
-		height: 152px;
+		height: 80px;
 	}
 	.failed {
 		position: fixed;
