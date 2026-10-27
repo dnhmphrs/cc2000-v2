@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import { PAGE } from '$lib/lab/log/sketch-copy.js';
 
 	// ── next: the run the lab found ──────────────────────────────────────────
 	// The board flow the lead picked — strand's journey drawn in the sketchy
@@ -50,14 +51,35 @@
 	// nothing there. ?screen=title: the title lettered on the glass, the bar
 	// in the corner and AGAIN on the glass, as 0.21 – 0.23.1 had it.
 	let playerOnScreen = true;
-	const PW = 352;
-	const PH = 352;
+	// (0.23.3 — the lead: on the computer screen, a response string, then the
+	// embed, then SHARE and the restart key; bigger, cleaner, not yellow; the
+	// words are the copy table's, PAGE) — the panel IS the glass, a column
+	// centred in it: the line, Spotify's 352 × 152 bar scaled to 0.86 of the
+	// glass's width (the artwork showing), the two keys; the type by the
+	// glass's width
 	$: gh = screen ? screen[3] - screen[1] : 0;
-	$: pk = screen ? Math.min(gw / PW, gh / PH) : 1;
-	$: playerStyle =
-		playerOnScreen && screen
-			? `left:${screen[0] + (gw - PW * pk) / 2}px;top:${screen[1] + (gh - PH * pk) / 2}px;width:${PW}px;height:${PH}px;transform:scale(${pk});transform-origin:0 0;border-radius:${6 / pk}px;`
-			: '';
+	$: fs = screen ? Math.max(10, Math.min(17, 0.05 * gw)) : 12;
+	$: outputStyle = screen
+		? `left:${screen[0]}px;top:${screen[1]}px;width:${gw}px;height:${gh}px;font-size:${fs}px;`
+		: '';
+	$: ek = screen ? Math.min(1, (0.86 * gw) / 352) : 1;
+	$: embedStyle = `width:${Math.round(352 * ek)}px;height:${Math.round(152 * ek)}px;`;
+	let shared = false;
+	async function share() {
+		const url = location.origin + location.pathname;
+		const text = song ? `${PAGE.response} ${song.title} — ${song.artist}` : PAGE.response;
+		try {
+			if (navigator.share)
+				await navigator.share({ title: 'Conception Calculator 2000', text, url });
+			else {
+				await navigator.clipboard.writeText(url);
+				shared = true;
+				setTimeout(() => (shared = false), 1600);
+			}
+		} catch {
+			/* declined */
+		}
+	}
 	// (the embed is a horizontal bar in the top left corner, under the
 	// version label — the lead; the keys and the song stay on the screen)
 	$: embed = song?.uri
@@ -163,26 +185,48 @@
 <canvas bind:this={canvas}></canvas>
 {#if failed}<p class="failed">{failed}</p>{/if}
 {#if ended}
-	<div
-		class="end"
-		class:on={!!screen && !playerOnScreen}
-		style={playerOnScreen ? '' : endStyle}
-		use:portal
-	>
-		<button type="button" on:click={again}>again</button>
-	</div>
-	{#if embed}
-		<div class="player" class:screen={playerOnScreen && !!screen} style={playerStyle} use:portal>
-			<iframe
-				title="{song.title} — {song.artist}"
-				src={embed}
-				width="352"
-				height={playerOnScreen && screen ? 352 : 80}
-				frameborder="0"
-				allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-				loading="lazy"
-			></iframe>
+	{#if playerOnScreen}
+		{#if screen}
+			<!-- THE OUTPUT, ON THE MONITOR'S SCREEN: a line, the player, two keys -->
+			<div class="output" style={outputStyle} use:portal>
+				<p class="output-say">{PAGE.response}</p>
+				{#if embed}
+					<div class="output-embed" style={embedStyle}>
+						<iframe
+							title="{song.title} — {song.artist}"
+							src={embed}
+							width="352"
+							height="152"
+							frameborder="0"
+							allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+							loading="lazy"
+							style="transform:scale({ek});"
+						></iframe>
+					</div>
+				{/if}
+				<div class="output-keys">
+					<button type="button" on:click={share}>{shared ? PAGE.copied : PAGE.share}</button>
+					<button type="button" on:click={again}>{PAGE.again}</button>
+				</div>
+			</div>
+		{/if}
+	{:else}
+		<div class="end" class:on={!!screen} style={endStyle} use:portal>
+			<button type="button" on:click={again}>again</button>
 		</div>
+		{#if embed}
+			<div class="player" use:portal>
+				<iframe
+					title="{song.title} — {song.artist}"
+					src={embed}
+					width="352"
+					height="80"
+					frameborder="0"
+					allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+					loading="lazy"
+				></iframe>
+			</div>
+		{/if}
 	{/if}
 {/if}
 
@@ -195,12 +239,66 @@
 		display: block;
 		background: #1b1917; /* the board's ground through the lens (app.html) */
 	}
-	.end {
+	.output {
 		position: fixed;
 		z-index: 30; /* over the board's canvases (11), under the corner's switch (35) */
 		pointer-events: auto; /* the layout's main has none, for the board */
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.6em;
+		padding: 0.4em;
+		box-sizing: border-box;
+	}
+	.output-say {
+		margin: 0;
+		font:
+			1em/1.3 ui-monospace,
+			monospace;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: #1c1a22;
+		text-align: center;
+	}
+	.output-embed {
+		position: relative;
+		overflow: hidden;
+		border-radius: 6px;
+	}
+	.output-embed iframe {
+		display: block;
+		width: 352px;
+		height: 152px;
+		transform-origin: 0 0;
+	}
+	.output-keys {
+		display: flex;
+		gap: 0.5em;
+	}
+	.output-keys button {
+		font:
+			0.9em/1 ui-monospace,
+			monospace;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: #f2efe6;
+		background: #1c1a22;
+		border: 0;
+		border-radius: 2px;
+		padding: 0.75em 1.1em;
+		cursor: pointer;
+	}
+	.output-keys button:hover {
+		background: #3a3542;
+	}
+	/* ?screen=title: the key on the glass and the bar in the corner, as before */
+	.end {
+		position: fixed;
+		z-index: 30;
+		pointer-events: auto;
 		left: 50%;
-		bottom: 7vh; /* centred, low on the page (the lead) */
+		bottom: 7vh;
 		transform: translateX(-50%);
 		display: flex;
 		gap: 10px;
@@ -218,10 +316,6 @@
 		padding: 9px 14px;
 		cursor: pointer;
 	}
-	.end button:hover {
-		background: #ffe678;
-	}
-	/* on the screen: a strip of small keys along the glass's bottom */
 	.end.on {
 		align-items: center;
 		justify-content: center;
@@ -233,7 +327,6 @@
 		border-radius: 1px;
 	}
 	.player {
-		/* a horizontal bar, top left, under the corner's label */
 		position: fixed;
 		z-index: 30;
 		pointer-events: auto;
@@ -241,7 +334,7 @@
 		top: 30px;
 		width: 352px;
 		max-width: calc(100vw - 20px);
-		height: 80px; /* Spotify's compact bar: the art small, the title, play */
+		height: 80px;
 		border-radius: 12px;
 		overflow: hidden;
 		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
@@ -249,16 +342,7 @@
 	.player iframe {
 		display: block;
 		width: 100%;
-	}
-	.player iframe {
 		height: 80px;
-	}
-	.player.screen {
-		max-width: none; /* scaled to the glass, whatever the board's width */
-		box-shadow: none;
-	}
-	.player.screen iframe {
-		height: 352px;
 	}
 	.failed {
 		position: fixed;

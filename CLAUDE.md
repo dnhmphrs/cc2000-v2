@@ -133,7 +133,9 @@ AND THE ONLY PAGE (see "Two sites" above). `?v=<name>` plays a variant
 `flow-strand-sketch-<name>.js` (on dev only): the run itself is the newest
 cut — L (0.21, `?v=l` is an alias of it), CLEAN UNTIL THE ROOM: the entry
 (the title, WHEN WERE YOU BORN? and HOW SPICY ARE YOUR PARENTS? typed into
-the double helix — `Q1_TEXT`, `Q2_TEXT`; the title's full stop fades ON THE SAME
+the double helix — `Q1_TEXT`, `Q2_TEXT`; each answer's gold trace runs the
+strand in `B.trace` 0.8 s, and the lens moves to the reading only once the
+spice's trace has run its length, `B.view` from E2 + trace; the title's full stop fades ON THE SAME
 BEAT as "… OF CONCEPTION", the last line — it used to glide over and become
 the strand's 5′ end, then had a beat of its own; each question typed within the
 0.8 s before its wait, `keys`, since live the run HOLDS at the wait until
@@ -162,7 +164,9 @@ overtakes a turn and hides it ("the room jumped in front of the tunnel"
 — the lead): every turn expands ahead of the frame and off the board), about nine and a half turns to the
 PORTHOLE at the apex — THE SUN (0.22.3): through the swim the porthole is
 LIGHT and nothing else, a warm white filling it with the lens's rays out
-of it (`sunVeil`, `LIGHT.sun`), and as the tunnel opens the white RESOLVES
+of it (`sunVeil`, `LIGHT.sun` 0.42 — 0.6 was a little too bright; the
+sunburst TURNS, `LIGHT.turn` 0.12 of a turn a second, and SHIMMERS on two
+slow waves — "a little too static"), and as the tunnel opens the white RESOLVES
 DOWNWARD into the room, clearing from the top of the hole down over the
 fall's first `SUN.resolve` seconds with a soft edge, the room revealing
 itself out of the light (the lead: "as the tunnel opens you should only
@@ -198,15 +202,18 @@ small core — low, no bloom, breathing on the hold's clock, off with AGAIN:
 sketch A's sun at a touch, not the flash; the RAYS come up EARLY, out of
 the porthole from `LIGHT.from` seconds before the dive, so the sun is seen
 as the tunnel's end is approached, the core only with the monitor); no date, no maths, no conversation anywhere on the
-fly-in. THE OUTPUT IS ON THE COMPUTER SCREEN: SPOTIFY'S PLAYER, FILLING THE
-MONITOR'S GLASS (0.23.2 — the PM wanted the embed, not the title; the
-lead: the embed filling the screen of the scene, AGAIN centred low on the
-page): the 352 × 352 embed, the artwork big, scaled to fill the glass and
-set in its middle (`runs/Next.svelte`, `sketch.screen()` gives it the
-glass each frame, so it follows the room as it sways after the pointer),
+fly-in. THE OUTPUT IS ON THE COMPUTER SCREEN (0.23.3 — the PM wanted the embed,
+not the title; the lead: a response string, then the embed, then SHARE
+and the restart key, bigger, cleaner, not yellow, on the computer screen):
+a column centred on the glass (`runs/Next.svelte` `.output`;
+`sketch.screen()` gives it the glass each frame, so it follows the room as
+it sways after the pointer) — the line YOU WERE CONCEIVED TO, Spotify's
+352 × 152 bar with the artwork scaled to 0.86 of the glass's width, and
+two keys in the screen's dark ink, SHARE (the Web Share sheet, or the
+link to the clipboard with LINK COPIED for a moment) and START AGAIN —
 up the moment the lens is at rest (`song()`), nothing lettered on the
-glass, and the page's AGAIN a key centred 7 vh up from the bottom of the
-page. `?screen=title` is what it was from 0.21 to 0.23.1: the song and its
+glass by the sketch; THE WORDS ARE THE COPY TABLE'S, `PAGE` in
+`lab/log/sketch-copy.js`, for the lead to edit. `?screen=title` is what it was from 0.21 to 0.23.1: the song and its
 artist lettered on the glass in the hand — capitals, WRAPPED at the words
 to the glass's width and sized to fit it (`screenWords`, `wordsFit`; not a
 monospace grid) — AGAIN a key at the glass's bottom, and the embed a
@@ -214,15 +221,20 @@ compact bar (352 × 80) in the top left corner; no PLAY key either way. THE LAND
 true from the moment the lens is at rest (the AGAIN key; the clock runs on
 to 44 and holds, nothing of the picture changing with it), and the room
 stays as it lands — warm, active, a little bouncy, the boil never calmed,
-the pointer's parallax on it — at `ROOM.calm` 0.6 of the boil and
-`ROOM.sway` half the sway since 0.23 ("the elements in the room are
-moving too much" — the PM); the monitor's glass is the pale screen the artist
+the pointer's parallax on it — at `ROOM.calm` 0.3 of the boil, `ROOM.sway`
+a quarter of the sway and `PARALLAX` halved since 0.23.3 ("the elements
+in the room are moving too much" — the PM, then the lead again); the monitor's glass is the pale screen the artist
 drew, never the spiral through it and never a black square (`glassBase`). A PERSON IS ALWAYS THERE on the main site:
 `live` is true there whatever the query, so the date and the spice are
 theirs to type and the scripted hand never fills them in (`?demo=1` is the
 lab's and the reels' tool). The 90s poster and clock sit exactly where the
 artist's composite has them (`data/roomElements.js`, fitted to
-`static/90s_Illustration.jpg`), so the wall's tape marks are covered. AGAIN
+`static/90s_Illustration.jpg`), so the wall's tape marks are covered. THE
+WALL NEVER WRAPS (0.23.4): the fall draws it ONCE and fills the plate past
+its picture with the wall's own edge colour (`rooms.js edgeOf`, `fall.js
+layer`) — it was mirror-tiled, and on a phone, where the wall sits deep
+behind a plate taller than the board, the tile's tape marks showed at the
+top (the lead: "the bg should never wrap"). AGAIN
 (`.again()`) dollies the lens on THROUGH the dark glass — slowly, the hold's
 clock kept running so the sway and the parallax go on — until the glass
 covers the board (`covers`); the glass DARKENS as the lens goes through it

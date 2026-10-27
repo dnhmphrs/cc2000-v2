@@ -172,6 +172,16 @@ export const COPY = [
 ];
 
 // ── The news, a headline or two a year (CAPITALS; the lead's to edit) ───────
+// THE PAGE'S OWN WORDS on the landed screen (runs/Next.svelte): the line
+// over the player, the share key, the restart key, and what the share key
+// says for a moment once the link is on the clipboard.
+export const PAGE = {
+	response: 'YOU WERE CONCEIVED TO',
+	share: 'SHARE',
+	again: 'START AGAIN',
+	copied: 'LINK COPIED'
+};
+
 export const HEADLINES = {
 	1950: ['KOREAN WAR BEGINS'],
 	1951: ['COLOUR TELEVISION'],

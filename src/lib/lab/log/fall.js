@@ -525,9 +525,30 @@ function drawFall(
 		// (with a reveal the last room is chalk until it comes, all colour once
 		// it has passed the board's corners: no flood)
 		const p = rev ? 0 : reveal && k === L ? (revealed ? 1 : 0) : paintOf(k, l.depth);
-		const tiles = key === 'bg' ? 1 : 0;
+		// (0.23.4: the wall is drawn ONCE, and the plate past its picture is
+		// filled with the wall's own edge colour — it was mirror-tiled, and on
+		// a phone, where the wall sits deep behind a plate taller than the
+		// board, the tile's marks showed: "the bg should never wrap", the lead)
+		const tiles = 0;
 		// mode: null as the flood has it; 'chalk' or 'colour' alone (the reveal)
 		const draw = (mode) => {
+			if (key === 'bg') {
+				// the wall's colour under its picture, out to the plate's edge
+				const fill = (f, al = 1) => {
+					if (!f || al <= 0.002) return;
+					ctx.save();
+					ctx.globalAlpha *= al;
+					ctx.fillStyle = f;
+					ctx.fillRect(box[0], box[1], box[2] - box[0], box[3] - box[1]);
+					ctx.restore();
+				};
+				if (mode === 'colour') fill(a.fill);
+				else if (mode === 'chalk') fill(a.chalkFill, 0.95);
+				else {
+					if (a.chalk && p < 0.998) fill(a.chalkFill, 0.95 * (1 - p));
+					fill(a.fill, p);
+				}
+			}
 			for (let j = -tiles; j <= tiles; j++)
 				for (let i = -tiles; i <= tiles; i++) {
 					const x = l.x + i * l.w;

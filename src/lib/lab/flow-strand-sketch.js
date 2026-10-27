@@ -310,12 +310,14 @@ const B = {
 	pan: [6.2, 6.8], // the stop to the strand's 5′ end
 	field: [Q1 + 0.25, Q1 + 0.7],
 	slider: [Q2 + 0.35, Q2 + 0.8],
-	trace: 1.2, // a gold trace's run down the strand
+	trace: 0.8, // a gold trace's run down the strand (0.23.3: a touch faster — the lead)
 	still: 1.6, // the strand's turn dies away over this, from E2
 	asked: [14.7, 15.3], // the questions go (before the caption types over the slider's row)
 	genetics: [15.3, 22.3], // the caption
-	view: [15.0, 16.2], // the lens comes to the reading
-	read: [16.0, 18.3], // the frame 5′ → 3′ (quicker than 19.6; 17.8 was too quick)
+	// (0.23.3: the lens moves to the reading only once the spice's trace has
+	// run its length — E2 + trace = 15.2 — the lead)
+	view: [15.2, 16.4], // the lens comes to the reading
+	read: [16.3, 18.5], // the frame 5′ → 3′ (quicker than 19.6; 17.8 was too quick)
 	axis: [18.7, 19.9], // the strand closes onto the axis
 	rope: [19.0, 20.5], // the backbones twist down the tail
 	back: [18.9, 20.7], // the lens draws back to the whole body
@@ -388,10 +390,10 @@ const EXIT = {
 	black: 0.8,
 	len: 11
 };
-const PARALLAX = [0.09, 0.05];
+const PARALLAX = [0.05, 0.03]; // (0.23.3: half again — "still moving too much")
 // The landed room's motion: the boil's amplitude and the sway's, of what
 // they were (the PM: too much)
-const ROOM = { calm: 0.6, sway: 0.5 };
+const ROOM = { calm: 0.3, sway: 0.25 };
 
 // (K2: no flash — the hole is the iris; see the header)
 
@@ -2251,7 +2253,9 @@ export default async function make({ THREE, at }) {
 	// (0.22.3: the rays with the porthole from the moment it is there — the
 	// lens on the axis, B.onAxis — at the SUN's strength, settling to the
 	// touch over the fall as the white resolves into the room)
-	const LIGHT = { rays: 0.32, sun: 0.6, core: 0.14, turn: 0.05 };
+	// (0.23.4: the sunburst TURNS at `turn` of a turn a second and SHIMMERS —
+	// two slow waves on its strength — "a little too static", the lead)
+	const LIGHT = { rays: 0.32, sun: 0.42, core: 0.14, turn: 0.12 }; // (sun 0.6 was a little too bright — the lead)
 	function lightAt(t) {
 		const t0 = B.onAxis[1];
 		if (t < t0) return null;
@@ -2271,7 +2275,8 @@ export default async function make({ THREE, at }) {
 		const settle = smooth(span(t, B.fall[0], B.land[1]));
 		const on = smooth(span(t, ...B.on));
 		const tb = holdSecs === null ? t : t + (secsNow - holdSecs);
-		const breath = 1 + 0.08 * Math.sin((TAU * (tb - B.on[0])) / 3.1);
+		const breath =
+			1 + 0.16 * Math.sin((TAU * (tb - t0)) / 2.3) + 0.09 * Math.sin((TAU * (tb - t0)) / 0.73 + 1);
 		const off = exit ? smooth(span(exit.s, ...EXIT.screen)) : 0;
 		const k = (1 - off) * breath;
 		if (near * k <= 0.002) return null;
