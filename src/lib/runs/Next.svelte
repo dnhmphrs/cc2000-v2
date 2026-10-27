@@ -43,16 +43,20 @@
 	$: endStyle = screen
 		? `left:${screen[0]}px;top:${screen[3] - BAR}px;width:${gw}px;height:${BAR}px;bottom:auto;transform:none;`
 		: '';
-	// ?screen=player: the player ON the glass (the sketch letters nothing
-	// there) — Spotify's 352 × 152 bar, the artwork showing, scaled to the
-	// glass's width and set in its middle above the keys
-	let playerOnScreen = false;
+	// THE PLAYER ON THE GLASS (0.23.2, the default — the PM wanted the embed,
+	// not the title; the lead: the embed filling the screen of the scene, AGAIN
+	// centred low on the page): Spotify's 352 × 352 embed, the artwork big,
+	// scaled to fill the glass and set in its middle; the sketch letters
+	// nothing there. ?screen=title: the title lettered on the glass, the bar
+	// in the corner and AGAIN on the glass, as 0.21 – 0.23.1 had it.
+	let playerOnScreen = true;
 	const PW = 352;
-	const PH = 152;
-	$: pk = screen ? Math.min(1, gw / PW) : 1;
+	const PH = 352;
+	$: gh = screen ? screen[3] - screen[1] : 0;
+	$: pk = screen ? Math.min(gw / PW, gh / PH) : 1;
 	$: playerStyle =
 		playerOnScreen && screen
-			? `left:${screen[0] + (gw - PW * pk) / 2}px;top:${screen[1] + Math.max(0, (screen[3] - BAR - screen[1] - PH * pk) / 2)}px;width:${PW}px;height:${PH}px;transform:scale(${pk});transform-origin:0 0;border-radius:${8 / pk}px;`
+			? `left:${screen[0] + (gw - PW * pk) / 2}px;top:${screen[1] + (gh - PH * pk) / 2}px;width:${PW}px;height:${PH}px;transform:scale(${pk});transform-origin:0 0;border-radius:${6 / pk}px;`
 			: '';
 	// (the embed is a horizontal bar in the top left corner, under the
 	// version label — the lead; the keys and the song stay on the screen)
@@ -79,7 +83,7 @@
 		let onResize = null;
 		(async () => {
 			const q = new URLSearchParams(location.search);
-			playerOnScreen = q.get('screen') === 'player';
+			playerOnScreen = q.get('screen') !== 'title';
 			const atRaw = q.get('at');
 			const at = atRaw === null || atRaw === '' ? null : Math.max(0, Math.min(1, Number(atRaw)));
 			const v0 = only ? '' : (q.get('v') ?? '').replace(/[^a-z0-9-]/g, '');
@@ -159,7 +163,12 @@
 <canvas bind:this={canvas}></canvas>
 {#if failed}<p class="failed">{failed}</p>{/if}
 {#if ended}
-	<div class="end" class:on={!!screen} style={endStyle} use:portal>
+	<div
+		class="end"
+		class:on={!!screen && !playerOnScreen}
+		style={playerOnScreen ? '' : endStyle}
+		use:portal
+	>
 		<button type="button" on:click={again}>again</button>
 	</div>
 	{#if embed}
@@ -168,7 +177,7 @@
 				title="{song.title} — {song.artist}"
 				src={embed}
 				width="352"
-				height={playerOnScreen && screen ? 152 : 80}
+				height={playerOnScreen && screen ? 352 : 80}
 				frameborder="0"
 				allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 				loading="lazy"
@@ -191,7 +200,7 @@
 		z-index: 30; /* over the board's canvases (11), under the corner's switch (35) */
 		pointer-events: auto; /* the layout's main has none, for the board */
 		left: 50%;
-		bottom: 22px;
+		bottom: 7vh; /* centred, low on the page (the lead) */
 		transform: translateX(-50%);
 		display: flex;
 		gap: 10px;
@@ -244,8 +253,12 @@
 	.player iframe {
 		height: 80px;
 	}
+	.player.screen {
+		max-width: none; /* scaled to the glass, whatever the board's width */
+		box-shadow: none;
+	}
 	.player.screen iframe {
-		height: 152px;
+		height: 352px;
 	}
 	.failed {
 		position: fixed;
