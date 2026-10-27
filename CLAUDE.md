@@ -133,7 +133,8 @@ AND THE ONLY PAGE (see "Two sites" above). `?v=<name>` plays a variant
 `flow-strand-sketch-<name>.js` (on dev only): the run itself is the newest
 cut — L (0.21, `?v=l` is an alias of it), CLEAN UNTIL THE ROOM: the entry
 (the title, WHEN WERE YOU BORN? and HOW SPICY ARE YOUR PARENTS? typed into
-the double helix — `Q1_TEXT`, `Q2_TEXT`; each question typed within the
+the double helix — `Q1_TEXT`, `Q2_TEXT`; the title's stop fades where it is, it
+used to glide over and become the strand's 5′ end; each question typed within the
 0.8 s before its wait, `keys`, since live the run HOLDS at the wait until
 the person answers and a question still being typed there stopped
 mid-word), COMPILING USER GENETICS (the
@@ -149,9 +150,15 @@ the swimmer: `lensAt`), SIMULATING CONCEPTION: the swim into ONE GROOVE
 it, its turns JOINED — the hand's wobble is one noise along the whole
 groove, `sketchTurn`; the ONE groove goes on round the room until the room's frame
 has taken the board — cut A's second set of rings at the dive is gone, the
-spiral's lines doubled with it), about nine and a half turns to the
+spiral's lines doubled with it — and through the fall it EXPANDS WITH THE
+FRAME (`rings`: the lens's distance to the apex taken in by the e-folds
+the porthole has grown beyond the swim's zoom), so the frame never
+overtakes a turn and hides it ("the room jumped in front of the tunnel"
+— the lead): every turn expands ahead of the frame and off the board), about nine and a half turns to the
 PORTHOLE at the apex — a circle onto the last room, in colour from its first pixel, grown
-steadily from a speck (`portR`; NOTHING of a record: no label, no disc, no
+steadily from a speck (`portR`, to the fall's own first plate on that board, `S.plate0`, so the
+fall opens on exactly it — on a phone the room used to drop a third at the
+dive; NOTHING of a record: no label, no disc, no
 spindle, no flecks — the lead saw a CD and wanted it gone) — and THE PORTHOLE
 IS THE ROOM'S OWN FRAME (0.22): a circle at the end of the tunnel while
 the room is far, and through the fall a circle of 0.9 of the plate's REAL
@@ -169,7 +176,9 @@ into the room and comes to rest, the monitor switches on softly and A TOUCH
 OF THE HOLY LIGHT comes out of it (`lightAt`: the lens's `light` — the lit
 glass smeared out along a slow sunburst's rays across the room, and a
 small core — low, no bloom, breathing on the hold's clock, off with AGAIN:
-sketch A's sun at a touch, not the flash); no date, no maths, no conversation anywhere on the
+sketch A's sun at a touch, not the flash; the RAYS come up EARLY, out of
+the porthole from `LIGHT.from` seconds before the dive, so the sun is seen
+as the tunnel's end is approached, the core only with the monitor); no date, no maths, no conversation anywhere on the
 fly-in. THE OUTPUT IS ON THE COMPUTER SCREEN: the song and its artist
 lettered on the glass in the hand — capitals, WRAPPED at the words to the
 glass's width and sized to fit it, so a long title wraps rather than
@@ -191,8 +200,10 @@ artist's composite has them (`data/roomElements.js`, fitted to
 `static/90s_Illustration.jpg`), so the wall's tape marks are covered. AGAIN
 (`.again()`) dollies the lens on THROUGH the dark glass — slowly, the hold's
 clock kept running so the sway and the parallax go on — until the glass
-covers the board (`covers`), and that dark is what the next title types on:
-no fade. The endings
+covers the board (`covers`); the glass DARKENS as the lens goes through it
+(`EXIT.dark`) and once it covers the board the picture fades to the ground
+over `EXIT.fade` — it snapped from the pale glass to the dark — and that
+dark is what the next title types on. The endings
 of round K sit beside it on cut K's base (`docs/explore-12.md`): `?v=k` cut
 K itself (the record and the needle drop), `?v=k1` the needle drop cleaned,
 `?v=k2` the iris as it was picked, `?v=k3` the screen's light (`log/fall.js

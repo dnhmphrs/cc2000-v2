@@ -369,12 +369,17 @@ const endAt = (edge) => (edge ? BREAK.end : SECONDS);
 // parallax on the landed room: the lens nudged by the pointer, by PARALLAX
 // of the room, eased; and the swimmer's VEER: each answer in tunnel B turns
 // it off its line, the lens leaning after it.
+// (0.22.2: the glass DARKENS as the lens goes through it (dark), and once
+// it covers the board the picture FADES to the ground over `fade` — it
+// snapped from the pale glass to the title's dark, the lead)
 const EXIT = {
 	words: [0, 0.7],
 	screen: [0.3, 1.2],
 	fly: [0.9, 7.4],
+	dark: [1.4, 4.2],
 	depth: 2.6,
-	black: 0.25,
+	fade: 0.7,
+	black: 0.8,
 	len: 11
 };
 const PARALLAX = [0.09, 0.05];
@@ -389,10 +394,6 @@ function eased(x, D) {
 	return D * (u * u * u - (u * u * u * u) / 2);
 }
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-const easeIO = (x) => {
-	const t = clamp01(x);
-	return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-};
 // Out with an overshoot: a slam's pop.
 const backOut = (x) => {
 	const k = clamp01(x) - 1;
@@ -826,6 +827,11 @@ export default async function make({ THREE, at }) {
 			return lerp(E[i], E[i + 1], f - i);
 		};
 		S = { key, bases, spec, body, decade, fall, geo, rc, efolds, calc, F, words, order, deep };
+		// The fall's first plate on this board (px tall): what the swim grows
+		// the room to by the dive, so the fall opens on exactly it (0.22: it
+		// grew to ROOM_AT_BAND of the board, which on a phone the fall's fit
+		// could not start from — the room dropped a third at the dive)
+		S.plate0 = geo.plate * Math.pow(geo.levels[0].X, -geo.zetaAt(B.fall[0]));
 		// (L) when the fall's plate first covers the board — the porthole,
 		// the plate's inscribed circle until then, is let past the board
 		// (0.22: the porthole, the room's own frame, past the board's corners
@@ -1320,10 +1326,10 @@ export default async function make({ THREE, at }) {
 	// (L) THE PORTHOLE: the circle at the apex the room is seen through,
 	// grown steadily from a speck of two pixels as the lens locks on to
 	// ROOM_AT_BAND of the board by the dive (firstRoom's law), in px.
-	const portR = (t, h) => {
+	const portR = (t, st) => {
 		if (t < B.onAxis[1]) return 0;
 		const u = span(t, B.onAxis[1], B.fall[0]);
-		return 0.5 * lerp(2, ROOM_AT_BAND * h, u * u);
+		return 0.5 * lerp(2, st.plate0, u * u);
 	};
 	// THE PORTHOLE IS THE ROOM'S OWN FRAME (0.22). A circle at the end of
 	// the tunnel while the room is far (the swim: R = 0.49 of the plate's
@@ -1342,7 +1348,7 @@ export default async function make({ THREE, at }) {
 	// motion and nothing opens after. No release, no second rate.
 	function holeAt(t, w, h, st, O, nudge = null, zeta = null) {
 		if (t < B.onAxis[1]) return { r: 0, box: null, covers: false };
-		if (t < B.fall[0]) return { r: 0.98 * portR(t, h), box: null, covers: false };
+		if (t < B.fall[0]) return { r: 0.98 * portR(t, st), box: null, covers: false };
 		const box = st.fall.frameOf(t, w, h, { origin: O, nudge, zeta });
 		if (!box) return { r: 0, box: null, covers: false };
 		const c = lerp(0.49, HOLE_C, smooth(span(t, B.fall[0], B.fall[0] + 1.0)));
@@ -1507,10 +1513,21 @@ export default async function make({ THREE, at }) {
 	// pulling apart along a seam: the groove runs up to the label.)
 	const recordTurn = (t) => TAU * GROOVE_TURN * Math.max(0, t - B.swim);
 	function rings(ink, t, w, h, cam, st, bo, band, O) {
-		void band;
 		void O;
-		const zL = cam.pos[0] - X_APEX;
+		let zL = cam.pos[0] - X_APEX;
 		if (zL <= 1) return;
+		// (0.22.2) THROUGH THE FALL THE GROOVE EXPANDS WITH THE ROOM'S FRAME:
+		// the lens's distance to the apex is taken in by the e-folds the
+		// porthole has grown beyond the swim's own zoom (the fall gathers,
+		// and the circle widens into the frame), so the frame never overtakes
+		// a turn of the spiral and hides it — the room "jumped in front of
+		// the tunnel" (the lead); every turn expands ahead of the frame and
+		// off the board, the tunnel's own expansion and nothing else.
+		if (t > B.fall[0] && band && band.hole > 0) {
+			const want = Math.log(band.hole / (0.49 * st.plate0));
+			const got = st.efolds(t) - st.efolds(B.fall[0]);
+			zL *= Math.exp(-Math.max(0, want - got));
+		}
 		const { k, step, umin } = TUN;
 		const iLo = Math.ceil(Math.log(Z_NOSE0 / (0.985 * zL)) / step);
 		const iHi = Math.floor(Math.log(Z_NOSE0 / (umin * zL)) / step);
@@ -2084,7 +2101,14 @@ export default async function make({ THREE, at }) {
 	let exit = null;
 	// (L: no fade — the dark glass takes the board (`covers`, in fallen) and
 	// that is the black; a hard cap at EXIT.len if it never does)
-	const exitFade = () => (exit && (exit.black !== undefined || exit.s >= EXIT.len - 0.05) ? 1 : 0);
+	const exitFade = () =>
+		!exit
+			? 0
+			: exit.black !== undefined
+				? smooth(span(exit.s - exit.black, 0, EXIT.fade))
+				: exit.s >= EXIT.len - 0.05
+					? 1
+					: 0;
 	const exitWords = () => (exit ? smooth(span(exit.s, ...EXIT.words)) : 0);
 	// The veer: where the answers have turned the swimmer at t — each slam
 	// with a `veer` bends it off its line while it is up, the way read off
@@ -2108,6 +2132,8 @@ export default async function make({ THREE, at }) {
 
 	// ── Render ───────────────────────────────────────────────────────────────
 	let lastGlass = null; // the last glass on the board this frame (the flash's)
+	let lastApex = null; // the vanishing point this frame, once the journey is on
+	let lastHole = 0; // the porthole's radius this frame, while it is opening
 	function render() {
 		window.__prof?.begin();
 		const t = time.t;
@@ -2182,28 +2208,41 @@ export default async function make({ THREE, at }) {
 	// bloom, no burn, no veil: the sun of sketch A's conception at a touch,
 	// not the flash. It breathes on the hold's clock and turns slowly, and
 	// goes with the screen under AGAIN.
-	const LIGHT = { rays: 0.32, core: 0.14, turn: 0.05 };
+	// (0.22.2: the rays come up EARLY — from `from` seconds before the dive,
+	// out of the porthole at the tunnel's end, so the sun is seen as it is
+	// approached, the lead; the core only with the monitor)
+	const LIGHT = { rays: 0.32, core: 0.14, turn: 0.05, from: 2.6 };
 	function lightAt(t) {
+		const t0 = B.dive[0] - LIGHT.from;
+		if (t < t0) return null;
 		const g = lastGlass;
-		if (!g || t < B.on[0]) return null;
-		const x = (g[0] + g[2]) / 2;
-		const y = (g[1] + g[3]) / 2;
-		const gr = 0.5 * Math.min(g[2] - g[0], g[3] - g[1]);
+		let x;
+		let y;
+		let r;
+		if (g) {
+			x = (g[0] + g[2]) / 2;
+			y = (g[1] + g[3]) / 2;
+			r = Math.max(8, 0.45 * Math.min(g[2] - g[0], g[3] - g[1]), 0.45 * lastHole);
+		} else if (lastApex) {
+			[x, y] = lastApex;
+			r = Math.max(8, 0.45 * lastHole);
+		} else return null;
+		const near = smooth(span(t, t0, B.on[1]));
 		const on = smooth(span(t, ...B.on));
 		const tb = holdSecs === null ? t : t + (secsNow - holdSecs);
 		const breath = 1 + 0.08 * Math.sin((TAU * (tb - B.on[0])) / 3.1);
 		const off = exit ? smooth(span(exit.s, ...EXIT.screen)) : 0;
-		const k = on * (1 - off) * breath;
-		if (k <= 0.002) return null;
+		const k = (1 - off) * breath;
+		if (near * k <= 0.002) return null;
 		return {
 			x,
 			y,
-			r: Math.max(8, 0.9 * gr),
-			rays: LIGHT.rays * k,
-			core: LIGHT.core * k,
+			r,
+			rays: LIGHT.rays * near * k,
+			core: LIGHT.core * on * k,
 			rings: 0,
 			phase: 0,
-			turn: TAU * LIGHT.turn * (tb - B.on[0]),
+			turn: TAU * LIGHT.turn * (tb - t0),
 			bloom: -1,
 			bloomSoft: 1,
 			burnA: 0,
@@ -2307,7 +2346,7 @@ export default async function make({ THREE, at }) {
 		// the room being brought in at the end); the fall carries on from the
 		// size it reaches. ζ is read back off the size.
 		const u = span(t, B.onAxis[1], B.fall[0]);
-		const ph = lerp(2, ROOM_AT_BAND * h, u * u);
+		const ph = lerp(2, st.plate0, u * u);
 		const X0 = g.levels[0].X;
 		const zeta = Math.log(g.plate / ph) / Math.log(X0);
 		if (ph < 1.5) return;
@@ -2368,11 +2407,10 @@ export default async function make({ THREE, at }) {
 		const bo = boilAt(t);
 		prof('lens');
 
-		// The title fading and the stop gliding to the strand's 5′ end.
-		const five = cam.project([0, 0, 0]);
+		// The title fading, and its stop fading where it is (0.22: it used to
+		// glide over and become the strand's 5′ end — the lead).
 		entry.title(ctx, w, h, t);
 		prof('title');
-		const pan = easeIO(span(t, ...B.pan));
 		const stop = TERM.layout(ctx, w, h).stop;
 
 		// ── The tunnel: the rings, the speed lines, the debris ──
@@ -2386,6 +2424,8 @@ export default async function make({ THREE, at }) {
 		const band = journey ? bandAt(t, w, h, st) : null;
 		Z.reset(w, h);
 		if (journey && O[2] > NEAR) {
+			lastApex = [O[0], O[1]];
+			lastHole = band.hole;
 			body.fillDepth(Z, cam, shape, pose);
 			prof('depth');
 			const ink = inkFor(gUnder);
@@ -2425,16 +2465,10 @@ export default async function make({ THREE, at }) {
 				reach: t >= E2 ? lerp(XR(NR - 1) + DS * 0.5, S_LEN, close) : undefined
 			});
 		}
-		// The stop: at the 5′ end, a full chalk dot (gone into the nose as the
-		// rings come).
-		if (t < B.read[0] + 0.6) {
-			const X = lerp(stop.x, five[0], pan);
-			const Y = lerp(stop.y, five[1], pan);
-			const sa = 0.95 * (1 - smooth(span(t, B.read[0], B.read[0] + 0.6)));
-			disc(ctx, X, Y, lerp(stop.r, Math.max(2.2, 0.8 * stop.r), pan), {
-				fill: PAL.chalk,
-				alpha: sa
-			});
+		// The terminal's stop, fading with the title over B.pan.
+		if (t < B.pan[1]) {
+			const sa = 0.95 * (1 - smooth(span(t, ...B.pan)));
+			if (sa > 0.004) disc(ctx, stop.x, stop.y, stop.r, { fill: PAL.chalk, alpha: sa });
 		}
 
 		// ── The body ──
@@ -2518,11 +2552,24 @@ export default async function make({ THREE, at }) {
 	// screen's light; never the spiral under the board through it, and never
 	// the board's dark (a black square on the coloured room — the lead).
 	const GLASS = '#ccdbf8';
-	function glassBase(ctx, glass) {
+	const hex = (c) => {
+		const h = c.replace('#', '');
+		const f =
+			h.length === 3
+				? h.split('').map((x) => x + x)
+				: [h.slice(0, 2), h.slice(2, 4), h.slice(4, 6)];
+		return f.map((x) => parseInt(x, 16));
+	};
+	const mixHex = (a, b, k) => {
+		const A = hex(a);
+		const Bc = hex(b);
+		return `rgb(${A.map((x, i) => Math.round(lerp(x, Bc[i], k))).join(',')})`;
+	};
+	function glassBase(ctx, glass, dark = 0) {
 		const [x0, y0, x1, y1] = glass;
 		if (x1 - x0 < 1 || y1 - y0 < 1) return;
 		ctx.save();
-		ctx.fillStyle = GLASS;
+		ctx.fillStyle = dark > 0.002 ? mixHex(GLASS, PAL.ground, dark) : GLASS;
 		ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
 		ctx.restore();
 	}
@@ -2686,6 +2733,8 @@ export default async function make({ THREE, at }) {
 		const O = Oa[2] > NEAR ? [Oa[0], Oa[1]] : [w / 2, h / 2];
 		const band0 = bandAt(t, w, h, st, O, nudge);
 		const opening = band0.hole > 0 && !band0.covers;
+		lastApex = O;
+		lastHole = opening ? band0.hole : 0;
 		// The boil eases off the coloured room after the flash — nearly still,
 		// so the room is seen as drawn rather than being worked over.
 		// (L: the landed room stays as it lands — warm, active, a little bouncy
@@ -2832,8 +2881,9 @@ export default async function make({ THREE, at }) {
 		if (cam.glass) {
 			const off = exit ? smooth(span(exit.s, ...EXIT.screen)) : 0;
 			// (L) the glass as drawn, under the screen's light: the spiral under
-			// the board never shows through the monitor
-			glassBase(ctx, cam.glass);
+			// the board never shows through the monitor; dark as AGAIN goes
+			// through it
+			glassBase(ctx, cam.glass, exit ? smooth(span(exit.s, ...EXIT.dark)) : 0);
 			screenOn(ctx, cam.glass, smooth(span(t, ...B.on)) * (1 - off), tf);
 			screenWords(ctx, cam.glass, t, st, bo, 1 - off);
 		}
