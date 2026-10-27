@@ -132,24 +132,38 @@ sketch tags (`board.js tag` stays silent there). ON THE MAIN SITE IT IS `/`
 AND THE ONLY PAGE (see "Two sites" above). `?v=<name>` plays a variant
 `flow-strand-sketch-<name>.js` (on dev only): the run itself is the newest
 cut — L (0.21, `?v=l` is an alias of it), CLEAN UNTIL THE ROOM: the entry
-(the title, the date and the spice typed into the double helix), COMPILING
-USER GENETICS (the amino-acid generator: the reading frame over the helix,
-the body written codon by codon, each ring's own shape flashed in gold —
-`log/body.js codonSection`), SIMULATING CONCEPTION: the swim into ONE GROOVE
+(the title, WHEN WERE YOU BORN? and HOW SPICY ARE YOUR PARENTS? typed into
+the double helix — `Q1_TEXT`, `Q2_TEXT`), COMPILING USER GENETICS (the
+amino-acid generator: the reading frame over the helix, the body written
+codon by codon, each ring's own shape flashed in gold — `log/body.js
+codonSection`; the strand LEVEL throughout, read a little off side-on, the
+body built flat across the board — or, on a board taller than it is wide,
+the lens rolled a quarter turn as it comes to the reading so the body is
+built upright, the head at the top, and rolled back as it goes round behind
+the swimmer: `lensAt`), SIMULATING CONCEPTION: the swim into ONE GROOVE
 (I5's: a helix down the cone turning under the stylus, nothing lettered on
 it, its turns JOINED — the hand's wobble is one noise along the whole
 groove, `sketchTurn`), about nine and a half turns to the PORTHOLE at the
 apex — a circle onto the last room, in colour from its first pixel, grown
 steadily from a speck (`portR`; NOTHING of a record: no label, no disc, no
-spindle, no flecks — the lead saw a CD and wanted it gone) — and THE IRIS
-(K2, straightened): the porthole is the circle INSIDE the room's plate
-(`holeR`, `plateH`), growing with the plate through the fall — the swim's
-steady law to the fall, the fall's own zoom after — so the plate's corners
-never show in the tunnel (the rectangle popped through the spiral, once),
-and it is let past the board only once the plate covers it (`S.tCover`),
-eased over 1.2 s so the widening has no start to see;
-no flash, the lens falls on into the room and comes to rest, the monitor
-switches on softly; no date, no maths, no conversation anywhere on the
+spindle, no flecks — the lead saw a CD and wanted it gone) — and THE PORTHOLE
+IS THE ROOM'S OWN FRAME (0.22): a circle at the end of the tunnel while
+the room is far, and through the fall a circle of 0.9 of the plate's REAL
+height on the board (`log/fall.js frameOf` — the plate as the fall lays
+it, into the glass and all) CUT TO THE PLATE (`holeAt`, `holePath`), so it
+flattens against the room's top and bottom as it nears and becomes the
+room's rectangle, the circle's arcs for corners, growing with the zoom
+until it has passed the board's corners — BEFORE the lens is at rest
+(`S.tCover`, ~41.9 on a laptop; `FILL.h` 1.12 keeps a phone's plate past
+its board), so the room takes the frame in the one motion and nothing
+opens after (the nest law read the plate too small past ζ = 0, so the hole
+lagged the room and had to be let go after the lens had stopped — "the
+tunnel suddenly widens", the lead, twice); no flash, the lens falls on
+into the room and comes to rest, the monitor switches on softly and A TOUCH
+OF THE HOLY LIGHT comes out of it (`lightAt`: the lens's `light` — the lit
+glass smeared out along a slow sunburst's rays across the room, and a
+small core — low, no bloom, breathing on the hold's clock, off with AGAIN:
+sketch A's sun at a touch, not the flash); no date, no maths, no conversation anywhere on the
 fly-in. THE OUTPUT IS ON THE COMPUTER SCREEN: the song and its artist
 lettered on the glass in the hand — capitals, WRAPPED at the words to the
 glass's width and sized to fit it, so a long title wraps rather than

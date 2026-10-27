@@ -191,7 +191,24 @@ export function makeFall({
 		cam.glass = glassAt[g.L] ? glassAt[g.L].box : null;
 		return cam;
 	};
-	return { order, beats, geometry, draw };
+	// The last room's PLATE on the board this frame, [x0, y0, x1, y1] (CSS
+	// px) — or null while it is behind the lens — as draw would lay it with
+	// the same options: for a flow that cuts a window onto the room before
+	// drawing it (the run's porthole), so the window is the plate's own.
+	const frameOf = (t, w, h, { zeta = null, nudge = null, origin = null } = {}) => {
+		const g = geometry(w, h);
+		const cam = lensAt(g, zeta ?? g.zetaAt(t), t, w, h, beats, K, nudge, origin);
+		const lv = g.levels[g.L];
+		const dw = cam.z - lv.O[2];
+		if (dw <= K.nearZ * cam.s) return null;
+		const m = (g.F * lv.s) / dw;
+		const e = cam.ox + (g.F * (lv.O[0] - cam.x)) / dw;
+		const f = cam.oy - (g.F * (lv.O[1] - cam.y)) / dw;
+		const x0 = e - (m * PLATE.W) / 2;
+		const y0 = f - (m * PLATE.H) / 2;
+		return [x0, y0, x0 + m * PLATE.W, y0 + m * PLATE.H];
+	};
+	return { order, beats, geometry, draw, frameOf };
 }
 
 // ── The nest ─────────────────────────────────────────────────────────────────

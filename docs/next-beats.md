@@ -1,6 +1,6 @@
 # The run at `/next` (cut L), timed, and how it hangs together
 
-Version 0.21: cut L, the iris, clean. The run is 52 s; `?at=` is seconds ÷ 52. On the main site this is `/`.
+Version 0.22: cut L, the landing one motion, clean. The run is 52 s; `?at=` is seconds ÷ 52. On the main site this is `/`.
 
 | part       | from | to   | what happens                                                                                                                                                                                                                                                                                          |
 | ---------- | ---- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -9,8 +9,8 @@ Version 0.21: cut L, the iris, clean. The run is 52 s; `?at=` is seconds ÷ 52. 
 | Compile    | 15.3 | 22.2 | COMPILING USER GENETICS: the reading frame 16.0 – 18.3 over the helix, each codon's own shape flashed in gold and relaxed into the body (the amino-acid generator), the strand onto the axis 18.7 – 19.9, the rope, the body; alive at 22.2                                                           |
 | Swim       | 22.2 | 28.4 | SIMULATING CONCEPTION (to 39.2); the swimmer sets off at 22.5, the lens round behind 22.6 – 25.2, onto the axis 25.6 – 28.4; the GROOVE sketched in turn by turn 23.1 – 26.2, one noise along it so the turns join, turning under the stylus; nothing lettered, nothing flying                        |
 | The groove | 28.4 | 39.9 | the stylus tracks in, about nine and a half turns in all; at the apex THE PORTHOLE, a circle onto the last room in colour, a speck from 28.4 grown steadily to 0.3 of the board by the dive; nothing of a record                                                                                      |
-| The fall   | 39.9 | 42.4 | the porthole is the circle inside the room's plate and grows with it as the fall zooms in — never a corner in the tunnel — and is let past the board once the plate covers it (~42.4); no flash                                                                                                       |
-| The screen | 42.3 | 43.5 | the monitor switches on softly, amber then cream; the song 43.6 – 44.4 and the artist 44.2 – 44.9 lettered on it, on a grid of capitals wrapped to the glass                                                                                                                                          |
+| The fall   | 39.9 | 42.4 | the porthole becomes the room's own frame — a circle cut to the plate, 0.9 of its height by 41.2 — and grows with the zoom until it is past the board (~41.9 on a laptop, ~42.1 on a phone) before the lens is at rest; no flash, nothing opens after                                                 |
+| The screen | 42.3 | 43.5 | the monitor switches on softly, amber then cream, a touch of warm light raying out of it over the room; the song 43.6 – 44.4 and the artist 44.2 – 44.9 lettered on it in the hand, wrapped to the glass                                                                                              |
 | The hold   | 44.9 | 52   | the run holds; AGAIN on the glass, Spotify's embed a compact bar top left from the final scene on; AGAIN: the words fade, the screen goes dark, the lens dollies slowly on through the glass — the room swaying all the way — until the glass covers the board, and the next title types on that dark |
 
 Cut K's table (0.20, now `?v=k`; 54 s, the record and the needle drop) and cut H's (0.18, `?v=h`) follow.
