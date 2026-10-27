@@ -64,22 +64,7 @@
 		: '';
 	$: ek = screen ? Math.min(1, (0.86 * gw) / 352) : 1;
 	$: embedStyle = `width:${Math.round(352 * ek)}px;height:${Math.round(152 * ek)}px;`;
-	let shared = false;
-	async function share() {
-		const url = location.origin + location.pathname;
-		const text = song ? `${PAGE.response} ${song.title} — ${song.artist}` : PAGE.response;
-		try {
-			if (navigator.share)
-				await navigator.share({ title: 'Conception Calculator 2000', text, url });
-			else {
-				await navigator.clipboard.writeText(url);
-				shared = true;
-				setTimeout(() => (shared = false), 1600);
-			}
-		} catch {
-			/* declined */
-		}
-	}
+	// (SHARE does nothing yet — it will be a share screen of its own)
 	// (the embed is a horizontal bar in the top left corner, under the
 	// version label — the lead; the keys and the song stay on the screen)
 	$: embed = song?.uri
@@ -205,7 +190,7 @@
 					</div>
 				{/if}
 				<div class="output-keys">
-					<button type="button" on:click={share}>{shared ? PAGE.copied : PAGE.share}</button>
+					<button type="button">{PAGE.share}</button>
 					<button type="button" on:click={again}>{PAGE.again}</button>
 				</div>
 			</div>
