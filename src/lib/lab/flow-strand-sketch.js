@@ -311,55 +311,57 @@ const B = {
 	field: [Q1 + 0.25, Q1 + 0.7],
 	slider: [Q2 + 0.35, Q2 + 0.8],
 	trace: 0.8, // the date's gold trace's run down the strand (0.23.3: a touch faster — the lead)
-	trace2: 1.2, // the spice's (0.23.6: the second scan was too fast — the lead)
+	trace2: 0.8, // the spice's — the same as the date's (0.23.8: 1.2 was longer than the first, which had a good length — the lead)
 	still: 1.6, // the strand's turn dies away over this, from E2
 	asked: [14.7, 15.3], // the questions go (before the caption types over the slider's row)
-	genetics: [16.6, 23.7], // the caption (typed from the lens's move to the reading, 0.23.7)
-	// (0.23.6: the lens moves to the reading a full second's BEAT after the
-	// spice's trace has run its length — E2 + trace2 = 15.6, the beat, 16.6 —
-	// the lead, twice; everything from the reading on moved with it)
-	view: [16.6, 17.8], // the lens comes to the reading
-	read: [17.7, 20], // the frame 5′ → 3′ (quicker than 19.6; 17.8 was too quick)
-	axis: [20.1, 21.3], // the strand closes onto the axis
-	rope: [20.4, 21.9], // the backbones twist down the tail
-	back: [20.3, 22.1], // the lens draws back to the whole body
-	gens: [21.8, 22.9],
-	contour: [22.6, 23.5],
-	life: 23.6,
+	genetics: [15.9, 22.8], // the caption (typed from the lens's move to the reading, 0.23.7)
+	// (0.23.8: the lens moves to the reading a BEAT of 0.7 s after the spice's
+	// trace has run its length — E2 + trace2 = 15.2, the beat, 15.9: a half
+	// second was too short, a full second a beat too long — the lead; and the
+	// reading 2.1 s, "the slightest touch too slow" at 2.3; everything from
+	// the axis on is 0.9 s earlier than 0.23.7)
+	view: [15.9, 17.1], // the lens comes to the reading
+	read: [17, 19.1], // the frame 5′ → 3′ (quicker than 19.6; 1.1 s was too quick, 2.3 a touch slow)
+	axis: [19.2, 20.4], // the strand closes onto the axis
+	rope: [19.5, 21], // the backbones twist down the tail
+	back: [19.4, 21.2], // the lens draws back to the whole body
+	gens: [20.9, 22],
+	contour: [21.7, 22.6],
+	life: 22.7,
 	// ── the journey (this variant's) ──
-	conception: [24, 32.9], // the caption
-	boil: [23.6, 25], // the hand comes into the lines
-	swim: 23.9,
+	conception: [23.1, 32], // the caption
+	boil: [22.7, 24.1], // the hand comes into the lines
+	swim: 23,
 	// (0.23: the swim CUT — the lens round behind and onto the axis in 4.3 s
 	// rather than 5.9, the porthole phase 5.5 s rather than 11.8, every beat
 	// from the dive on 7.9 s earlier)
-	behind: [24, 26], // the lens round behind the swimmer
-	onAxis: [26.2, 28.2], // the lens down onto the tunnel's axis
-	tunnel: [24.5, 27], // the rings sketched in, near to far
-	lines: [25.4, 27.8], // the speed lines come
-	glint: [25.4, 27], // the light at the end of it
-	premise: [27.2, 28.6], // the slam: the birth date − 264 DAYS
-	count: [28.2, 32.5], // 264 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
-	seam: [30.1, 32.5], // the tunnel narrowed into the band
-	conceived: [32.5, 33.9], // the conception date on the band
+	behind: [23.1, 25.1], // the lens round behind the swimmer
+	onAxis: [25.3, 27.3], // the lens down onto the tunnel's axis
+	tunnel: [23.6, 26.1], // the rings sketched in, near to far
+	lines: [24.5, 26.9], // the speed lines come
+	glint: [24.5, 26.1], // the light at the end of it
+	premise: [26.3, 27.7], // the slam: the birth date − 264 DAYS
+	count: [27.3, 31.6], // 264 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
+	seam: [29.2, 31.6], // the tunnel narrowed into the band
+	conceived: [31.6, 33], // the conception date on the band
 	// (K2) THE IRIS: the spindle hole widens at ONE rate in e-folds of its
 	// radius — a true iris — over 0.8 s, past the board's corners by 32.8
-	dive: [33.4, 34.2],
+	dive: [32.5, 33.3],
 	iris: 0.8,
-	fall: [33.7, 35.9], // (the landing under the white: no beat between the date and the final scene)
-	land: [34.7, 35.9],
+	fall: [32.8, 35], // (the landing under the white: no beat between the date and the final scene)
+	land: [33.8, 35],
 	// (K2) THE IRIS: the room floods with its colour UNDER the label as the
 	// label forms — done by the time the spindle hole is dark in it
 	// (bandAt: m > 0.35) — so the hole is a porthole onto the colour room
-	colour: [26.4, 27],
-	aim: [34.9, 35.9],
+	colour: [25.5, 26.1],
+	aim: [34, 35],
 	// (K2) the monitor switched on softly as the lens comes to rest (B.land
 	// ends 34.5); the song lettered on it; no needle drop, no flash
-	on: [35.8, 37],
-	hit: 36.1, // (the output may go on the screen from here: `screen()`)
-	song: [37.1, 37.9],
-	artist: [37.7, 38.4],
-	push: [36.2, 39.2],
+	on: [34.9, 36.1],
+	hit: 35.2, // (the output may go on the screen from here: `screen()`)
+	song: [36.2, 37],
+	artist: [36.8, 37.5],
+	push: [35.3, 38.3],
 	out: [97.5, 98] // (never: the run HOLDS on its last frame; `again` restarts it)
 };
 // THE BREAKDOWN (a verdict: a birthday the archive cannot answer for). The
@@ -369,7 +371,7 @@ const B = {
 // (strip), the band tears open as it would for the dive but onto the gif
 // tiled across the board rather than the rooms (spread), and the verdict is
 // lettered over the tiles (verdict) and held (end; AGAIN on the page).
-const BREAK = { strip: [34.5, 35.3], spread: [35.3, 37.7], verdict: 37.9, end: 43.4 };
+const BREAK = { strip: [33.6, 34.4], spread: [34.4, 36.8], verdict: 37, end: 42.5 };
 const endAt = (edge) => (edge ? BREAK.end : SECONDS);
 // AGAIN: the song and the date fade (words), the monitor goes dark
 // (screen), and the lens dollies on through the glass — the fall's own
@@ -629,7 +631,7 @@ const FOV_CHASE = 52;
 const FOV_END = 40;
 const fovAt = (t) =>
 	t > B.swim
-		? lerp(lerp(30, FOV_CHASE, smooth(span(t, B.swim, 26.4))), FOV_END, smooth(span(t, 28.4, 32.9)))
+		? lerp(lerp(30, FOV_CHASE, smooth(span(t, B.swim, 25.5))), FOV_END, smooth(span(t, 27.5, 32.0)))
 		: 30;
 
 // ── The board's shape ────────────────────────────────────────────────────────
@@ -842,7 +844,7 @@ export default async function make({ THREE, at }) {
 		const tEnd = F.edge ? B.dive[1] + 1 : B.land[1];
 		const E = new Float64Array(N + 1);
 		const rate = (t) =>
-			smooth(span(t, B.swim, B.swim + 1.5)) * lerp(r0, rc, smooth(span(t, 24.9, 28.9)));
+			smooth(span(t, B.swim, B.swim + 1.5)) * lerp(r0, rc, smooth(span(t, 24.0, 28.0)));
 		for (let i = 1; i <= N; i++) {
 			const ta = B.swim + (i - 1) * DT;
 			E[i] = E[i - 1] + 0.5 * DT * (rate(ta) + rate(ta + DT));
@@ -2257,34 +2259,44 @@ export default async function make({ THREE, at }) {
 	// touch over the fall as the white resolves into the room)
 	// (0.23.4: the sunburst TURNS at `turn` of a turn a second and SHIMMERS —
 	// two slow waves on its strength — "a little too static", the lead)
-	const LIGHT = { rays: 0.32, sun: 0.42, core: 0.14, turn: 0.12, diffuse: 0.26 }; // (sun 0.6 was a little too bright — the lead)
+	const LIGHT = { rays: 0.32, sun: 0.42, core: 0.14, turn: 0.12, diffuse: 0.26, glass: 0.6 }; // (sun 0.6 was a little too bright — the lead)
 	function lightAt(t) {
 		const t0 = B.onAxis[1];
 		if (t < t0) return null;
 		const g = lastGlass;
-		// (0.23.7: ALWAYS DIFFUSE ABOUT ITS ORIGIN — the light's radius is never
-		// under `LIGHT.diffuse` of the board's short side, from the star at the
-		// swim's far end to the room at rest, and inside that radius the lens
-		// lets the sunburst's rays go to a soft glow (lens.js): "i never want
-		// to see the origin of the sunbeam. it wants to always be diffuse
-		// around its polar origin" — the lead)
+		// (0.23.7: ALWAYS DIFFUSE ABOUT ITS ORIGIN — within `soft` of the light
+		// the lens lets the sunburst's rays go to a soft glow (lens.js `ang`):
+		// `LIGHT.diffuse` of the board's short side round the star at the swim's
+		// far end and through the fall, and at rest `LIGHT.glass` of the glass's
+		// short side, so the rays are whole from the glass's edge out and only
+		// their meeting on the glass is soft: "i never want to see the origin of
+		// the sunbeam. it wants to always be diffuse around its polar origin" —
+		// the lead. 0.23.8: at rest the soft zone is the glass's and no wider —
+		// it took the room, the beam went and left a wash: "the sunbeam shouldnt
+		// disappear completely … i still wanted the sunbeam. just not right at
+		// its origin".)
 		const diffuse = LIGHT.diffuse * Math.min(board.w, board.h);
 		let x;
 		let y;
 		let r;
+		let soft;
 		if (g) {
 			x = (g[0] + g[2]) / 2;
 			y = (g[1] + g[3]) / 2;
+			const gm = Math.min(g[2] - g[0], g[3] - g[1]);
 			// (0.23.6: NEVER A POINT — the light is as wide as the porthole all
-			// through the fall and never narrower than the glass at rest: "as the
-			// tunnel fades away i dont want to see the point of the sunbeam ever"
-			// — the lead)
-			r = Math.max(diffuse, 1.1 * Math.min(g[2] - g[0], g[3] - g[1]), 1.2 * lastHole);
+			// through the fall, and once the lens is at rest it eases, over two
+			// seconds, to the whole glass, never narrower: "as the tunnel fades
+			// away i dont want to see the point of the sunbeam ever" — the lead)
+			const settle = smooth(span(t, B.land[1], B.land[1] + 2));
+			r = Math.max(8, 1.1 * gm, 1.2 * lastHole * (1 - settle));
+			soft = Math.max(LIGHT.glass * gm, diffuse * (1 - settle));
 		} else if (lastApex) {
 			[x, y] = lastApex;
 			// (0.23.5: wide — 1.2 of the porthole — so the shafts come from the
 			// whole sun and not a point at its middle: "too much of a point")
-			r = Math.max(diffuse, 1.2 * lastHole);
+			r = Math.max(8, 1.2 * lastHole);
+			soft = diffuse;
 		} else return null;
 		const near = smooth(span(t, t0, t0 + 3));
 		const settle = smooth(span(t, B.fall[0], B.land[1]));
@@ -2299,6 +2311,7 @@ export default async function make({ THREE, at }) {
 			x,
 			y,
 			r,
+			soft,
 			rays: lerp(LIGHT.sun, LIGHT.rays, settle) * near * k,
 			core: LIGHT.core * on * k,
 			rings: 0,
