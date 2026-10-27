@@ -62,7 +62,7 @@
 	$: outputStyle = screen
 		? `left:${screen[0]}px;top:${screen[1]}px;width:${gw}px;height:${gh}px;font-size:${fs}px;`
 		: '';
-	$: ek = screen ? Math.min(1, (0.86 * gw) / 352) : 1;
+	$: ek = screen ? Math.min(1, (0.96 * gw) / 352) : 1; // (0.23.6: a bit bigger — the lead)
 	$: embedStyle = `width:${Math.round(352 * ek)}px;height:${Math.round(152 * ek)}px;`;
 	// (SHARE does nothing yet — it will be a share screen of its own)
 	// (the embed is a horizontal bar in the top left corner, under the
