@@ -314,7 +314,7 @@ const B = {
 	trace2: 1.2, // the spice's (0.23.6: the second scan was too fast — the lead)
 	still: 1.6, // the strand's turn dies away over this, from E2
 	asked: [14.7, 15.3], // the questions go (before the caption types over the slider's row)
-	genetics: [15.3, 23.7], // the caption
+	genetics: [16.6, 23.7], // the caption (typed from the lens's move to the reading, 0.23.7)
 	// (0.23.6: the lens moves to the reading a full second's BEAT after the
 	// spice's trace has run its length — E2 + trace2 = 15.6, the beat, 16.6 —
 	// the lead, twice; everything from the reading on moved with it)
@@ -2257,11 +2257,18 @@ export default async function make({ THREE, at }) {
 	// touch over the fall as the white resolves into the room)
 	// (0.23.4: the sunburst TURNS at `turn` of a turn a second and SHIMMERS —
 	// two slow waves on its strength — "a little too static", the lead)
-	const LIGHT = { rays: 0.32, sun: 0.42, core: 0.14, turn: 0.12 }; // (sun 0.6 was a little too bright — the lead)
+	const LIGHT = { rays: 0.32, sun: 0.42, core: 0.14, turn: 0.12, diffuse: 0.26 }; // (sun 0.6 was a little too bright — the lead)
 	function lightAt(t) {
 		const t0 = B.onAxis[1];
 		if (t < t0) return null;
 		const g = lastGlass;
+		// (0.23.7: ALWAYS DIFFUSE ABOUT ITS ORIGIN — the light's radius is never
+		// under `LIGHT.diffuse` of the board's short side, from the star at the
+		// swim's far end to the room at rest, and inside that radius the lens
+		// lets the sunburst's rays go to a soft glow (lens.js): "i never want
+		// to see the origin of the sunbeam. it wants to always be diffuse
+		// around its polar origin" — the lead)
+		const diffuse = LIGHT.diffuse * Math.min(board.w, board.h);
 		let x;
 		let y;
 		let r;
@@ -2269,16 +2276,15 @@ export default async function make({ THREE, at }) {
 			x = (g[0] + g[2]) / 2;
 			y = (g[1] + g[3]) / 2;
 			// (0.23.6: NEVER A POINT — the light is as wide as the porthole all
-			// through the fall, and once the lens is at rest it eases, over two
-			// seconds, to the whole glass, never narrower: "as the tunnel fades
-			// away i dont want to see the point of the sunbeam ever" — the lead)
-			const settle = smooth(span(t, B.land[1], B.land[1] + 2));
-			r = Math.max(8, 1.1 * Math.min(g[2] - g[0], g[3] - g[1]), 1.2 * lastHole * (1 - settle));
+			// through the fall and never narrower than the glass at rest: "as the
+			// tunnel fades away i dont want to see the point of the sunbeam ever"
+			// — the lead)
+			r = Math.max(diffuse, 1.1 * Math.min(g[2] - g[0], g[3] - g[1]), 1.2 * lastHole);
 		} else if (lastApex) {
 			[x, y] = lastApex;
 			// (0.23.5: wide — 1.2 of the porthole — so the shafts come from the
 			// whole sun and not a point at its middle: "too much of a point")
-			r = Math.max(8, 1.2 * lastHole);
+			r = Math.max(diffuse, 1.2 * lastHole);
 		} else return null;
 		const near = smooth(span(t, t0, t0 + 3));
 		const settle = smooth(span(t, B.fall[0], B.land[1]));

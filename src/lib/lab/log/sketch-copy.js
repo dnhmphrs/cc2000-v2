@@ -115,7 +115,10 @@ export const NOW = 2026; // the year the years count back from
 export const COPY = [
 	// ── the machine's status lines, typed at the bottom: the only words on
 	// the fly-in (cut K: no date, no maths, no conversation) ──
-	{ caption: 'COMPILING USER GENETICS', at: 15.3, until: 22.3 },
+	// (0.23.7: typed from the moment the lens starts for the reading, B.view —
+	// "compiling user genetics should only start typing when the camera starts
+	// zooming in for the amino acid scan", the lead)
+	{ caption: 'COMPILING USER GENETICS', at: 16.6, until: 22.3 },
 	{ when: 'song', caption: 'SIMULATING CONCEPTION', at: 24, until: 32.9 },
 	{ when: 'edge', caption: 'SIGNAL LOST', at: 34.9, until: 43.4 },
 

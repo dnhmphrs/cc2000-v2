@@ -434,14 +434,25 @@ function buildLens({ THREE, renderer, board, canvas }) {
 				const d1 = sin(a2).mul(0.5).add(0.5);
 				const d2 = d1.mul(d1);
 				const d4 = d2.mul(d2);
-				const broad = c2.mul(c2).mul(c1);
-				const fine = d4.mul(d2).mul(0.5);
+				// (0.23.7: DIFFUSE ABOUT THE ORIGIN — inside the light's radius the
+				// rays' angular pattern goes smoothly to its own mean, a soft even
+				// glow in one warm gold, so the rays never meet at a point: they
+				// come out of a disc of light — "always diffuse around its polar
+				// origin", the lead. The means are the patterns' own averages
+				// over the angle: E[c⁵] = 0.246, E[d⁶]/2 = 0.113.)
+				const ang = smoothstep(0.3, 1.1, rr);
+				const broad = mix(float(0.246), c2.mul(c2).mul(c1), ang);
+				const fine = mix(float(0.113), d4.mul(d2).mul(0.5), ang);
 				const burst = broad.add(fine);
 				const hueK = fract(floor(a1.div(TAU).add(0.5)).mul(0.618034));
 				const rayCol = mix(
-					mix(vec3(1.0, 0.42, 0.14), vec3(1.0, 0.72, 0.3), smoothstep(0.0, 0.5, hueK)),
-					vec3(1.0, 0.9, 0.64),
-					smoothstep(0.5, 1.0, hueK)
+					vec3(1.0, 0.72, 0.3),
+					mix(
+						mix(vec3(1.0, 0.42, 0.14), vec3(1.0, 0.72, 0.3), smoothstep(0.0, 0.5, hueK)),
+						vec3(1.0, 0.9, 0.64),
+						smoothstep(0.5, 1.0, hueK)
+					),
+					ang
 				);
 				// the shafts: the picture's brights from the light, warmed,
 				// stronger along the sunburst's rays
