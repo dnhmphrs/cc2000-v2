@@ -43,6 +43,17 @@
 	$: endStyle = screen
 		? `left:${screen[0]}px;top:${screen[3] - BAR}px;width:${gw}px;height:${BAR}px;bottom:auto;transform:none;`
 		: '';
+	// ?screen=player: the player ON the glass (the sketch letters nothing
+	// there) — Spotify's 352 × 152 bar, the artwork showing, scaled to the
+	// glass's width and set in its middle above the keys
+	let playerOnScreen = false;
+	const PW = 352;
+	const PH = 152;
+	$: pk = screen ? Math.min(1, gw / PW) : 1;
+	$: playerStyle =
+		playerOnScreen && screen
+			? `left:${screen[0] + (gw - PW * pk) / 2}px;top:${screen[1] + Math.max(0, (screen[3] - BAR - screen[1] - PH * pk) / 2)}px;width:${PW}px;height:${PH}px;transform:scale(${pk});transform-origin:0 0;border-radius:${8 / pk}px;`
+			: '';
 	// (the embed is a horizontal bar in the top left corner, under the
 	// version label — the lead; the keys and the song stay on the screen)
 	$: embed = song?.uri
@@ -68,6 +79,7 @@
 		let onResize = null;
 		(async () => {
 			const q = new URLSearchParams(location.search);
+			playerOnScreen = q.get('screen') === 'player';
 			const atRaw = q.get('at');
 			const at = atRaw === null || atRaw === '' ? null : Math.max(0, Math.min(1, Number(atRaw)));
 			const v0 = only ? '' : (q.get('v') ?? '').replace(/[^a-z0-9-]/g, '');
@@ -151,12 +163,12 @@
 		<button type="button" on:click={again}>again</button>
 	</div>
 	{#if embed}
-		<div class="player" use:portal>
+		<div class="player" class:screen={playerOnScreen && !!screen} style={playerStyle} use:portal>
 			<iframe
 				title="{song.title} — {song.artist}"
 				src={embed}
 				width="352"
-				height="80"
+				height={playerOnScreen && screen ? 152 : 80}
 				frameborder="0"
 				allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 				loading="lazy"
@@ -231,6 +243,9 @@
 	}
 	.player iframe {
 		height: 80px;
+	}
+	.player.screen iframe {
+		height: 152px;
 	}
 	.failed {
 		position: fixed;

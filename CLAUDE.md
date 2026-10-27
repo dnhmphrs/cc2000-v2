@@ -148,7 +148,11 @@ the lens rolled a quarter turn as it comes to the reading so the body is
 built upright, the head at the top, and rolled back as it goes round behind
 the swimmer: `lensAt`), SIMULATING CONCEPTION: the swim into ONE GROOVE
 (I5's: a helix down the cone turning under the stylus, nothing lettered on
-it, its turns JOINED — the hand's wobble is one noise along the whole
+it — THE SWIM CUT to 9.5 s in 0.23, the run to 44 s, about three and a
+half turns on a laptop, the porthole a star for most of it and the sun only
+in its last two seconds, `portR` as the cube of the time: "the simulation
+transition can be cut way down, especially the blinding light moment",
+the PM — its turns JOINED — the hand's wobble is one noise along the whole
 groove, `sketchTurn`; the ONE groove goes on round the room until the room's frame
 has taken the board — cut A's second set of rings at the dive is gone, the
 spiral's lines doubled with it — and through the fall it EXPANDS WITH THE
@@ -173,7 +177,7 @@ height) cut to the plate (`holeAt`, `holePath`; the plate as the fall
 REALLY lays it on the board, `log/fall.js frameOf`, into the glass and
 all) — a window with the plate's top and bottom and the circle's arcs for
 sides — grown by the zoom and by NOTHING ELSE, past the board's corners
-BEFORE the lens is at rest (`S.tCover`, ~42.0 on a laptop, ~42.2 on a
+BEFORE the lens is at rest (`S.tCover`, ~34.1 on a laptop, ~34.3 on a
 phone; `FILL.h` 1.12 keeps a phone's plate past its board), so the lens
 simply swims through the end of the tunnel and the room's depth does the
 reveal (it widened from the inscribed circle over the fall's first second
@@ -198,11 +202,16 @@ AGAIN a key at the glass's bottom (`sketch.screen()` gives it the glass each
 frame, so it follows the room as it sways after the pointer); Spotify's
 embed comes up the moment the title is on the screen (`song()` is null
 before it), a compact bar (352 × 80) in the top left
-corner, no PLAY key. THE LANDED ROOM IS THE PAGE'S AT ONCE: `ended()` is
+corner, no PLAY key; `?screen=player` puts the player ON the glass
+instead, scaled to it, and nothing is lettered there — for the talk about
+what goes on the screen (the PM: not necessarily the title; the player
+missed there). THE LANDED ROOM IS THE PAGE'S AT ONCE: `ended()` is
 true from the moment the lens is at rest (the AGAIN key; the clock runs on
-to 52 and holds, nothing of the picture changing with it), and the room
+to 44 and holds, nothing of the picture changing with it), and the room
 stays as it lands — warm, active, a little bouncy, the boil never calmed,
-the pointer's parallax on it; the monitor's glass is the pale screen the artist
+the pointer's parallax on it — at `ROOM.calm` 0.6 of the boil and
+`ROOM.sway` half the sway since 0.23 ("the elements in the room are
+moving too much" — the PM); the monitor's glass is the pale screen the artist
 drew, never the spiral through it and never a black square (`glassBase`). A PERSON IS ALWAYS THERE on the main site:
 `live` is true there whatever the query, so the date and the spice are
 theirs to type and the scripted hand never fills them in (`?demo=1` is the
