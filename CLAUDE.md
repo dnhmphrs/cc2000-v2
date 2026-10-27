@@ -143,7 +143,9 @@ BEAT as "… OF CONCEPTION", the last line — it used to glide over and become
 the strand's 5′ end, then had a beat of its own; each question typed within the
 0.8 s before its wait, `keys`, since live the run HOLDS at the wait until
 the person answers and a question still being typed there stopped
-mid-word), COMPILING USER GENETICS (the
+mid-word), COMPILING USER GENETICS (typed from the moment the lens starts
+for the reading, 16.6, not from the questions' going — "should only start
+typing when the camera starts zooming in for the amino acid scan"; the
 amino-acid generator: the reading frame over the helix, the body written
 codon by codon, each ring's own shape flashed in gold — `log/body.js
 codonSection`; the strand LEVEL throughout, read SIDE-ON with the frame at
@@ -169,10 +171,15 @@ PORTHOLE at the apex — THE SUN (0.22.3): through the swim the porthole is
 LIGHT and nothing else, a warm white filling it with the lens's rays out
 of it (`sunVeil`, `LIGHT.sun` 0.42 — 0.6 was a little too bright; the
 light's radius 1.2 of the porthole, so the shafts come from the whole sun
-and not a point at its middle — and NEVER A POINT after: as wide as the
-porthole all through the fall, easing over two seconds after the landing
-to the whole glass, never narrower ("as the tunnel fades away i dont want
-to see the point of the sunbeam ever"); the
+and not a point at its middle — and NEVER A POINT, EVER (0.23.7): the
+light's radius is never under `LIGHT.diffuse` 0.26 of the board's short
+side, from the star at the swim's far end to the room at rest (nor under
+1.2 of the porthole, nor 1.1 of the glass), and INSIDE that radius the
+lens lets the sunburst's angular pattern go smoothly to its own mean, one
+even warm glow, so the rays come out of a disc of light and never meet
+(`lens.js` `ang`; "i never want to see the origin of the sunbeam. it wants
+to always be diffuse around its polar origin" — the lead, after "as the
+tunnel fades away i dont want to see the point of the sunbeam ever"); the
 sunburst TURNS, `LIGHT.turn` 0.12 of a turn a second, and SHIMMERS on two
 slow waves — "a little too static"), and as the tunnel opens the white RESOLVES
 DOWNWARD into the room, clearing from the top of the hole down over the
