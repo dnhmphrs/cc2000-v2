@@ -164,7 +164,9 @@ overtakes a turn and hides it ("the room jumped in front of the tunnel"
 — the lead): every turn expands ahead of the frame and off the board), about nine and a half turns to the
 PORTHOLE at the apex — THE SUN (0.22.3): through the swim the porthole is
 LIGHT and nothing else, a warm white filling it with the lens's rays out
-of it (`sunVeil`, `LIGHT.sun` 0.42 — 0.6 was a little too bright), and as the tunnel opens the white RESOLVES
+of it (`sunVeil`, `LIGHT.sun` 0.42 — 0.6 was a little too bright; the
+sunburst TURNS, `LIGHT.turn` 0.12 of a turn a second, and SHIMMERS on two
+slow waves — "a little too static"), and as the tunnel opens the white RESOLVES
 DOWNWARD into the room, clearing from the top of the hole down over the
 fall's first `SUN.resolve` seconds with a soft edge, the room revealing
 itself out of the light (the lead: "as the tunnel opens you should only
@@ -227,7 +229,12 @@ drew, never the spiral through it and never a black square (`glassBase`). A PERS
 theirs to type and the scripted hand never fills them in (`?demo=1` is the
 lab's and the reels' tool). The 90s poster and clock sit exactly where the
 artist's composite has them (`data/roomElements.js`, fitted to
-`static/90s_Illustration.jpg`), so the wall's tape marks are covered. AGAIN
+`static/90s_Illustration.jpg`), so the wall's tape marks are covered. THE
+WALL NEVER WRAPS (0.23.4): the fall draws it ONCE and fills the plate past
+its picture with the wall's own edge colour (`rooms.js edgeOf`, `fall.js
+layer`) — it was mirror-tiled, and on a phone, where the wall sits deep
+behind a plate taller than the board, the tile's tape marks showed at the
+top (the lead: "the bg should never wrap"). AGAIN
 (`.again()`) dollies the lens on THROUGH the dark glass — slowly, the hold's
 clock kept running so the sway and the parallax go on — until the glass
 covers the board (`covers`); the glass DARKENS as the lens goes through it

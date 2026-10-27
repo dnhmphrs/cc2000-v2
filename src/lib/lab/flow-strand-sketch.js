@@ -2253,7 +2253,9 @@ export default async function make({ THREE, at }) {
 	// (0.22.3: the rays with the porthole from the moment it is there — the
 	// lens on the axis, B.onAxis — at the SUN's strength, settling to the
 	// touch over the fall as the white resolves into the room)
-	const LIGHT = { rays: 0.32, sun: 0.42, core: 0.14, turn: 0.05 }; // (sun 0.6 was a little too bright — the lead)
+	// (0.23.4: the sunburst TURNS at `turn` of a turn a second and SHIMMERS —
+	// two slow waves on its strength — "a little too static", the lead)
+	const LIGHT = { rays: 0.32, sun: 0.42, core: 0.14, turn: 0.12 }; // (sun 0.6 was a little too bright — the lead)
 	function lightAt(t) {
 		const t0 = B.onAxis[1];
 		if (t < t0) return null;
@@ -2273,7 +2275,8 @@ export default async function make({ THREE, at }) {
 		const settle = smooth(span(t, B.fall[0], B.land[1]));
 		const on = smooth(span(t, ...B.on));
 		const tb = holdSecs === null ? t : t + (secsNow - holdSecs);
-		const breath = 1 + 0.08 * Math.sin((TAU * (tb - B.on[0])) / 3.1);
+		const breath =
+			1 + 0.16 * Math.sin((TAU * (tb - t0)) / 2.3) + 0.09 * Math.sin((TAU * (tb - t0)) / 0.73 + 1);
 		const off = exit ? smooth(span(exit.s, ...EXIT.screen)) : 0;
 		const k = (1 - off) * breath;
 		if (near * k <= 0.002) return null;

@@ -65,6 +65,12 @@ export async function loadRooms({ decades = DECADES, chalk = false } = {}) {
 					const src = cfg.key === 'screen' ? cutGlass(img, d) : img;
 					const a = { w: img.width, h: img.height, mips: mips(src) };
 					if (chalk) a.chalk = mips(chalkOf(src, cfg.key === 'bg'));
+					// (the wall's own colour at its edge: what the plate is filled
+					// with past the wall's picture, so the wall never wraps)
+					if (cfg.key === 'bg') {
+						a.fill = edgeOf(src);
+						if (a.chalk) a.chalkFill = edgeOf(chalkOf(src, true));
+					}
 					art[d][cfg.key] = a;
 				})
 			);
@@ -81,6 +87,17 @@ const canvasOf = (w, h) => {
 };
 
 // A mip chain: the source, then halved copies down to ~96 px.
+// The colour of a picture's right edge, half way down (a wall's: plain
+// there in every decade), as a CSS colour.
+export function edgeOf(src) {
+	const c = document.createElement('canvas');
+	c.width = 1;
+	c.height = 1;
+	const x = c.getContext('2d', { willReadFrequently: true });
+	x.drawImage(src, src.width - 3, Math.floor(src.height / 2), 1, 1, 0, 0, 1, 1);
+	const [r, g, b] = x.getImageData(0, 0, 1, 1).data;
+	return `rgb(${r},${g},${b})`;
+}
 export function mips(src) {
 	const out = [src];
 	let c = src;
