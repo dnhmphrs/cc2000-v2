@@ -313,52 +313,53 @@ const B = {
 	trace: 0.8, // a gold trace's run down the strand (0.23.3: a touch faster — the lead)
 	still: 1.6, // the strand's turn dies away over this, from E2
 	asked: [14.7, 15.3], // the questions go (before the caption types over the slider's row)
-	genetics: [15.3, 22.3], // the caption
-	// (0.23.3: the lens moves to the reading only once the spice's trace has
-	// run its length — E2 + trace = 15.2 — the lead)
-	view: [15.2, 16.4], // the lens comes to the reading
-	read: [16.3, 18.5], // the frame 5′ → 3′ (quicker than 19.6; 17.8 was too quick)
-	axis: [18.7, 19.9], // the strand closes onto the axis
-	rope: [19.0, 20.5], // the backbones twist down the tail
-	back: [18.9, 20.7], // the lens draws back to the whole body
-	gens: [20.4, 21.5],
-	contour: [21.2, 22.1],
-	life: 22.2,
+	genetics: [15.3, 22.8], // the caption
+	// (0.23.5: the lens moves to the reading a BEAT after the spice's trace
+	// has run its length — E2 + trace = 15.2, a half second's pause, 15.7 —
+	// the lead; everything from the reading on is half a second later)
+	view: [15.7, 16.9], // the lens comes to the reading
+	read: [16.8, 19.1], // the frame 5′ → 3′ (quicker than 19.6; 17.8 was too quick)
+	axis: [19.2, 20.4], // the strand closes onto the axis
+	rope: [19.5, 21], // the backbones twist down the tail
+	back: [19.4, 21.2], // the lens draws back to the whole body
+	gens: [20.9, 22],
+	contour: [21.7, 22.6],
+	life: 22.7,
 	// ── the journey (this variant's) ──
-	conception: [22.6, 31.5], // the caption
-	boil: [22.2, 23.6], // the hand comes into the lines
-	swim: 22.5,
+	conception: [23.1, 32], // the caption
+	boil: [22.7, 24.1], // the hand comes into the lines
+	swim: 23,
 	// (0.23: the swim CUT — the lens round behind and onto the axis in 4.3 s
 	// rather than 5.9, the porthole phase 5.5 s rather than 11.8, every beat
 	// from the dive on 7.9 s earlier)
-	behind: [22.6, 24.6], // the lens round behind the swimmer
-	onAxis: [24.8, 26.8], // the lens down onto the tunnel's axis
-	tunnel: [23.1, 25.6], // the rings sketched in, near to far
-	lines: [24.0, 26.4], // the speed lines come
-	glint: [24.0, 25.6], // the light at the end of it
-	premise: [25.8, 27.2], // the slam: the birth date − 264 DAYS
-	count: [26.8, 31.1], // 264 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
-	seam: [28.7, 31.1], // the tunnel narrowed into the band
-	conceived: [31.1, 32.5], // the conception date on the band
+	behind: [23.1, 25.1], // the lens round behind the swimmer
+	onAxis: [25.3, 27.3], // the lens down onto the tunnel's axis
+	tunnel: [23.6, 26.1], // the rings sketched in, near to far
+	lines: [24.5, 26.9], // the speed lines come
+	glint: [24.5, 26.1], // the light at the end of it
+	premise: [26.3, 27.7], // the slam: the birth date − 264 DAYS
+	count: [27.3, 31.6], // 264 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
+	seam: [29.2, 31.6], // the tunnel narrowed into the band
+	conceived: [31.6, 33], // the conception date on the band
 	// (K2) THE IRIS: the spindle hole widens at ONE rate in e-folds of its
 	// radius — a true iris — over 0.8 s, past the board's corners by 32.8
-	dive: [32.0, 32.8],
+	dive: [32.5, 33.3],
 	iris: 0.8,
-	fall: [32.3, 34.5], // (the landing under the white: no beat between the date and the final scene)
-	land: [33.3, 34.5],
+	fall: [32.8, 35], // (the landing under the white: no beat between the date and the final scene)
+	land: [33.8, 35],
 	// (K2) THE IRIS: the room floods with its colour UNDER the label as the
 	// label forms — done by the time the spindle hole is dark in it
 	// (bandAt: m > 0.35) — so the hole is a porthole onto the colour room
-	colour: [25.0, 25.6],
-	aim: [33.5, 34.5],
+	colour: [25.5, 26.1],
+	aim: [34, 35],
 	// (K2) the monitor switched on softly as the lens comes to rest (B.land
 	// ends 34.5); the song lettered on it; no needle drop, no flash
-	on: [34.4, 35.6],
-	hit: 34.7, // (the output may go on the screen from here: `screen()`)
-	song: [35.7, 36.5],
-	artist: [36.3, 37.0],
-	push: [34.8, 37.8],
-	out: [97, 98] // (never: the run HOLDS on its last frame; `again` restarts it)
+	on: [34.9, 36.1],
+	hit: 35.2, // (the output may go on the screen from here: `screen()`)
+	song: [36.2, 37],
+	artist: [36.8, 37.5],
+	push: [35.3, 38.3],
+	out: [97.5, 98] // (never: the run HOLDS on its last frame; `again` restarts it)
 };
 // THE BREAKDOWN (a verdict: a birthday the archive cannot answer for). The
 // date is found as on any run; then, where the dive would be, the machine
@@ -367,7 +368,7 @@ const B = {
 // (strip), the band tears open as it would for the dive but onto the gif
 // tiled across the board rather than the rooms (spread), and the verdict is
 // lettered over the tiles (verdict) and held (end; AGAIN on the page).
-const BREAK = { strip: [33.1, 33.9], spread: [33.9, 36.3], verdict: 36.5, end: 42 };
+const BREAK = { strip: [33.6, 34.4], spread: [34.4, 36.8], verdict: 37, end: 42.5 };
 const endAt = (edge) => (edge ? BREAK.end : SECONDS);
 // AGAIN: the song and the date fade (words), the monitor goes dark
 // (screen), and the lens dollies on through the glass — the fall's own
@@ -627,7 +628,7 @@ const FOV_CHASE = 52;
 const FOV_END = 40;
 const fovAt = (t) =>
 	t > B.swim
-		? lerp(lerp(30, FOV_CHASE, smooth(span(t, B.swim, 25.0))), FOV_END, smooth(span(t, 27.0, 31.5)))
+		? lerp(lerp(30, FOV_CHASE, smooth(span(t, B.swim, 25.5))), FOV_END, smooth(span(t, 27.5, 32.0)))
 		: 30;
 
 // ── The board's shape ────────────────────────────────────────────────────────
@@ -840,7 +841,7 @@ export default async function make({ THREE, at }) {
 		const tEnd = F.edge ? B.dive[1] + 1 : B.land[1];
 		const E = new Float64Array(N + 1);
 		const rate = (t) =>
-			smooth(span(t, B.swim, B.swim + 1.5)) * lerp(r0, rc, smooth(span(t, 23.5, 27.5)));
+			smooth(span(t, B.swim, B.swim + 1.5)) * lerp(r0, rc, smooth(span(t, 24.0, 28.0)));
 		for (let i = 1; i <= N; i++) {
 			const ta = B.swim + (i - 1) * DT;
 			E[i] = E[i - 1] + 0.5 * DT * (rate(ta) + rate(ta + DT));
@@ -2266,10 +2267,12 @@ export default async function make({ THREE, at }) {
 		if (g) {
 			x = (g[0] + g[2]) / 2;
 			y = (g[1] + g[3]) / 2;
-			r = Math.max(8, 0.45 * Math.min(g[2] - g[0], g[3] - g[1]), 0.45 * lastHole);
+			r = Math.max(8, 0.45 * Math.min(g[2] - g[0], g[3] - g[1]), 1.2 * lastHole);
 		} else if (lastApex) {
 			[x, y] = lastApex;
-			r = Math.max(8, 0.45 * lastHole);
+			// (0.23.5: wide — 1.2 of the porthole — so the shafts come from the
+			// whole sun and not a point at its middle: "too much of a point")
+			r = Math.max(8, 1.2 * lastHole);
 		} else return null;
 		const near = smooth(span(t, t0, t0 + 3));
 		const settle = smooth(span(t, B.fall[0], B.land[1]));
