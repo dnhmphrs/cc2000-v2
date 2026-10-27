@@ -2211,9 +2211,12 @@ export default async function make({ THREE, at }) {
 	// (0.22.2: the rays come up EARLY — from `from` seconds before the dive,
 	// out of the porthole at the tunnel's end, so the sun is seen as it is
 	// approached, the lead; the core only with the monitor)
-	const LIGHT = { rays: 0.32, core: 0.14, turn: 0.05, from: 2.6 };
+	// (0.22.3: the rays with the porthole from the moment it is there — the
+	// lens on the axis, B.onAxis — at the SUN's strength, settling to the
+	// touch over the fall as the white resolves into the room)
+	const LIGHT = { rays: 0.32, sun: 0.6, core: 0.14, turn: 0.05 };
 	function lightAt(t) {
-		const t0 = B.dive[0] - LIGHT.from;
+		const t0 = B.onAxis[1];
 		if (t < t0) return null;
 		const g = lastGlass;
 		let x;
@@ -2227,7 +2230,8 @@ export default async function make({ THREE, at }) {
 			[x, y] = lastApex;
 			r = Math.max(8, 0.45 * lastHole);
 		} else return null;
-		const near = smooth(span(t, t0, B.on[1]));
+		const near = smooth(span(t, t0, t0 + 3));
+		const settle = smooth(span(t, B.fall[0], B.land[1]));
 		const on = smooth(span(t, ...B.on));
 		const tb = holdSecs === null ? t : t + (secsNow - holdSecs);
 		const breath = 1 + 0.08 * Math.sin((TAU * (tb - B.on[0])) / 3.1);
@@ -2238,7 +2242,7 @@ export default async function make({ THREE, at }) {
 			x,
 			y,
 			r,
-			rays: LIGHT.rays * near * k,
+			rays: lerp(LIGHT.sun, LIGHT.rays, settle) * near * k,
 			core: LIGHT.core * on * k,
 			rings: 0,
 			phase: 0,
@@ -2330,6 +2334,40 @@ export default async function make({ THREE, at }) {
 		band && band.hole > 0
 			? () => ({ cx: O[0], cy: O[1], r: 1.06 * band.hole, wob: 0, feather: 0.03 })
 			: () => null;
+	// (0.22.3) THE SUN. Through the swim the porthole is LIGHT and nothing
+	// else — a warm white filling it, the lens's rays out of it — and as the
+	// tunnel opens the white RESOLVES DOWNWARD into the room: it clears from
+	// the top of the hole down over the fall's first SUN.resolve seconds, a
+	// soft edge sweeping down, the room revealing itself out of the light
+	// (the lead: "as the tunnel opens you should only see sunshine, and the
+	// sunshine should resolve downwards, like the room is revealing itself").
+	const SUN = { colour: '#fff6e2', resolve: 1.6, soft: 0.45 };
+	const sunP = (t) => span(t, B.fall[0], B.fall[0] + SUN.resolve);
+	// the veil's cover at a point: v its height down the hole's box, 0 … 1
+	const sunAlpha = (v, p) => 1 - smooth(span(p * (1 + SUN.soft) - v, 0, SUN.soft));
+	const sunAt = (box, glass, p) => {
+		if (p >= 1) return 0;
+		if (p <= 0 || !box) return 1;
+		const v = ((glass[1] + glass[3]) / 2 - box[1]) / Math.max(1, box[3] - box[1]);
+		return sunAlpha(v, p);
+	};
+	function sunVeil(ctx, w, h, box, p) {
+		if (p >= 1) return;
+		ctx.save();
+		if (p <= 0 || !box) ctx.fillStyle = SUN.colour;
+		else {
+			const g = ctx.createLinearGradient(0, box[1], 0, box[3]);
+			const [R, G, Bc] = hex(SUN.colour);
+			for (let i = 0; i <= 10; i++) {
+				const v = i / 10;
+				const a = sunAlpha(v, p);
+				g.addColorStop(v, `rgba(${R},${G},${Bc},${a.toFixed(3)})`);
+			}
+			ctx.fillStyle = g;
+		}
+		ctx.fillRect(-10, -10, w + 20, h + 20);
+		ctx.restore();
+	}
 	function firstRoom(ctx, w, h, t, st, O, bo) {
 		const g = st.geo;
 		const tf = st.efolds(t) - st.efolds(B.fall[0]);
@@ -2383,6 +2421,8 @@ export default async function make({ THREE, at }) {
 			// (L) the monitor's glass as drawn — never the spiral seen through
 			// it (the fall leaves the glass clear)
 			if (camR?.glass) glassBase(ctx, camR.glass);
+			// the sun: the porthole is light alone through the swim
+			sunVeil(ctx, w, h, null, 0);
 		} finally {
 			g.zetaAt = keep;
 			ctx.restore();
@@ -2764,7 +2804,20 @@ export default async function make({ THREE, at }) {
 		prof('rings');
 		// The rooms: the first already there, grown out of the tunnel (see
 		// firstRoom), the band opening over it.
-		const fly = exit ? smooth(span(exit.s, ...EXIT.fly)) : 0;
+		// (0.22.3: the dolly HOLDS where the glass covers the board — `exit.fly`
+		// — while the picture fades, so the lens never crosses the glass's
+		// plane mid-fade and the wall behind it never shows)
+		const fly = exit ? (exit.fly ?? smooth(span(exit.s, ...EXIT.fly))) : 0;
+		// (0.22.3) AGAIN: the sway and the pointer's parallax are CALMED as the
+		// lens goes into the glass — near the glass's plane any shift of the
+		// lens throws the glass aside, so it never covered the board on some
+		// runs, the lens went through its plane and the room's WALL showed
+		// before the dark ("a flash of room graphic background" — the lead)
+		const calmExit = exit ? smooth(span(exit.s, EXIT.fly[0], EXIT.dark[1])) : 0;
+		if (calmExit > 0) {
+			nudge[0] *= 1 - calmExit;
+			nudge[1] *= 1 - calmExit;
+		}
 		// (L) while the iris opens the room is clipped to the hole: the colour
 		// disc in the chalk tunnel, nothing of the plate outside it
 		const inHole = opening;
@@ -2791,9 +2844,12 @@ export default async function make({ THREE, at }) {
 			dust: null,
 			// (K2) the colour through the hole while it opens; all colour
 			// once it has taken the frame (the flood, long done)
-			reveal: opening ? iris(band, O) : null
+			reveal: opening ? iris(band, O) : null,
+			sway: 1 - calmExit
 		});
 		if (inHole) {
+			// the sun resolving downward into the room as the tunnel opens
+			sunVeil(ctx, w, h, band.holeBox, sunP(t));
 			ctx.restore();
 			// the porthole's rim, as firstRoom draws it, let go past the board
 			ctx.save();
@@ -2818,7 +2874,14 @@ export default async function make({ THREE, at }) {
 			lastGlass = cam.glass;
 			// (L) AGAIN: the moment the dark glass covers the board, the
 			// picture is the board's dark — the next title types on it
-			if (exit && exit.black === undefined && covers(cam.glass, w, h)) exit.black = exit.s;
+			if (exit && exit.black === undefined && covers(cam.glass, w, h)) {
+				exit.black = exit.s;
+				exit.fly = fly;
+			}
+		} else if (exit && exit.black === undefined && exit.s > EXIT.fly[0] + 0.5) {
+			// (the glass has gone behind the lens without covering the board:
+			// the dark at once, never the wall behind it)
+			exit.black = exit.s - EXIT.fade;
 		}
 		// The swimmer goes into the band's flash and is gone (the lead): none
 		// in the room, none in AGAIN's dolly through the glass.
@@ -2880,12 +2943,20 @@ export default async function make({ THREE, at }) {
 		// embed on the same glass: `screen()`).
 		if (cam.glass) {
 			const off = exit ? smooth(span(exit.s, ...EXIT.screen)) : 0;
-			// (L) the glass as drawn, under the screen's light: the spiral under
-			// the board never shows through the monitor; dark as AGAIN goes
-			// through it
-			glassBase(ctx, cam.glass, exit ? smooth(span(exit.s, ...EXIT.dark)) : 0);
-			screenOn(ctx, cam.glass, smooth(span(t, ...B.on)) * (1 - off), tf);
-			screenWords(ctx, cam.glass, t, st, bo, 1 - off);
+			// (the glass is under the sun's veil while the white resolves down
+			// the room: drawn as faint as the veil over it is clear)
+			const gk = inHole ? 1 - sunAt(band.holeBox, cam.glass, sunP(t)) : 1;
+			if (gk > 0.004) {
+				ctx.save();
+				ctx.globalAlpha = gk;
+				// (L) the glass as drawn, under the screen's light: the spiral under
+				// the board never shows through the monitor; dark as AGAIN goes
+				// through it
+				glassBase(ctx, cam.glass, exit ? smooth(span(exit.s, ...EXIT.dark)) : 0);
+				screenOn(ctx, cam.glass, smooth(span(t, ...B.on)) * (1 - off), tf);
+				screenWords(ctx, cam.glass, t, st, bo, 1 - off);
+				ctx.restore();
+			}
 		}
 		prof('band');
 		figures(ink, w, h, t, O, st, bo);

@@ -175,11 +175,12 @@ export function makeFall({
 			screenOff = 0,
 			tiles = 0,
 			tilesAlpha = 0.55,
-			zeta = null
+			zeta = null,
+			sway = 1
 		} = {}
 	) => {
 		const g = geometry(w, h);
-		const cam = lensAt(g, zeta ?? g.zetaAt(t), t, w, h, beats, K, nudge, origin);
+		const cam = lensAt(g, zeta ?? g.zetaAt(t), t, w, h, beats, K, nudge, origin, sway);
 		if (background) background(ctx, cam, g.efolds(t), lerp(1, 0.7, cam.land));
 		const d = dust === undefined ? getBoard().dust : dust;
 		const glassAt = drawFall(ctx, w, h, d, g, art, cam, t, beats, K, colourAlong, bake, reveal, {
@@ -195,9 +196,9 @@ export function makeFall({
 	// px) — or null while it is behind the lens — as draw would lay it with
 	// the same options: for a flow that cuts a window onto the room before
 	// drawing it (the run's porthole), so the window is the plate's own.
-	const frameOf = (t, w, h, { zeta = null, nudge = null, origin = null } = {}) => {
+	const frameOf = (t, w, h, { zeta = null, nudge = null, origin = null, sway = 1 } = {}) => {
 		const g = geometry(w, h);
-		const cam = lensAt(g, zeta ?? g.zetaAt(t), t, w, h, beats, K, nudge, origin);
+		const cam = lensAt(g, zeta ?? g.zetaAt(t), t, w, h, beats, K, nudge, origin, sway);
 		const lv = g.levels[g.L];
 		const dw = cam.z - lv.O[2];
 		if (dw <= K.nearZ * cam.s) return null;
@@ -342,7 +343,10 @@ function fitNest(w, h, order, art, K, beats) {
 // `nudge` ([x, y], room units of the last plate): the lens moved by hand —
 // a flow's pointer parallax — the same way the sway moves it, so the plane
 // d₀ ahead holds and the room's depths part behind it.
-function lensAt(geo, zeta, t, w, h, B, K = {}, nudge = null, origin = null) {
+// `sway` (0 … 1) scales the hand's sway: a flow dollying on through the glass
+// calms it, so the glass can fill the board (near its plane any shift of the
+// lens throws the glass aside).
+function lensAt(geo, zeta, t, w, h, B, K = {}, nudge = null, origin = null, sway = 1) {
 	const cam = geo.pose(zeta);
 	const last = geo.levels[geo.L];
 	const land = smooth(span(t, B.land[0], B.land[1]));
@@ -365,11 +369,13 @@ function lensAt(geo, zeta, t, w, h, B, K = {}, nudge = null, origin = null) {
 			cam.z = zP + (cam.z - zP) / k;
 		}
 	}
-	const A = lerp(
-		lerp(0, 0.05, span(t, B.fall[0], B.fall[0] + 2)),
-		0.3,
-		smooth(span(t, B.land[0], B.land[1] + 0.5))
-	);
+	const A =
+		sway *
+		lerp(
+			lerp(0, 0.05, span(t, B.fall[0], B.fall[0] + 2)),
+			0.3,
+			smooth(span(t, B.land[0], B.land[1] + 0.5))
+		);
 	const ex = A * Math.sin(1.1 * t - 0.4) + (nudge?.[0] ?? 0);
 	const ey = A * 0.45 * Math.sin(1.7 * t + 0.6) + (nudge?.[1] ?? 0);
 	cam.x += cam.s * ex;
