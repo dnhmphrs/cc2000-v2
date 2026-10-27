@@ -656,11 +656,11 @@ export default async function make({ THREE, at }) {
 	// on the site it filled the form in by itself — the lead: "this should
 	// never happen. manual only").
 	const main = typeof document !== 'undefined' && document.documentElement.dataset.site === 'main';
-	// ?screen=player: the page puts Spotify's player ON the monitor's glass
-	// (runs/Next.svelte) and nothing is lettered on it — to look at beside
-	// the title on the screen (the PM: "I don't think it needs to be the song
-	// title written out. Kinda miss the player in there")
-	const playerOnScreen = q.get('screen') === 'player';
+	// The page puts Spotify's player ON the monitor's glass (runs/Next.svelte)
+	// and nothing is lettered on it (0.23.2, the default: the PM wanted the
+	// embed, not the title); ?screen=title letters the song and its artist on
+	// the glass instead, as 0.21 – 0.23.1 did
+	const playerOnScreen = q.get('screen') !== 'title';
 	const live =
 		at === null &&
 		(main || (q.get('demo') !== '1' && /^\/(lab|next)(\/|$)/.test(location.pathname)));

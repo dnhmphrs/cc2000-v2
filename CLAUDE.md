@@ -198,18 +198,19 @@ small core — low, no bloom, breathing on the hold's clock, off with AGAIN:
 sketch A's sun at a touch, not the flash; the RAYS come up EARLY, out of
 the porthole from `LIGHT.from` seconds before the dive, so the sun is seen
 as the tunnel's end is approached, the core only with the monitor); no date, no maths, no conversation anywhere on the
-fly-in. THE OUTPUT IS ON THE COMPUTER SCREEN: the song and its artist
-lettered on the glass in the hand — capitals, WRAPPED at the words to the
-glass's width and sized to fit it, so a long title wraps rather than
-shrinking (`screenWords`, `wordsFit`; not a monospace grid) — and the page's
-AGAIN a key at the glass's bottom (`sketch.screen()` gives it the glass each
-frame, so it follows the room as it sways after the pointer); Spotify's
-embed comes up the moment the title is on the screen (`song()` is null
-before it), a compact bar (352 × 80) in the top left
-corner, no PLAY key; `?screen=player` puts the player ON the glass
-instead, scaled to it, and nothing is lettered there — for the talk about
-what goes on the screen (the PM: not necessarily the title; the player
-missed there). THE LANDED ROOM IS THE PAGE'S AT ONCE: `ended()` is
+fly-in. THE OUTPUT IS ON THE COMPUTER SCREEN: SPOTIFY'S PLAYER, FILLING THE
+MONITOR'S GLASS (0.23.2 — the PM wanted the embed, not the title; the
+lead: the embed filling the screen of the scene, AGAIN centred low on the
+page): the 352 × 352 embed, the artwork big, scaled to fill the glass and
+set in its middle (`runs/Next.svelte`, `sketch.screen()` gives it the
+glass each frame, so it follows the room as it sways after the pointer),
+up the moment the lens is at rest (`song()`), nothing lettered on the
+glass, and the page's AGAIN a key centred 7 vh up from the bottom of the
+page. `?screen=title` is what it was from 0.21 to 0.23.1: the song and its
+artist lettered on the glass in the hand — capitals, WRAPPED at the words
+to the glass's width and sized to fit it (`screenWords`, `wordsFit`; not a
+monospace grid) — AGAIN a key at the glass's bottom, and the embed a
+compact bar (352 × 80) in the top left corner; no PLAY key either way. THE LANDED ROOM IS THE PAGE'S AT ONCE: `ended()` is
 true from the moment the lens is at rest (the AGAIN key; the clock runs on
 to 44 and holds, nothing of the picture changing with it), and the room
 stays as it lands — warm, active, a little bouncy, the boil never calmed,
