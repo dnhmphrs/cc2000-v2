@@ -317,7 +317,7 @@ function fitNest(w, h, order, art, K, beats) {
 	let acc = 0;
 	for (let i = 1; i <= n; i++) {
 		const x = (i - 0.5) / n;
-		acc += Math.pow(c + x, 3) * (1 - x) * (1 - x);
+		acc += Math.pow(c + x, 3) * Math.pow(1 - x, K.pace.ease ?? 2);
 		T.push(acc);
 	}
 	const E = (x) => {

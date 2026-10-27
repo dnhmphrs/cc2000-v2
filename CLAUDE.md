@@ -133,8 +133,9 @@ AND THE ONLY PAGE (see "Two sites" above). `?v=<name>` plays a variant
 `flow-strand-sketch-<name>.js` (on dev only): the run itself is the newest
 cut — L (0.21, `?v=l` is an alias of it), CLEAN UNTIL THE ROOM: the entry
 (the title, WHEN WERE YOU BORN? and HOW SPICY ARE YOUR PARENTS? typed into
-the double helix — `Q1_TEXT`, `Q2_TEXT`; the title's stop fades where it is, it
-used to glide over and become the strand's 5′ end; each question typed within the
+the double helix — `Q1_TEXT`, `Q2_TEXT`; the title's full stop fades ON THE SAME
+BEAT as "… OF CONCEPTION", the last line — it used to glide over and become
+the strand's 5′ end, then had a beat of its own; each question typed within the
 0.8 s before its wait, `keys`, since live the run HOLDS at the wait until
 the person answers and a question still being typed there stopped
 mid-word), COMPILING USER GENETICS (the
@@ -151,8 +152,8 @@ it, its turns JOINED — the hand's wobble is one noise along the whole
 groove, `sketchTurn`; the ONE groove goes on round the room until the room's frame
 has taken the board — cut A's second set of rings at the dive is gone, the
 spiral's lines doubled with it — and through the fall it EXPANDS WITH THE
-FRAME (`rings`: the lens's distance to the apex taken in by the e-folds
-the porthole has grown beyond the swim's zoom), so the frame never
+ROOM'S DEPTH (`rings`: the lens's distance to the apex taken in by the
+e-folds the plate has grown beyond the swim's zoom), so the frame never
 overtakes a turn and hides it ("the room jumped in front of the tunnel"
 — the lead): every turn expands ahead of the frame and off the board), about nine and a half turns to the
 PORTHOLE at the apex — THE SUN (0.22.3): through the swim the porthole is
@@ -166,16 +167,20 @@ circle grown steadily from a speck (`portR`, to the fall's own first plate on th
 fall opens on exactly it — on a phone the room used to drop a third at the
 dive; NOTHING of a record: no label, no disc, no
 spindle, no flecks — the lead saw a CD and wanted it gone) — and THE PORTHOLE
-IS THE ROOM'S OWN FRAME (0.22): a circle at the end of the tunnel while
-the room is far, and through the fall a circle of 0.9 of the plate's REAL
-height on the board (`log/fall.js frameOf` — the plate as the fall lays
-it, into the glass and all) CUT TO THE PLATE (`holeAt`, `holePath`), so it
-flattens against the room's top and bottom as it nears and becomes the
-room's rectangle, the circle's arcs for corners, growing with the zoom
-until it has passed the board's corners — BEFORE the lens is at rest
-(`S.tCover`, ~41.9 on a laptop; `FILL.h` 1.12 keeps a phone's plate past
-its board), so the room takes the frame in the one motion and nothing
-opens after (the nest law read the plate too small past ζ = 0, so the hole
+IS THE ROOM'S OWN FRAME (0.22), ONE SHAPE FROM THE SPECK TO THE LANDING
+(0.22.4): the circle of half the plate's width (`HOLE_C`, φ/2 of its
+height) cut to the plate (`holeAt`, `holePath`; the plate as the fall
+REALLY lays it on the board, `log/fall.js frameOf`, into the glass and
+all) — a window with the plate's top and bottom and the circle's arcs for
+sides — grown by the zoom and by NOTHING ELSE, past the board's corners
+BEFORE the lens is at rest (`S.tCover`, ~42.0 on a laptop, ~42.2 on a
+phone; `FILL.h` 1.12 keeps a phone's plate past its board), so the lens
+simply swims through the end of the tunnel and the room's depth does the
+reveal (it widened from the inscribed circle over the fall's first second
+for a round, and that read as the hole being opened at the end — "i dont
+want to expand the hole", the lead); the fall's slowing to rest is
+`FALL_PACE.ease` 1.4 (it was 2, a touch too slow across the last of the
+room's expansion) (the nest law read the plate too small past ζ = 0, so the hole
 lagged the room and had to be let go after the lens had stopped — "the
 tunnel suddenly widens", the lead, twice); no flash, the lens falls on
 into the room and comes to rest, the monitor switches on softly and A TOUCH

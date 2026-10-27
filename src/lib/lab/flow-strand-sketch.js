@@ -551,11 +551,14 @@ const INSIDE = 0.12; // the fall stops inside the last room (?inside=: this far 
 // (0.22: at least 1.12 boards tall — on a phone the plate's top and bottom
 // are then past the board's at rest, the porthole with them)
 const FILL = { w: 1.5, h: 1.12 }; // … where the room is this many boards wide, and at least this tall
-// The porthole's radius, of the plate's height, by the fall's first second
-// (holeAt): past the board's corners (0.94 h at 16:10, 0.83 h at 4:3) at
-// rest, where the plate is ≥ 1.06 h tall
-const HOLE_C = 0.9;
-const FALL_PACE = { n: 512, c: 0.55 };
+// The porthole's radius, of the plate's height (holeAt): half the plate's
+// width (φ/2), so the window's sides are the circle's own arcs and its top
+// and bottom the plate's — and past the board's corners at rest (0.94 h at
+// 16:10, 0.83 h at 4:3), where the plate is ≥ 1.12 h tall
+const HOLE_C = 0.81;
+// (0.22.4: `ease` — the fall's slowing to rest, (1 − x)^ease: 2 was a
+// touch too slow across the last of the room's expansion — the lead)
+const FALL_PACE = { n: 512, c: 0.55, ease: 1.4 };
 
 // ── The count ────────────────────────────────────────────────────────────────
 // The 266 days struck one at a time over B.count: the rate (in figures a
@@ -1346,13 +1349,27 @@ export default async function make({ THREE, at }) {
 	// it has passed the board's corners — which it does (HOLE_C, and FILL)
 	// before the lens comes to rest, so the room takes the frame in the one
 	// motion and nothing opens after. No release, no second rate.
+	// (0.22.4: ONE SHAPE, from the speck to the landing — the circle of
+	// HOLE_C × the plate's height cut to the plate, the room's own frame
+	// with the circle's arcs for corners — grown by the zoom and nothing
+	// else; it widened from the inscribed circle over the fall's first
+	// second, and that read as the hole being opened at the end: "i just
+	// want to swim through the end of the tunnel, and have the room/depth
+	// stuff handle the final reveal" — the lead)
 	function holeAt(t, w, h, st, O, nudge = null, zeta = null) {
 		if (t < B.onAxis[1]) return { r: 0, box: null, covers: false };
-		if (t < B.fall[0]) return { r: 0.98 * portR(t, st), box: null, covers: false };
-		const box = st.fall.frameOf(t, w, h, { origin: O, nudge, zeta });
+		let box;
+		if (t < B.fall[0]) {
+			// the swim: the plate at the size firstRoom grows it to, its ζ read
+			// back off that size
+			const ph = 2 * portR(t, st);
+			if (ph < 1.5) return { r: 0, box: null, covers: false };
+			const g = st.geo;
+			const z = Math.log(g.plate / ph) / Math.log(g.levels[0].X);
+			box = st.fall.frameOf(t, w, h, { origin: O, zeta: z });
+		} else box = st.fall.frameOf(t, w, h, { origin: O, nudge, zeta });
 		if (!box) return { r: 0, box: null, covers: false };
-		const c = lerp(0.49, HOLE_C, smooth(span(t, B.fall[0], B.fall[0] + 1.0)));
-		const r = c * (box[3] - box[1]);
+		const r = HOLE_C * (box[3] - box[1]);
 		// past the board (a margin for the hand's wobble on the rim)
 		const m = 4;
 		const far = Math.max(
@@ -1523,8 +1540,8 @@ export default async function make({ THREE, at }) {
 		// a turn of the spiral and hides it — the room "jumped in front of
 		// the tunnel" (the lead); every turn expands ahead of the frame and
 		// off the board, the tunnel's own expansion and nothing else.
-		if (t > B.fall[0] && band && band.hole > 0) {
-			const want = Math.log(band.hole / (0.49 * st.plate0));
+		if (t > B.fall[0] && band && band.holeBox) {
+			const want = Math.log((band.holeBox[3] - band.holeBox[1]) / st.plate0);
 			const got = st.efolds(t) - st.efolds(B.fall[0]);
 			zL *= Math.exp(-Math.max(0, want - got));
 		}
@@ -2332,7 +2349,7 @@ export default async function make({ THREE, at }) {
 	// of the colour before the hole is a hole.
 	const iris = (band, O) =>
 		band && band.hole > 0
-			? () => ({ cx: O[0], cy: O[1], r: 1.06 * band.hole, wob: 0, feather: 0.03 })
+			? () => ({ cx: O[0], cy: O[1], r: 1.1 * band.hole, wob: 0, feather: 0.03 })
 			: () => null;
 	// (0.22.3) THE SUN. Through the swim the porthole is LIGHT and nothing
 	// else — a warm white filling it, the lens's rays out of it — and as the
@@ -2397,10 +2414,11 @@ export default async function make({ THREE, at }) {
 		// (L) It stays a circle to the dive, and the dive widens it: THE IRIS
 		// (bandAt's hole), the colour room growing in it, the chalk tunnel
 		// outside, until it has taken the frame.
-		const R = 0.49 * ph;
+		const R = HOLE_C * ph;
+		const pbox = st.fall.frameOf(t, w, h, { origin: O, zeta });
 		const port = () => {
 			ctx.beginPath();
-			holePath(ctx, w, h, O, R, bo);
+			holePath(ctx, w, h, O, R, bo, pbox);
 		};
 		const keep = g.zetaAt;
 		g.zetaAt = () => zeta;
@@ -2416,7 +2434,7 @@ export default async function make({ THREE, at }) {
 				dust: null,
 				// (L: in colour from its first pixel; the disc a hair wider than
 				// the hole so the rim's wobble never shows chalk)
-				reveal: () => ({ cx: O[0], cy: O[1], r: 1.06 * R, wob: 0, feather: 0.03 })
+				reveal: () => ({ cx: O[0], cy: O[1], r: 1.1 * R, wob: 0, feather: 0.03 })
 			});
 			// (L) the monitor's glass as drawn — never the spiral seen through
 			// it (the fall leaves the glass clear)
@@ -2505,9 +2523,13 @@ export default async function make({ THREE, at }) {
 				reach: t >= E2 ? lerp(XR(NR - 1) + DS * 0.5, S_LEN, close) : undefined
 			});
 		}
-		// The terminal's stop, fading with the title over B.pan.
-		if (t < B.pan[1]) {
-			const sa = 0.95 * (1 - smooth(span(t, ...B.pan)));
+		// The terminal's full stop, fading ON THE SAME BEAT as the title's last
+		// line, "… OF CONCEPTION" (entry.title's fade; it had a beat of its own)
+		if (t < B.gone + 1.1) {
+			const n = TERM.layout(ctx, w, h).out.length;
+			const step = n > 1 ? Math.min(0.25, 0.5 / (n - 1)) : 0;
+			const t0 = B.gone + step * (n - 1);
+			const sa = 0.95 * (1 - smooth(span(t, t0, t0 + 0.5)));
 			if (sa > 0.004) disc(ctx, stop.x, stop.y, stop.r, { fill: PAL.chalk, alpha: sa });
 		}
 
