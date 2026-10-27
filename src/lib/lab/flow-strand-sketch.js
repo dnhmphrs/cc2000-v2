@@ -806,7 +806,11 @@ export default async function make({ THREE, at }) {
 		const rc = geo.rate0;
 		const r0 = V_SWIM / Z_NOSE0;
 		const DT = 0.01;
-		const N = Math.ceil((B.dive[1] + 1 - B.swim) / DT);
+		// (to the lens's rest: the groove is drawn round the room until the
+		// room's frame has taken the board, and must not freeze before it)
+		const N = Math.ceil((B.land[1] - B.swim) / DT);
+		// (on a verdict the tunnel jams a second past the dive, as it did)
+		const tEnd = F.edge ? B.dive[1] + 1 : B.land[1];
 		const E = new Float64Array(N + 1);
 		const rate = (t) =>
 			smooth(span(t, B.swim, B.swim + 1.5)) * lerp(r0, rc, smooth(span(t, 24.0, 30.0)));
@@ -816,8 +820,8 @@ export default async function make({ THREE, at }) {
 		}
 		const efolds = (t) => {
 			if (t <= B.swim) return 0;
-			// (held at the table's end: on a verdict the tunnel jams there)
-			const f = Math.min(N, (t - B.swim) / DT);
+			// (held at the table's end — or where it jams on a verdict)
+			const f = Math.min(N, (Math.min(t, tEnd) - B.swim) / DT);
 			const i = Math.min(N - 1, Math.floor(f));
 			return lerp(E[i], E[i + 1], f - i);
 		};
@@ -1011,16 +1015,18 @@ export default async function make({ THREE, at }) {
 		// it comes to the reading (`up`), so the strand and the body run
 		// down the board, the head at the top, and rolls back as it goes
 		// round behind the swimmer.)
-		// Reading: close, a little off side-on and above, tracking the frame
-		// (the rings open a little, so each codon's shape reads).
+		// Reading: close, SIDE-ON and level as the body after it (the lead:
+		// off side-on "the sperm is at an angle and to the side of the
+		// screen"), the frame at the middle of the board, the strand sliding
+		// through it.
 		const xf = frameX(t);
-		const dirR = norm([-0.18, 0.34, 0.92]);
+		const dirR = norm([0, 0.14, 0.99]);
 		const kR0 = kOf(30, w, h);
 		const tall = h > w;
 		const across = tall ? h : w;
 		const along = tall ? w : h;
 		const dR = Math.max(12, (5.5 * kR0) / Math.min(0.5 * across, 0.75 * along));
-		const tgtR = [clamp(xf + 0.4, 2.2, S_LEN - 1.5), 0, 0];
+		const tgtR = [xf, 0, 0];
 		const posR = add3(tgtR, mul3(dirR, dR));
 		// The whole body, side-on and level, a touch above.
 		const dirF = norm([0, 0.14, 0.99]);
@@ -1627,66 +1633,6 @@ export default async function make({ THREE, at }) {
 			});
 		}
 	}
-	// One hand-drawn ring of radius rho through `at` (the plane's point at
-	// [x, y] → the board, or null where it is hidden): started anywhere, swept
-	// a little past a whole turn, its radius wobbling, all new each drawing.
-	function sketchRing(ink, at, rho, i, bo, upto, lw, a, M = TUN.M) {
-		const { wob } = TUN;
-		const ph0 = TAU * rand(i, bo, 31);
-		const sweep = TAU * (1.03 + 0.08 * rand(i, bo, 32)) * upto;
-		const n = Math.max(8, Math.ceil(M * upto));
-		const dx = 0.02 * rho * (2 * rand(i, bo, 36) - 1);
-		const dy = 0.02 * rho * (2 * rand(i, bo, 35) - 1);
-		const run = [];
-		const flush = () => {
-			if (run.length > 1) ink.line(run.slice(), HAND.ink, lw, a, false);
-			run.length = 0;
-		};
-		const bw = board.w;
-		const bh = board.h;
-		// Which sides of the board a point is off (left, right, above, below).
-		const side = (p) =>
-			(p[0] < -60 ? 1 : 0) |
-			(p[0] > bw + 60 ? 2 : 0) |
-			(p[1] < -60 ? 4 : 0) |
-			(p[1] > bh + 60 ? 8 : 0);
-		let prev = 0;
-		for (let j = 0; j <= n; j++) {
-			const f = j / n;
-			const ph = ph0 + sweep * f;
-			const rr = rho * (1 + wob * noise1(f * 6.5 * upto + i * 1.7, bo * 13 + i) + 0.012 * f);
-			const p = at(dx + rr * Math.cos(ph), dy + rr * Math.sin(ph));
-			// A piece wholly off one side of the board is not stroked. (Not
-			// "both ends off the board": a ring drawn apart along the band is
-			// two long straight pieces from far left to far right — the slot's
-			// lines, rushing up and down off the seam — whose ends are both off
-			// it and which cross the whole of it.)
-			const s = p ? side(p) : 0;
-			if (!p || s & prev) {
-				flush();
-				if (p) run.push(p);
-			} else {
-				// A long piece (the slot's lines) drawn freehand, not ruled: cut
-				// to ~48 px, each cut off true by a pixel or so, new each drawing.
-				const q = run[run.length - 1];
-				const d = q ? Math.hypot(p[0] - q[0], p[1] - q[1]) : 0;
-				if (d > 72) {
-					const m = Math.min(48, Math.ceil(d / 48));
-					const nx = -(p[1] - q[1]) / d;
-					const ny = (p[0] - q[0]) / d;
-					const amp = 0.7 + 0.45 * lw;
-					for (let c = 1; c < m; c++) {
-						const u = c / m;
-						const e = amp * noise1(c * 0.61 + i * 3.1, bo * 19 + i) * Math.sin(Math.PI * u);
-						run.push([lerp(q[0], p[0], u) + e * nx, lerp(q[1], p[1], u) + e * ny]);
-					}
-				}
-				run.push(p);
-			}
-			prev = s;
-		}
-		flush();
-	}
 	// The tunnel's rings going on round the rooms: circles about the
 	// vanishing point at the run's one zoom (e^(E − 0.3 i), the same rate the
 	// rooms grow at), under the plates, so the rooms are hung in the tunnel
@@ -1696,41 +1642,6 @@ export default async function make({ THREE, at }) {
 	// pushed out to either side and off the seam), and closing into circles
 	// as the band's edges part — the slot opening into the round tunnel round
 	// the room, not new rings sketched in over it.
-	function fallRings(ink, t, w, h, O, E, bo, band) {
-		const come = smooth(span(t, B.dive[0], B.dive[0] + 0.15));
-		const go = 1 - smooth(span(t, B.land[0] - 0.8, B.land[0] + 0.6));
-		const al = come * go;
-		if (al <= 0.01) return;
-		const { step } = TUN;
-		const R = 0.75 * Math.hypot(w, h);
-		const r0 = 0.01 * h;
-		const iLo = Math.ceil((E - Math.log(R / r0)) / step);
-		const iHi = Math.floor(E / step);
-		const sc = Math.sqrt(h / 800);
-		// Drawn apart along the seam ALL THE WAY DOWN — the slot the tunnel
-		// ended on kept through the whole fall (the original closed them back
-		// into circles as the band opened; the lead asked for the slot to stay):
-		// each ring its two long runs above and below the middle, rushing off.
-		const fo = 0; // (I5: no slot — the grooves run round the rooms as circles)
-		const sx = band ? band.W * band.m : 1.6 * w;
-		const hs = S.bandHold;
-		for (let i = iLo; i <= iHi; i++) {
-			const rho = r0 * Math.exp(E - step * i);
-			const v = Math.log(rho / r0) / Math.log(R / r0);
-			const a = al * lerp(0.15, 0.7, smooth(span(v, 0.1, 0.7))) * (1 - smooth(span(v, 0.9, 1)));
-			if (a < 0.02) continue;
-			const lw = lerp(0.7, 2.4, smooth(span(v, 0.2, 0.9))) * sc;
-			const at = (px, py) =>
-				fo > 0
-					? [O[0] + px + (px >= 0 ? sx : -sx), O[1] + py + (py >= 0 ? hs : -hs)]
-					: [O[0] + px, O[1] + py];
-			// (A point every ~9 px round it, 16 at the least: the small ones
-			// do not need the big ones' 56.)
-			const M = clamp(Math.ceil((TAU * rho) / 9), 16, TUN.M);
-			sketchRing(ink, at, rho, i, bo, 1, lw, a, M);
-			if (v > 0.6) sketchRing(ink, at, rho * 1.012, i + 7919, bo, 1, 0.55 * lw, 0.6 * a, M);
-		}
-	}
 	// Debris: dots and dashes streaming out from the vanishing point (or the
 	// band's edges), each on its own ray and pace, a new ray each time round.
 	function debris(ctx, w, h, t, O, band, a, n) {
@@ -2797,12 +2708,10 @@ export default async function make({ THREE, at }) {
 			ink.flush(ctx);
 		}
 		prof('lens');
-		// The rings going on round the rooms, under them.
-		{
-			const ink = inkFor(gUnder);
-			fallRings(ink, t, w, h, O, st.efolds(B.fall[0]) + zf, bo, band);
-			ink.flush(ctx);
-		}
+		// (0.22: no second set of rings round the rooms — cut A's circles came
+		// in over the groove at the dive and the spiral's lines doubled, the
+		// lead; the groove itself goes on round the room, `rings` above,
+		// until the room's frame has taken the board)
 		prof('rings');
 		// The rooms: the first already there, grown out of the tunnel (see
 		// firstRoom), the band opening over it.
@@ -3185,13 +3094,20 @@ const DIGIT_CELL = [0, 1, 3, 4, 6, 7, 8, 9];
 const GROUP_OF = [0, 0, 1, 1, 2, 2, 2, 2];
 const TECHF = (s) => `400 ${s}px ${TECH_FONT}`;
 const blinkOn = (secs, steady) => steady || (((secs * 2.3) % 1) + 1) % 1 < 0.58;
-function keys(text, seed, lead = 0.06) {
+// (typed within `by` of the asking, whatever its length: live, the run
+// HOLDS at the question's wait (EPICYCLE.beats, 0.8 s after it is asked)
+// until the person answers, and a question still being typed at the hold
+// stops mid-word — "how spicy are your .." — the lead)
+function keys(text, seed, lead = 0.06, by = 0.76) {
 	const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
 	let t = lead;
-	return [...text].map((ch, i) => {
+	const raw = [...text].map((ch, i) => {
 		t += 0.032 * (0.55 + 0.9 * rnd()) + (i > 0 && text[i - 1] === ' ' ? 0.03 : 0);
 		return t;
 	});
+	const last = raw[raw.length - 1];
+	if (last <= by) return raw;
+	return raw.map((x) => lead + ((x - lead) * (by - lead)) / (last - lead));
 }
 const K1 = keys(Q1_TEXT, 7001);
 const K2 = keys(Q2_TEXT, 7013);

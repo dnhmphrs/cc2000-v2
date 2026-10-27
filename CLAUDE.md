@@ -133,18 +133,24 @@ AND THE ONLY PAGE (see "Two sites" above). `?v=<name>` plays a variant
 `flow-strand-sketch-<name>.js` (on dev only): the run itself is the newest
 cut — L (0.21, `?v=l` is an alias of it), CLEAN UNTIL THE ROOM: the entry
 (the title, WHEN WERE YOU BORN? and HOW SPICY ARE YOUR PARENTS? typed into
-the double helix — `Q1_TEXT`, `Q2_TEXT`), COMPILING USER GENETICS (the
+the double helix — `Q1_TEXT`, `Q2_TEXT`; each question typed within the
+0.8 s before its wait, `keys`, since live the run HOLDS at the wait until
+the person answers and a question still being typed there stopped
+mid-word), COMPILING USER GENETICS (the
 amino-acid generator: the reading frame over the helix, the body written
 codon by codon, each ring's own shape flashed in gold — `log/body.js
-codonSection`; the strand LEVEL throughout, read a little off side-on, the
-body built flat across the board — or, on a board taller than it is wide,
+codonSection`; the strand LEVEL throughout, read SIDE-ON with the frame at
+the middle of the board and the strand sliding through it, the body built
+flat across the board — or, on a board taller than it is wide,
 the lens rolled a quarter turn as it comes to the reading so the body is
 built upright, the head at the top, and rolled back as it goes round behind
 the swimmer: `lensAt`), SIMULATING CONCEPTION: the swim into ONE GROOVE
 (I5's: a helix down the cone turning under the stylus, nothing lettered on
 it, its turns JOINED — the hand's wobble is one noise along the whole
-groove, `sketchTurn`), about nine and a half turns to the PORTHOLE at the
-apex — a circle onto the last room, in colour from its first pixel, grown
+groove, `sketchTurn`; the ONE groove goes on round the room until the room's frame
+has taken the board — cut A's second set of rings at the dive is gone, the
+spiral's lines doubled with it), about nine and a half turns to the
+PORTHOLE at the apex — a circle onto the last room, in colour from its first pixel, grown
 steadily from a speck (`portR`; NOTHING of a record: no label, no disc, no
 spindle, no flecks — the lead saw a CD and wanted it gone) — and THE PORTHOLE
 IS THE ROOM'S OWN FRAME (0.22): a circle at the end of the tunnel while
