@@ -547,7 +547,13 @@ const COUNT_FLIES = false; // the 266 figures and the months flying out (cut G h
 const GROOVE_TURN = 0.11; // (I5) the record's turn under the stylus, turns a second
 const ROOM_AT_BAND = 0.3; // the room this much of the board tall at the dive (firstRoom; the fall's start)
 const INSIDE = 0.12; // the fall stops inside the last room (?inside=: this far into its glass)
-const FILL = { w: 1.5, h: 0.92 }; // … where the room is this many boards wide, and at least this tall
+// (0.22: at least 1.12 boards tall — on a phone the plate's top and bottom
+// are then past the board's at rest, the porthole with them)
+const FILL = { w: 1.5, h: 1.12 }; // … where the room is this many boards wide, and at least this tall
+// The porthole's radius, of the plate's height, by the fall's first second
+// (holeAt): past the board's corners (0.94 h at 16:10, 0.83 h at 4:3) at
+// rest, where the plate is ≥ 1.06 h tall
+const HOLE_C = 0.9;
 const FALL_PACE = { n: 512, c: 0.55 };
 
 // ── The count ────────────────────────────────────────────────────────────────
@@ -818,11 +824,12 @@ export default async function make({ THREE, at }) {
 		S = { key, bases, spec, body, decade, fall, geo, rc, efolds, calc, F, words, order, deep };
 		// (L) when the fall's plate first covers the board — the porthole,
 		// the plate's inscribed circle until then, is let past the board
+		// (0.22: the porthole, the room's own frame, past the board's corners
+		// — holeAt, on the plate as the fall really lays it)
 		{
 			let tc = B.land[1];
 			for (let tt = B.fall[0]; tt <= B.land[1] + 1; tt += 0.02) {
-				const ph = geo.plate * Math.pow(geo.levels[0].X, -geo.zetaAt(tt));
-				if (ph >= 1.02 * h && ph * PHI >= 1.02 * w) {
+				if (holeAt(tt, w, h, S, apexAt(tt, w, h, S)).covers) {
 					tc = tt;
 					break;
 				}
@@ -855,6 +862,12 @@ export default async function make({ THREE, at }) {
 		answers: ans,
 		get decade() {
 			return S?.decade;
+		},
+		// the porthole at t on this board: its radius, the plate's box, and
+		// whether it is past the board's corners (the landing's one motion)
+		holeAt: (t) => (S ? holeAt(t, board.w, board.h, S, apexAt(t, board.w, board.h, S)) : null),
+		get tCover() {
+			return S?.tCover ?? null;
 		},
 		get zoom() {
 			return S ? { rate0: S.geo.rate0, z0: S.geo.zetaAt(0), total: S.geo.TOTAL } : null;
@@ -989,16 +1002,29 @@ export default async function make({ THREE, at }) {
 	function lensAt(t, w, h, st, fr) {
 		const L = st.body.length;
 		const E0 = entryLens(w, h, fr);
-		// Reading: close, from the front, a little above, tracking the frame.
+		// (0.22: the strand LEVEL through the compile — the lead: the reading
+		// looked awkward, the body should be built flat. The axis is seen
+		// through the lens's centre while it is read, so it is a horizontal
+		// line whatever the angle; the whole body is seen with no turn along
+		// it (dirF has no x), so it is level wherever it sits on the board.
+		// On a board taller than it is wide the lens ROLLS a quarter turn as
+		// it comes to the reading (`up`), so the strand and the body run
+		// down the board, the head at the top, and rolls back as it goes
+		// round behind the swimmer.)
+		// Reading: close, a little off side-on and above, tracking the frame
+		// (the rings open a little, so each codon's shape reads).
 		const xf = frameX(t);
-		const dirR = norm([-0.5, 0.42, 0.76]);
+		const dirR = norm([-0.18, 0.34, 0.92]);
 		const kR0 = kOf(30, w, h);
-		const dR = Math.max(12, (5 * kR0) / Math.min(0.5 * w, 0.75 * h));
+		const tall = h > w;
+		const across = tall ? h : w;
+		const along = tall ? w : h;
+		const dR = Math.max(12, (5.5 * kR0) / Math.min(0.5 * across, 0.75 * along));
 		const tgtR = [clamp(xf + 0.4, 2.2, S_LEN - 1.5), 0, 0];
 		const posR = add3(tgtR, mul3(dirR, dR));
-		// The whole body, nearly side-on.
-		const dirF = norm([-0.22, 0.3, 0.93]);
-		const dF = (L * kR0) / (0.86 * w) + 6;
+		// The whole body, side-on and level, a touch above.
+		const dirF = norm([0, 0.14, 0.99]);
+		const dF = (L * kR0) / (0.86 * across) + 6;
 		const tgtF = [L / 2 - 2, -1, 0];
 		const posF = add3(tgtF, mul3(dirF, dF));
 		const kR = smooth(span(t, ...B.view));
@@ -1006,6 +1032,9 @@ export default async function make({ THREE, at }) {
 		let pos = lerp3(lerp3(E0.pos, posR, kR), posF, kF);
 		let tgt = lerp3(lerp3(E0.tgt, tgtR, kR), tgtF, kF);
 		let fov = 30;
+		// the roll on a tall board: in with the reading, out round behind
+		const roll = tall ? kR * (t > B.swim ? 1 - smooth(span(t, ...B.behind)) : 1) : 0;
+		const up = roll > 0 ? norm(lerp3([0, 1, 0], [-1, 0, 0], roll)) : [0, 1, 0];
 		if (t > B.swim) {
 			// Round behind it, above and aside; then down onto the axis.
 			const sw = swimAt(t, st);
@@ -1021,13 +1050,16 @@ export default async function make({ THREE, at }) {
 			tgt = lerp3(tA, [X_APEX, 0, 0], k2);
 			fov = fovAt(t);
 		}
-		const cam = camera3({ pos, target: tgt, up: [0, 1, 0], fov: fovOf(fov, w, h), w, h });
+		const cam = camera3({ pos, target: tgt, up, fov: fovOf(fov, w, h), w, h });
 		cam.fov = fovOf(fov, w, h);
 		cam.k = kOf(fov, w, h);
 		cam.tgt = tgt;
 		return cam;
 	}
-	const lerp3 = (a, b, k) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k), lerp(a[2], b[2], k)];
+	// (a declaration: lensAt is called while the answers settle, before this line runs)
+	function lerp3(a, b, k) {
+		return [lerp(a[0], b[0], k), lerp(a[1], b[1], k), lerp(a[2], b[2], k)];
+	}
 	// The reading frame's centre on the axis.
 	function frameX(t) {
 		const u = span(t, ...B.read);
@@ -1287,22 +1319,41 @@ export default async function make({ THREE, at }) {
 		const u = span(t, B.onAxis[1], B.fall[0]);
 		return 0.5 * lerp(2, ROOM_AT_BAND * h, u * u);
 	};
-	// The plate's height on the board as the fall draws it (its one level).
-	const plateH = (t, g) => g.plate * Math.pow(g.levels[0].X, -g.zetaAt(t));
-	function holeR(t, w, h, st) {
-		if (t < B.onAxis[1]) return 0;
-		if (t < B.fall[0]) return 0.98 * portR(t, h);
-		const g = st.geo;
-		const r = 0.49 * plateH(t, g);
-		// … and once the plate covers the board, let past its corners — EASED
-		// (a smoothstep: no extra rate at its start), so the circle goes on
-		// at the plate's own pace and widens out of it, no jump (the tunnel
-		// "suddenly got out of the way" — the lead)
-		const tc = st.tCover;
-		if (t < tc) return r;
-		return lerp(r, 1.3 * Math.hypot(w, h), smooth(span(t, tc, tc + 1.2)));
+	// THE PORTHOLE IS THE ROOM'S OWN FRAME (0.22). A circle at the end of
+	// the tunnel while the room is far (the swim: R = 0.49 of the plate's
+	// height, inscribed in it), and through the fall a circle of R = c × the
+	// plate's REAL height on the board (log/fall.js frameOf — the plate as
+	// the fall draws it, into the glass and all; the nest law plateH() read
+	// the plate too small past ζ = 0, so the hole lagged the room and had to
+	// be let go after the lens had stopped: "the camera zooms in on the room
+	// while it's still blocked, then the tunnel suddenly widens") CUT TO THE
+	// PLATE (holePath clamps the circle to the box), c easing from 0.49 to
+	// HOLE_C over the fall's first second: the circle flattens against the
+	// room's top and bottom as it nears, becomes the room's rectangle with
+	// the circle's arcs for corners, and that frame grows with the zoom until
+	// it has passed the board's corners — which it does (HOLE_C, and FILL)
+	// before the lens comes to rest, so the room takes the frame in the one
+	// motion and nothing opens after. No release, no second rate.
+	function holeAt(t, w, h, st, O, nudge = null, zeta = null) {
+		if (t < B.onAxis[1]) return { r: 0, box: null, covers: false };
+		if (t < B.fall[0]) return { r: 0.98 * portR(t, h), box: null, covers: false };
+		const box = st.fall.frameOf(t, w, h, { origin: O, nudge, zeta });
+		if (!box) return { r: 0, box: null, covers: false };
+		const c = lerp(0.49, HOLE_C, smooth(span(t, B.fall[0], B.fall[0] + 1.0)));
+		const r = c * (box[3] - box[1]);
+		// past the board (a margin for the hand's wobble on the rim)
+		const m = 4;
+		const far = Math.max(
+			Math.hypot(O[0], O[1]),
+			Math.hypot(w - O[0], O[1]),
+			Math.hypot(O[0], h - O[1]),
+			Math.hypot(w - O[0], h - O[1])
+		);
+		const covers =
+			box[0] <= -m && box[1] <= -m && box[2] >= w + m && box[3] >= h + m && r >= far + m;
+		return { r, box, covers };
 	}
-	function bandAt(t, w, h, st) {
+	function bandAt(t, w, h, st, O = null, nudge = null) {
 		const m = smooth(span(t, ...B.seam));
 		const hold = smooth(span(t, B.conceived[0] - 0.15, B.conceived[0] + 0.3));
 		// (on a verdict the band opens for the breakdown instead of the dive —
@@ -1336,22 +1387,46 @@ export default async function make({ THREE, at }) {
 			// plate's corners are never seen in the tunnel (the rectangle
 			// popped through the spiral — the lead); released past the board
 			// once the plate covers it)
-			hole: edge ? 0 : holeR(t, w, h, st),
+			...(edge ? { hole: 0, holeBox: null, covers: false } : holeOf(t, w, h, st, O, nudge)),
 			tau
 		};
 	}
+	const holeOf = (t, w, h, st, O, nudge) => {
+		const { r, box, covers } = holeAt(t, w, h, st, O ?? apexAt(t, w, h, st), nudge);
+		return { hole: r, holeBox: box, covers };
+	};
+	// The vanishing point this frame: the tunnel's apex by the chase's lens.
+	function apexAt(t, w, h, st) {
+		const Oa = lensAt(t, w, h, st).project([X_APEX, 0, 0]);
+		return Oa[2] > NEAR ? [Oa[0], Oa[1]] : [w / 2, h / 2];
+	}
 	// The hole's ragged edge (re-drawn each drawing) as a subpath: wider than
 	// tall, as the band is.
-	function holePath(ctx, w, h, O, r, bo) {
+	function holePath(ctx, w, h, O, r, bo, box = null) {
 		// (I5: round — the spindle hole — and its edge the hand's, not torn)
-		const rx = r;
-		const ry = r;
-		const n = 40;
+		// (0.22: cut to the room's plate `box` where the circle reaches past
+		// it — the ray from O at θ stops at the plate's edge — so the hole
+		// becomes the room's own frame as it nears, its corners the circle's)
+		const n = box ? 96 : 40;
 		for (let i = 0; i <= n; i++) {
 			const th = (TAU * i) / n;
-			const k = 1 + 0.03 * noise1(3 * Math.cos(th) + 7, bo * 11 + 5) * Math.sin(th * 5 + bo);
-			const x = O[0] + rx * k * Math.cos(th);
-			const y = O[1] + ry * k * Math.sin(th);
+			const cx = Math.cos(th);
+			const cy = Math.sin(th);
+			let rr = r;
+			if (box) {
+				if (cx > 1e-6) rr = Math.min(rr, (box[2] - O[0]) / cx);
+				else if (cx < -1e-6) rr = Math.min(rr, (box[0] - O[0]) / cx);
+				if (cy > 1e-6) rr = Math.min(rr, (box[3] - O[1]) / cy);
+				else if (cy < -1e-6) rr = Math.min(rr, (box[1] - O[1]) / cy);
+				rr = Math.max(0, rr);
+			}
+			// the hand's wobble on the rim: 3% of the radius while it is small,
+			// never more than 2.5 px (a pen's), so the frame's edges are lines
+			const wob = Math.min(0.03 * rr, 2.5);
+			const k =
+				1 + (wob / Math.max(1, rr)) * noise1(3 * cx + 7, bo * 11 + 5) * Math.sin(th * 5 + bo);
+			const x = O[0] + rr * k * cx;
+			const y = O[1] + rr * k * cy;
 			if (i) ctx.lineTo(x, y);
 			else ctx.moveTo(x, y);
 		}
@@ -1362,7 +1437,7 @@ export default async function make({ THREE, at }) {
 		if (!band || !(band.hole > 0)) return;
 		ctx.beginPath();
 		ctx.rect(-50, -50, w + 100, h + 100);
-		holePath(ctx, w, h, O, band.hole, bo);
+		holePath(ctx, w, h, O, band.hole, bo, band.holeBox);
 		ctx.clip('evenodd');
 	}
 	// The band's two edges on the board, drawn by hand (re-drawn each
@@ -2189,6 +2264,43 @@ export default async function make({ THREE, at }) {
 		prof('grain');
 		window.__prof?.end();
 	}
+	// (0.22) A TOUCH OF THE HOLY LIGHT: as the monitor comes on (B.on) a
+	// light sits in its glass — log/lens.js `light`: the picture's own
+	// brights (the lit glass) smeared out along a slow sunburst's rays, so
+	// shafts of warm light lie across the room, and a small core — low, no
+	// bloom, no burn, no veil: the sun of sketch A's conception at a touch,
+	// not the flash. It breathes on the hold's clock and turns slowly, and
+	// goes with the screen under AGAIN.
+	const LIGHT = { rays: 0.32, core: 0.14, turn: 0.05 };
+	function lightAt(t) {
+		const g = lastGlass;
+		if (!g || t < B.on[0]) return null;
+		const x = (g[0] + g[2]) / 2;
+		const y = (g[1] + g[3]) / 2;
+		const gr = 0.5 * Math.min(g[2] - g[0], g[3] - g[1]);
+		const on = smooth(span(t, ...B.on));
+		const tb = holdSecs === null ? t : t + (secsNow - holdSecs);
+		const breath = 1 + 0.08 * Math.sin((TAU * (tb - B.on[0])) / 3.1);
+		const off = exit ? smooth(span(exit.s, ...EXIT.screen)) : 0;
+		const k = on * (1 - off) * breath;
+		if (k <= 0.002) return null;
+		return {
+			x,
+			y,
+			r: Math.max(8, 0.9 * gr),
+			rays: LIGHT.rays * k,
+			core: LIGHT.core * k,
+			rings: 0,
+			phase: 0,
+			turn: TAU * LIGHT.turn * (tb - B.on[0]),
+			bloom: -1,
+			bloomSoft: 1,
+			burnA: 0,
+			burnB: 0,
+			burnR: 1,
+			veil: 0
+		};
+	}
 	// The fuzz over the frame: the lens on the GPU, or the canvas grain.
 	let lensShown = false;
 	function fuzz(ctx, w, h, secs) {
@@ -2196,7 +2308,7 @@ export default async function make({ THREE, at }) {
 			lens.frame({
 				secs,
 				look,
-				light: null, // (K2: no light out of the screen)
+				light: lightAt(time.t),
 				// the rings under the board, the rest over it, both inside the
 				// lens (so they take its halo, its mist and its grain)
 				under: gUnder?.count ? (r, o) => gUnder.draw(r, { w, h, dpr: o.dpr }) : null,
@@ -2653,8 +2765,16 @@ export default async function make({ THREE, at }) {
 		const bo = boilAt(t);
 		// (L) the tunnel is drawn round the room until the porthole has passed
 		// the board's corners (bandAt's hole)
-		const band0 = bandAt(t, w, h, st);
-		const opening = band0.hole > 0 && band0.hole < 1.2 * Math.hypot(w, h);
+		// (0.22: until the room's frame — the porthole — has passed the
+		// board's corners, holeAt; it does so before the lens is at rest)
+		const veer = veerAt(t, st);
+		const nd = nudgeOf(t, secsNow);
+		const nudge = [nd[0] + 0.08 * veer[0], nd[1] + 0.05 * veer[1]];
+		const camT = lensAt(t, w, h, st);
+		const Oa = camT.project([X_APEX, 0, 0]);
+		const O = Oa[2] > NEAR ? [Oa[0], Oa[1]] : [w / 2, h / 2];
+		const band0 = bandAt(t, w, h, st, O, nudge);
+		const opening = band0.hole > 0 && !band0.covers;
 		// The boil eases off the coloured room after the flash — nearly still,
 		// so the room is seen as drawn rather than being worked over.
 		// (L: the landed room stays as it lands — warm, active, a little bouncy
@@ -2666,9 +2786,6 @@ export default async function make({ THREE, at }) {
 		// rooms are locked to the rings' centre; the fall's own sway rides on
 		// it): the one thing that kept slipping when the two were worked out
 		// apart.
-		const camT = lensAt(t, w, h, st);
-		const Oa = camT.project([X_APEX, 0, 0]);
-		const O = Oa[2] > NEAR ? [Oa[0], Oa[1]] : [w / 2, h / 2];
 		// The hold's time: the run's clock stands, the room goes on swaying.
 		const tf = holdSecs === null ? t : t + (secsNow - holdSecs);
 		if (opening) {
@@ -2689,8 +2806,6 @@ export default async function make({ THREE, at }) {
 		prof('rings');
 		// The rooms: the first already there, grown out of the tunnel (see
 		// firstRoom), the band opening over it.
-		const veer = veerAt(t, st);
-		const nd = nudgeOf(t, secsNow);
 		const fly = exit ? smooth(span(exit.s, ...EXIT.fly)) : 0;
 		// (L) while the iris opens the room is clipped to the hole: the colour
 		// disc in the chalk tunnel, nothing of the plate outside it
@@ -2698,13 +2813,13 @@ export default async function make({ THREE, at }) {
 		if (inHole) {
 			ctx.save();
 			ctx.beginPath();
-			holePath(ctx, w, h, O, band.hole, bo);
+			holePath(ctx, w, h, O, band.hole, bo, band.holeBox);
 			ctx.clip();
 		}
 		const cam = st.fall.draw(roomPen(O, zf, bo, calm), w, h, tf, {
 			origin: O,
 			// the lens leans after the swimmer's veer, and after the pointer
-			nudge: [nd[0] + 0.08 * veer[0], nd[1] + 0.05 * veer[1]],
+			nudge,
 			// (no tesseract in this cut)
 			tiles: 0,
 			tilesAlpha: 0.5,
@@ -2725,7 +2840,7 @@ export default async function make({ THREE, at }) {
 			// the porthole's rim, as firstRoom draws it, let go past the board
 			ctx.save();
 			ctx.beginPath();
-			holePath(ctx, w, h, O, band.hole, bo);
+			holePath(ctx, w, h, O, band.hole, bo, band.holeBox);
 			ctx.strokeStyle = PAL.chalk;
 			ctx.lineWidth = 1.3 * Math.sqrt(h / 800);
 			ctx.globalAlpha = 0.7 * (1 - smooth(span(band.hole, 0.5 * h, 0.8 * h)));
@@ -3064,7 +3179,7 @@ function badGroups(typed) {
 // slider — intro/epicycle.js's, as it lays them, without its figure (the kit
 // draws them only round its own figure).
 const Q1_TEXT = 'when were you born?';
-const Q2_TEXT = 'how spicy?';
+const Q2_TEXT = 'how spicy are your parents?';
 const MASK = 'dd.mm.yyyy';
 const DIGIT_CELL = [0, 1, 3, 4, 6, 7, 8, 9];
 const GROUP_OF = [0, 0, 1, 1, 2, 2, 2, 2];
