@@ -155,8 +155,14 @@ FRAME (`rings`: the lens's distance to the apex taken in by the e-folds
 the porthole has grown beyond the swim's zoom), so the frame never
 overtakes a turn and hides it ("the room jumped in front of the tunnel"
 — the lead): every turn expands ahead of the frame and off the board), about nine and a half turns to the
-PORTHOLE at the apex — a circle onto the last room, in colour from its first pixel, grown
-steadily from a speck (`portR`, to the fall's own first plate on that board, `S.plate0`, so the
+PORTHOLE at the apex — THE SUN (0.22.3): through the swim the porthole is
+LIGHT and nothing else, a warm white filling it with the lens's rays out
+of it (`sunVeil`, `LIGHT.sun`), and as the tunnel opens the white RESOLVES
+DOWNWARD into the room, clearing from the top of the hole down over the
+fall's first `SUN.resolve` seconds with a soft edge, the room revealing
+itself out of the light (the lead: "as the tunnel opens you should only
+see sunshine, and the sunshine should resolve downwards"); the porthole a
+circle grown steadily from a speck (`portR`, to the fall's own first plate on that board, `S.plate0`, so the
 fall opens on exactly it — on a phone the room used to drop a third at the
 dive; NOTHING of a record: no label, no disc, no
 spindle, no flecks — the lead saw a CD and wanted it gone) — and THE PORTHOLE
@@ -201,9 +207,15 @@ artist's composite has them (`data/roomElements.js`, fitted to
 (`.again()`) dollies the lens on THROUGH the dark glass — slowly, the hold's
 clock kept running so the sway and the parallax go on — until the glass
 covers the board (`covers`); the glass DARKENS as the lens goes through it
-(`EXIT.dark`) and once it covers the board the picture fades to the ground
-over `EXIT.fade` — it snapped from the pale glass to the dark — and that
-dark is what the next title types on. The endings
+(`EXIT.dark`) and once it covers the board the DOLLY HOLDS there
+(`exit.fly`) while the picture fades to the ground over `EXIT.fade` — it
+snapped from the pale glass to the dark — and that dark is what the next
+title types on. The sway and the pointer's parallax are CALMED as the lens
+goes into the glass (`calmExit`, fall.js `sway`): near the glass's plane
+any shift of the lens throws the glass aside, so on some runs it never
+covered the board, the lens crossed its plane and the room's WALL showed
+before the dark ("a flash of room graphic background" — the lead); if the
+glass does go behind the lens uncovered, the dark comes at once. The endings
 of round K sit beside it on cut K's base (`docs/explore-12.md`): `?v=k` cut
 K itself (the record and the needle drop), `?v=k1` the needle drop cleaned,
 `?v=k2` the iris as it was picked, `?v=k3` the screen's light (`log/fall.js
