@@ -292,7 +292,10 @@ export const meta = {
 };
 
 // ── The beats ────────────────────────────────────────────────────────────────
-const SECONDS = 52;
+// (0.23: 44 — the swim cut from 17.7 s to 9.5, the sun's moment to its last
+// two seconds: "the simulation transition can be cut way down, especially
+// the blinding light moment" — the PM)
+const SECONDS = 44;
 const TERM = makeTerminal(0.8, { cmd: false, align: 'center' });
 const FREEZE = TERM.stop + 0.2; // ≈ 5.14
 const { q1: Q1, wait1: W1, e1: E1, q2: Q2, wait2: W2, e2: E2 } = EPICYCLE.beats;
@@ -320,36 +323,39 @@ const B = {
 	contour: [21.2, 22.1],
 	life: 22.2,
 	// ── the journey (this variant's) ──
-	conception: [22.6, 35.6], // the caption
+	conception: [22.6, 31.5], // the caption
 	boil: [22.2, 23.6], // the hand comes into the lines
 	swim: 22.5,
-	behind: [22.6, 25.2], // the lens round behind the swimmer
-	onAxis: [25.6, 28.4], // the lens down onto the tunnel's axis
-	tunnel: [23.1, 26.2], // the rings sketched in, near to far
-	lines: [24.2, 27.2], // the speed lines come
-	glint: [24.0, 26.0], // the light at the end of it
-	premise: [27.2, 28.75], // the slam: the birth date − 264 DAYS
-	count: [28.7, 39], // 264 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
-	seam: [36.6, 39], // the tunnel narrowed into the band
-	conceived: [39, 40.4], // the conception date on the band
+	// (0.23: the swim CUT — the lens round behind and onto the axis in 4.3 s
+	// rather than 5.9, the porthole phase 5.5 s rather than 11.8, every beat
+	// from the dive on 7.9 s earlier)
+	behind: [22.6, 24.6], // the lens round behind the swimmer
+	onAxis: [24.8, 26.8], // the lens down onto the tunnel's axis
+	tunnel: [23.1, 25.6], // the rings sketched in, near to far
+	lines: [24.0, 26.4], // the speed lines come
+	glint: [24.0, 25.6], // the light at the end of it
+	premise: [25.8, 27.2], // the slam: the birth date − 264 DAYS
+	count: [26.8, 31.1], // 264 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
+	seam: [28.7, 31.1], // the tunnel narrowed into the band
+	conceived: [31.1, 32.5], // the conception date on the band
 	// (K2) THE IRIS: the spindle hole widens at ONE rate in e-folds of its
-	// radius — a true iris — over 0.8 s, past the board's corners by 40.7
-	dive: [39.9, 40.7],
+	// radius — a true iris — over 0.8 s, past the board's corners by 32.8
+	dive: [32.0, 32.8],
 	iris: 0.8,
-	fall: [40.2, 42.4], // (the landing under the white: no beat between the date and the final scene)
-	land: [41.2, 42.4],
+	fall: [32.3, 34.5], // (the landing under the white: no beat between the date and the final scene)
+	land: [33.3, 34.5],
 	// (K2) THE IRIS: the room floods with its colour UNDER the label as the
-	// label forms — done by the time the spindle hole is dark in it (≈ 37.6,
-	// bandAt: m > 0.35) — so the hole is a porthole onto the colour room
-	colour: [27.0, 27.6],
-	aim: [41.4, 42.4],
+	// label forms — done by the time the spindle hole is dark in it
+	// (bandAt: m > 0.35) — so the hole is a porthole onto the colour room
+	colour: [25.0, 25.6],
+	aim: [33.5, 34.5],
 	// (K2) the monitor switched on softly as the lens comes to rest (B.land
-	// ends 42.4); the song lettered on it; no needle drop, no flash
-	on: [42.3, 43.5],
-	hit: 42.6, // (the output may go on the screen from here: `screen()`)
-	song: [43.6, 44.4],
-	artist: [44.2, 44.9],
-	push: [42.7, 45.7],
+	// ends 34.5); the song lettered on it; no needle drop, no flash
+	on: [34.4, 35.6],
+	hit: 34.7, // (the output may go on the screen from here: `screen()`)
+	song: [35.7, 36.5],
+	artist: [36.3, 37.0],
+	push: [34.8, 37.8],
 	out: [97, 98] // (never: the run HOLDS on its last frame; `again` restarts it)
 };
 // THE BREAKDOWN (a verdict: a birthday the archive cannot answer for). The
@@ -359,7 +365,7 @@ const B = {
 // (strip), the band tears open as it would for the dive but onto the gif
 // tiled across the board rather than the rooms (spread), and the verdict is
 // lettered over the tiles (verdict) and held (end; AGAIN on the page).
-const BREAK = { strip: [41.0, 41.8], spread: [41.8, 44.2], verdict: 44.4, end: 50 };
+const BREAK = { strip: [33.1, 33.9], spread: [33.9, 36.3], verdict: 36.5, end: 42 };
 const endAt = (edge) => (edge ? BREAK.end : SECONDS);
 // AGAIN: the song and the date fade (words), the monitor goes dark
 // (screen), and the lens dollies on through the glass — the fall's own
@@ -383,6 +389,9 @@ const EXIT = {
 	len: 11
 };
 const PARALLAX = [0.09, 0.05];
+// The landed room's motion: the boil's amplitude and the sway's, of what
+// they were (the PM: too much)
+const ROOM = { calm: 0.6, sway: 0.5 };
 
 // (K2: no flash — the hole is the iris; see the header)
 
@@ -609,7 +618,7 @@ const FOV_CHASE = 52;
 const FOV_END = 40;
 const fovAt = (t) =>
 	t > B.swim
-		? lerp(lerp(30, FOV_CHASE, smooth(span(t, B.swim, 25.0))), FOV_END, smooth(span(t, 31, 36.4)))
+		? lerp(lerp(30, FOV_CHASE, smooth(span(t, B.swim, 25.0))), FOV_END, smooth(span(t, 27.0, 31.5)))
 		: 30;
 
 // ── The board's shape ────────────────────────────────────────────────────────
@@ -640,6 +649,11 @@ export default async function make({ THREE, at }) {
 	// on the site it filled the form in by itself — the lead: "this should
 	// never happen. manual only").
 	const main = typeof document !== 'undefined' && document.documentElement.dataset.site === 'main';
+	// ?screen=player: the page puts Spotify's player ON the monitor's glass
+	// (runs/Next.svelte) and nothing is lettered on it — to look at beside
+	// the title on the screen (the PM: "I don't think it needs to be the song
+	// title written out. Kinda miss the player in there")
+	const playerOnScreen = q.get('screen') === 'player';
 	const live =
 		at === null &&
 		(main || (q.get('demo') !== '1' && /^\/(lab|next)(\/|$)/.test(location.pathname)));
@@ -817,7 +831,7 @@ export default async function make({ THREE, at }) {
 		const tEnd = F.edge ? B.dive[1] + 1 : B.land[1];
 		const E = new Float64Array(N + 1);
 		const rate = (t) =>
-			smooth(span(t, B.swim, B.swim + 1.5)) * lerp(r0, rc, smooth(span(t, 24.0, 30.0)));
+			smooth(span(t, B.swim, B.swim + 1.5)) * lerp(r0, rc, smooth(span(t, 23.5, 27.5)));
 		for (let i = 1; i <= N; i++) {
 			const ta = B.swim + (i - 1) * DT;
 			E[i] = E[i - 1] + 0.5 * DT * (rate(ta) + rate(ta + DT));
@@ -1332,7 +1346,7 @@ export default async function make({ THREE, at }) {
 	const portR = (t, st) => {
 		if (t < B.onAxis[1]) return 0;
 		const u = span(t, B.onAxis[1], B.fall[0]);
-		return 0.5 * lerp(2, st.plate0, u * u);
+		return 0.5 * lerp(2, st.plate0, u * u * u);
 	};
 	// THE PORTHOLE IS THE ROOM'S OWN FRAME (0.22). A circle at the end of
 	// the tunnel while the room is far (the swim: R = 0.49 of the plate's
@@ -2400,8 +2414,10 @@ export default async function make({ THREE, at }) {
 		// is exponential — nothing, nothing, then all at once — and read as
 		// the room being brought in at the end); the fall carries on from the
 		// size it reaches. ζ is read back off the size.
+		// (0.23: as the CUBE of the time — a star for most of the swim, the sun
+		// only in its last two seconds; it was the square)
 		const u = span(t, B.onAxis[1], B.fall[0]);
-		const ph = lerp(2, st.plate0, u * u);
+		const ph = lerp(2, st.plate0, u * u * u);
 		const X0 = g.levels[0].X;
 		const zeta = Math.log(g.plate / ph) / Math.log(X0);
 		if (ph < 1.5) return;
@@ -2801,7 +2817,9 @@ export default async function make({ THREE, at }) {
 		// so the room is seen as drawn rather than being worked over.
 		// (L: the landed room stays as it lands — warm, active, a little bouncy
 		// — the lead; it was calmed to a near-still and read as frozen)
-		const calm = 1;
+		// (0.23: ROOM.calm of that, and the sway ROOM.sway of the fall's — "the
+		// elements in the room are moving too much" — the PM)
+		const calm = ROOM.calm;
 		let band = band0;
 		// The vanishing point IS the tunnel's apex, projected by the chase's
 		// lens, all the way down (the fall is given it as its origin, so the
@@ -2867,7 +2885,7 @@ export default async function make({ THREE, at }) {
 			// (K2) the colour through the hole while it opens; all colour
 			// once it has taken the frame (the flood, long done)
 			reveal: opening ? iris(band, O) : null,
-			sway: 1 - calmExit
+			sway: (1 - calmExit) * lerp(1, ROOM.sway, smooth(span(t, ...B.land)))
 		});
 		if (inHole) {
 			// the sun resolving downward into the room as the tunnel opens
@@ -2976,7 +2994,7 @@ export default async function make({ THREE, at }) {
 				// through it
 				glassBase(ctx, cam.glass, exit ? smooth(span(exit.s, ...EXIT.dark)) : 0);
 				screenOn(ctx, cam.glass, smooth(span(t, ...B.on)) * (1 - off), tf);
-				screenWords(ctx, cam.glass, t, st, bo, 1 - off);
+				if (!playerOnScreen) screenWords(ctx, cam.glass, t, st, bo, 1 - off);
 				ctx.restore();
 			}
 		}
