@@ -171,14 +171,18 @@ circle grown steadily from a speck (`portR`, to the fall's own first plate on th
 fall opens on exactly it — on a phone the room used to drop a third at the
 dive; NOTHING of a record: no label, no disc, no
 spindle, no flecks — the lead saw a CD and wanted it gone) — and THE PORTHOLE
-IS THE ROOM'S OWN FRAME (0.22), ONE SHAPE FROM THE SPECK TO THE LANDING
-(0.22.4): the circle of half the plate's width (`HOLE_C`, φ/2 of its
-height) cut to the plate (`holeAt`, `holePath`; the plate as the fall
-REALLY lays it on the board, `log/fall.js frameOf`, into the glass and
-all) — a window with the plate's top and bottom and the circle's arcs for
-sides — grown by the zoom and by NOTHING ELSE, past the board's corners
-BEFORE the lens is at rest (`S.tCover`, ~34.1 on a laptop, ~34.3 on a
-phone; `FILL.h` 1.12 keeps a phone's plate past its board), so the lens
+IS A CIRCLE, ALWAYS, INSCRIBED IN THE ROOM'S PLATE (0.23.1: "the shape we
+see should always be the shape of the hole" — the lead; it was cut to the
+plate's rectangle for a round, and a wider circle filled by the wall's
+texture repeating past the plate was tried and dropped — "a bad idea"),
+ONE SHAPE FROM THE SPECK TO THE LANDING: `HOLE_C` 0.49 of the plate's REAL
+height on the board (`holeAt`, `holePath`; the plate as the fall lays it,
+`log/fall.js frameOf`, into the glass and all), grown by the zoom and by
+NOTHING ELSE, so nothing but the room is ever inside it — and that is why
+the lens lands as deep as `FILL` says, the room 2.1 boards wide (1.25
+tall on a phone): the inscribed circle has to be past the board's corners
+at rest, which it is just BEFORE the lens is there (`S.tCover`, ~34.3 on
+a laptop and a phone, rest 34.5), so the lens
 simply swims through the end of the tunnel and the room's depth does the
 reveal (it widened from the inscribed circle over the fall's first second
 for a round, and that read as the hole being opened at the end — "i dont

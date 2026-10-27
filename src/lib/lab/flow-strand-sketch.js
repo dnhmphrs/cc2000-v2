@@ -557,14 +557,21 @@ const COUNT_FLIES = false; // the 266 figures and the months flying out (cut G h
 const GROOVE_TURN = 0.11; // (I5) the record's turn under the stylus, turns a second
 const ROOM_AT_BAND = 0.3; // the room this much of the board tall at the dive (firstRoom; the fall's start)
 const INSIDE = 0.12; // the fall stops inside the last room (?inside=: this far into its glass)
-// (0.22: at least 1.12 boards tall — on a phone the plate's top and bottom
-// are then past the board's at rest, the porthole with them)
-const FILL = { w: 1.5, h: 1.12 }; // … where the room is this many boards wide, and at least this tall
-// The porthole's radius, of the plate's height (holeAt): half the plate's
-// width (φ/2), so the window's sides are the circle's own arcs and its top
-// and bottom the plate's — and past the board's corners at rest (0.94 h at
-// 16:10, 0.83 h at 4:3), where the plate is ≥ 1.12 h tall
-const HOLE_C = 0.81;
+// (0.23.1: 2.1 boards wide — the porthole is the plate's inscribed circle,
+// and at rest it must be past the board's corners: 0.5 × 2.1 / φ = 0.65 of
+// the width, 1.04 of a 16:10 board's height against its corners' 0.94 — and
+// at least 1.25 tall, which is a phone's binding side: its corners at 0.55 h,
+// the circle 0.61 h there)
+const FILL = { w: 2.1, h: 1.25 }; // … where the room is this many boards wide, and at least this tall
+// The porthole's radius, of the plate's height (holeAt): A CIRCLE, always,
+// INSCRIBED in the plate (0.23.1: "the shape we see should always be the
+// shape of the hole" — the lead; it was cut to the plate for a round, and
+// repeating the wall past the plate to fill a wider circle was tried and
+// dropped), so nothing but the room is ever inside it — which is why the
+// lens lands as deep as FILL says: the inscribed circle has to be past the
+// board's corners at rest (0.94 h at 16:10, 0.83 h at 4:3, 0.55 h on a
+// phone), so the plate is ≥ 2.1 boards wide and ≥ 1.25 tall there
+const HOLE_C = 0.49;
 // (0.22.4: `ease` — the fall's slowing to rest, (1 − x)^ease: 2 was a
 // touch too slow across the last of the room's expansion — the lead)
 const FALL_PACE = { n: 512, c: 0.55, ease: 1.4 };
@@ -1384,7 +1391,7 @@ export default async function make({ THREE, at }) {
 		} else box = st.fall.frameOf(t, w, h, { origin: O, nudge, zeta });
 		if (!box) return { r: 0, box: null, covers: false };
 		const r = HOLE_C * (box[3] - box[1]);
-		// past the board (a margin for the hand's wobble on the rim)
+		// past the board's corners (a margin for the hand's wobble on the rim)
 		const m = 4;
 		const far = Math.max(
 			Math.hypot(O[0], O[1]),
@@ -1392,8 +1399,7 @@ export default async function make({ THREE, at }) {
 			Math.hypot(O[0], h - O[1]),
 			Math.hypot(w - O[0], h - O[1])
 		);
-		const covers =
-			box[0] <= -m && box[1] <= -m && box[2] >= w + m && box[3] >= h + m && r >= far + m;
+		const covers = r >= far + m;
 		return { r, box, covers };
 	}
 	function bandAt(t, w, h, st, O = null, nudge = null) {
@@ -1480,7 +1486,7 @@ export default async function make({ THREE, at }) {
 		if (!band || !(band.hole > 0)) return;
 		ctx.beginPath();
 		ctx.rect(-50, -50, w + 100, h + 100);
-		holePath(ctx, w, h, O, band.hole, bo, band.holeBox);
+		holePath(ctx, w, h, O, band.hole, bo);
 		ctx.clip('evenodd');
 	}
 	// The band's two edges on the board, drawn by hand (re-drawn each
@@ -2431,10 +2437,9 @@ export default async function make({ THREE, at }) {
 		// (bandAt's hole), the colour room growing in it, the chalk tunnel
 		// outside, until it has taken the frame.
 		const R = HOLE_C * ph;
-		const pbox = st.fall.frameOf(t, w, h, { origin: O, zeta });
 		const port = () => {
 			ctx.beginPath();
-			holePath(ctx, w, h, O, R, bo, pbox);
+			holePath(ctx, w, h, O, R, bo);
 		};
 		const keep = g.zetaAt;
 		g.zetaAt = () => zeta;
@@ -2864,7 +2869,7 @@ export default async function make({ THREE, at }) {
 		if (inHole) {
 			ctx.save();
 			ctx.beginPath();
-			holePath(ctx, w, h, O, band.hole, bo, band.holeBox);
+			holePath(ctx, w, h, O, band.hole, bo);
 			ctx.clip();
 		}
 		const cam = st.fall.draw(roomPen(O, zf, bo, calm), w, h, tf, {
@@ -2894,7 +2899,7 @@ export default async function make({ THREE, at }) {
 			// the porthole's rim, as firstRoom draws it, let go past the board
 			ctx.save();
 			ctx.beginPath();
-			holePath(ctx, w, h, O, band.hole, bo, band.holeBox);
+			holePath(ctx, w, h, O, band.hole, bo);
 			ctx.strokeStyle = PAL.chalk;
 			ctx.lineWidth = 1.3 * Math.sqrt(h / 800);
 			ctx.globalAlpha = 0.7 * (1 - smooth(span(band.hole, 0.5 * h, 0.8 * h)));
