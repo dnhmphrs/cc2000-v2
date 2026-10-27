@@ -52,7 +52,9 @@
 //     after(renderer, { board, dpr })     onto the canvas after the pass
 //     look   any of LENS's numbers, this frame (e.g. { grain: 0 })
 //     light  a light at (x, y), CSS px — flow-strand-sketch's conception:
-//            { x, y, r (its core's radius), rays (its shafts: the picture's
+//            { x, y, r (its core's radius), soft (the radius within which
+//            its rays go to an even glow, so they never meet at a point —
+//            r if absent), rays (its shafts: the picture's
 //            own brights smeared out from it along its rays — a pass at a
 //            quarter size — with a sunburst through them, each ray its own
 //            warm hue), core, rings (log-polar rings drifting out, at
@@ -213,6 +215,7 @@ function buildLens({ THREE, renderer, board, canvas }) {
 		// a flow's light (god rays): centre (device px), strength, core, rays
 		lightP: uniform(V2(0, 0)), // the light, lens px
 		lightR: uniform(40), // its core's radius, lens px
+		lightSoft: uniform(40), // the radius within which its rays go diffuse, lens px
 		lightRays: uniform(0), // the shafts and the sunburst
 		lightCore: uniform(0), // the core's glow
 		lightRings: uniform(0), // the log-polar rings
@@ -233,13 +236,23 @@ function buildLens({ THREE, renderer, board, canvas }) {
 
 	// ── The board as a texture ──
 	let boardTex = null;
+	let boardTexSize = ''; // the canvas's size the texture was made at
 	const boardTexture = () => {
 		const c = board.canvas;
-		if (boardTex && (boardTex.image.width !== c.width || boardTex.image.height !== c.height)) {
+		// (0.23.8: a new texture whenever the canvas has been resized. The
+		// texture's image IS the canvas, so comparing the two never found a
+		// difference, the GPU's storage stayed at the old size and every
+		// frame after a resize was uploaded into its corner — the picture
+		// scaled down wherever a pass samples it by uv: under the GPU ink, and
+		// the halo's chain. "resizing the screen makes the blur pass wildly
+		// off" — the lead.)
+		const size = `${c.width}x${c.height}`;
+		if (boardTex && size !== boardTexSize) {
 			boardTex.dispose();
 			boardTex = null;
 		}
 		if (!boardTex) {
+			boardTexSize = size;
 			boardTex = new THREE.CanvasTexture(c);
 			boardTex.colorSpace = THREE.NoColorSpace;
 			boardTex.flipY = false; // row 0 the board's top, as screenUV
@@ -434,13 +447,16 @@ function buildLens({ THREE, renderer, board, canvas }) {
 				const d1 = sin(a2).mul(0.5).add(0.5);
 				const d2 = d1.mul(d1);
 				const d4 = d2.mul(d2);
-				// (0.23.7: DIFFUSE ABOUT THE ORIGIN — inside the light's radius the
-				// rays' angular pattern goes smoothly to its own mean, a soft even
-				// glow in one warm gold, so the rays never meet at a point: they
-				// come out of a disc of light — "always diffuse around its polar
+				// (0.23.7: DIFFUSE ABOUT THE ORIGIN — inside `lightSoft` the rays'
+				// angular pattern goes smoothly to its own mean, a soft even glow
+				// in one warm gold, so the rays never meet at a point: they come
+				// out of a disc of light — "always diffuse around its polar
 				// origin", the lead. The means are the patterns' own averages
-				// over the angle: E[c⁵] = 0.246, E[d⁶]/2 = 0.113.)
-				const ang = smoothstep(0.3, 1.1, rr);
+				// over the angle: E[c⁵] = 0.246, E[d⁶]/2 = 0.113. 0.23.8: its own
+				// radius, apart from the reach's `lightR` — tied to that it took
+				// the whole room at the landing and left a wash where the beam
+				// had been: "the sunbeam shouldnt disappear completely".)
+				const ang = smoothstep(0.3, 1.1, r.div(u.lightSoft));
 				const broad = mix(float(0.246), c2.mul(c2).mul(c1), ang);
 				const fine = mix(float(0.113), d4.mul(d2).mul(0.5), ang);
 				const burst = broad.add(fine);
@@ -658,6 +674,7 @@ function buildLens({ THREE, renderer, board, canvas }) {
 		if (L) {
 			u.lightP.value.set(L.x * dpr, L.y * dpr);
 			u.lightR.value = Math.max(1, (L.r ?? 40) * dpr);
+			u.lightSoft.value = Math.max(1, (L.soft ?? L.r ?? 40) * dpr);
 			u.lightRays.value = L.rays ?? 0;
 			u.lightCore.value = L.core ?? 0;
 			u.lightRings.value = L.rings ?? 0;

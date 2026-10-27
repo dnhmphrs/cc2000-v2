@@ -134,17 +134,20 @@ AND THE ONLY PAGE (see "Two sites" above). `?v=<name>` plays a variant
 cut — L (0.21, `?v=l` is an alias of it), CLEAN UNTIL THE ROOM: the entry
 (the title, WHEN WERE YOU BORN? and HOW SPICY ARE YOUR PARENTS? typed into
 the double helix — `Q1_TEXT`, `Q2_TEXT`; the date's gold trace runs the strand
-in `B.trace` 0.8 s and the spice's in `B.trace2` 1.2 s (the second scan
-was too fast), and the lens moves to the reading only once the spice's
-trace has run its length and a full second's beat, `B.view` from E2 +
-trace2 + 1 = 16.6 — everything from the reading on moved with it, the run
-still 44 s; the title's full stop fades ON THE SAME
+in `B.trace` 0.8 s and the spice's in `B.trace2` the same 0.8 (0.23.8: it
+was 1.2 for a round, "longer than the first scan, which had a good
+length"), and the lens moves to the reading only once the spice's trace
+has run its length and a beat of 0.7 s, `B.view` from E2 + trace2 + 0.7 =
+15.9 (half a second was too short, a full second a beat too long — the
+lead); the reading itself 2.1 s (2.3 was "the slightest touch too slow");
+everything from the axis on 0.9 s earlier than 0.23.7, the run still 44 s;
+the title's full stop fades ON THE SAME
 BEAT as "… OF CONCEPTION", the last line — it used to glide over and become
 the strand's 5′ end, then had a beat of its own; each question typed within the
 0.8 s before its wait, `keys`, since live the run HOLDS at the wait until
 the person answers and a question still being typed there stopped
 mid-word), COMPILING USER GENETICS (typed from the moment the lens starts
-for the reading, 16.6, not from the questions' going — "should only start
+for the reading, 15.9, not from the questions' going — "should only start
 typing when the camera starts zooming in for the amino acid scan"; the
 amino-acid generator: the reading frame over the helix, the body written
 codon by codon, each ring's own shape flashed in gold — `log/body.js
@@ -171,15 +174,21 @@ PORTHOLE at the apex — THE SUN (0.22.3): through the swim the porthole is
 LIGHT and nothing else, a warm white filling it with the lens's rays out
 of it (`sunVeil`, `LIGHT.sun` 0.42 — 0.6 was a little too bright; the
 light's radius 1.2 of the porthole, so the shafts come from the whole sun
-and not a point at its middle — and NEVER A POINT, EVER (0.23.7): the
-light's radius is never under `LIGHT.diffuse` 0.26 of the board's short
-side, from the star at the swim's far end to the room at rest (nor under
-1.2 of the porthole, nor 1.1 of the glass), and INSIDE that radius the
+and not a point at its middle — and NEVER A POINT, EVER (0.23.7): within
+a SOFT radius of its own (`light.soft`, apart from the reach's `r`) the
 lens lets the sunburst's angular pattern go smoothly to its own mean, one
 even warm glow, so the rays come out of a disc of light and never meet
-(`lens.js` `ang`; "i never want to see the origin of the sunbeam. it wants
-to always be diffuse around its polar origin" — the lead, after "as the
-tunnel fades away i dont want to see the point of the sunbeam ever"); the
+(`lens.js` `ang`): `LIGHT.diffuse` 0.26 of the board's short side round
+the star at the swim's far end and through the fall, easing after the
+landing to `LIGHT.glass` 0.6 of the glass's short side, so at rest the
+rays are whole from the glass's edge out across the room and only their
+meeting on the glass is soft ("i never want to see the origin of the
+sunbeam. it wants to always be diffuse around its polar origin" — the
+lead; 0.23.8: for a round the soft radius was the reach's, 1.1 of the
+glass, the beam went at the landing and left a wash — "the sunbeam
+shouldnt disappear completely … the whole end graphic is super faded");
+the reach as before, as wide as the porthole through the fall, easing over
+two seconds after the landing to the glass; the
 sunburst TURNS, `LIGHT.turn` 0.12 of a turn a second, and SHIMMERS on two
 slow waves — "a little too static"), and as the tunnel opens the white RESOLVES
 DOWNWARD into the room, clearing from the top of the hole down over the
@@ -200,8 +209,8 @@ height on the board (`holeAt`, `holePath`; the plate as the fall lays it,
 NOTHING ELSE, so nothing but the room is ever inside it — and that is why
 the lens lands as deep as `FILL` says, the room 2.1 boards wide (1.25
 tall on a phone): the inscribed circle has to be past the board's corners
-at rest, which it is just BEFORE the lens is there (`S.tCover`, ~35.7 on
-a laptop and a phone, rest 35.9), so the lens
+at rest, which it is just BEFORE the lens is there (`S.tCover`, ~34.9 on
+a laptop, 34.8 on a phone, rest 35), so the lens
 simply swims through the end of the tunnel and the room's depth does the
 reveal (it widened from the inscribed circle over the fall's first second
 for a round, and that read as the hole being opened at the end — "i dont
