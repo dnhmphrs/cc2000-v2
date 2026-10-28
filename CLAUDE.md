@@ -134,20 +134,19 @@ AND THE ONLY PAGE (see "Two sites" above). `?v=<name>` plays a variant
 cut — L (0.21, `?v=l` is an alias of it), CLEAN UNTIL THE ROOM: the entry
 (the title, WHEN WERE YOU BORN? and HOW SPICY ARE YOUR PARENTS? typed into
 the double helix — `Q1_TEXT`, `Q2_TEXT`; the date's gold trace runs the strand
-in `B.trace` 0.8 s and the spice's in `B.trace2` the same 0.8 (0.23.8: it
-was 1.2 for a round, "longer than the first scan, which had a good
-length"), and the lens moves to the reading only once the spice's trace
-has run its length and a beat of 0.7 s, `B.view` from E2 + trace2 + 0.7 =
-15.9 (half a second was too short, a full second a beat too long — the
-lead); the reading itself 2.1 s (2.3 was "the slightest touch too slow");
-everything from the axis on 0.9 s earlier than 0.23.7, the run still 44 s;
-the title's full stop fades ON THE SAME
+in `B.trace` 0.7 s and the spice's in `B.trace2` 1.4 (0.23.9 — the lead's
+own numbers, after 0.8/1.2 and 0.8/0.8), and the lens moves to the reading
+only once the spice's trace has run its length and a beat of 0.7 s,
+`B.view` from E2 + trace2 + 0.7 = 16.5 (half a second was too short, a
+full second a beat too long — the lead); the reading itself 2.1 s (2.3 was
+"the slightest touch too slow"); the run still 44 s, the lens at rest at
+35.6; the title's full stop fades ON THE SAME
 BEAT as "… OF CONCEPTION", the last line — it used to glide over and become
 the strand's 5′ end, then had a beat of its own; each question typed within the
 0.8 s before its wait, `keys`, since live the run HOLDS at the wait until
 the person answers and a question still being typed there stopped
 mid-word), COMPILING USER GENETICS (typed from the moment the lens starts
-for the reading, 15.9, not from the questions' going — "should only start
+for the reading, 16.5, not from the questions' going — "should only start
 typing when the camera starts zooming in for the amino acid scan"; the
 amino-acid generator: the reading frame over the helix, the body written
 codon by codon, each ring's own shape flashed in gold — `log/body.js
@@ -192,9 +191,12 @@ two seconds after the landing to the glass; the
 sunburst TURNS, `LIGHT.turn` 0.12 of a turn a second, and SHIMMERS on two
 slow waves — "a little too static"), and as the tunnel opens the white RESOLVES
 DOWNWARD into the room, clearing from the top of the hole down over the
-fall's first `SUN.resolve` seconds with a soft edge, the room revealing
-itself out of the light (the lead: "as the tunnel opens you should only
-see sunshine, and the sunshine should resolve downwards"); the porthole a
+fall's first `SUN.resolve` seconds — 2.4, with an edge `SUN.soft` 0.7 of
+the hole (0.23.9: 1.6 and 0.45 were "too sudden" — the lead); the glass is
+drawn whole under it with the veil's own white over it, since drawn as
+faint as the veil was clear the spiral showed through it — the room
+revealing itself out of the light (the lead: "as the tunnel opens you
+should only see sunshine, and the sunshine should resolve downwards"); the porthole a
 circle grown steadily from a speck (`portR`, to the fall's own first plate on that board, `S.plate0`, so the
 fall opens on exactly it — on a phone the room used to drop a third at the
 dive; NOTHING of a record: no label, no disc, no
@@ -209,8 +211,8 @@ height on the board (`holeAt`, `holePath`; the plate as the fall lays it,
 NOTHING ELSE, so nothing but the room is ever inside it — and that is why
 the lens lands as deep as `FILL` says, the room 2.1 boards wide (1.25
 tall on a phone): the inscribed circle has to be past the board's corners
-at rest, which it is just BEFORE the lens is there (`S.tCover`, ~34.9 on
-a laptop, 34.8 on a phone, rest 35), so the lens
+at rest, which it is just BEFORE the lens is there (`S.tCover`, ~35.5 on
+a laptop, 35.4 on a phone, rest 35.6), so the lens
 simply swims through the end of the tunnel and the room's depth does the
 reveal (it widened from the inscribed circle over the fall's first second
 for a round, and that read as the hole being opened at the end — "i dont
@@ -235,7 +237,13 @@ it sways after the pointer) — the line YOU WERE CONCEIVED TO, Spotify's
 352 × 152 bar with the artwork scaled to 0.96 of the glass's width, and
 two keys in the screen's dark ink, SHARE (which does nothing yet — it will
 be a share screen of its own, the lead) and START AGAIN —
-up the moment the lens is at rest (`song()`), nothing lettered on the
+up THE MOMENT the lens is at rest, `ended()` true from `B.hit` = the rest
+(0.23.9: it was the monitor's switch-on's end, 1.1 s later), and WHOLE:
+the song is named from the moment the answer is in (`song()`, from
+`B.life`) and the page keeps the output in the DOM off the board and
+hidden from then, so Spotify's embed is loaded twelve seconds before the
+landing and fades in with the glass ("a slight lag before the embed
+popped up" — the lead); nothing lettered on the
 glass by the sketch; THE WORDS ARE THE COPY TABLE'S, `PAGE` in
 `lab/log/sketch-copy.js`, for the lead to edit. `?screen=title` is what it was from 0.21 to 0.23.1: the song and its
 artist lettered on the glass in the hand — capitals, WRAPPED at the words

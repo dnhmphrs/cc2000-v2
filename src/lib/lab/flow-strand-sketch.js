@@ -310,58 +310,58 @@ const B = {
 	pan: [6.2, 6.8], // the stop to the strand's 5′ end
 	field: [Q1 + 0.25, Q1 + 0.7],
 	slider: [Q2 + 0.35, Q2 + 0.8],
-	trace: 0.8, // the date's gold trace's run down the strand (0.23.3: a touch faster — the lead)
-	trace2: 0.8, // the spice's — the same as the date's (0.23.8: 1.2 was longer than the first, which had a good length — the lead)
+	trace: 0.7, // the date's gold trace's run down the strand (0.23.9: 0.7 — the lead)
+	trace2: 1.4, // the spice's (0.23.9: twice the date's — the lead)
 	still: 1.6, // the strand's turn dies away over this, from E2
 	asked: [14.7, 15.3], // the questions go (before the caption types over the slider's row)
-	genetics: [15.9, 22.8], // the caption (typed from the lens's move to the reading, 0.23.7)
+	genetics: [16.5, 23.4], // the caption (typed from the lens's move to the reading, 0.23.7)
 	// (0.23.8: the lens moves to the reading a BEAT of 0.7 s after the spice's
-	// trace has run its length — E2 + trace2 = 15.2, the beat, 15.9: a half
+	// trace has run its length — E2 + trace2 = 15.8, the beat, 16.5: a half
 	// second was too short, a full second a beat too long — the lead; and the
-	// reading 2.1 s, "the slightest touch too slow" at 2.3; everything from
-	// the axis on is 0.9 s earlier than 0.23.7)
-	view: [15.9, 17.1], // the lens comes to the reading
-	read: [17, 19.1], // the frame 5′ → 3′ (quicker than 19.6; 1.1 s was too quick, 2.3 a touch slow)
-	axis: [19.2, 20.4], // the strand closes onto the axis
-	rope: [19.5, 21], // the backbones twist down the tail
-	back: [19.4, 21.2], // the lens draws back to the whole body
-	gens: [20.9, 22],
-	contour: [21.7, 22.6],
-	life: 22.7,
+	// reading 2.1 s, "the slightest touch too slow" at 2.3; 0.23.9: the scans
+	// 0.7 and 1.4, everything from the reading on 0.6 s later than 0.23.8)
+	view: [16.5, 17.7], // the lens comes to the reading
+	read: [17.6, 19.7], // the frame 5′ → 3′ (quicker than 19.6; 1.1 s was too quick, 2.3 a touch slow)
+	axis: [19.8, 21], // the strand closes onto the axis
+	rope: [20.1, 21.6], // the backbones twist down the tail
+	back: [20, 21.8], // the lens draws back to the whole body
+	gens: [21.5, 22.6],
+	contour: [22.3, 23.2],
+	life: 23.3,
 	// ── the journey (this variant's) ──
-	conception: [23.1, 32], // the caption
-	boil: [22.7, 24.1], // the hand comes into the lines
-	swim: 23,
+	conception: [23.7, 32.6], // the caption
+	boil: [23.3, 24.7], // the hand comes into the lines
+	swim: 23.6,
 	// (0.23: the swim CUT — the lens round behind and onto the axis in 4.3 s
 	// rather than 5.9, the porthole phase 5.5 s rather than 11.8, every beat
 	// from the dive on 7.9 s earlier)
-	behind: [23.1, 25.1], // the lens round behind the swimmer
-	onAxis: [25.3, 27.3], // the lens down onto the tunnel's axis
-	tunnel: [23.6, 26.1], // the rings sketched in, near to far
-	lines: [24.5, 26.9], // the speed lines come
-	glint: [24.5, 26.1], // the light at the end of it
-	premise: [26.3, 27.7], // the slam: the birth date − 264 DAYS
-	count: [27.3, 31.6], // 264 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
-	seam: [29.2, 31.6], // the tunnel narrowed into the band
-	conceived: [31.6, 33], // the conception date on the band
+	behind: [23.7, 25.7], // the lens round behind the swimmer
+	onAxis: [25.9, 27.9], // the lens down onto the tunnel's axis
+	tunnel: [24.2, 26.7], // the rings sketched in, near to far
+	lines: [25.1, 27.5], // the speed lines come
+	glint: [25.1, 26.7], // the light at the end of it
+	premise: [26.9, 28.3], // the slam: the birth date − 264 DAYS
+	count: [27.9, 32.2], // 264 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
+	seam: [29.8, 32.2], // the tunnel narrowed into the band
+	conceived: [32.2, 33.6], // the conception date on the band
 	// (K2) THE IRIS: the spindle hole widens at ONE rate in e-folds of its
 	// radius — a true iris — over 0.8 s, past the board's corners by 32.8
-	dive: [32.5, 33.3],
+	dive: [33.1, 33.9],
 	iris: 0.8,
-	fall: [32.8, 35], // (the landing under the white: no beat between the date and the final scene)
-	land: [33.8, 35],
+	fall: [33.4, 35.6], // (the landing under the white: no beat between the date and the final scene)
+	land: [34.4, 35.6],
 	// (K2) THE IRIS: the room floods with its colour UNDER the label as the
 	// label forms — done by the time the spindle hole is dark in it
 	// (bandAt: m > 0.35) — so the hole is a porthole onto the colour room
-	colour: [25.5, 26.1],
-	aim: [34, 35],
+	colour: [26.1, 26.7],
+	aim: [34.6, 35.6],
 	// (K2) the monitor switched on softly as the lens comes to rest (B.land
 	// ends 34.5); the song lettered on it; no needle drop, no flash
-	on: [34.9, 36.1],
-	hit: 35.2, // (the output may go on the screen from here: `screen()`)
-	song: [36.2, 37],
-	artist: [36.8, 37.5],
-	push: [35.3, 38.3],
+	on: [35.5, 36.7],
+	hit: 35.6, // = land[1]: the output on the glass the moment the lens is at rest (0.23.9; it was 0.2 s after) // (the output may go on the screen from here: `screen()`)
+	song: [36.8, 37.6],
+	artist: [37.4, 38.1],
+	push: [35.9, 38.9],
 	out: [97.5, 98] // (never: the run HOLDS on its last frame; `again` restarts it)
 };
 // THE BREAKDOWN (a verdict: a birthday the archive cannot answer for). The
@@ -371,7 +371,7 @@ const B = {
 // (strip), the band tears open as it would for the dive but onto the gif
 // tiled across the board rather than the rooms (spread), and the verdict is
 // lettered over the tiles (verdict) and held (end; AGAIN on the page).
-const BREAK = { strip: [33.6, 34.4], spread: [34.4, 36.8], verdict: 37, end: 42.5 };
+const BREAK = { strip: [34.2, 35], spread: [35, 37.4], verdict: 37.6, end: 43.1 };
 const endAt = (edge) => (edge ? BREAK.end : SECONDS);
 // AGAIN: the song and the date fade (words), the monitor goes dark
 // (screen), and the lens dollies on through the glass — the fall's own
@@ -631,7 +631,7 @@ const FOV_CHASE = 52;
 const FOV_END = 40;
 const fovAt = (t) =>
 	t > B.swim
-		? lerp(lerp(30, FOV_CHASE, smooth(span(t, B.swim, 25.5))), FOV_END, smooth(span(t, 27.5, 32.0)))
+		? lerp(lerp(30, FOV_CHASE, smooth(span(t, B.swim, 26.1))), FOV_END, smooth(span(t, 28.1, 32.6)))
 		: 30;
 
 // ── The board's shape ────────────────────────────────────────────────────────
@@ -844,7 +844,7 @@ export default async function make({ THREE, at }) {
 		const tEnd = F.edge ? B.dive[1] + 1 : B.land[1];
 		const E = new Float64Array(N + 1);
 		const rate = (t) =>
-			smooth(span(t, B.swim, B.swim + 1.5)) * lerp(r0, rc, smooth(span(t, 24.0, 28.0)));
+			smooth(span(t, B.swim, B.swim + 1.5)) * lerp(r0, rc, smooth(span(t, 24.6, 28.6)));
 		for (let i = 1; i <= N; i++) {
 			const ta = B.swim + (i - 1) * DT;
 			E[i] = E[i - 1] + 0.5 * DT * (rate(ta) + rate(ta + DT));
@@ -2411,7 +2411,9 @@ export default async function make({ THREE, at }) {
 	// soft edge sweeping down, the room revealing itself out of the light
 	// (the lead: "as the tunnel opens you should only see sunshine, and the
 	// sunshine should resolve downwards, like the room is revealing itself").
-	const SUN = { colour: '#fff6e2', resolve: 1.6, soft: 0.45 };
+	// (0.23.9: slower and softer — resolve 2.4 s, the edge 0.7 of the hole:
+	// "how the light fades to reveal the room is too sudden" — the lead)
+	const SUN = { colour: '#fff6e2', resolve: 2.4, soft: 0.7 };
 	const sunP = (t) => span(t, B.fall[0], B.fall[0] + SUN.resolve);
 	// the veil's cover at a point: v its height down the hole's box, 0 … 1
 	const sunAlpha = (v, p) => 1 - smooth(span(p * (1 + SUN.soft) - v, 0, SUN.soft));
@@ -3022,17 +3024,25 @@ export default async function make({ THREE, at }) {
 		if (cam.glass) {
 			const off = exit ? smooth(span(exit.s, ...EXIT.screen)) : 0;
 			// (the glass is under the sun's veil while the white resolves down
-			// the room: drawn as faint as the veil over it is clear)
-			const gk = inHole ? 1 - sunAt(band.holeBox, cam.glass, sunP(t)) : 1;
-			if (gk > 0.004) {
+			// the room: drawn whole, with the veil's own white over it as deep as
+			// the veil is there — 0.23.9: it was drawn as FAINT as the veil was
+			// clear, and with the slower, softer resolve the spiral under the
+			// board showed through the half-drawn glass for a second)
+			const gv = inHole ? sunAt(band.holeBox, cam.glass, sunP(t)) : 0;
+			if (gv < 0.996) {
 				ctx.save();
-				ctx.globalAlpha = gk;
 				// (L) the glass as drawn, under the screen's light: the spiral under
 				// the board never shows through the monitor; dark as AGAIN goes
 				// through it
 				glassBase(ctx, cam.glass, exit ? smooth(span(exit.s, ...EXIT.dark)) : 0);
 				screenOn(ctx, cam.glass, smooth(span(t, ...B.on)) * (1 - off), tf);
 				if (!playerOnScreen) screenWords(ctx, cam.glass, t, st, bo, 1 - off);
+				if (gv > 0.004) {
+					const g = cam.glass;
+					ctx.globalAlpha = gv;
+					ctx.fillStyle = SUN.colour;
+					ctx.fillRect(g[0] - 1, g[1] - 1, g[2] - g[0] + 2, g[3] - g[1] + 2);
+				}
 				ctx.restore();
 			}
 		}
@@ -3063,7 +3073,10 @@ export default async function make({ THREE, at }) {
 		// The scene is the page's as soon as the lens is at rest in it (the
 		// AGAIN key); on a verdict, once the verdict is up. The clock runs on
 		// to the end and holds; nothing of the picture changes with it.
-		ended: () => !exit && time.t >= (S?.F?.edge ? BREAK.verdict : B.on[1]),
+		// (0.23.9: from the moment the lens is at rest, B.hit = land[1] — it was
+		// the monitor's switch-on's end, 1.1 s later, and the output came late:
+		// "a slight lag before the embed popped up" — the lead)
+		ended: () => !exit && time.t >= (S?.F?.edge ? BREAK.verdict : B.hit),
 		// From the top — through the monitor when there is one to fly into
 		// (a song's end), straight to the title on a verdict.
 		again: () => {
@@ -3074,10 +3087,14 @@ export default async function make({ THREE, at }) {
 				time.seek(0);
 			}
 		},
-		// The song (or the verdict) of the run, for the page's player.
-		// (the embed comes up with the title on the screen, and goes with AGAIN)
+		// The song (or the verdict) of the run, for the page's player — from the
+		// moment the answer is in, so the page can have Spotify's embed loaded
+		// before the landing (0.23.9: it was named 1.2 s after the lens was at
+		// rest, and the embed came up late and then loaded — "a slight lag
+		// before the embed popped up", the lead); it goes with AGAIN. WHERE it
+		// shows is `screen()`.
 		song: () =>
-			S && !exit && time.t >= (S.F.edge ? BREAK.verdict : B.song[0])
+			S && !exit && time.t >= B.life
 				? { title: S.F.title, artist: S.F.artist, uri: S.F.uri, edge: S.F.edge }
 				: null,
 		// The monitor's glass on the board this frame, CSS px [x0, y0, x1, y1],

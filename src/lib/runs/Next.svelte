@@ -64,6 +64,8 @@
 		: '';
 	$: ek = screen ? Math.min(1, (0.96 * gw) / 352) : 1; // (0.23.6: a bit bigger — the lead)
 	$: embedStyle = `width:${Math.round(352 * ek)}px;height:${Math.round(152 * ek)}px;`;
+	// the output's place while it waits for the glass: off the board, hidden
+	const PRELOAD = 'left:-2000px;top:0;width:352px;height:260px;font-size:12px;visibility:hidden;';
 	// (SHARE does nothing yet — it will be a share screen of its own)
 	// (the embed is a horizontal bar in the top left corner, under the
 	// version label — the lead; the keys and the song stay on the screen)
@@ -169,49 +171,50 @@
 
 <canvas bind:this={canvas}></canvas>
 {#if failed}<p class="failed">{failed}</p>{/if}
-{#if ended}
-	{#if playerOnScreen}
-		{#if screen}
-			<!-- THE OUTPUT, ON THE MONITOR'S SCREEN: a line, the player, two keys -->
-			<div class="output" style={outputStyle} use:portal>
-				<p class="output-say">{PAGE.response}</p>
-				{#if embed}
-					<div class="output-embed" style={embedStyle}>
-						<iframe
-							title="{song.title} — {song.artist}"
-							src={embed}
-							width="352"
-							height="152"
-							frameborder="0"
-							allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-							loading="lazy"
-							style="transform:scale({ek});"
-						></iframe>
-					</div>
-				{/if}
-				<div class="output-keys">
-					<button type="button">{PAGE.share}</button>
-					<button type="button" on:click={again}>{PAGE.again}</button>
+{#if playerOnScreen}
+	{#if song}
+		<!-- THE OUTPUT, ON THE MONITOR'S SCREEN: a line, the player, two keys.
+		     (0.23.9: in the page from the moment the song is known, off the
+		     board and hidden until the sketch gives it the glass — so Spotify's
+		     embed is loaded by the landing and the output is whole the moment
+		     the lens is at rest) -->
+		<div class="output" class:preload={!screen} style={screen ? outputStyle : PRELOAD} use:portal>
+			<p class="output-say">{PAGE.response}</p>
+			{#if embed}
+				<div class="output-embed" style={embedStyle}>
+					<iframe
+						title="{song.title} — {song.artist}"
+						src={embed}
+						width="352"
+						height="152"
+						frameborder="0"
+						allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+						style="transform:scale({ek});"
+					></iframe>
 				</div>
+			{/if}
+			<div class="output-keys">
+				<button type="button">{PAGE.share}</button>
+				<button type="button" on:click={again}>{PAGE.again}</button>
 			</div>
-		{/if}
-	{:else}
-		<div class="end" class:on={!!screen} style={endStyle} use:portal>
-			<button type="button" on:click={again}>again</button>
 		</div>
-		{#if embed}
-			<div class="player" use:portal>
-				<iframe
-					title="{song.title} — {song.artist}"
-					src={embed}
-					width="352"
-					height="80"
-					frameborder="0"
-					allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-					loading="lazy"
-				></iframe>
-			</div>
-		{/if}
+	{/if}
+{:else if ended}
+	<div class="end" class:on={!!screen} style={endStyle} use:portal>
+		<button type="button" on:click={again}>again</button>
+	</div>
+	{#if embed}
+		<div class="player" use:portal>
+			<iframe
+				title="{song.title} — {song.artist}"
+				src={embed}
+				width="352"
+				height="80"
+				frameborder="0"
+				allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+				loading="lazy"
+			></iframe>
+		</div>
 	{/if}
 {/if}
 
@@ -228,6 +231,13 @@
 		position: fixed;
 		z-index: 30; /* over the board's canvases (11), under the corner's switch (35) */
 		pointer-events: auto; /* the layout's main has none, for the board */
+		transition: opacity 0.6s ease; /* comes up with the monitor's glass */
+	}
+	.output.preload {
+		opacity: 0;
+		pointer-events: none;
+	}
+	.output {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
