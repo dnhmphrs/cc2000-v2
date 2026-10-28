@@ -183,17 +183,21 @@ ROOM'S DEPTH (`rings`: the lens's distance to the apex taken in by the
 e-folds the plate has grown beyond the swim's zoom), so the frame never
 overtakes a turn and hides it ("the room jumped in front of the tunnel"
 — the lead): every turn expands ahead of the frame and off the board), about nine and a half turns to the
-PORTHOLE at the apex — THE SUN (0.22.3): through the swim the end of the
-tunnel is LIGHT and nothing else — A GLOW, `sunGlow` (0.23.13): the sun's
-white full to the throat's rim, where the groove ends, falling off softly
-to nothing at `SUN.reach` 1.7 of it, no edge anywhere, there from the
-tunnel's first turn and fading in with the groove, growing only as the
-throat does; NO ROOM is drawn under it through the swim, the fall draws
-the room under the same glow from the dive and the glow fades evenly off
-it (it was a hard white disc, then the room under a softer glow showing
-through round its edge — "sperm flies into tunnel. sperm gradually gets
-to end of tunnel. sperm flies out." — the lead) — with the lens's rays
-out of it (`LIGHT.sun` 0.42 — 0.6 was a little too bright; the
+PORTHOLE at the apex — THE END OF THE TUNNEL IS THE END OF THE TUNNEL
+(0.23.14): the groove winds down to its throat and NOTHING is drawn
+inside it through the swim — the board's dark, and the lens's own
+sunbeam out of it, the rays with a soft core at the throat as their
+source (`LIGHT.sunCore`, gone as the room comes up) — and at the dive the
+room comes up out of that dark inside the hole over `ROOM_IN` 1.2 s
+(`fallen`); NO WHITE ANYWHERE — THE SUN of 0.22.3 (the porthole light
+alone through the swim, a warm white resolving off the room as the
+tunnel opened: a hard disc, then one size, then a glow, `sunVeil`,
+`sunGlow`) is GONE, and so is the room drawn at the throat, which was
+mostly the monitor's pale glass, a square in a circle — the lead, three
+rounds running: "there should not be a separate hole", "sperm flies into
+tunnel. sperm gradually gets to end of tunnel. sperm flies out.",
+"remove the disc completely"; the sunshine is the lens's own rays alone
+(`lightAt`), out of it (`LIGHT.sun` 0.42 — 0.6 was a little too bright; the
 light's radius 1.2 of the porthole, so the shafts come from the whole sun
 and not a point at its middle — and NEVER A POINT, EVER (0.23.7): within
 a SOFT radius of its own (`light.soft`, apart from the reach's `r`) the
@@ -211,15 +215,9 @@ shouldnt disappear completely … the whole end graphic is super faded");
 the reach as before, as wide as the porthole through the fall, easing over
 two seconds after the landing to the glass; the
 sunburst TURNS, `LIGHT.turn` 0.12 of a turn a second, and SHIMMERS on two
-slow waves — "a little too static"), and as the tunnel opens the glow
-FADES EVENLY off the room over the fall's first `SUN.resolve` seconds —
-2.4 (0.23.9: 1.6 was "too sudden" — the lead; and from 0.22.3 to 0.23.9
-it cleared from the top of the hole down with a soft edge sweeping down,
-until the lead: "the fade reveal on the room should never be a scroll
-down"); the glass is drawn whole under it with the glow's own white over
-it, since drawn as faint as the veil was clear the spiral showed through
-it — the room revealing itself out of the light (the lead: "as the tunnel
-opens you should only see sunshine"); the porthole
+slow waves — "a little too static"); as the tunnel opens the room comes
+up out of the dark inside the hole, evenly, over 1.2 s (the white's even
+fade of 0.23.9, and the downward sweep before it, went with the sun); the porthole
 the tunnel's throat, exactly the circle of the fall's own first plate on
 that board, `S.plate0`, at the dive (`portR`; `holeAt` scales the swim's
 box to the throat's height), so the fall opens on exactly it — on a phone
