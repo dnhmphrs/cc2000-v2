@@ -189,14 +189,15 @@ shouldnt disappear completely … the whole end graphic is super faded");
 the reach as before, as wide as the porthole through the fall, easing over
 two seconds after the landing to the glass; the
 sunburst TURNS, `LIGHT.turn` 0.12 of a turn a second, and SHIMMERS on two
-slow waves — "a little too static"), and as the tunnel opens the white RESOLVES
-DOWNWARD into the room, clearing from the top of the hole down over the
-fall's first `SUN.resolve` seconds — 2.4, with an edge `SUN.soft` 0.7 of
-the hole (0.23.9: 1.6 and 0.45 were "too sudden" — the lead); the glass is
-drawn whole under it with the veil's own white over it, since drawn as
-faint as the veil was clear the spiral showed through it — the room
-revealing itself out of the light (the lead: "as the tunnel opens you
-should only see sunshine, and the sunshine should resolve downwards"); the porthole a
+slow waves — "a little too static"), and as the tunnel opens the white
+RESOLVES into the room, ONE EVEN FADE over the whole hole over the fall's
+first `SUN.resolve` seconds — 2.4 (0.23.9: 1.6 was "too sudden" — the
+lead; and from 0.22.3 to 0.23.9 it cleared from the top of the hole down
+with a soft edge sweeping down, until the lead: "the fade reveal on the
+room should never be a scroll down"); the glass is drawn whole under it
+with the veil's own white over it, since drawn as faint as the veil was
+clear the spiral showed through it — the room revealing itself out of the
+light (the lead: "as the tunnel opens you should only see sunshine"); the porthole a
 circle grown steadily from a speck (`portR`, to the fall's own first plate on that board, `S.plate0`, so the
 fall opens on exactly it — on a phone the room used to drop a third at the
 dive; NOTHING of a record: no label, no disc, no

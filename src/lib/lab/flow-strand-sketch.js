@@ -2406,17 +2406,18 @@ export default async function make({ THREE, at }) {
 			: () => null;
 	// (0.22.3) THE SUN. Through the swim the porthole is LIGHT and nothing
 	// else — a warm white filling it, the lens's rays out of it — and as the
-	// tunnel opens the white RESOLVES DOWNWARD into the room: it clears from
-	// the top of the hole down over the fall's first SUN.resolve seconds, a
-	// soft edge sweeping down, the room revealing itself out of the light
-	// (the lead: "as the tunnel opens you should only see sunshine, and the
-	// sunshine should resolve downwards, like the room is revealing itself").
-	// (0.23.9: slower and softer — resolve 2.4 s, the edge 0.7 of the hole:
-	// "how the light fades to reveal the room is too sudden" — the lead)
-	const SUN = { colour: '#fff6e2', resolve: 2.4, soft: 0.7 };
+	// tunnel opens the white RESOLVES into the room over the fall's first
+	// SUN.resolve seconds, the room revealing itself out of the light (the
+	// lead: "as the tunnel opens you should only see sunshine").
+	// (0.23.9: slower — resolve 2.4 s, 1.6 was "too sudden"; and ONE EVEN
+	// FADE over the whole hole: from 0.22.3 to 0.23.9 it cleared from the top
+	// of the hole down with a soft edge sweeping down, and the lead: "the
+	// fade reveal on the room should never be a scroll down")
+	const SUN = { colour: '#fff6e2', resolve: 2.4 };
 	const sunP = (t) => span(t, B.fall[0], B.fall[0] + SUN.resolve);
-	// the veil's cover at a point: v its height down the hole's box, 0 … 1
-	const sunAlpha = (v, p) => 1 - smooth(span(p * (1 + SUN.soft) - v, 0, SUN.soft));
+	// the veil's cover, 0 … 1, the same everywhere (v, the height down the
+	// hole's box, is kept for a sweep's sake and not used)
+	const sunAlpha = (v, p) => 1 - smooth(p);
 	const sunAt = (box, glass, p) => {
 		if (p >= 1) return 0;
 		if (p <= 0 || !box) return 1;
@@ -2426,17 +2427,8 @@ export default async function make({ THREE, at }) {
 	function sunVeil(ctx, w, h, box, p) {
 		if (p >= 1) return;
 		ctx.save();
-		if (p <= 0 || !box) ctx.fillStyle = SUN.colour;
-		else {
-			const g = ctx.createLinearGradient(0, box[1], 0, box[3]);
-			const [R, G, Bc] = hex(SUN.colour);
-			for (let i = 0; i <= 10; i++) {
-				const v = i / 10;
-				const a = sunAlpha(v, p);
-				g.addColorStop(v, `rgba(${R},${G},${Bc},${a.toFixed(3)})`);
-			}
-			ctx.fillStyle = g;
-		}
+		ctx.fillStyle = SUN.colour;
+		ctx.globalAlpha = p <= 0 || !box ? 1 : sunAlpha(0, p);
 		ctx.fillRect(-10, -10, w + 20, h + 20);
 		ctx.restore();
 	}
