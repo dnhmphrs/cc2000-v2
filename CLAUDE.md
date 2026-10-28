@@ -140,7 +140,10 @@ only once the spice's trace has run its length and a beat of 0.7 s,
 `B.view` from E2 + trace2 + 0.7 = 16.5 (half a second was too short, a
 full second a beat too long — the lead); the reading itself 2.1 s (2.3 was
 "the slightest touch too slow"); the run still 44 s, the lens at rest at
-35.6; the title's full stop fades ON THE SAME
+37.2 (0.23.17: the swim from the lens on the axis to the dive 1.2 s longer
+and the fall 0.4 s, every later beat 1.6 s later — "we can take a touch
+longer on the transition, it reads a bit fast"; the verdict's hold ends at
+43.8 to stay inside the 44); the title's full stop fades ON THE SAME
 BEAT as "… OF CONCEPTION", the last line — it used to glide over and become
 the strand's 5′ end, then had a beat of its own; each question typed within the
 0.8 s before its wait, `keys`, since live the run HOLDS at the wait until
@@ -181,7 +184,7 @@ dive the fall's true size took over: "the room/scene position resets …
 it always looks like you have two scenes glued"; a frame-by-frame diff
 across the dive, `?at=` pins 0.02 s apart, is the check: no step bigger
 than its neighbours) — and THE DOLLY ZOOM (0.23.16, Vertigo's, Kubrick's):
-from `VERTIGO.from` 29.4 to the dive the swim's lens widens to
+from `VERTIGO.from` 29.73 to the dive the swim's lens widens to
 `VERTIGO.fov` 88° while it closes on the swimmer by the ratio of the
 half-angles' tangents (`fovAt`, `dollyAt`), so the swimmer holds its size
 and the cone's walls flare out past it and its end stretches away; held
@@ -207,7 +210,15 @@ cone's own perspective — the plate the cut circle is inscribed in, at the
 cut's depth (`firstRoom`, `portR`, clipped to the cut) — from the
 tunnel's first turn, fading in with the groove, as small as the opening is
 and growing only as it does, and the lens swims down the cone and through
-the cut into it; nothing else at the end: no rim, no white, no glow, no
+the cut into it; and while the cut is small IT IS LIGHT (0.23.17, `GLOW`):
+the sun's white full over it and falling off softly past it, no edge, a
+soft star never under `GLOW.min` of the board, the beam out of it from the
+tunnel's first turn (`lightAt` from `B.tunnel`), and as the cut grows from
+`GLOW.from` 1.2% to `GLOW.to` 5% of the board's short side the light fades
+and the room resolves out of it — nothing drawn under the light until
+then ("the opening of the tunnel starts as glow with the sunbeam, and
+then resolves into the room … i can see the room itself from too far
+out" — the lead); nothing else at the end: no rim, no white, no glow, no
 core, no dark to come up out of ("imagine a cone with its end cut off …
 you keep adding the end/room as its own thing, when it should simply be
 what exists after the cone" — the lead, after a white disc, a one-size
@@ -261,9 +272,9 @@ tall on a phone): the inscribed circle has to be past the board's corners
 at rest — and past them by `CIRCLE` 1.06 whatever the board's shape, since
 on a near-square board (a half screen) FILL's width and height left the
 circle short of the corners and the tunnel showed round the landed room
-(0.23.15) — which it is just BEFORE the lens is there (`S.tCover`, ~35.24
-on a laptop, 35.18 on a phone, 35.22 on a 960 × 1080 half screen, rest
-35.6), so the lens
+(0.23.15) — which it is just BEFORE the lens is there (`S.tCover`, ~36.74
+on a laptop, 36.64 on a phone, 36.70 on a 960 × 1080 half screen, rest
+37.2), so the lens
 simply swims through the end of the tunnel and the room's depth does the
 reveal (it widened from the inscribed circle over the fall's first second
 for a round, and that read as the hole being opened at the end — "i dont

@@ -119,8 +119,8 @@ export const COPY = [
 	// "compiling user genetics should only start typing when the camera starts
 	// zooming in for the amino acid scan", the lead)
 	{ caption: 'COMPILING USER GENETICS', at: 16.5, until: 22 },
-	{ when: 'song', caption: 'SIMULATING CONCEPTION', at: 23.7, until: 32.6 },
-	{ when: 'edge', caption: 'SIGNAL LOST', at: 34.6, until: 43.1 },
+	{ when: 'song', caption: 'SIMULATING CONCEPTION', at: 23.7, until: 33.63 },
+	{ when: 'edge', caption: 'SIGNAL LOST', at: 36.02, until: 43.8 },
 
 	// ── A VERDICT, held over the gif (the original site's three) ──
 
@@ -132,7 +132,7 @@ export const COPY = [
 	// in the original site's words ──
 	{
 		when: 'past',
-		at: 37.6,
+		at: 39.2,
 		out: 198,
 		hold: true,
 		x: 0,
@@ -142,11 +142,11 @@ export const COPY = [
 			{ text: 'YOU WERE BORN IN THE TIME OF DINOSAURS', size: 0.038, write: [44.9, 45.6] },
 			{ text: 'THERE WAS NO MUSIC', size: 0.038, write: [45.7, 46.1] }
 		],
-		marks: [{ line: 0, at: 38.7, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 40.3, kind: 'circle', pad: 0.3 }]
 	},
 	{
 		when: 'future',
-		at: 37.6,
+		at: 39.2,
 		out: 198,
 		hold: true,
 		x: 0,
@@ -156,11 +156,11 @@ export const COPY = [
 			{ text: 'YOU WERE BORN IN THE AFTER TIME', size: 0.038, write: [44.9, 45.5] },
 			{ text: 'CONCEIVED TO BABY, BY JUSTIN BIEBER', size: 0.038, write: [45.6, 46.2] }
 		],
-		marks: [{ line: 0, at: 38.7, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 40.3, kind: 'circle', pad: 0.3 }]
 	},
 	{
 		when: 'unknown',
-		at: 37.6,
+		at: 39.2,
 		out: 198,
 		hold: true,
 		x: 0,
@@ -170,7 +170,7 @@ export const COPY = [
 			{ text: 'YOUR MOMENT WAS TOO HOT TO CALCULATE', size: 0.038, write: [44.9, 45.6] },
 			{ text: 'YOUR PARENTS FUCK', size: 0.042, write: [45.7, 46.1] }
 		],
-		marks: [{ line: 0, at: 38.7, kind: 'circle', pad: 0.3 }]
+		marks: [{ line: 0, at: 40.3, kind: 'circle', pad: 0.3 }]
 	}
 ];
 

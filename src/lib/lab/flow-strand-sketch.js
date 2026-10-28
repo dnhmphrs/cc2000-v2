@@ -329,7 +329,7 @@ const B = {
 	contour: [22.3, 23.2],
 	life: 23.3,
 	// ── the journey (this variant's) ──
-	conception: [23.7, 32.6], // the caption
+	conception: [23.7, 33.63], // the caption
 	boil: [23.3, 24.7], // the hand comes into the lines
 	swim: 23.6,
 	// (0.23: the swim CUT — the lens round behind and onto the axis in 4.3 s
@@ -340,28 +340,28 @@ const B = {
 	tunnel: [24.2, 26.7], // the rings sketched in, near to far
 	lines: [25.1, 27.5], // the speed lines come
 	glint: [25.1, 26.7], // the light at the end of it
-	premise: [26.9, 28.3], // the slam: the birth date − 264 DAYS
-	count: [27.9, 32.2], // 264 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
-	seam: [29.8, 32.2], // the tunnel narrowed into the band
-	conceived: [32.2, 33.6], // the conception date on the band
+	premise: [26.9, 28.39], // the slam: the birth date − 264 DAYS
+	count: [27.9, 33.14], // 264 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
+	seam: [30.21, 33.14], // the tunnel narrowed into the band
+	conceived: [33.14, 34.84], // the conception date on the band
 	// (K2) THE IRIS: the spindle hole widens at ONE rate in e-folds of its
 	// radius — a true iris — over 0.8 s, past the board's corners by 32.8
-	dive: [33.1, 33.9],
+	dive: [34.23, 35.19],
 	iris: 0.8,
-	fall: [33.4, 35.6], // (the landing under the white: no beat between the date and the final scene)
-	land: [34.4, 35.6],
+	fall: [34.6, 37.2], // (the landing under the white: no beat between the date and the final scene)
+	land: [35.78, 37.2],
 	// (K2) THE IRIS: the room floods with its colour UNDER the label as the
 	// label forms — done by the time the spindle hole is dark in it
 	// (bandAt: m > 0.35) — so the hole is a porthole onto the colour room
 	colour: [26.1, 26.7],
-	aim: [34.6, 35.6],
+	aim: [36.02, 37.2],
 	// (K2) the monitor switched on softly as the lens comes to rest (B.land
 	// ends 34.5); the song lettered on it; no needle drop, no flash
-	on: [35.5, 36.7],
-	hit: 35.6, // = land[1]: the output on the glass the moment the lens is at rest (0.23.9; it was 0.2 s after) // (the output may go on the screen from here: `screen()`)
-	song: [36.8, 37.6],
-	artist: [37.4, 38.1],
-	push: [35.9, 38.9],
+	on: [37.08, 38.3],
+	hit: 37.2, // = land[1]: the output on the glass the moment the lens is at rest (0.23.9; it was 0.2 s after) // (the output may go on the screen from here: `screen()`)
+	song: [38.4, 39.2],
+	artist: [39, 39.7],
+	push: [37.5, 40.5],
 	out: [97.5, 98] // (never: the run HOLDS on its last frame; `again` restarts it)
 };
 // THE BREAKDOWN (a verdict: a birthday the archive cannot answer for). The
@@ -371,7 +371,7 @@ const B = {
 // (strip), the band tears open as it would for the dive but onto the gif
 // tiled across the board rather than the rooms (spread), and the verdict is
 // lettered over the tiles (verdict) and held (end; AGAIN on the page).
-const BREAK = { strip: [34.2, 35], spread: [35, 37.4], verdict: 37.6, end: 43.1 };
+const BREAK = { strip: [35.55, 36.49], spread: [36.49, 39], verdict: 39.2, end: 43.8 }; // (0.23.17: on the stretched swim; end held under the run's 44)
 const endAt = (edge) => (edge ? BREAK.end : SECONDS);
 // AGAIN: the song and the date fade (words), the monitor goes dark
 // (screen), and the lens dollies on through the glass — the fall's own
@@ -636,7 +636,11 @@ const FOV_CHASE = 52;
 const FOV_END = 40;
 const fovBaseAt = (t) =>
 	t > B.swim
-		? lerp(lerp(30, FOV_CHASE, smooth(span(t, B.swim, 26.1))), FOV_END, smooth(span(t, 28.1, 32.6)))
+		? lerp(
+				lerp(30, FOV_CHASE, smooth(span(t, B.swim, 26.1))),
+				FOV_END,
+				smooth(span(t, 28.14, 33.63))
+			)
 		: 30;
 // (0.23.16) THE DOLLY ZOOM (Vertigo's, Kubrick's): over the last seconds of
 // the tunnel the lens WIDENS to VERTIGO.fov while it closes on the swimmer by
@@ -646,7 +650,7 @@ const fovBaseAt = (t) =>
 // "can we use that famous kubrick dolly zoom effect to give the
 // zoom/perspective effect a bit more bite" — the lead. ?vertigo=0 on dev:
 // without it; ?vertigo=<degrees> its widest field of view, to tune by eye.
-const VERTIGO = { from: 29.4, fov: 88 }; // (78 was gentle; 100 cost the pinprick)
+const VERTIGO = { from: 29.73, fov: 88 }; // (78 was gentle; 100 cost the pinprick)
 const vertigoQ =
 	typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('vertigo');
 const vertigoFov = Number(vertigoQ) > 0 ? Math.min(150, Number(vertigoQ)) : VERTIGO.fov;
@@ -2430,7 +2434,9 @@ export default async function make({ THREE, at }) {
 		glass: 0.6
 	}; // (sun 0.6 was a little too bright — the lead)
 	function lightAt(t) {
-		const t0 = B.onAxis[1];
+		// (0.23.17: the beam from the tunnel's first turn, with the light at
+		// its end — it waited for the lens on the axis, B.onAxis)
+		const t0 = B.tunnel[0];
 		if (t < t0) return null;
 		const g = lastGlass;
 		// (0.23.7: ALWAYS DIFFUSE ABOUT ITS ORIGIN — within `soft` of the light
@@ -2467,7 +2473,7 @@ export default async function make({ THREE, at }) {
 			r = Math.max(8, 1.2 * lastHole);
 			soft = diffuse;
 		} else return null;
-		const near = smooth(span(t, t0, t0 + 3));
+		const near = smooth(span(t, t0, t0 + 2.5));
 		const settle = smooth(span(t, B.fall[0], B.land[1]));
 		const on = smooth(span(t, ...B.on));
 		const tb = holdSecs === null ? t : t + (secsNow - holdSecs);
@@ -2592,33 +2598,61 @@ export default async function make({ THREE, at }) {
 		if (!th) return;
 		const R = th.r;
 		const ph = R / HOLE_C; // (the plate the cut circle, radius R, is inscribed in: R = HOLE_C × its height)
-		if (R < 0.6) return;
 		const a = smooth(span(t, B.tunnel[0], B.tunnel[0] + TUN.fadeIn));
 		if (a < 0.01) return;
-		const tf = st.efolds(t) - st.efolds(B.fall[0]);
-		const zeta = g.zetaOfPlate(ph);
 		const O = [th.cx, th.cy];
-		const keep = g.zetaAt;
-		g.zetaAt = () => zeta;
-		ctx.save();
-		ctx.globalAlpha = a;
-		ctx.beginPath();
-		holePath(ctx, w, h, O, R, bo);
-		ctx.clip();
-		try {
-			const camR = st.fall.draw(roomPen(O, tf, bo), w, h, t, {
-				origin: O,
-				colourAlong: false,
-				dust: null,
-				reveal: () => ({ cx: O[0], cy: O[1], r: 1.1 * R, wob: 0, feather: 0.03 })
-			});
-			// (L) the monitor's glass as drawn — never the spiral through it
-			if (camR?.glass) glassBase(ctx, camR.glass);
-		} finally {
-			g.zetaAt = keep;
+		const m = Math.min(w, h);
+		const gl = a * (1 - smooth(span(R / m, GLOW.from, GLOW.to)));
+		// (the room under the light only once there is room to see: while the
+		// light covers the cut whole, nothing is drawn under it)
+		if (R >= 0.6 && gl < 0.995 * a) {
+			const tf = st.efolds(t) - st.efolds(B.fall[0]);
+			const zeta = g.zetaOfPlate(ph);
+			const keep = g.zetaAt;
+			g.zetaAt = () => zeta;
+			ctx.save();
+			ctx.globalAlpha = a;
+			ctx.beginPath();
+			holePath(ctx, w, h, O, R, bo);
+			ctx.clip();
+			try {
+				const camR = st.fall.draw(roomPen(O, tf, bo), w, h, t, {
+					origin: O,
+					colourAlong: false,
+					dust: null,
+					reveal: () => ({ cx: O[0], cy: O[1], r: 1.1 * R, wob: 0, feather: 0.03 })
+				});
+				// (L) the monitor's glass as drawn — never the spiral through it
+				if (camR?.glass) glassBase(ctx, camR.glass);
+			} finally {
+				g.zetaAt = keep;
+				ctx.restore();
+			}
+		}
+		// (0.23.17) THE LIGHT AT THE END, RESOLVING INTO THE ROOM: while the
+		// cut is small it is light — the sun's white full over it and falling
+		// off softly past it, no edge (a soft star when it is a pixel, never
+		// smaller than GLOW.min of the board) — and as it grows, from GLOW.from
+		// to GLOW.to of the board's short side, the light fades and the room
+		// resolves out of it: "the opening of the tunnel starts as glow with
+		// the sunbeam, and then resolves into the room … i can see the room
+		// itself from too far out" (the lead).
+		if (gl > 0.004) {
+			const reach = Math.max(GLOW.reach * R, GLOW.min * m);
+			const [cr, cg, cb] = hex(GLOW.colour);
+			const col = (k) => `rgba(${cr},${cg},${cb},${(gl * k).toFixed(3)})`;
+			const gr = ctx.createRadialGradient(O[0], O[1], 0, O[0], O[1], reach);
+			gr.addColorStop(0, col(1));
+			gr.addColorStop(Math.min(0.9, (1.02 * R) / reach), col(1));
+			gr.addColorStop(Math.min(0.95, (1.02 * R) / reach + 0.25 * (1 - R / reach)), col(0.35));
+			gr.addColorStop(1, col(0));
+			ctx.save();
+			ctx.fillStyle = gr;
+			ctx.fillRect(O[0] - reach, O[1] - reach, 2 * reach, 2 * reach);
 			ctx.restore();
 		}
 	}
+	const GLOW = { from: 0.012, to: 0.05, min: 0.022, reach: 2.4, colour: '#fff6e2' };
 
 	// From the stop's glide to the fall: one world.
 	function world(ctx, w, h, t, hand, st) {
