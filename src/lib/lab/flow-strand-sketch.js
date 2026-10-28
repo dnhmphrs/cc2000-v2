@@ -1356,16 +1356,53 @@ export default async function make({ THREE, at }) {
 	// (L) THE PORTHOLE: the circle at the apex the room is seen through,
 	// grown steadily from a speck of two pixels as the lens locks on to
 	// ROOM_AT_BAND of the board by the dive (firstRoom's law), in px.
-	// (0.23.9: ONE SIZE — the porthole comes in over PORT.grow seconds at the
-	// size the fall opens on, the circle inscribed in the fall's first plate,
-	// and stays it through the swim; it grew as the cube of the time from a
-	// speck to that, the star and then the sun, and the lead: "you have the
-	// end hole get bigger. i dont want this. the hole should stay the same
-	// size, and if anything we just speed up towards the end")
-	const PORT = { grow: 0.8 };
-	const portR = (t, st) => {
+	// (0.23.12) THE HOLE IS THE END OF THE TUNNEL, AND NOTHING ELSE. The cone
+	// the groove winds down is CUT at a THROAT, depth zEnd from the apex: the
+	// groove's last turn is the throat's rim, the light fills the throat, and
+	// the throat is projected like every other turn of the groove — so it is
+	// a pixel while the end is far, grows only as the end is approached, at
+	// the tunnel's own pace, and the lens swims through it into the room.
+	// zEnd is the one depth at which the throat is exactly the circle the
+	// fall opens on (HOLE_C of the fall's first plate, S.plate0) at the dive,
+	// found once per board by bisection on the dive's own lens, so the fall
+	// takes the frame from the tunnel with nothing changing at the seam.
+	// (It was a disc of its own at the apex — a speck grown as the cube of
+	// the time to the sun, then one size — with a hand-drawn rim, the groove
+	// winding on past it to a point; the lead: "there should not be a
+	// separate hole. the hole should just be the end of the tunnel, and the
+	// sperm swims towards that end of the tunnel and then through it.")
+	function throatOf(st, w, h) {
+		const key = `${w}x${h}`;
+		if (st.throat?.key === key) return st.throat;
+		const cam = lensAt(B.fall[0], w, h, st);
+		const zL = cam.pos[0] - X_APEX;
+		const R = HOLE_C * st.plate0;
+		const rOf = (z) => {
+			const c = cam.project([X_APEX + z, 0, 0]);
+			const e = cam.project([X_APEX + z, TUN.k * z, 0]);
+			return c[2] > NEAR && e[2] > NEAR ? Math.hypot(e[0] - c[0], e[1] - c[1]) : Infinity;
+		};
+		let lo = 1e-3;
+		let hi = 0.98 * zL;
+		for (let i = 0; i < 60; i++) {
+			const mid = (lo + hi) / 2;
+			if (rOf(mid) < R) lo = mid;
+			else hi = mid;
+		}
+		const zEnd = (lo + hi) / 2;
+		st.throat = { key, zEnd };
+		return st.throat;
+	}
+	// the throat on the board this frame, as half the plate height it is the
+	// inscribed circle of (so 2 portR × HOLE_C is its radius)
+	const portR = (t, w, h, st) => {
 		if (t < B.onAxis[1]) return 0;
-		return 0.5 * lerp(2, st.plate0, smooth(span(t, B.onAxis[1], B.onAxis[1] + PORT.grow)));
+		const { zEnd } = throatOf(st, w, h);
+		const cam = lensAt(t, w, h, st);
+		const c = cam.project([X_APEX + zEnd, 0, 0]);
+		const e = cam.project([X_APEX + zEnd, TUN.k * zEnd, 0]);
+		if (c[2] <= NEAR || e[2] <= NEAR) return 0;
+		return Math.hypot(e[0] - c[0], e[1] - c[1]) / HOLE_C / 2;
 	};
 	// THE PORTHOLE IS THE ROOM'S OWN FRAME (0.22). A circle at the end of
 	// the tunnel while the room is far (the swim: R = 0.49 of the plate's
@@ -1395,7 +1432,7 @@ export default async function make({ THREE, at }) {
 		if (t < B.fall[0]) {
 			// the swim: the plate at the size firstRoom grows it to, its ζ read
 			// back off that size
-			const ph = 2 * portR(t, st);
+			const ph = 2 * portR(t, w, h, st);
 			if (ph < 1.5) return { r: 0, box: null, covers: false };
 			const g = st.geo;
 			const z = Math.log(g.plate / ph) / Math.log(g.levels[0].X);
@@ -1577,9 +1614,8 @@ export default async function make({ THREE, at }) {
 	// record's rate (recordTurn), so the stylus tracks a record under it. No
 	// pulling apart along a seam: the groove runs up to the label.)
 	const recordTurn = (t) => TAU * GROOVE_TURN * Math.max(0, t - B.swim);
-	const UNWIND = { gain: 2, over: 3 };
-	const unwind = q.get('unwind') === '1';
 	function rings(ink, t, w, h, cam, st, bo, band, O) {
+		void O;
 		let zL = cam.pos[0] - X_APEX;
 		if (zL <= 1) return;
 		// (0.22.2) THROUGH THE FALL THE GROOVE EXPANDS WITH THE ROOM'S FRAME:
@@ -1599,29 +1635,9 @@ export default async function make({ THREE, at }) {
 		const iHi = Math.floor(Math.log(Z_NOSE0 / (umin * zL)) / step);
 		const sc = Math.sqrt(h / 800);
 		const rec = recordTurn(t);
-		// (0.23.10, a look: THE GROOVE UNRAVELS INTO THE HOLE — over the last
-		// UNWIND.over seconds before the dive the turns round the porthole are
-		// spread outward from its rim, r → R (r/R)^g with g rising to 1 +
-		// UNWIND.gain, R the hole's radius: the rim itself stays, the turn just
-		// outside it hugs it and the rest open out and off the board, so the
-		// spiral loosens as the end nears and its last turn is the hole's edge
-		// — "could we have the spiral unravel as we get towards the end, then
-		// maybe the hole and the spiral can be integrated better" — the lead.
-		// ?unwind=1 on dev; off, the groove is as it was)
-		const Rh = band?.hole ?? 0;
-		const g =
-			unwind && Rh > 1 ? 1 + UNWIND.gain * smooth(span(t, B.fall[0] - UNWIND.over, B.fall[0])) : 1;
-		const spread =
-			g > 1.001
-				? (p) => {
-						const dx = p[0] - O[0];
-						const dy = p[1] - O[1];
-						const r = Math.hypot(dx, dy);
-						if (r < 1e-3) return p;
-						const k2 = (Rh * Math.pow(r / Rh, g)) / r;
-						return [O[0] + dx * k2, O[1] + dy * k2];
-					}
-				: null;
+		// (0.23.12) THE TUNNEL ENDS AT THE THROAT: no turn of the groove past
+		// it — the cone's last turn is the hole's rim (throatOf)
+		const { zEnd } = throatOf(st, w, h);
 		for (let i = iLo; i <= iHi; i++) {
 			const zi = Z_NOSE0 * Math.exp(-step * i);
 			const u = zi / zL;
@@ -1639,10 +1655,10 @@ export default async function make({ THREE, at }) {
 			const lw = lerp(0.7, 2.6, smooth(span(u, 0.04, 0.8))) * sc;
 			const rho = k * zi;
 			const at = (px, py, zf) => {
+				if (zf < zEnd) return null; // (past the throat: the room, not the tunnel)
 				const q = cam.project([X_APEX + zf, py, -px]);
 				if (q[2] <= NEAR) return null;
-				if (Z.hidden([q[0], q[1], q[2]])) return null;
-				return spread ? spread([q[0], q[1]]) : [q[0], q[1]];
+				return Z.hidden([q[0], q[1], q[2]]) ? null : [q[0], q[1]];
 			};
 			sketchTurn(ink, at, rho, zi, i, bo, upto, lw, a, rec);
 			if (u > 0.25)
@@ -2502,10 +2518,8 @@ export default async function make({ THREE, at }) {
 		// size it reaches. ζ is read back off the size.
 		// (0.23: as the CUBE of the time — a star for most of the swim, the sun
 		// only in its last two seconds; it was the square)
-		// (0.23.9: ONE SIZE — portR's: in over PORT.grow seconds to the fall's
-		// first plate and held there; the lead: "the hole should stay the same
-		// size, and if anything we just speed up towards the end")
-		const ph = 2 * portR(t, st);
+		// (0.23.12: portR's — THE THROAT, the end of the tunnel itself)
+		const ph = 2 * portR(t, w, h, st);
 		const X0 = g.levels[0].X;
 		const zeta = Math.log(g.plate / ph) / Math.log(X0);
 		if (ph < 1.5) return;
@@ -2548,16 +2562,7 @@ export default async function make({ THREE, at }) {
 			g.zetaAt = keep;
 			ctx.restore();
 		}
-		// the rim
-		if (ph > 1.5) {
-			ctx.save();
-			port();
-			ctx.strokeStyle = PAL.chalk;
-			ctx.lineWidth = 1.3 * Math.sqrt(h / 800);
-			ctx.globalAlpha = 0.7 * (1 - smooth(span(R, 0.5 * h, 0.8 * h)));
-			ctx.stroke();
-			ctx.restore();
-		}
+		// (0.23.12: no rim of its own — the groove's last turn is the rim)
 	}
 
 	// From the stop's glide to the fall: one world.
@@ -2978,15 +2983,7 @@ export default async function make({ THREE, at }) {
 			// the sun resolving downward into the room as the tunnel opens
 			sunVeil(ctx, w, h, band.holeBox, sunP(t));
 			ctx.restore();
-			// the porthole's rim, as firstRoom draws it, let go past the board
-			ctx.save();
-			ctx.beginPath();
-			holePath(ctx, w, h, O, band.hole, bo);
-			ctx.strokeStyle = PAL.chalk;
-			ctx.lineWidth = 1.3 * Math.sqrt(h / 800);
-			ctx.globalAlpha = 0.7 * (1 - smooth(span(band.hole, 0.5 * h, 0.8 * h)));
-			ctx.stroke();
-			ctx.restore();
+			// (0.23.12: no rim of its own — the groove's last turn is the rim)
 		}
 		prof('rooms');
 
