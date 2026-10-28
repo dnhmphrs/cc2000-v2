@@ -585,7 +585,7 @@ const FALL_PACE = { n: 512, c: 0.55, ease: 1.4 };
 // (0.23.15) the swim: its e-folds of zoom from the set-off to the dive, and
 // the fall's opening rate as a share of the most it can open at (pace c ->
 // cMax: no gathering, only the slowing to rest)
-const SWIM = { efolds: 4, seam: 0.8, cMax: 60 };
+const SWIM = { efolds: 4.6, seam: 0.95, cMax: 60 }; // (0.23.16: 4 and 0.8 before the dolly zoom)
 
 // ── The count ────────────────────────────────────────────────────────────────
 // The 266 days struck one at a time over B.count: the rate (in figures a
@@ -634,10 +634,26 @@ const DIR_C = norm([-1, 0.2, 0.26]);
 const OFF = [0, -1.5, -2.2];
 const FOV_CHASE = 52;
 const FOV_END = 40;
-const fovAt = (t) =>
+const fovBaseAt = (t) =>
 	t > B.swim
 		? lerp(lerp(30, FOV_CHASE, smooth(span(t, B.swim, 26.1))), FOV_END, smooth(span(t, 28.1, 32.6)))
 		: 30;
+// (0.23.16) THE DOLLY ZOOM (Vertigo's, Kubrick's): over the last seconds of
+// the tunnel the lens WIDENS to VERTIGO.fov while it closes on the swimmer by
+// exactly as much (dollyAt: the ratio of the half-angles' tangents), so the
+// swimmer holds its size on the board and everything past it — the cone's
+// walls, its cut end, the room — stretches away; held through the fall.
+// "can we use that famous kubrick dolly zoom effect to give the
+// zoom/perspective effect a bit more bite" — the lead. ?vertigo=0 on dev:
+// without it; ?vertigo=<degrees> its widest field of view, to tune by eye.
+const VERTIGO = { from: 29.4, fov: 88 }; // (78 was gentle; 100 cost the pinprick)
+const vertigoQ =
+	typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('vertigo');
+const vertigoFov = Number(vertigoQ) > 0 ? Math.min(150, Number(vertigoQ)) : VERTIGO.fov;
+const vertK = (t) => (vertigoQ === '0' ? 0 : smooth(span(t, VERTIGO.from, B.fall[0])));
+const fovAt = (t) => lerp(fovBaseAt(t), vertigoFov, vertK(t));
+const dollyAt = (t) =>
+	Math.tan((fovBaseAt(t) * Math.PI) / 360) / Math.tan((fovAt(t) * Math.PI) / 360);
 
 // ── The board's shape ────────────────────────────────────────────────────────
 // A fixed vertical field of view crops the sides of a board narrower than it
@@ -978,7 +994,7 @@ export default async function make({ THREE, at }) {
 			return S?.tCover ?? null;
 		},
 		get zoom() {
-			return S ? { rate0: S.geo.rate0, z0: S.geo.zetaAt(0), total: S.geo.TOTAL } : null;
+			return S ? { rate0: S.geo.rate0, z0: S.geo.zetaAt(0), total: S.geo.TOTAL, rs: S.rs } : null;
 		},
 		// where the fall comes to rest: how far into the last glass, and how
 		// many times the room covers the board there (its tighter direction)
@@ -1152,7 +1168,7 @@ export default async function make({ THREE, at }) {
 			const k1 = smooth(span(t, ...B.behind));
 			const k2 = smooth(span(t, ...B.onAxis));
 			const pB = [L + 34, 15, 24];
-			const pC = [D_C, 0, 0];
+			const pC = [D_C * dollyAt(t), 0, 0]; // (the dolly zoom's dolly)
 			const rel = lerp3(lerp3(posF, pB, k1), pC, k2);
 			const relT = lerp3(tgtF, [-70, -4, 0], k1);
 			pos = add3(sw.axis, mul3(rel, s));
@@ -2575,7 +2591,7 @@ export default async function make({ THREE, at }) {
 		const th = throatAt(t, w, h, st);
 		if (!th) return;
 		const R = th.r;
-		const ph = (2 * R) / HOLE_C;
+		const ph = R / HOLE_C; // (the plate the cut circle, radius R, is inscribed in: R = HOLE_C × its height)
 		if (R < 0.6) return;
 		const a = smooth(span(t, B.tunnel[0], B.tunnel[0] + TUN.fadeIn));
 		if (a < 0.01) return;
