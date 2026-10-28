@@ -555,7 +555,7 @@ const X_APEX = -430; // the apex: the zoom's fixed point
 const Z_NOSE0 = -X_APEX; // the nose's distance to it as the swim starts
 const V_SWIM = 28; // world units a second as it sets off
 const ZETA_S = 140; // the swimmer shrinks with the zoom below this distance
-const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05 };
+const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05, fadeIn: 1.5 };
 // The fall: eleven crossings (twelve rooms, the answer's last) at strand's
 // pace, so the rooms rush (a crossing every ~1.4 s, at 0.5–1 e-folds a second).
 const FALL_X = 0; // no crossings: the room through the band is the last
@@ -1356,10 +1356,16 @@ export default async function make({ THREE, at }) {
 	// (L) THE PORTHOLE: the circle at the apex the room is seen through,
 	// grown steadily from a speck of two pixels as the lens locks on to
 	// ROOM_AT_BAND of the board by the dive (firstRoom's law), in px.
+	// (0.23.9: ONE SIZE — the porthole comes in over PORT.grow seconds at the
+	// size the fall opens on, the circle inscribed in the fall's first plate,
+	// and stays it through the swim; it grew as the cube of the time from a
+	// speck to that, the star and then the sun, and the lead: "you have the
+	// end hole get bigger. i dont want this. the hole should stay the same
+	// size, and if anything we just speed up towards the end")
+	const PORT = { grow: 0.8 };
 	const portR = (t, st) => {
 		if (t < B.onAxis[1]) return 0;
-		const u = span(t, B.onAxis[1], B.fall[0]);
-		return 0.5 * lerp(2, st.plate0, u * u * u);
+		return 0.5 * lerp(2, st.plate0, smooth(span(t, B.onAxis[1], B.onAxis[1] + PORT.grow)));
 	};
 	// THE PORTHOLE IS THE ROOM'S OWN FRAME (0.22). A circle at the end of
 	// the tunnel while the room is far (the swim: R = 0.49 of the plate's
@@ -1394,6 +1400,22 @@ export default async function make({ THREE, at }) {
 			const g = st.geo;
 			const z = Math.log(g.plate / ph) / Math.log(g.levels[0].X);
 			box = st.fall.frameOf(t, w, h, { origin: O, zeta: z });
+			// (0.23.9: the box scaled about its middle to EXACTLY ph tall — the
+			// frame read back at that ζ still grew with the swim's own zoom, so
+			// the hole went on getting bigger towards the dive; its height is
+			// now portR's alone, one size through the swim, and the fall's first
+			// plate is that size, so the dive opens on exactly it)
+			if (box) {
+				const cx = (box[0] + box[2]) / 2;
+				const cy = (box[1] + box[3]) / 2;
+				const k = ph / Math.max(1, box[3] - box[1]);
+				box = [
+					cx + (box[0] - cx) * k,
+					cy + (box[1] - cy) * k,
+					cx + (box[2] - cx) * k,
+					cy + (box[3] - cy) * k
+				];
+			}
 		} else box = st.fall.frameOf(t, w, h, { origin: O, nudge, zeta });
 		if (!box) return { r: 0, box: null, covers: false };
 		const r = HOLE_C * (box[3] - box[1]);
@@ -1582,7 +1604,13 @@ export default async function make({ THREE, at }) {
 			const ti = B.tunnel[0] + 0.14 * Math.max(0, i - st.iRef);
 			const upto = smooth(span(t, ti, ti + 0.5));
 			if (upto <= 0) continue;
-			const a = lerp(0.16, 0.85, smooth(span(u, umin, 0.45))) * (1 - smooth(span(u, 0.88, 0.985)));
+			// (0.23.9: the whole groove FADES IN over TUN.fadeIn seconds as it is
+			// first sketched — "when the spiral first appears, can it fade in
+			// slightly, it's a bit too aggressive in contrast" — the lead)
+			const a =
+				lerp(0.16, 0.85, smooth(span(u, umin, 0.45))) *
+				(1 - smooth(span(u, 0.88, 0.985))) *
+				smooth(span(t, B.tunnel[0], B.tunnel[0] + TUN.fadeIn));
 			if (a < 0.02) continue;
 			const lw = lerp(0.7, 2.6, smooth(span(u, 0.04, 0.8))) * sc;
 			const rho = k * zi;
@@ -2449,8 +2477,10 @@ export default async function make({ THREE, at }) {
 		// size it reaches. ζ is read back off the size.
 		// (0.23: as the CUBE of the time — a star for most of the swim, the sun
 		// only in its last two seconds; it was the square)
-		const u = span(t, B.onAxis[1], B.fall[0]);
-		const ph = lerp(2, st.plate0, u * u * u);
+		// (0.23.9: ONE SIZE — portR's: in over PORT.grow seconds to the fall's
+		// first plate and held there; the lead: "the hole should stay the same
+		// size, and if anything we just speed up towards the end")
+		const ph = 2 * portR(t, st);
 		const X0 = g.levels[0].X;
 		const zeta = Math.log(g.plate / ph) / Math.log(X0);
 		if (ph < 1.5) return;

@@ -59,13 +59,18 @@
 	// glass's width
 	$: gh = screen ? screen[3] - screen[1] : 0;
 	$: fs = screen ? Math.max(10, Math.min(17, 0.05 * gw)) : 12;
+	// (0.23.9: MOVED BY TRANSFORM, its size and type in whole pixels — the
+	// glass sways under the pointer every frame, and set by left/top the
+	// panel, Spotify's iframe inside it, was laid out again every frame at
+	// the reveal: "the site seems to get jittery on the reveal" — the lead)
 	$: outputStyle = screen
-		? `left:${screen[0]}px;top:${screen[1]}px;width:${gw}px;height:${gh}px;font-size:${fs}px;`
+		? `transform:translate(${screen[0].toFixed(1)}px,${screen[1].toFixed(1)}px);width:${Math.round(gw)}px;height:${Math.round(gh)}px;font-size:${Math.round(fs)}px;`
 		: '';
 	$: ek = screen ? Math.min(1, (0.96 * gw) / 352) : 1; // (0.23.6: a bit bigger — the lead)
 	$: embedStyle = `width:${Math.round(352 * ek)}px;height:${Math.round(152 * ek)}px;`;
 	// the output's place while it waits for the glass: off the board, hidden
-	const PRELOAD = 'left:-2000px;top:0;width:352px;height:260px;font-size:12px;visibility:hidden;';
+	const PRELOAD =
+		'transform:translate(-2000px,0);width:352px;height:260px;font-size:12px;visibility:hidden;';
 	// (SHARE does nothing yet — it will be a share screen of its own)
 	// (the embed is a horizontal bar in the top left corner, under the
 	// version label — the lead; the keys and the song stay on the screen)
@@ -229,6 +234,9 @@
 	}
 	.output {
 		position: fixed;
+		left: 0;
+		top: 0;
+		will-change: transform, opacity; /* its own layer: moved without a layout */
 		z-index: 30; /* over the board's canvases (11), under the corner's switch (35) */
 		pointer-events: auto; /* the layout's main has none, for the board */
 		transition: opacity 0.6s ease; /* comes up with the monitor's glass */

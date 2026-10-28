@@ -158,11 +158,15 @@ built upright, the head at the top, and rolled back as it goes round behind
 the swimmer: `lensAt`), SIMULATING CONCEPTION: the swim into ONE GROOVE
 (I5's: a helix down the cone turning under the stylus, nothing lettered on
 it — THE SWIM CUT to 9.5 s in 0.23, the run to 44 s, about three and a
-half turns on a laptop, the porthole a star for most of it and the sun only
-in its last two seconds, `portR` as the cube of the time: "the simulation
-transition can be cut way down, especially the blinding light moment",
-the PM — its turns JOINED — the hand's wobble is one noise along the whole
-groove, `sketchTurn`; the ONE groove goes on round the room until the room's frame
+half turns on a laptop — THE GROOVE FADES IN over `TUN.fadeIn` 1.5 s as
+it is first sketched (0.23.9: "a bit too aggressive in contrast" — the
+lead), and THE PORTHOLE IS ONE SIZE through the swim (0.23.9): in over
+`PORT.grow` 0.8 s to the circle inscribed in the fall's first plate,
+`S.plate0`, and held there, `portR` — "the hole should stay the same size,
+and if anything we just speed up towards the end" — it grew as the cube of
+the time from a speck to that, the star and then the sun ("the blinding
+light moment", the PM) — its turns JOINED — the hand's wobble is one noise
+along the whole groove, `sketchTurn`; the ONE groove goes on round the room until the room's frame
 has taken the board — cut A's second set of rings at the dive is gone, the
 spiral's lines doubled with it — and through the fall it EXPANDS WITH THE
 ROOM'S DEPTH (`rings`: the lens's distance to the apex taken in by the
@@ -198,9 +202,11 @@ room should never be a scroll down"); the glass is drawn whole under it
 with the veil's own white over it, since drawn as faint as the veil was
 clear the spiral showed through it — the room revealing itself out of the
 light (the lead: "as the tunnel opens you should only see sunshine"); the porthole a
-circle grown steadily from a speck (`portR`, to the fall's own first plate on that board, `S.plate0`, so the
-fall opens on exactly it — on a phone the room used to drop a third at the
-dive; NOTHING of a record: no label, no disc, no
+circle the size of the fall's own first plate on that board, `S.plate0`
+(`portR`; `holeAt` scales the swim's box to exactly that height, since the
+frame read back at the porthole's ζ still grew with the swim's zoom), so
+the fall opens on exactly it — on a phone the room used to drop a third
+at the dive; NOTHING of a record: no label, no disc, no
 spindle, no flecks — the lead saw a CD and wanted it gone) — and THE PORTHOLE
 IS A CIRCLE, ALWAYS, INSCRIBED IN THE ROOM'S PLATE (0.23.1: "the shape we
 see should always be the shape of the hole" — the lead; it was cut to the
@@ -234,7 +240,10 @@ not the title; the lead: a response string, then the embed, then SHARE
 and the restart key, bigger, cleaner, not yellow, on the computer screen):
 a column centred on the glass (`runs/Next.svelte` `.output`;
 `sketch.screen()` gives it the glass each frame, so it follows the room as
-it sways after the pointer) — the line YOU WERE CONCEIVED TO, Spotify's
+it sways after the pointer — MOVED BY TRANSFORM on its own layer, its size
+and type in whole pixels, 0.23.9: set by left/top the panel and Spotify's
+iframe in it were laid out again every frame, "jittery on the reveal" —
+the lead) — the line YOU WERE CONCEIVED TO, Spotify's
 352 × 152 bar with the artwork scaled to 0.96 of the glass's width, and
 two keys in the screen's dark ink, SHARE (which does nothing yet — it will
 be a share screen of its own, the lead) and START AGAIN —
