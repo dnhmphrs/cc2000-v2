@@ -161,7 +161,7 @@ it — THE SWIM CUT to 9.5 s in 0.23, the run to 44 s — and THE LONG
 TUNNEL SWUM FAST (0.23.15): the cut had been made by cutting the tunnel to
 three and a half turns, one e-fold of zoom, so its end was never a
 pinprick ("we should not have done that by just making the tunnel short"
-— the lead); now the swim covers `SWIM.efolds` 4, about thirteen turns,
+— the lead); now the swim covers `SWIM.efolds` 4.6, about fifteen turns,
 in the same seconds, its rate gathering as u^qe to the hand-over, so the
 end of the tunnel is one or two pixels when the lens comes onto the axis
 and grows only as it is swum towards — THE GROOVE FADES IN over `TUN.fadeIn` 1.5 s as
@@ -174,7 +174,19 @@ the dive's own lens — the groove's last turn is the throat's rim (no turn
 past it, `rings`), the sun's light fills it, no rim of its own is drawn,
 and the throat is projected like every other turn (`portR`), so it grows
 only as the end is approached, at the tunnel's own pace, and the lens
-swims through it into the room with nothing changing at the seam ("there
+swims through it into the room with nothing changing at the seam —
+THE ROOM IN THE CUT IS THE PLATE THE CUT IS INSCRIBED IN, R / HOLE_C tall
+(0.23.16: it was drawn at twice that, zoomed in on the monitor, and at the
+dive the fall's true size took over: "the room/scene position resets …
+it always looks like you have two scenes glued"; a frame-by-frame diff
+across the dive, `?at=` pins 0.02 s apart, is the check: no step bigger
+than its neighbours) — and THE DOLLY ZOOM (0.23.16, Vertigo's, Kubrick's):
+from `VERTIGO.from` 29.4 to the dive the swim's lens widens to
+`VERTIGO.fov` 88° while it closes on the swimmer by the ratio of the
+half-angles' tangents (`fovAt`, `dollyAt`), so the swimmer holds its size
+and the cone's walls flare out past it and its end stretches away; held
+through the fall; `?vertigo=0` on dev is without it, `?vertigo=<deg>`
+sets the widest angle (78 was gentle, 100 cost the pinprick) ("there
 should not be a separate hole. the hole should just be the end of the
 tunnel, and the sperm swims towards that end of the tunnel and then
 through it" — the lead; it was a disc of its own at the apex with a
@@ -204,7 +216,7 @@ DIVE: the room's growth on the board through the swim is the zoom rate ×
 zL / (zL − zEnd), so the swim is flown to END at the rate that makes the
 opening grow at exactly the fall's own growth (measured off the throat
 and `plateAt`, the table refilled to settle), and the fall opens at
-`SWIM.seam` 0.8 of the fastest it can (its pace's c), so it comes out of
+`SWIM.seam` 0.95 of the fastest it can (its pace's c), so it comes out of
 the tunnel at its fastest and only slows into the room; the fall flies
 ONE PATH (`log/fall.js onePath`): before the first glass the lens flew at
 the plate's own plane and from ζ = 0 at the point behind the glass, and
