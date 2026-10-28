@@ -120,11 +120,13 @@ export function makeFall({
 	zeta0,
 	pace,
 	fill = null,
-	inside = 0
+	inside = 0,
+	onePath = false
 } = {}) {
 	const K = {
 		fill,
 		inside,
+		onePath,
 		fov: fov ?? FALL.fov,
 		fit: fit ?? FALL.fit,
 		margin: margin ?? FALL.margin,
@@ -250,11 +252,16 @@ function makeNest(w, h, order, art, K) {
 		O = [O[0] + s * g[0], O[1] + s * g[1], O[2] + s * g[2]];
 		s *= X;
 	}
+	// (`onePath`: before the first glass, ζ < 0, the lens flies the same
+	// path as the first crossing — towards the point behind the glass the
+	// crossing zooms on — rather than towards the plate's own plane; with the
+	// two targets the room's growth on the board stepped up by ~1.9× at
+	// ζ = 0, a lurch in the middle of the fall. flow-strand-sketch, 0.23.15.)
 	const pose = (zeta) => {
 		let k;
 		let loc;
 		let sc;
-		if (zeta < 0) {
+		if (zeta < 0 && !(K.onePath && levels[0].X)) {
 			k = 0;
 			sc = Math.pow(levels[0].X, zeta);
 			loc = [levels[0].glass.x, levels[0].glass.y, d0 * sc];
@@ -263,7 +270,7 @@ function makeNest(w, h, order, art, K) {
 			sc = 1;
 			loc = [levels[L].glass.x, levels[L].glass.y, d0];
 		} else {
-			k = Math.min(L, Math.floor(zeta));
+			k = Math.max(0, Math.min(L, Math.floor(zeta)));
 			const lv = levels[k];
 			const zp = (lv.glass.z - lv.gap) / (1 - lv.X);
 			sc = Math.pow(lv.X, zeta - k);
@@ -302,7 +309,24 @@ function makeNest(w, h, order, art, K) {
 		}
 		return Math.min(ZEND, L + lam / logs[L]);
 	};
-	return { w, h, F, d0, plate, L, levels, pose, TOTAL, zetaOf, ZEND };
+	// The last plate's height on the board at ζ (on its axis, no sway), and
+	// ζ back from a height: the plate's size law, whichever path is flown.
+	const plateAt = (zeta) => {
+		const lv = levels[L];
+		const dz = pose(zeta).z - lv.O[2];
+		return dz > 0 ? (F * lv.s * PLATE.H) / dz : Infinity;
+	};
+	const zetaOfPlate = (px) => {
+		let lo = -12;
+		let hi = ZEND;
+		for (let i = 0; i < 60; i++) {
+			const mid = (lo + hi) / 2;
+			if (plateAt(mid) < px) lo = mid;
+			else hi = mid;
+		}
+		return (lo + hi) / 2;
+	};
+	return { w, h, F, d0, plate, L, levels, pose, TOTAL, zetaOf, ZEND, plateAt, zetaOfPlate };
 }
 
 // ── The pace ─────────────────────────────────────────────────────────────────
