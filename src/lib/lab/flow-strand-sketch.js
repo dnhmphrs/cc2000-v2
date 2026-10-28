@@ -2434,9 +2434,11 @@ export default async function make({ THREE, at }) {
 		glass: 0.6
 	}; // (sun 0.6 was a little too bright — the lead)
 	function lightAt(t) {
-		// (0.23.17: the beam from the tunnel's first turn, with the light at
-		// its end — it waited for the lens on the axis, B.onAxis)
-		const t0 = B.tunnel[0];
+		// (0.23.18: the beam from the lens's swing onto the axis, B.onAxis[0]
+		// — from the tunnel's first turn it was "a touch too soon" (the lead);
+		// before 0.23.17 it waited for the lens to be on the axis, B.onAxis[1];
+		// the light at the end itself is there from the first turn, firstRoom)
+		const t0 = B.onAxis[0];
 		if (t < t0) return null;
 		const g = lastGlass;
 		// (0.23.7: ALWAYS DIFFUSE ABOUT ITS ORIGIN — within `soft` of the light
