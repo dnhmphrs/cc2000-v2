@@ -157,8 +157,14 @@ the lens rolled a quarter turn as it comes to the reading so the body is
 built upright, the head at the top, and rolled back as it goes round behind
 the swimmer: `lensAt`), SIMULATING CONCEPTION: the swim into ONE GROOVE
 (I5's: a helix down the cone turning under the stylus, nothing lettered on
-it — THE SWIM CUT to 9.5 s in 0.23, the run to 44 s, about three and a
-half turns on a laptop — THE GROOVE FADES IN over `TUN.fadeIn` 1.5 s as
+it — THE SWIM CUT to 9.5 s in 0.23, the run to 44 s — and THE LONG
+TUNNEL SWUM FAST (0.23.15): the cut had been made by cutting the tunnel to
+three and a half turns, one e-fold of zoom, so its end was never a
+pinprick ("we should not have done that by just making the tunnel short"
+— the lead); now the swim covers `SWIM.efolds` 4, about thirteen turns,
+in the same seconds, its rate gathering as u^qe to the hand-over, so the
+end of the tunnel is one or two pixels when the lens comes onto the axis
+and grows only as it is swum towards — THE GROOVE FADES IN over `TUN.fadeIn` 1.5 s as
 it is first sketched (0.23.9: "a bit too aggressive in contrast" — the
 lead), and THE HOLE IS THE END OF THE TUNNEL AND NOTHING ELSE (0.23.12):
 the cone the groove winds down is CUT at a THROAT, `throatOf` — the depth
@@ -183,21 +189,29 @@ ROOM'S DEPTH (`rings`: the lens's distance to the apex taken in by the
 e-folds the plate has grown beyond the swim's zoom), so the frame never
 overtakes a turn and hides it ("the room jumped in front of the tunnel"
 — the lead): every turn expands ahead of the frame and off the board), about nine and a half turns to the
-PORTHOLE at the apex — THE END OF THE TUNNEL IS THE END OF THE TUNNEL
-(0.23.14): the groove winds down to its throat and NOTHING is drawn
-inside it through the swim — the board's dark, and the lens's own
-sunbeam out of it, the rays with a soft core at the throat as their
-source (`LIGHT.sunCore`, gone as the room comes up) — and at the dive the
-room comes up out of that dark inside the hole over `ROOM_IN` 1.2 s
-(`fallen`); NO WHITE ANYWHERE — THE SUN of 0.22.3 (the porthole light
-alone through the swim, a warm white resolving off the room as the
-tunnel opened: a hard disc, then one size, then a glow, `sunVeil`,
-`sunGlow`) is GONE, and so is the room drawn at the throat, which was
-mostly the monitor's pale glass, a square in a circle — the lead, three
-rounds running: "there should not be a separate hole", "sperm flies into
-tunnel. sperm gradually gets to end of tunnel. sperm flies out.",
-"remove the disc completely"; the sunshine is the lens's own rays alone
-(`lightAt`), out of it (`LIGHT.sun` 0.42 — 0.6 was a little too bright; the
+PORTHOLE at the apex — ONE TRUNCATED CONE, AND THE ROOM PAST ITS CUT
+(0.23.15): what is seen through the cone's cut end is the room, at the
+cone's own perspective — the plate the cut circle is inscribed in, at the
+cut's depth (`firstRoom`, `portR`, clipped to the cut) — from the
+tunnel's first turn, fading in with the groove, as small as the opening is
+and growing only as it does, and the lens swims down the cone and through
+the cut into it; nothing else at the end: no rim, no white, no glow, no
+core, no dark to come up out of ("imagine a cone with its end cut off …
+you keep adding the end/room as its own thing, when it should simply be
+what exists after the cone" — the lead, after a white disc, a one-size
+disc, a glow, a veil and a dark end each in turn); and ONE ZOOM ACROSS THE
+DIVE: the room's growth on the board through the swim is the zoom rate ×
+zL / (zL − zEnd), so the swim is flown to END at the rate that makes the
+opening grow at exactly the fall's own growth (measured off the throat
+and `plateAt`, the table refilled to settle), and the fall opens at
+`SWIM.seam` 0.8 of the fastest it can (its pace's c), so it comes out of
+the tunnel at its fastest and only slows into the room; the fall flies
+ONE PATH (`log/fall.js onePath`): before the first glass the lens flew at
+the plate's own plane and from ζ = 0 at the point behind the glass, and
+the room's growth stepped up 1.9× there, mid-fall — the lurch behind "a
+touch too slow near the final room expansion"; `plateAt`/`zetaOfPlate`
+are the plate's size law on either path; the sunshine is the lens's own
+rays alone (`lightAt`), out of it (`LIGHT.sun` 0.42 — 0.6 was a little too bright; the
 light's radius 1.2 of the porthole, so the shafts come from the whole sun
 and not a point at its middle — and NEVER A POINT, EVER (0.23.7): within
 a SOFT radius of its own (`light.soft`, apart from the reach's `r`) the
@@ -215,9 +229,7 @@ shouldnt disappear completely … the whole end graphic is super faded");
 the reach as before, as wide as the porthole through the fall, easing over
 two seconds after the landing to the glass; the
 sunburst TURNS, `LIGHT.turn` 0.12 of a turn a second, and SHIMMERS on two
-slow waves — "a little too static"); as the tunnel opens the room comes
-up out of the dark inside the hole, evenly, over 1.2 s (the white's even
-fade of 0.23.9, and the downward sweep before it, went with the sun); the porthole
+slow waves — "a little too static"); the porthole
 the tunnel's throat, exactly the circle of the fall's own first plate on
 that board, `S.plate0`, at the dive (`portR`; `holeAt` scales the swim's
 box to the throat's height), so the fall opens on exactly it — on a phone
@@ -234,8 +246,12 @@ height on the board (`holeAt`, `holePath`; the plate as the fall lays it,
 NOTHING ELSE, so nothing but the room is ever inside it — and that is why
 the lens lands as deep as `FILL` says, the room 2.1 boards wide (1.25
 tall on a phone): the inscribed circle has to be past the board's corners
-at rest, which it is just BEFORE the lens is there (`S.tCover`, ~35.5 on
-a laptop, 35.4 on a phone, rest 35.6), so the lens
+at rest — and past them by `CIRCLE` 1.06 whatever the board's shape, since
+on a near-square board (a half screen) FILL's width and height left the
+circle short of the corners and the tunnel showed round the landed room
+(0.23.15) — which it is just BEFORE the lens is there (`S.tCover`, ~35.24
+on a laptop, 35.18 on a phone, 35.22 on a 960 × 1080 half screen, rest
+35.6), so the lens
 simply swims through the end of the tunnel and the room's depth does the
 reveal (it widened from the inscribed circle over the fall's first second
 for a round, and that read as the hole being opened at the end — "i dont

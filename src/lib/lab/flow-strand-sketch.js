@@ -568,7 +568,8 @@ const INSIDE = 0.12; // the fall stops inside the last room (?inside=: this far 
 // the width, 1.04 of a 16:10 board's height against its corners' 0.94 — and
 // at least 1.25 tall, which is a phone's binding side: its corners at 0.55 h,
 // the circle 0.61 h there)
-const FILL = { w: 2.1, h: 1.25 }; // … where the room is this many boards wide, and at least this tall
+const FILL = { w: 2.1, h: 1.25 };
+const CIRCLE = 1.06; // … and where the porthole is past the board's corners by this much (0.23.15) // … where the room is this many boards wide, and at least this tall
 // The porthole's radius, of the plate's height (holeAt): A CIRCLE, always,
 // INSCRIBED in the plate (0.23.1: "the shape we see should always be the
 // shape of the hole" — the lead; it was cut to the plate for a round, and
@@ -581,6 +582,10 @@ const HOLE_C = 0.49;
 // (0.22.4: `ease` — the fall's slowing to rest, (1 − x)^ease: 2 was a
 // touch too slow across the last of the room's expansion — the lead)
 const FALL_PACE = { n: 512, c: 0.55, ease: 1.4 };
+// (0.23.15) the swim: its e-folds of zoom from the set-off to the dive, and
+// the fall's opening rate as a share of the most it can open at (pace c ->
+// cMax: no gathering, only the slowing to rest)
+const SWIM = { efolds: 4, seam: 0.8, cMax: 60 };
 
 // ── The count ────────────────────────────────────────────────────────────────
 // The 266 days struck one at a time over B.count: the rate (in figures a
@@ -759,10 +764,14 @@ export default async function make({ THREE, at }) {
 		// (made with `inside`, as the fall itself is: so the last room has its
 		// nest ratio X even when it is the only room, and the approach's zoom
 		// counts back from it in e-folds rather than going nowhere)
-		const g0 = makeFall({ art, order, beats: fb, inside: 0.5 }).geometry(w, h);
-		const X0 = g0.levels[0].X;
-		const far = g0.plate / (ROOM_AT_BAND * h);
-		const z0 = far > 1 ? clamp(Math.log(far) / Math.log(X0), -2, -0.05) : -0.05;
+		const g0 = makeFall({
+			onePath: true,
+			art,
+			order,
+			beats: fb,
+			inside: 0.5
+		}).geometry(w, h);
+		const z0 = clamp(g0.zetaOfPlate(ROOM_AT_BAND * h), -2, -0.05);
 		// Inside: how far into the last room's glass the lens stops — so the
 		// room is FILL.w times the board's width (the monitor at the middle,
 		// the lamp and the tower either side, the frame far past the edges)
@@ -771,6 +780,7 @@ export default async function make({ THREE, at }) {
 		let deep = inside;
 		if (inside > 0 && !q.has('inside')) {
 			const pg = makeFall({
+				onePath: true,
 				art,
 				order,
 				beats: fb,
@@ -779,10 +789,18 @@ export default async function make({ THREE, at }) {
 				inside: 0.5
 			}).geometry(w, h);
 			const lv = pg.levels[pg.L];
+			// (0.23.15: and the porthole — HOLE_C of the plate's height — past
+			// the board's corners with a margin, CIRCLE: on a near-square board
+			// (a half screen) FILL's width and height left the circle short of
+			// the corners at rest, and the tunnel showed round the landed room)
 			const cover = (d) => {
 				const dist = pg.pose(pg.L + d).z - lv.O[2];
 				const k = (pg.F * lv.s) / dist;
-				return Math.min((PLATE.W * k) / w / FILL.w, (PLATE.H * k) / h / FILL.h);
+				return Math.min(
+					(PLATE.W * k) / w / FILL.w,
+					(PLATE.H * k) / h / FILL.h,
+					(HOLE_C * PLATE.H * k) / (CIRCLE * 0.5 * Math.hypot(w, h) + 6)
+				);
 			};
 			let lo = 0.05;
 			let hi = 0.85;
@@ -793,17 +811,20 @@ export default async function make({ THREE, at }) {
 			}
 			deep = (lo + hi) / 2;
 		}
-		// (Going on into the last room is more e-folds in the same seconds;
-		// the fall's pace is re-shaped — its c — so that it still OPENS at the
-		// rate it did, the tunnel's, and the tunnel before it is unchanged.)
-		let pace = FALL_PACE;
-		if (deep > 0) {
-			const want = makeFall({ art, order, beats: fb, zeta0: z0, pace: FALL_PACE }).geometry(
-				w,
-				h
-			).rate0;
+		// (0.23.15) THE FALL OPENS AT THE SWIM'S PACE, a high one: SWIM.seam of
+		// the fastest it can open at on this board (its pace's c large: no
+		// gathering, only the slowing to rest), its c found to give exactly
+		// that. The swim gathers to it by the dive (below), so the lens comes
+		// out of the tunnel at its fastest and slows into the room. (It opened
+		// at the slow rate the swim crept at — the swim cut to 9.5 s had been
+		// made by cutting the tunnel to three and a half turns, so its end was
+		// never a pinprick: "we should not have done that by just making the
+		// tunnel short" — the lead.)
+		let pace;
+		{
 			const rateAt = (c) =>
 				makeFall({
+					onePath: true,
 					art,
 					order,
 					beats: fb,
@@ -811,16 +832,18 @@ export default async function make({ THREE, at }) {
 					pace: { ...FALL_PACE, c },
 					inside: deep
 				}).geometry(w, h).rate0;
+			const want = SWIM.seam * rateAt(SWIM.cMax);
 			let lo = 0.2;
-			let hi = FALL_PACE.c;
-			for (let i = 0; i < 24; i++) {
-				const mid = (lo + hi) / 2;
+			let hi = SWIM.cMax;
+			for (let i = 0; i < 30; i++) {
+				const mid = Math.sqrt(lo * hi);
 				if (rateAt(mid) > want) hi = mid;
 				else lo = mid;
 			}
-			pace = { ...FALL_PACE, c: (lo + hi) / 2 };
+			pace = { ...FALL_PACE, c: Math.sqrt(lo * hi) };
 		}
 		const fall = makeFall({
+			onePath: true,
 			art,
 			order,
 			beats: deep > 0 ? { ...fb, push: null } : fb,
@@ -843,12 +866,26 @@ export default async function make({ THREE, at }) {
 		// (on a verdict the tunnel jams a second past the dive, as it did)
 		const tEnd = F.edge ? B.dive[1] + 1 : B.land[1];
 		const E = new Float64Array(N + 1);
-		const rate = (t) =>
-			smooth(span(t, B.swim, B.swim + 1.5)) * lerp(r0, rc, smooth(span(t, 24.6, 28.6)));
-		for (let i = 1; i <= N; i++) {
-			const ta = B.swim + (i - 1) * DT;
-			E[i] = E[i - 1] + 0.5 * DT * (rate(ta) + rate(ta + DT));
-		}
+		// (0.23.15) THE LONG TUNNEL, SWUM FAST: the rate gathers from the swim's
+		// own pace to the fall's opening rate as u^qe over the swim (u its time
+		// from the set-off to the dive), qe chosen so the swim covers
+		// SWIM.efolds by the dive — about thirteen turns of the groove, so the
+		// end of the tunnel is a pinprick when the lens comes onto the axis
+		// and grows only as it is swum towards. It only ever gathers; it was
+		// one e-fold, three and a half turns, crept at a tenth of this.
+		const T = B.fall[0] - B.swim;
+		const onset = 0.6; // (what the set-off's smoothing takes off the mean)
+		const tabulate = (rs) => {
+			const qe = Math.max(0, (rs - r0) / Math.max(0.01, SWIM.efolds / T - r0 * onset) - 1);
+			const rate = (t) =>
+				smooth(span(t, B.swim, B.swim + 1.5)) *
+				lerp(r0, rs, Math.pow(span(t, B.swim, B.fall[0]), qe));
+			for (let i = 1; i <= N; i++) {
+				const ta = B.swim + (i - 1) * DT;
+				E[i] = E[i - 1] + 0.5 * DT * (rate(ta) + rate(ta + DT));
+			}
+		};
+		tabulate(rc);
 		const efolds = (t) => {
 			if (t <= B.swim) return 0;
 			// (held at the table's end — or where it jams on a verdict)
@@ -861,7 +898,34 @@ export default async function make({ THREE, at }) {
 		// the room to by the dive, so the fall opens on exactly it (0.22: it
 		// grew to ROOM_AT_BAND of the board, which on a phone the fall's fit
 		// could not start from — the room dropped a third at the dive)
-		S.plate0 = geo.plate * Math.pow(geo.levels[0].X, -geo.zetaAt(B.fall[0]));
+		S.plate0 = geo.plateAt(geo.zetaAt(B.fall[0]));
+		// (0.23.15) ONE CONE, ONE ZOOM AT THE DIVE: the room is seen through
+		// the cone's cut end at the cone's own perspective, so through the swim
+		// it grows as the opening does — faster than the lens's zoom, by the
+		// opening's nearness (its log-growth is the zoom rate × zL / (zL −
+		// zEnd)) — and the fall grows it at its own opening rate. So the swim
+		// is flown to END at the rate that makes the opening grow at exactly
+		// the fall's rate at the dive: measured off the throat, the table
+		// refilled, twice to settle. (Before, the room's size in the swim had
+		// its own law, and the seam was hidden under a white disc.)
+		if (!F.edge) {
+			// the fall's growth on the board as it opens (the plate's size law)
+			const f0 = B.fall[0];
+			const fallGrow =
+				Math.log(geo.plateAt(geo.zetaAt(f0 + 0.05)) / geo.plateAt(geo.zetaAt(f0))) / 0.05;
+			let rs = rc;
+			for (let k = 0; k < 3; k++) {
+				S.throat = null;
+				const a = throatAt(f0 - 0.05, w, h, S);
+				const b = throatAt(f0, w, h, S);
+				if (!a || !b || !(a.r > 0) || !(b.r > a.r)) break;
+				const grow = Math.log(b.r / a.r) / 0.05;
+				rs *= fallGrow / grow;
+				tabulate(rs);
+			}
+			S.throat = null;
+			S.rs = rs;
+		}
 		// (L) when the fall's plate first covers the board — the porthole,
 		// the plate's inscribed circle until then, is let past the board
 		// (0.22: the porthole, the room's own frame, past the board's corners
@@ -906,6 +970,10 @@ export default async function make({ THREE, at }) {
 		// the porthole at t on this board: its radius, the plate's box, and
 		// whether it is past the board's corners (the landing's one motion)
 		holeAt: (t) => (S ? holeAt(t, board.w, board.h, S, apexAt(t, board.w, board.h, S)) : null),
+		// the tunnel's end at t on this board: its centre and radius, and the
+		// swim's e-folds of zoom so far
+		throatAt: (t) =>
+			S ? { ...(throatAt(t, board.w, board.h, S) ?? {}), efolds: S.efolds(t) } : null,
 		get tCover() {
 			return S?.tCover ?? null;
 		},
@@ -1444,7 +1512,7 @@ export default async function make({ THREE, at }) {
 			const ph = 2 * portR(t, w, h, st);
 			if (ph < 1.5) return { r: 0, box: null, covers: false };
 			const g = st.geo;
-			const z = Math.log(g.plate / ph) / Math.log(g.levels[0].X);
+			const z = g.zetaOfPlate(ph);
 			box = st.fall.frameOf(t, w, h, { origin: O, zeta: z });
 			// (0.23.9: the box scaled about its middle to EXACTLY ph tall — the
 			// frame read back at that ζ still grew with the swim's own zoom, so
@@ -2341,7 +2409,6 @@ export default async function make({ THREE, at }) {
 		rays: 0.32,
 		sun: 0.42,
 		core: 0.14,
-		sunCore: 0.3,
 		turn: 0.12,
 		diffuse: 0.26,
 		glass: 0.6
@@ -2399,9 +2466,9 @@ export default async function make({ THREE, at }) {
 			r,
 			soft,
 			rays: lerp(LIGHT.sun, LIGHT.rays, settle) * near * k,
-			// (0.23.14: a soft core at the tunnel's end through the swim, the
-			// source of the rays, gone as the room comes up)
-			core: (LIGHT.core * on + LIGHT.sunCore * near * (1 - settle)) * k,
+			// (the core only with the monitor: a core at the tunnel's end
+			// through the swim was tried in 0.23.14 and read as a soft disc)
+			core: LIGHT.core * on * k,
 			rings: 0,
 			phase: 0,
 			turn: TAU * LIGHT.turn * (tb - t0),
@@ -2492,15 +2559,50 @@ export default async function make({ THREE, at }) {
 		band && band.hole > 0
 			? () => ({ cx: O[0], cy: O[1], r: 1.1 * band.hole, wob: 0, feather: 0.03 })
 			: () => null;
-	// (0.23.14) THE END OF THE TUNNEL IS THE END OF THE TUNNEL: the groove
-	// winds down to its throat and NOTHING is drawn inside it through the
-	// swim — the board's dark, the lens's own sunbeam out of it (lightAt:
-	// the rays, and a soft core at the throat as their source) — and at the
-	// dive the room comes up out of that dark inside the hole over ROOM_IN
-	// seconds (fallen). The sun was a disc, then a glow; the room drawn at
-	// the throat was mostly the monitor's pale glass, a square in a circle;
-	// the lead: "remove the disc completely".
-	const ROOM_IN = 1.2;
+	// (0.23.15) ONE TRUNCATED CONE, AND THE ROOM PAST ITS CUT END. The groove
+	// winds down the cone to the cut (throatOf); what is seen through the
+	// cut is the room, at the cone's own perspective — its plate the one the
+	// cut circle is inscribed in, at the cut's depth (portR), clipped to the
+	// cut — from the tunnel's first turn, fading in with the groove, as small
+	// as the opening is and growing only as it does, and the lens swims down
+	// the cone and through the cut into it; the fall carries on from exactly
+	// that size and rate. Nothing else at the end: no rim, no white, no
+	// glow, no dark to come up out of — "imagine a cone with its end cut
+	// off … you keep adding the end/room as its own thing, when it should
+	// simply be what exists after the cone" (the lead).
+	function firstRoom(ctx, w, h, t, st, bo) {
+		const g = st.geo;
+		const th = throatAt(t, w, h, st);
+		if (!th) return;
+		const R = th.r;
+		const ph = (2 * R) / HOLE_C;
+		if (R < 0.6) return;
+		const a = smooth(span(t, B.tunnel[0], B.tunnel[0] + TUN.fadeIn));
+		if (a < 0.01) return;
+		const tf = st.efolds(t) - st.efolds(B.fall[0]);
+		const zeta = g.zetaOfPlate(ph);
+		const O = [th.cx, th.cy];
+		const keep = g.zetaAt;
+		g.zetaAt = () => zeta;
+		ctx.save();
+		ctx.globalAlpha = a;
+		ctx.beginPath();
+		holePath(ctx, w, h, O, R, bo);
+		ctx.clip();
+		try {
+			const camR = st.fall.draw(roomPen(O, tf, bo), w, h, t, {
+				origin: O,
+				colourAlong: false,
+				dust: null,
+				reveal: () => ({ cx: O[0], cy: O[1], r: 1.1 * R, wob: 0, feather: 0.03 })
+			});
+			// (L) the monitor's glass as drawn — never the spiral through it
+			if (camR?.glass) glassBase(ctx, camR.glass);
+		} finally {
+			g.zetaAt = keep;
+			ctx.restore();
+		}
+	}
 
 	// From the stop's glide to the fall: one world.
 	function world(ctx, w, h, t, hand, st) {
@@ -2535,6 +2637,7 @@ export default async function make({ THREE, at }) {
 			rings(ink, t, w, h, cam, st, bo, band, O);
 			ink.flush(ctx);
 			prof('rings');
+			if (!st.F.edge) firstRoom(ctx, w, h, t, st, bo);
 			prof('rooms');
 			rush(ctx, w, h, t, O, bo, band, false);
 		}
@@ -2915,17 +3018,7 @@ export default async function make({ THREE, at }) {
 			reveal: opening ? iris(band, O) : null,
 			sway: (1 - calmExit) * lerp(1, ROOM.sway, smooth(span(t, ...B.land)))
 		});
-		// the room up out of the dark as the tunnel's end is gone through
-		const dark = inHole ? 1 - smooth(span(t, B.fall[0], B.fall[0] + ROOM_IN)) : 0;
-		if (inHole) {
-			if (dark > 0.003) {
-				ctx.globalAlpha = dark;
-				ctx.fillStyle = PAL.ground;
-				ctx.fillRect(-10, -10, w + 20, h + 20);
-				ctx.globalAlpha = 1;
-			}
-			ctx.restore();
-		}
+		if (inHole) ctx.restore();
 		prof('rooms');
 
 		// The swimmer, the chase's own picture, at the vanishing point; on into
@@ -3021,13 +3114,6 @@ export default async function make({ THREE, at }) {
 				glassBase(ctx, cam.glass, exit ? smooth(span(exit.s, ...EXIT.dark)) : 0);
 				screenOn(ctx, cam.glass, smooth(span(t, ...B.on)) * (1 - off), tf);
 				if (!playerOnScreen) screenWords(ctx, cam.glass, t, st, bo, 1 - off);
-				// (0.23.14: the glass comes up out of the dark with the room)
-				if (dark > 0.003) {
-					const g = cam.glass;
-					ctx.globalAlpha = dark;
-					ctx.fillStyle = PAL.ground;
-					ctx.fillRect(g[0] - 1, g[1] - 1, g[2] - g[0] + 2, g[3] - g[1] + 2);
-				}
 				ctx.restore();
 			}
 		}
