@@ -213,7 +213,8 @@ and growing only as it does, and the lens swims down the cone and through
 the cut into it; and while the cut is small IT IS LIGHT (0.23.17, `GLOW`):
 the sun's white full over it and falling off softly past it, no edge, a
 soft star never under `GLOW.min` of the board, the beam out of it from the
-tunnel's first turn (`lightAt` from `B.tunnel`), and as the cut grows from
+lens's swing onto the axis (`lightAt` from `B.onAxis[0]`, 25.9; from the
+first turn was "a touch too soon" — the lead), and as the cut grows from
 `GLOW.from` 1.2% to `GLOW.to` 5% of the board's short side the light fades
 and the room resolves out of it — nothing drawn under the light until
 then ("the opening of the tunnel starts as glow with the sunbeam, and
