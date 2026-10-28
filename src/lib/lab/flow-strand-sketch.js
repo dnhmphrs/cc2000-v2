@@ -2337,7 +2337,15 @@ export default async function make({ THREE, at }) {
 	// touch over the fall as the white resolves into the room)
 	// (0.23.4: the sunburst TURNS at `turn` of a turn a second and SHIMMERS —
 	// two slow waves on its strength — "a little too static", the lead)
-	const LIGHT = { rays: 0.32, sun: 0.42, core: 0.14, turn: 0.12, diffuse: 0.26, glass: 0.6 }; // (sun 0.6 was a little too bright — the lead)
+	const LIGHT = {
+		rays: 0.32,
+		sun: 0.42,
+		core: 0.14,
+		sunCore: 0.3,
+		turn: 0.12,
+		diffuse: 0.26,
+		glass: 0.6
+	}; // (sun 0.6 was a little too bright — the lead)
 	function lightAt(t) {
 		const t0 = B.onAxis[1];
 		if (t < t0) return null;
@@ -2391,7 +2399,9 @@ export default async function make({ THREE, at }) {
 			r,
 			soft,
 			rays: lerp(LIGHT.sun, LIGHT.rays, settle) * near * k,
-			core: LIGHT.core * on * k,
+			// (0.23.14: a soft core at the tunnel's end through the swim, the
+			// source of the rays, gone as the room comes up)
+			core: (LIGHT.core * on + LIGHT.sunCore * near * (1 - settle)) * k,
 			rings: 0,
 			phase: 0,
 			turn: TAU * LIGHT.turn * (tb - t0),
@@ -2482,63 +2492,15 @@ export default async function make({ THREE, at }) {
 		band && band.hole > 0
 			? () => ({ cx: O[0], cy: O[1], r: 1.1 * band.hole, wob: 0, feather: 0.03 })
 			: () => null;
-	// (0.22.3) THE SUN. Through the swim the porthole is LIGHT and nothing
-	// else — a warm white filling it, the lens's rays out of it — and as the
-	// tunnel opens the white RESOLVES into the room over the fall's first
-	// SUN.resolve seconds, the room revealing itself out of the light (the
-	// lead: "as the tunnel opens you should only see sunshine").
-	// (0.23.9: slower — resolve 2.4 s, 1.6 was "too sudden"; and ONE EVEN
-	// FADE over the whole hole: from 0.22.3 to 0.23.9 it cleared from the top
-	// of the hole down with a soft edge sweeping down, and the lead: "the
-	// fade reveal on the room should never be a scroll down")
-	const SUN = { colour: '#fff6e2', resolve: 2.4, reach: 1.7 };
-	const sunP = (t) => span(t, B.fall[0], B.fall[0] + SUN.resolve);
-	// the veil's cover, 0 … 1, the same everywhere (v, the height down the
-	// hole's box, is kept for a sweep's sake and not used)
-	const sunAlpha = (v, p) => 1 - smooth(p);
-	const sunAt = (box, glass, p) => {
-		if (p >= 1) return 0;
-		if (p <= 0 || !box) return 1;
-		const v = ((glass[1] + glass[3]) / 2 - box[1]) / Math.max(1, box[3] - box[1]);
-		return sunAlpha(v, p);
-	};
-	// (0.23.13) THE GLOW: the sun's white as a radial gradient about the
-	// throat — full to the throat's rim, where the groove ends, falling off
-	// softly to nothing at SUN.reach of it — so the light at the end of the
-	// tunnel has no edge, in the swim and through the fall alike (it was a
-	// hard disc, then a veil cut to the hole)
-	function sunGlow(ctx, cx, cy, r, a) {
-		if (a <= 0.003 || !(r > 0.5)) return;
-		const [R, G, Bc] = hex(SUN.colour);
-		const reach = SUN.reach * r;
-		const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, reach);
-		const col = (k) => `rgba(${R},${G},${Bc},${(a * k).toFixed(3)})`;
-		g.addColorStop(0, col(1));
-		g.addColorStop(1 / SUN.reach, col(1));
-		g.addColorStop(1.25 / SUN.reach, col(0.45));
-		g.addColorStop(1, col(0));
-		ctx.save();
-		ctx.fillStyle = g;
-		ctx.fillRect(cx - reach, cy - reach, 2 * reach, 2 * reach);
-		ctx.restore();
-	}
-	function firstRoom(ctx, w, h, t, st, O, bo) {
-		void O;
-		void bo;
-		// (0.23.13) THE END OF THE TUNNEL IS LIGHT AND NOTHING ELSE: a glow
-		// over the throat (sunGlow — full to the throat's rim, where the groove
-		// ends, falling off softly past it), from the tunnel's first turn,
-		// fading in with the groove, growing only as the throat does. No room
-		// is drawn under it through the swim; the fall draws the room under
-		// the same glow from the dive, and the glow fades evenly off it.
-		// (Before: the room at the apex, clipped to a disc and veiled white —
-		// a disc of its own with a rim; then the room under a softer glow,
-		// showing through round the glow's edge: "sperm flies into tunnel.
-		// sperm gradually gets to end of tunnel. sperm flies out." — the lead)
-		const th = throatAt(t, w, h, st);
-		if (!th) return;
-		sunGlow(ctx, th.cx, th.cy, th.r, smooth(span(t, B.tunnel[0], B.tunnel[0] + TUN.fadeIn)));
-	}
+	// (0.23.14) THE END OF THE TUNNEL IS THE END OF THE TUNNEL: the groove
+	// winds down to its throat and NOTHING is drawn inside it through the
+	// swim — the board's dark, the lens's own sunbeam out of it (lightAt:
+	// the rays, and a soft core at the throat as their source) — and at the
+	// dive the room comes up out of that dark inside the hole over ROOM_IN
+	// seconds (fallen). The sun was a disc, then a glow; the room drawn at
+	// the throat was mostly the monitor's pale glass, a square in a circle;
+	// the lead: "remove the disc completely".
+	const ROOM_IN = 1.2;
 
 	// From the stop's glide to the fall: one world.
 	function world(ctx, w, h, t, hand, st) {
@@ -2573,7 +2535,6 @@ export default async function make({ THREE, at }) {
 			rings(ink, t, w, h, cam, st, bo, band, O);
 			ink.flush(ctx);
 			prof('rings');
-			if (!st.F.edge) firstRoom(ctx, w, h, t, st, O, bo);
 			prof('rooms');
 			rush(ctx, w, h, t, O, bo, band, false);
 		}
@@ -2954,11 +2915,16 @@ export default async function make({ THREE, at }) {
 			reveal: opening ? iris(band, O) : null,
 			sway: (1 - calmExit) * lerp(1, ROOM.sway, smooth(span(t, ...B.land)))
 		});
+		// the room up out of the dark as the tunnel's end is gone through
+		const dark = inHole ? 1 - smooth(span(t, B.fall[0], B.fall[0] + ROOM_IN)) : 0;
 		if (inHole) {
+			if (dark > 0.003) {
+				ctx.globalAlpha = dark;
+				ctx.fillStyle = PAL.ground;
+				ctx.fillRect(-10, -10, w + 20, h + 20);
+				ctx.globalAlpha = 1;
+			}
 			ctx.restore();
-			// the sun's glow over the hole, fading evenly as the tunnel opens
-			sunGlow(ctx, O[0], O[1], band.hole, 1 - smooth(sunP(t)));
-			// (0.23.12: no rim of its own — the groove's last turn is the rim)
 		}
 		prof('rooms');
 
@@ -3047,8 +3013,7 @@ export default async function make({ THREE, at }) {
 			// the veil is there — 0.23.9: it was drawn as FAINT as the veil was
 			// clear, and with the slower, softer resolve the spiral under the
 			// board showed through the half-drawn glass for a second)
-			const gv = inHole ? sunAt(band.holeBox, cam.glass, sunP(t)) : 0;
-			if (gv < 0.996) {
+			{
 				ctx.save();
 				// (L) the glass as drawn, under the screen's light: the spiral under
 				// the board never shows through the monitor; dark as AGAIN goes
@@ -3056,10 +3021,11 @@ export default async function make({ THREE, at }) {
 				glassBase(ctx, cam.glass, exit ? smooth(span(exit.s, ...EXIT.dark)) : 0);
 				screenOn(ctx, cam.glass, smooth(span(t, ...B.on)) * (1 - off), tf);
 				if (!playerOnScreen) screenWords(ctx, cam.glass, t, st, bo, 1 - off);
-				if (gv > 0.004) {
+				// (0.23.14: the glass comes up out of the dark with the room)
+				if (dark > 0.003) {
 					const g = cam.glass;
-					ctx.globalAlpha = gv;
-					ctx.fillStyle = SUN.colour;
+					ctx.globalAlpha = dark;
+					ctx.fillStyle = PAL.ground;
 					ctx.fillRect(g[0] - 1, g[1] - 1, g[2] - g[0] + 2, g[3] - g[1] + 2);
 				}
 				ctx.restore();
