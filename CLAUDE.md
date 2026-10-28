@@ -160,19 +160,23 @@ the swimmer: `lensAt`), SIMULATING CONCEPTION: the swim into ONE GROOVE
 it — THE SWIM CUT to 9.5 s in 0.23, the run to 44 s, about three and a
 half turns on a laptop — THE GROOVE FADES IN over `TUN.fadeIn` 1.5 s as
 it is first sketched (0.23.9: "a bit too aggressive in contrast" — the
-lead), and THE PORTHOLE IS ONE SIZE through the swim (0.23.9): in over
-`PORT.grow` 0.8 s to the circle inscribed in the fall's first plate,
-`S.plate0`, and held there, `portR` — "the hole should stay the same size,
-and if anything we just speed up towards the end" — it grew as the cube of
-the time from a speck to that, the star and then the sun ("the blinding
-light moment", the PM) — its turns JOINED — the hand's wobble is one noise
-along the whole groove, `sketchTurn`; A LOOK TO TRY, `?unwind=1` on dev
-(0.23.10): over the last `UNWIND.over` 3 s before the dive the turns round
-the porthole are spread outward from its rim, r → R (r/R)^g, g rising to
-1 + `UNWIND.gain`, so the spiral loosens as the end nears and its last turn
-is the hole's edge ("could we have the spiral unravel as we get towards
-the end, then maybe the hole and the spiral can be integrated better" —
-the lead; off, the groove is as it was); the ONE groove goes on round the room until the room's frame
+lead), and THE HOLE IS THE END OF THE TUNNEL AND NOTHING ELSE (0.23.12):
+the cone the groove winds down is CUT at a THROAT, `throatOf` — the depth
+at which the cone's section is exactly the circle the fall opens on
+(`HOLE_C` of `S.plate0`) at the dive, found once per board by bisection on
+the dive's own lens — the groove's last turn is the throat's rim (no turn
+past it, `rings`), the sun's light fills it, no rim of its own is drawn,
+and the throat is projected like every other turn (`portR`), so it grows
+only as the end is approached, at the tunnel's own pace, and the lens
+swims through it into the room with nothing changing at the seam ("there
+should not be a separate hole. the hole should just be the end of the
+tunnel, and the sperm swims towards that end of the tunnel and then
+through it" — the lead; it was a disc of its own at the apex with a
+hand-drawn rim, a speck grown as the cube of the time to the sun and then
+one size, the groove winding on past it to a point; an unravelling of the
+groove into it was tried for a round, `?unwind=1`, and taken out) — its
+turns JOINED — the hand's wobble is one noise along the whole groove,
+`sketchTurn`; the ONE groove goes on round the room until the room's frame
 has taken the board — cut A's second set of rings at the dive is gone, the
 spiral's lines doubled with it — and through the fall it EXPANDS WITH THE
 ROOM'S DEPTH (`rings`: the lens's distance to the apex taken in by the
@@ -207,11 +211,11 @@ with a soft edge sweeping down, until the lead: "the fade reveal on the
 room should never be a scroll down"); the glass is drawn whole under it
 with the veil's own white over it, since drawn as faint as the veil was
 clear the spiral showed through it — the room revealing itself out of the
-light (the lead: "as the tunnel opens you should only see sunshine"); the porthole a
-circle the size of the fall's own first plate on that board, `S.plate0`
-(`portR`; `holeAt` scales the swim's box to exactly that height, since the
-frame read back at the porthole's ζ still grew with the swim's zoom), so
-the fall opens on exactly it — on a phone the room used to drop a third
+light (the lead: "as the tunnel opens you should only see sunshine"); the porthole
+the tunnel's throat, exactly the circle of the fall's own first plate on
+that board, `S.plate0`, at the dive (`portR`; `holeAt` scales the swim's
+box to the throat's height), so the fall opens on exactly it — on a phone
+the room used to drop a third
 at the dive; NOTHING of a record: no label, no disc, no
 spindle, no flecks — the lead saw a CD and wanted it gone) — and THE PORTHOLE
 IS A CIRCLE, ALWAYS, INSCRIBED IN THE ROOM'S PLATE (0.23.1: "the shape we
