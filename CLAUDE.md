@@ -166,7 +166,13 @@ lead), and THE PORTHOLE IS ONE SIZE through the swim (0.23.9): in over
 and if anything we just speed up towards the end" — it grew as the cube of
 the time from a speck to that, the star and then the sun ("the blinding
 light moment", the PM) — its turns JOINED — the hand's wobble is one noise
-along the whole groove, `sketchTurn`; the ONE groove goes on round the room until the room's frame
+along the whole groove, `sketchTurn`; A LOOK TO TRY, `?unwind=1` on dev
+(0.23.10): over the last `UNWIND.over` 3 s before the dive the turns round
+the porthole are spread outward from its rim, r → R (r/R)^g, g rising to
+1 + `UNWIND.gain`, so the spiral loosens as the end nears and its last turn
+is the hole's edge ("could we have the spiral unravel as we get towards
+the end, then maybe the hole and the spiral can be integrated better" —
+the lead; off, the groove is as it was); the ONE groove goes on round the room until the room's frame
 has taken the board — cut A's second set of rings at the dive is gone, the
 spiral's lines doubled with it — and through the fall it EXPANDS WITH THE
 ROOM'S DEPTH (`rings`: the lens's distance to the apex taken in by the

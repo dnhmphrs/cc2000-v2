@@ -1577,8 +1577,9 @@ export default async function make({ THREE, at }) {
 	// record's rate (recordTurn), so the stylus tracks a record under it. No
 	// pulling apart along a seam: the groove runs up to the label.)
 	const recordTurn = (t) => TAU * GROOVE_TURN * Math.max(0, t - B.swim);
+	const UNWIND = { gain: 2, over: 3 };
+	const unwind = q.get('unwind') === '1';
 	function rings(ink, t, w, h, cam, st, bo, band, O) {
-		void O;
 		let zL = cam.pos[0] - X_APEX;
 		if (zL <= 1) return;
 		// (0.22.2) THROUGH THE FALL THE GROOVE EXPANDS WITH THE ROOM'S FRAME:
@@ -1598,6 +1599,29 @@ export default async function make({ THREE, at }) {
 		const iHi = Math.floor(Math.log(Z_NOSE0 / (umin * zL)) / step);
 		const sc = Math.sqrt(h / 800);
 		const rec = recordTurn(t);
+		// (0.23.10, a look: THE GROOVE UNRAVELS INTO THE HOLE — over the last
+		// UNWIND.over seconds before the dive the turns round the porthole are
+		// spread outward from its rim, r → R (r/R)^g with g rising to 1 +
+		// UNWIND.gain, R the hole's radius: the rim itself stays, the turn just
+		// outside it hugs it and the rest open out and off the board, so the
+		// spiral loosens as the end nears and its last turn is the hole's edge
+		// — "could we have the spiral unravel as we get towards the end, then
+		// maybe the hole and the spiral can be integrated better" — the lead.
+		// ?unwind=1 on dev; off, the groove is as it was)
+		const Rh = band?.hole ?? 0;
+		const g =
+			unwind && Rh > 1 ? 1 + UNWIND.gain * smooth(span(t, B.fall[0] - UNWIND.over, B.fall[0])) : 1;
+		const spread =
+			g > 1.001
+				? (p) => {
+						const dx = p[0] - O[0];
+						const dy = p[1] - O[1];
+						const r = Math.hypot(dx, dy);
+						if (r < 1e-3) return p;
+						const k2 = (Rh * Math.pow(r / Rh, g)) / r;
+						return [O[0] + dx * k2, O[1] + dy * k2];
+					}
+				: null;
 		for (let i = iLo; i <= iHi; i++) {
 			const zi = Z_NOSE0 * Math.exp(-step * i);
 			const u = zi / zL;
@@ -1617,7 +1641,8 @@ export default async function make({ THREE, at }) {
 			const at = (px, py, zf) => {
 				const q = cam.project([X_APEX + zf, py, -px]);
 				if (q[2] <= NEAR) return null;
-				return Z.hidden([q[0], q[1], q[2]]) ? null : [q[0], q[1]];
+				if (Z.hidden([q[0], q[1], q[2]])) return null;
+				return spread ? spread([q[0], q[1]]) : [q[0], q[1]];
 			};
 			sketchTurn(ink, at, rho, zi, i, bo, upto, lw, a, rec);
 			if (u > 0.25)
