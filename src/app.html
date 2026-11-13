@@ -1,39 +1,12 @@
 <!doctype html>
-<!-- The ground, before a single byte of CSS or JS: the blue-black the three
-     3D scenes paint (0x090b14, the deep backdrop's colour1), so the first
-     painted pixel and the first WebGL frame are the same colour and the
-     canvas fading in over it changes nothing. It was the warm AIR of the
-     WebGL run (config/palette.js), which showed as a yellowish black for as
-     long as the warm-up took and then went blue as the canvas arrived. An
-     inline style outranks the stylesheet, so this is the one that decides. -->
-<html lang="en" data-site="dev" style="background: #090b14">
+<!-- The ground, before a single byte of CSS or JS: the board's dark as the
+     lens shows it (run/lens.js lifts the darks a hair, warm: rgb(27, 25, 23)),
+     so the first painted pixel and the run's first frame are one colour and
+     nothing changes when that frame lands. An inline style outranks the
+     stylesheet, so this is the one that decides; styles.css says the same. -->
+<html lang="en" style="background: #1b1917">
 	<head>
 		<meta charset="utf-8" />
-		<!-- The board's routes (the lab, the reels, the index, the next run)
-		     open on the BOARD's warm dark (#151515, log/board.js PAL.ground), the
-		     colour their first frame paints, so loading them is one colour and
-		     no blue shows before it; the run at / and /v3 keeps its blue-black.
-		     Before the first paint, so it is the first paint; the layout keeps
-		     it in step on a client-side change of route. On the MAIN site
-		     (data-site, written by hooks.server.js) every page is the run on
-		     the board, so it is always the board's dark. -->
-		<script>
-			// THE RUN's ground is the board's dark THROUGH THE LENS (log/lens.js:
-			// the darks lifted a hair, warm — rgb(27, 25, 23)), so the main
-			// site and /next open on that and the lens's first frame changes
-			// nothing; the lab and the reels, which draw the board bare, open
-			// on the board's own #151515.
-			if (
-				document.documentElement.dataset.site === 'main' ||
-				/^\/next(\/|$)/.test(location.pathname)
-			) {
-				document.documentElement.style.background = '#1b1917';
-				document.documentElement.style.setProperty('--bg', '#1b1917');
-			} else if (/^\/(lab|v4|log|eva|flows|cut)(\/|$)/.test(location.pathname)) {
-				document.documentElement.style.background = '#151515';
-				document.documentElement.style.setProperty('--bg', '#151515');
-			}
-		</script>
 		<link rel="icon" href="%sveltekit.assets%/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
 		%sveltekit.head%

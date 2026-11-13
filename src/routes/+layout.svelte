@@ -1,59 +1,11 @@
 <script>
 	import './styles.css';
-	import { onMount } from 'svelte';
-	import Version from '$lib/components/Version.svelte';
-	import Build from '$lib/components/Build.svelte';
-	import LabBar from '$lib/components/LabBar.svelte';
-	import { MAIN } from '$lib/site.js';
-	import { page } from '$app/stores';
-	import { screenSize, aspect } from '$lib/store/store';
-	import { aspectKind, applyChassisVars, chassisCss } from '$lib/config';
-	import { palette, applyCssVars } from '$lib/theme';
+	import { version } from '$app/environment';
 
-	// Keep the UI ink (CSS custom properties) in sync with the active palette.
-	$: applyCssVars($palette);
-
-	// The experiments' bar, on the lab, the reels and the index only — here
-	// beside the run switch rather than in main, whose stacking context would
-	// put it under the blackboard sketches' own canvas.
-	$: onLab = !MAIN && /^\/(lab|v4|log|eva)(\/|$)/.test($page.url.pathname);
-	// The board's routes open on the board's own warm dark (see app.html,
-	// which sets it before the first paint); the run keeps its blue-black.
-	$: onRun = MAIN || /^\/next(\/|$)/.test($page.url.pathname);
-	$: onBoard = onRun || onLab || /^\/(flows|cut)(\/|$)/.test($page.url.pathname);
-	$: if (typeof document !== 'undefined') {
-		const root = document.documentElement;
-		// (the run's ground is the board's dark through the lens, see app.html)
-		const ground = onRun ? '#1b1917' : onBoard ? '#151515' : '';
-		if (root.style.getPropertyValue('--bg') !== ground) {
-			root.style.background = ground || '#090b14';
-			if (ground) root.style.setProperty('--bg', ground);
-			else root.style.removeProperty('--bg');
-		}
-	}
-
-	// One place decides what shape of screen this is. Everything that lays out
-	// differently in portrait, landscape or the square middle a tablet lands in
-	// reads `aspect` or the CSS custom properties written from it — nothing
-	// measures the viewport for itself.
-	function handleResize() {
-		const w = window.innerWidth;
-		const h = window.innerHeight;
-		const kind = aspectKind(w, h);
-		screenSize.set({ width: w, height: h });
-		aspect.set(kind);
-		applyChassisVars(kind);
-	}
-
-	onMount(() => {
-		handleResize();
-		window.addEventListener('resize', handleResize);
-		window.addEventListener('orientationchange', handleResize);
-		return () => {
-			window.removeEventListener('resize', handleResize);
-			window.removeEventListener('orientationchange', handleResize);
-		};
-	});
+	// The frame round every page: the stylesheet, the faces, and the corner's
+	// label. The label is the build — package.json's version and the commit it
+	// was built from (vite.config.js) — so one deploy can be told from the one
+	// before at a glance. It is the only thing in the corner: no links out.
 </script>
 
 <svelte:head>
@@ -63,11 +15,11 @@
 		content="Calculate the song playing at your exact moment of conception."
 	/>
 	<!-- The faces, at the head of the queue. They are declared font-display:block
-	     (styles/fonts.css) so nothing paints in a stand-in and re-flows when the
-	     real one lands — which means the block period has to be over before the
-	     first paint wants them, and a preload is what makes that true. Same
-	     origin, but a font fetch is anonymous whatever its origin, so crossorigin
-	     is required or the browser fetches the file twice and the preload buys
+	     (styles.css) so nothing paints in a stand-in and re-flows when the real
+	     one lands, which means the block period has to be over before the first
+	     paint wants them, and a preload is what makes that true. Same origin,
+	     but a font fetch is anonymous whatever its origin, so crossorigin is
+	     required or the browser fetches the file twice and the preload buys
 	     nothing. -->
 	<link
 		rel="preload"
@@ -90,43 +42,24 @@
 		type="font/woff"
 		crossorigin="anonymous"
 	/>
-
-	<!-- The chassis, generated from CHASSIS itself, so the very first paint lays
-	     the machine out at the size JS is about to confirm rather than at a
-	     hard-coded guess that then has to be corrected. See config/layout.js.
-
-	     The @html is safe: chassisCss() is built entirely from those constants
-	     and no input of any kind reaches it. A plain <style> element cannot be
-	     used here — Svelte hoists it as this component's own stylesheet. -->
-	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-	{@html `<style>${chassisCss()}</style>`}
 </svelte:head>
 
-<main>
-	<slot />
-</main>
-{#if MAIN}
-	<Build />
-{:else}
-	<Version />
-{/if}
-{#if onLab}
-	<LabBar />
-{/if}
+<slot />
+<span class="build" aria-hidden="true">{version}</span>
 
 <style>
-	main {
+	.build {
 		position: fixed;
-		inset: 0;
-		z-index: 10;
+		top: 8px;
+		left: 10px;
+		z-index: 35; /* over the board (11) and the output (30) */
+		font-family: var(--tech);
+		font-size: 10px;
+		letter-spacing: 0.14em;
+		color: var(--yellow);
+		opacity: 0.35;
+		user-select: none;
 		pointer-events: none;
+		white-space: nowrap;
 	}
-
-	/* No blanket pointer-events reset here: it used to re-enable hit-testing on
-	   every descendant, which then sat on top of the 3D stage.
-	   CAREFUL: every screen that wants clicks must set pointer-events:auto on its
-	   own root. Forgetting it renders a perfectly visible control that nothing
-	   can press — it has caught the restart button, the machine's calculate
-	   button and the Spotify player already, and it looks like a dead handler
-	   rather than a CSS miss. */
 </style>
