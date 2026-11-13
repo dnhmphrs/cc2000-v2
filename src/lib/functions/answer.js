@@ -27,8 +27,8 @@ import { conceptionDate, previousDay, dateToDecade } from './utils';
 // dinosaurs for anyone too young.
 
 // The chart archive starts here, and ends with its last week.
-export const ARCHIVE_START = '1958-06-01';
-export const ARCHIVE_END = Object.keys(data).sort().at(-1);
+const ARCHIVE_START = '1958-06-01';
+const ARCHIVE_END = Object.keys(data).sort().at(-1);
 const plusDays = (iso, n) => {
 	const d = new Date(`${iso}T00:00:00Z`);
 	d.setUTCDate(d.getUTCDate() + n);
@@ -60,12 +60,4 @@ export function resolve(dateStr, spicy) {
 		cd = previousDay(cd);
 	}
 	return { edge: 'unknown' };
-}
-
-// The earliest birthday the archive can answer for: a conception the day after
-// it starts. Derived so it cannot drift from resolve() above.
-export function earliestBirthday() {
-	const d = new Date(`${ARCHIVE_START}T00:00:00Z`);
-	d.setUTCDate(d.getUTCDate() + 269);
-	return d.toISOString().slice(0, 10);
 }

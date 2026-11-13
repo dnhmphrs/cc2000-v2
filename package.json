@@ -13,11 +13,9 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"verify": "node scripts/verify.mjs",
-		"shots": "node scripts/shots.mjs",
-		"browser": "node scripts/browser.mjs"
+		"shots": "node scripts/shots.mjs"
 	},
 	"dependencies": {
-		"@tweenjs/tween.js": "^25.0.0",
 		"three": "^0.186.0"
 	},
 	"devDependencies": {

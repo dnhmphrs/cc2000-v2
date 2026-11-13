@@ -1,159 +1,200 @@
-// ── Smoke test ───────────────────────────────────────────────────────────────
-// Drives the real site in a real browser and checks the few things that are
-// invisible in a diff and have actually broken.
+// ── Verify ───────────────────────────────────────────────────────────────────
+// Smoke-test the site as a visitor meets it. Run it against a BUILD before
+// every push:
 //
-// THIS BUILD HAS NO MACHINE. The run opens on a title card over a fly-in that is
-// already mounted and held at progress zero; the two answers are taken mid-flight
-// by one popup that asks the second question the moment the first is answered;
-// an out-of-range birthday is NOT refused — the run goes in and the tunnel breaks
-// down onto the verdict screen; and the loop home flies the camera through the
-// room's monitor straight back into the flight. So what this checks is the gate
-// and the two ways out, not a calculator:
+//   npm run build && npx vite preview --port 4175
+//   BASE=http://localhost:4175 node scripts/verify.mjs
 //
-//   the card lifts on its own      no click, and the flight is under it
-//   the flight stops to ask        twice, back to back, and holds until answered
-//   out of range breaks down       into the verdict, and calculate again flies on
-//   the run completes              a room, with a track in it
-//   the loop goes round            through the glass and back into the flight
+// (it passes against `npm run dev` too, more slowly). What it holds the site
+// to:
 //
-//   npm run dev      in one terminal
-//   npm run verify   in another
-//
-// BASE, CHROMIUM and LANE (webgl | webgpu — see lane.mjs) are overridable from
-// the environment, and ROUTE picks the run: / (the site) or /v2 (the WebGL run
-// it replaced — the same card, popups and room over different 3D; its popup
-// refuses out of range in place, so the verdict checks are skipped there).
-// Exits non-zero if anything failed.
-import { launch } from './lane.mjs';
+//   the shell     / answers; the first paint is the run's own dark; the corner
+//                 is the build label and nothing else — no links out
+//   the run       boots with no errors and no missing file, and WAITS for a
+//                 person: the clock holds at each question until it is answered
+//   by hand       a date and a spice typed on the keyboard take it to the room;
+//                 the output is on the monitor (the line, Spotify's player,
+//                 SHARE, START AGAIN); START AGAIN goes round to the title
+//   a verdict     a birthday the archive cannot answer for ends on its verdict
+//   on a phone    the touch key comes up at the question
+//   pinned        ?at= holds a frame
+//   elsewhere     any other path is a 404
+import { readFileSync } from 'node:fs';
+import { launch, ready } from './launch.mjs';
 
-const BASE = process.env.BASE ?? 'http://127.0.0.1:5178';
-const ROUTE = process.env.ROUTE ?? '/';
-const fails = [];
-const ok = (name, cond, detail) => {
-	console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`);
-	if (!cond) fails.push(name);
+const BASE = process.env.BASE ?? 'http://localhost:4175';
+const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+let fails = 0;
+const ok = (name, pass, note = '') => {
+	console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${note ? `  (${note})` : ''}`);
+	if (!pass) fails++;
+	return pass;
 };
-
-const { browser: b, lane } = await launch();
-console.log(`lane  ${lane}`);
-const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
+const browser = await launch();
 const errs = [];
-p.on('pageerror', (e) => errs.push(e.message));
-p.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
-
-const until = async (fn, max = 120) => {
-	for (let i = 0; i < max; i++) {
-		if (await p.evaluate(fn)) return true;
-		await p.waitForTimeout(500);
+const missing = [];
+const watch = (page, who) => {
+	page.on('pageerror', (e) => errs.push(`${who}: ${e.message}`));
+	page.on('response', (r) => {
+		// (Spotify's embed is another site's business)
+		if (r.status() >= 400 && r.url().startsWith(BASE)) missing.push(`${r.status()} ${r.url()}`);
+	});
+};
+const tOf = (page) => page.evaluate(() => window.__run?.t ?? 0);
+const until = async (page, test, ms) => {
+	const t0 = Date.now();
+	while (Date.now() - t0 < ms) {
+		if (await page.evaluate(test).catch(() => false)) return true;
+		await page.waitForTimeout(150);
 	}
 	return false;
 };
 
-// Whichever popup is open. Both use the same selects the machine used to —
-// addressed by id now rather than by aria-label, because the selects carry
-// real <label for> elements and an aria-label on top of one would override the
-// visible word.
-const answerDob = async (month, day, year) => {
-	await p.selectOption('#ask-year', String(year));
-	await p.selectOption('#ask-month', String(month));
-	await p.selectOption('#ask-day', String(day));
-	await p.waitForTimeout(200);
-};
-const asksSpicy = () => /spicy/i.test(document.querySelector('.ask .q')?.textContent ?? '');
-
-// ?seed= pins every choice the run leaves to chance — config/dev.js.
-await p.goto(`${BASE}${ROUTE}?speed=6&seed=1`, { waitUntil: 'networkidle' });
-
-// ── The card lifts on its own ────────────────────────────────────────────────
-// Nothing is clicked. If this ever needs a click the run has grown a step.
-ok('title card is up on load', await p.evaluate(() => !!document.querySelector('.prelude')));
+// ── The shell, and the run by hand ───────────────────────────────────────────
+const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+const page = await ctx.newPage();
+watch(page, 'by hand');
+const res = await page.goto(`${BASE}/`, { waitUntil: 'load' });
+ok('/ answers', res?.status() === 200);
 ok(
-	'the card lifts without being clicked',
-	await until(() => !document.querySelector('.prelude'), 40)
+	'the first paint is the run’s dark',
+	(await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)) ===
+		'rgb(27, 25, 23)'
 );
-
-// ── The flight stops to ask ──────────────────────────────────────────────────
-ok('the flight asks for a birthday', await until(() => !!document.querySelector('.ask'), 60));
-
-if (ROUTE === '/') {
-	// ── Out of range stops in its gif tunnel ───────────────────────────────
-	// The earliest year the dial offers is before the archive. It is taken, the
-	// spice is asked at once in the same panel, and the run goes in, down a
-	// tunnel made of the verdict's gif, stops inside it, and the verdict is
-	// given there, typed. Calculate again hands the run back to the flight,
-	// with no title card.
-	const earliest = await p.evaluate(() => {
-		const sel = document.querySelector('#ask-year');
-		return +sel.options[sel.options.length - 1].value;
-	});
-	await answerDob(1, 14, earliest);
-	await p.click('button.go');
-	await p.waitForTimeout(300);
-	ok(
-		'the spice is asked the moment the birthday is in, in the same panel',
-		(await p.evaluate(() => !!document.querySelector('.ask'))) && (await p.evaluate(asksSpicy))
-	);
-	await p.selectOption('#ask-spicy', '4');
-	await p.click('button.go');
-	ok('the second answer lets it fly', await until(() => !document.querySelector('.ask'), 20));
-	ok(
-		'an impossible birthday stops in its gif tunnel, with the verdict',
-		await until(() => !!document.querySelector('.error-screen .verdict'), 80)
-	);
-	ok(
-		'with the right heading and the right line, typed',
-		await until(
-			() =>
-				/before 1958/i.test(document.querySelector('.error-screen .q')?.textContent ?? '') &&
-				/dinosaurs/.test(document.querySelector('.error-screen .verdict .live')?.textContent ?? ''),
-			40
-		)
-	);
-	await p.click('.error-screen .go');
-	ok('calculate again flies on', await until(() => !document.querySelector('.error-screen'), 20));
-	ok(
-		'and does NOT replay the title card',
-		await p.evaluate(() => !document.querySelector('.prelude'))
-	);
-	ok('and asks again', await until(() => !!document.querySelector('.ask'), 80));
-}
-
-// ── A real date ──────────────────────────────────────────────────────────────
-await answerDob(7, 14, 1986);
-await p.click('button.go');
-ok('the flight moves on and asks how spicy', await until(asksSpicy, 80));
-await p.selectOption('#ask-spicy', '4');
-await p.click('button.go');
-ok('the second answer lets it dive', await until(() => !document.querySelector('.ask'), 20));
-
-// ── The run ──────────────────────────────────────────────────────────────────
-// Two minutes: on the webgpu lane (SwiftShader) the dive takes 56–58 s from
-// the second answer even at ?speed=6, and a minute was failing it by chance.
+const label = await page.locator('span.build').allTextContents();
 ok(
-	'run completes',
-	await until(() => !!document.querySelector('.again') || !!document.querySelector('.card'), 240)
+	'the corner is the build label',
+	label.length === 1 && label[0].startsWith(pkg.version),
+	label[0] ?? 'none'
+);
+ok('no links out', (await page.locator('a[href], nav').count()) === 0);
+ok(
+	'the run boots',
+	await ready(page).then(
+		() => true,
+		() => false
+	)
+);
+const B = await page.evaluate(() => ({ ...window.__run.beats, live: window.__run.live }));
+ok('a person is expected: the run is live', B.live === true);
+// the title types, then the first question waits
+ok(
+	'it waits at the first question',
+	(await until(page, `window.__run.t >= ${B.wait1 - 0.01}`, 30000)) &&
+		(await page.waitForTimeout(1500), Math.abs((await tOf(page)) - B.wait1) < 0.05),
+	`t = ${(await tOf(page)).toFixed(2)}`
+);
+await page.keyboard.type('14021987', { delay: 60 });
+await page.keyboard.press('Enter');
+ok(
+	'the date is taken, and it waits at the second',
+	(await until(page, `window.__run.t >= ${B.wait2 - 0.01}`, 20000)) &&
+		(await page.waitForTimeout(1500), Math.abs((await tOf(page)) - B.wait2) < 0.05),
+	`t = ${(await tOf(page)).toFixed(2)}`
+);
+await page.keyboard.press('7');
+await page.keyboard.press('Enter');
+ok(
+	'the answers are the person’s',
+	await page.evaluate(
+		() => window.__run.answers.date === '14021987' && window.__run.answers.spice === 7
+	)
+);
+ok('the lens comes to rest in the room', await until(page, 'window.__run.api.ended()', 60000));
+const song = await page.evaluate(() => window.__run.api.song());
+ok(
+	'the archive names a song',
+	!!song?.uri && !song.edge,
+	song ? `${song.title} — ${song.artist}` : ''
+);
+const out = page.locator('.output:not(.preload)');
+ok(
+	'the output is on the monitor',
+	await out.waitFor({ timeout: 8000 }).then(
+		() => true,
+		() => false
+	)
 );
 ok(
-	'answer lands in the monitor glass',
-	await p.evaluate(() => {
-		const g = document.querySelector('.glass');
-		return !!g && g.getBoundingClientRect().width > 40;
-	})
+	'a line, the player, two keys',
+	(await out.locator('.output-say').count()) === 1 &&
+		/^https:\/\/open\.spotify\.com\/embed\/track\//.test(
+			(await out
+				.locator('iframe')
+				.getAttribute('src')
+				.catch(() => '')) ?? ''
+		) &&
+		(await out.locator('.output-keys button').count()) === 2
 );
-
-// ── The loop home ────────────────────────────────────────────────────────────
-// Through the glass and back into the flight — no title card the second time,
-// and the questions get asked again because asking them is the shape of the run.
-await p.click('.again');
-ok('the loop lands back in the flight', await until(() => !document.querySelector('.again'), 40));
+await page.waitForTimeout(800);
+await out.locator('.output-keys button').last().click();
 ok(
-	'and does NOT replay the title card',
-	await p.evaluate(() => !document.querySelector('.prelude'))
+	'START AGAIN goes round to the title',
+	(await until(page, '!window.__run.api.ended() && window.__run.t < 5', 20000)) &&
+		(await page.locator('.output:not(.preload)').count()) === 0
 );
-ok('and asks again', await until(() => !!document.querySelector('.ask'), 80));
+await ctx.close();
 
-ok('no console errors', errs.length === 0, errs[0] ?? '');
+// ── A verdict, a phone and a pin, side by side ───────────────────────────────
+await Promise.all([
+	(async () => {
+		const c = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+		const p = await c.newPage();
+		watch(p, 'verdict');
+		await p.goto(`${BASE}/?demo=1&edge=past`, { waitUntil: 'load' });
+		await ready(p);
+		ok('?demo=1 answers for itself', (await p.evaluate(() => window.__run.live)) === false);
+		ok('a verdict’s run ends on its verdict', await until(p, 'window.__run.api.ended()', 90000));
+		const s = await p.evaluate(() => window.__run.api.song());
+		ok('…and has no song', s?.edge === 'past' && !s.uri);
+		await c.close();
+	})(),
+	(async () => {
+		const c = await browser.newContext({
+			viewport: { width: 390, height: 844 },
+			deviceScaleFactor: 2,
+			hasTouch: true,
+			isMobile: true
+		});
+		const p = await c.newPage();
+		watch(p, 'phone');
+		await p.goto(`${BASE}/`, { waitUntil: 'load' });
+		await ready(p);
+		await until(p, `window.__run.t >= ${B.wait1 - 0.01}`, 30000);
+		const key = p.locator('body > button');
+		ok(
+			'on a phone the touch key comes up at the question',
+			await key.waitFor({ state: 'visible', timeout: 5000 }).then(
+				() => true,
+				() => false
+			),
+			(await key.textContent().catch(() => '')) ?? ''
+		);
+		await c.close();
+	})(),
+	(async () => {
+		const c = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+		const p = await c.newPage();
+		watch(p, 'pinned');
+		await p.goto(`${BASE}/?at=0.5`, { waitUntil: 'load' });
+		await ready(p);
+		await p.waitForTimeout(1200);
+		const t = await tOf(p);
+		ok('?at= pins a frame', Math.abs(t - 22) < 0.01, `t = ${t.toFixed(2)}`);
+		for (const path of ['/next', '/v2', '/v3', '/lab', '/log']) {
+			const r = await p.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded' });
+			ok(`${path} is a 404`, r?.status() === 404);
+		}
+		await c.close();
+	})()
+]);
 
-await b.close();
-console.log(fails.length ? `\nFAILED: ${fails.join(', ')}` : '\nAll passed.');
-process.exit(fails.length ? 1 : 0);
+// (the 404s above are asked for; anything else missing is a broken link)
+const lost = missing.filter((m) => !/\/(next|v2|v3|lab|log)$/.test(m));
+ok('no missing files', lost.length === 0);
+if (lost.length) console.log([...new Set(lost)].slice(0, 8).join('\n'));
+ok('no page errors', errs.length === 0);
+if (errs.length) console.log([...new Set(errs)].slice(0, 5).join('\n'));
+await browser.close();
+console.log(fails ? `\n${fails} FAILED` : '\nAll passed.');
+process.exit(fails ? 1 : 0);
