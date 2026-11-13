@@ -1,5 +1,17 @@
 # Conception Calculator 2000
 
+> **This branch is the archive.** It is the whole project as it stood at
+> 0.23.18 (28 October 2026), just before the repository was cut down to the
+> current run: v2 and v3, the lab and every sketch, flow and variant in it, and
+> every earlier cut of the run, all still building. It is frozen. Nothing is
+> developed here and it is never merged.
+>
+> The current version lives on `main` (the site) and `dev` (the work). The
+> account of what is on this branch, version by version and branch by branch,
+> and how to look at each thing, is
+> [`_archive/README.md` on `main`](../main/_archive/README.md). Everything below
+> is this README as it was.
+
 Give it your birthday and how spicy you like it, and it tells you the song that
 was playing at your moment of conception — then flies you into the bedroom where
 it happened.

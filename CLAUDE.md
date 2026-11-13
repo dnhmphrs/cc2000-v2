@@ -1,5 +1,13 @@
 # Working agreements
 
+> **This branch is the archive, frozen at 0.23.18.** Do not develop here, do
+> not open a pull request from it, and do not take the agreements below as
+> live: they describe how this tree was worked on (`dev` to `main`, the two
+> sites, the lanes) and are kept as the record. The work is on `dev`, in the
+> lean tree, and that tree's own CLAUDE.md is the one that applies. To look at
+> something old, run this branch (`yarn install && npm run dev`); the account
+> of what is where is `_archive/README.md` on `main`.
+
 ## Demos and PRs go to `main`
 
 `main` is the site. Work happens on `dev` — push there as it is made, it is
