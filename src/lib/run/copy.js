@@ -79,8 +79,8 @@ export const COPY = [
 		y: 0,
 		lines: [
 			{ text: 'NO SIGNAL BEFORE 1958', size: 0.066 },
-			{ text: 'YOU WERE BORN IN THE TIME OF DINOSAURS', size: 0.038, write: [44.9, 45.6] },
-			{ text: 'THERE WAS NO MUSIC', size: 0.038, write: [45.7, 46.1] }
+			{ text: 'YOU WERE BORN IN THE TIME OF DINOSAURS', size: 0.038, write: [39.7, 40.4] },
+			{ text: 'THERE WAS NO MUSIC', size: 0.038, write: [40.5, 40.9] }
 		],
 		marks: [{ line: 0, at: 40.3, kind: 'circle', pad: 0.3 }]
 	},
@@ -93,8 +93,8 @@ export const COPY = [
 		y: 0,
 		lines: [
 			{ text: 'NO SIGNAL YET', size: 0.066 },
-			{ text: 'YOU WERE BORN IN THE AFTER TIME', size: 0.038, write: [44.9, 45.5] },
-			{ text: 'CONCEIVED TO BABY, BY JUSTIN BIEBER', size: 0.038, write: [45.6, 46.2] }
+			{ text: 'YOU WERE BORN IN THE AFTER TIME', size: 0.038, write: [39.7, 40.3] },
+			{ text: 'CONCEIVED TO BABY, BY JUSTIN BIEBER', size: 0.038, write: [40.4, 41] }
 		],
 		marks: [{ line: 0, at: 40.3, kind: 'circle', pad: 0.3 }]
 	},
@@ -107,8 +107,8 @@ export const COPY = [
 		y: 0,
 		lines: [
 			{ text: 'OVERHEATED', size: 0.066 },
-			{ text: 'YOUR MOMENT WAS TOO HOT TO CALCULATE', size: 0.038, write: [44.9, 45.6] },
-			{ text: 'YOUR PARENTS FUCK', size: 0.042, write: [45.7, 46.1] }
+			{ text: 'YOUR MOMENT WAS TOO HOT TO CALCULATE', size: 0.038, write: [39.7, 40.4] },
+			{ text: 'YOUR PARENTS FUCK', size: 0.042, write: [40.5, 40.9] }
 		],
 		marks: [{ line: 0, at: 40.3, kind: 'circle', pad: 0.3 }]
 	}

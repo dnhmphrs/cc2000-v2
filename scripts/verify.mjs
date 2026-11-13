@@ -15,12 +15,15 @@
 //   by hand       a date and a spice typed on the keyboard take it to the room;
 //                 the output is on the monitor (the line, Spotify's player,
 //                 SHARE, START AGAIN); START AGAIN goes round to the title
-//   a verdict     a birthday the archive cannot answer for ends on its verdict
+//   a verdict     a birthday the archive cannot answer for ends on its verdict,
+//                 with a key to start again
+//   the copy      no line of the copy table is timed past the end of the run
 //   on a phone    the touch key comes up at the question
 //   pinned        ?at= holds a frame
 //   elsewhere     any other path is a 404
 import { readFileSync } from 'node:fs';
 import { launch, ready } from './launch.mjs';
+import { COPY } from '../src/lib/run/copy.js';
 
 const BASE = process.env.BASE ?? 'http://localhost:4175';
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
@@ -76,6 +79,22 @@ ok(
 	)
 );
 const B = await page.evaluate(() => ({ ...window.__run.beats, live: window.__run.live }));
+// A line timed past the end is never written (it has happened: the run was
+// shortened and the verdicts' second and third lines were left behind). A
+// verdict's run holds 0.2 s short of the end. (`out` may be later: a slam
+// that is held.)
+const seconds = await page.evaluate(() => window.__run.seconds);
+const late = COPY.flatMap((row) =>
+	[
+		row.at,
+		row.until,
+		...(row.lines ?? []).flatMap((l) => l.write ?? []),
+		...(row.marks ?? []).map((m) => m.at)
+	]
+		.filter((t) => t !== undefined && t > seconds - 0.2 + 1e-9)
+		.map((t) => `${row.caption ?? row.lines?.[0]?.text} at ${t}`)
+);
+ok('every line of the copy is timed inside the run', late.length === 0, late.join('; '));
 ok('a person is expected: the run is live', B.live === true);
 // the title types, then the first question waits
 ok(
@@ -147,6 +166,19 @@ await Promise.all([
 		ok('a verdict’s run ends on its verdict', await until(p, 'window.__run.api.ended()', 90000));
 		const s = await p.evaluate(() => window.__run.api.song());
 		ok('…and has no song', s?.edge === 'past' && !s.uri);
+		const back = p.locator('.verdict-keys button');
+		ok(
+			'…and offers the way back',
+			await back.waitFor({ state: 'visible', timeout: 10000 }).then(
+				() => true,
+				() => false
+			)
+		);
+		await back.click({ timeout: 5000 }).catch(() => {});
+		ok(
+			'START AGAIN on a verdict goes straight to the title',
+			await until(p, '!window.__run.api.ended() && window.__run.t < 5', 15000)
+		);
 		await c.close();
 	})(),
 	(async () => {

@@ -18,6 +18,9 @@
 	// The end: the run holds on its last frame, and the page offers the output.
 	let ended = false;
 	let song = null;
+	// A verdict (a birthday the archive cannot answer for) has no song, no room
+	// and no monitor to put the output on: the page offers the way back alone.
+	let verdict = false;
 	let run = null;
 	// The monitor's glass on the board, [x0, y0, x1, y1] in CSS px, when the
 	// sketch gives it (`screen()`): the output sits ON THE SCREEN, following it
@@ -101,6 +104,8 @@
 				// in): the embed is loaded from then, and goes with AGAIN.
 				const sg = at === null ? (sketch.song?.() ?? null) : null;
 				if ((sg?.uri ?? null) !== (song?.uri ?? null)) song = sg;
+				const v = e && !!sg?.edge;
+				if (v !== verdict) verdict = v;
 				if (e) {
 					const r = sketch.screen?.() ?? null;
 					if (r && r[2] - r[0] > 60 && r[3] - r[1] > 40) {
@@ -148,6 +153,13 @@
 				<button type="button">{PAGE.share}</button>
 				<button type="button" on:click={again}>{PAGE.again}</button>
 			</div>
+		</div>
+	{/if}
+	{#if verdict}
+		<!-- A VERDICT'S WAY BACK: the one key, low on the board, up once the
+		     verdict's lines are written. -->
+		<div class="verdict-keys" use:portal>
+			<button type="button" on:click={again}>{PAGE.again}</button>
 		</div>
 	{/if}
 {:else if ended}
@@ -213,7 +225,8 @@
 		display: flex;
 		gap: 0.5em;
 	}
-	.output-keys button {
+	.output-keys button,
+	.verdict-keys button {
 		font:
 			0.9em/1 ui-monospace,
 			monospace;
@@ -227,8 +240,33 @@
 		cursor: pointer;
 		transition: background 0.15s;
 	}
-	.output-keys button:hover {
+	.output-keys button:hover,
+	.verdict-keys button:hover {
 		background: #3a3542;
+	}
+	/* a verdict's key: no glass to sit on, so low on the board, over the gif */
+	.verdict-keys {
+		position: fixed;
+		z-index: 30;
+		left: 50%;
+		bottom: 14vh;
+		transform: translateX(-50%);
+		font-size: 15px;
+		/* (the verdict's last line is written 1.8 s after the run says it has ended) */
+		animation: verdict-key 0.6s ease 1.8s both;
+	}
+	.verdict-keys button {
+		box-shadow: 0 0 0 1px rgba(242, 239, 230, 0.3);
+	}
+	@keyframes verdict-key {
+		from {
+			opacity: 0;
+			visibility: hidden;
+		}
+		to {
+			opacity: 1;
+			visibility: visible;
+		}
 	}
 	/* ?screen=title: the key on the glass and the bar in the corner */
 	.end {
