@@ -5,15 +5,12 @@ import { conceptionDate, previousDay, dateToDecade } from './utils';
 // Birthday plus a spicy level in, a track out. The one place the archive is
 // actually consulted.
 //
-// It lives here rather than in the calculator because it is not a view's job,
-// and because the dev harness needs it too: pinning the site to the computation
-// or the room means seeding a real answer first, and it must be the SAME answer
-// the machine would have produced.
+// It lives here rather than in the run because it is not a drawing's job.
 //
 // Returns either { track, conceived, decade } or { edge }, one of three, each
-// with its own gif and its own line (components/error/ErrorScreen.svelte), as
-// the original site had them: the flight goes in regardless, down a tunnel
-// made of that gif, and the verdict is given there.
+// with its own gif (data/gifs.js) and its own lines (run/copy.js), as the
+// original site had them: the run goes in regardless, breaks down where the
+// dive would be, and the verdict is given over the gif.
 //
 //   past      conceived before the archive starts — the time of dinosaurs
 //   future    born after today, or conceived after the archive's last

@@ -101,7 +101,7 @@ export const LAYERS = [
 		port: { x: 0.3, y: 0.66, width: 0.46 },
 		// The 90s wall is drawn with the poster's own edges on it (the tape
 		// marks), so the sprite must sit EXACTLY where the artist's composite
-		// (static/90s_Illustration.jpg) has it: the sprite fitted to the
+		// (90s_Illustration.jpg, on the archive branch) has it: the sprite fitted to the
 		// composite by least difference lands at (1973, 0) of 3840 × 2160 at
 		// its own 1180 × 1176 — the bg covers the plate at its height, so a
 		// composite px is H/2160 plate units: centre (643, 492) px off the
@@ -188,8 +188,8 @@ export const LAYERS = [
 ];
 
 // ── THE 50s, WHOLE ───────────────────────────────────────────────────────────
-// The 50s does not need to be guessed at. It ships `50s_Illustration_desktop.jpg`
-// — the artist's own finished composite — and every element PNG is a 1:1 CROP of
+// The 50s does not need to be guessed at. It came with `50s_Illustration_desktop.jpg`
+// (on the archive branch) — the artist's own finished composite — and every element PNG is a 1:1 CROP of
 // it, which means each one has exactly one offset at which it matches, and that
 // offset is the placement. Found by sliding each sprite over the composite and
 // taking the minimum, then converted with the frame's own arithmetic: the

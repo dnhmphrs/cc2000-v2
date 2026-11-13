@@ -1,5 +1,5 @@
 // ── GPU ink: the hand's strokes as one instanced draw ────────────────────────
-// log/sketch-hand.js's batched strokes (makeInk), the speed lines' wedges and
+// hand.js's batched strokes (makeInk), the speed lines' wedges and
 // the debris' dashes drawn on the GPU instead of the board's canvas: every
 // segment of every polyline an INSTANCE of one quad, laid out in the vertex
 // shader, its edge antialiased in the fragment, all of a layer in ONE draw.
@@ -295,7 +295,7 @@ export function makeGpuInk({ THREE }) {
 		reset() {
 			n = 0;
 		},
-		// makeInk's batch, onto this layer (see log/sketch-hand.js)
+		// makeInk's batch, onto this layer (see hand.js)
 		ink() {
 			const B = new Map();
 			const order = [];

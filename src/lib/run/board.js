@@ -1,50 +1,31 @@
 // ── The blackboard ───────────────────────────────────────────────────────────
-// The shared hand of the log sketches (lab/log-*.js): the rebuild as clean,
-// bold, coloured line on a dark board — maths drawn and labelled like a
-// lecture, the space-time geometry of the complex logarithm rather than the
-// biology of the old runs. Everything here is 2D canvas: the look is lines,
-// discs and type, and a 2D canvas draws those crisply on every device, with
-// the 3D (spheres, cylinders, tori) projected by hand (camera3) the way the
-// Atlas of the Logarithm draws its plates.
+// What the run is drawn on: clean, bold line on a dark board. Everything here
+// is 2D canvas — the look is lines, discs and type, and a 2D canvas draws
+// those crisply on every device — with the 3D projected by hand (camera3).
 //
-// One canvas for the page (getBoard), fixed over the lab's WebGPU canvas and
-// repainted whole by whichever sketch is drawing, so a reel of sketches
-// (/v4?chain=log) shows only the beat that is on.
-//
-// Coordinates: sketches work in MATH units — x right, y up — through a view
-// (makeView) that puts the origin where it is asked and scales by a number of
-// pixels to the unit; strokes and type are in CSS pixels.
+// One canvas for the page (getBoard), fixed over it and repainted whole every
+// frame; strokes and type are in CSS pixels. Through the lens (lens.js) the
+// canvas is hidden and drawn on the GPU as a texture instead.
 
 export const PHI = (1 + Math.sqrt(5)) / 2;
 export const TAU = Math.PI * 2;
 
-// The palette, off the plates: a dark board, chalk for type and points, and
-// three bold colours for the three things that matter — the golden spiral,
-// and the two families of a net (cyan, pink) — with a rose for construction.
+// The palette: a dark board, chalk for line and type, gold for what is lit,
+// a rose for construction.
 export const PAL = {
 	ground: '#151515',
 	chalk: '#ece6da',
-	chalkDim: 'rgba(236, 230, 218, 0.5)',
 	node: '#bdb8ad',
 	gold: '#f5c150',
-	cyan: '#5ed3e3',
-	pink: '#eaa2e6',
-	rose: '#a7847a',
-	red: '#ef7a68',
-	green: '#86cf8a',
-	blue: '#7ea6f5',
-	violet: '#b49af0'
+	rose: '#a7847a'
 };
 
-// The type: a mathematical serif, italic, as a blackboard is written in.
-export const MATH_FONT =
-	"'Spectral', 'STIX Two Text', 'Latin Modern Roman', 'Cambria', Georgia, 'DejaVu Serif', serif";
+// The type: the site's own face, monospaced.
 export const TECH_FONT = "'nb-architekt', ui-monospace, 'SF Mono', Menlo, monospace";
 
 export function clamp01(v) {
 	return v < 0 ? 0 : v > 1 ? 1 : v;
 }
-export const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 // Where u is in [a, b], 0..1.
 export const span = (u, a, b) => clamp01((u - a) / (b - a));
 export const lerp = (a, b, t) => a + (b - a) * t;
@@ -58,19 +39,19 @@ let BOARD = null;
 export function getBoard() {
 	if (BOARD) return BOARD;
 	const canvas = document.createElement('canvas');
-	canvas.className = 'log-board';
+	canvas.className = 'board';
 	Object.assign(canvas.style, {
 		position: 'fixed',
 		inset: '0',
 		width: '100vw',
 		height: '100vh',
-		zIndex: '11', // over the layout's main (10), under the corner's switch (35)
+		zIndex: '11', // under the page's output (30) and the corner's label (35)
 		pointerEvents: 'none',
 		display: 'block'
 	});
 	document.body.appendChild(canvas);
 	const ctx = canvas.getContext('2d');
-	BOARD = { canvas, ctx, w: 0, h: 0, dpr: 1, dust: null, shown: true, lens: null };
+	BOARD = { canvas, ctx, w: 0, h: 0, dpr: 1, shown: true, lens: null };
 	const resize = () => {
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 		BOARD.w = window.innerWidth;
@@ -85,38 +66,17 @@ export function getBoard() {
 	return BOARD;
 }
 
-// A faint chalk dust over the board: fixed (seeded), so a pinned frame is the
-// same frame on every load. Off with ?dust=0.
-function dust(b) {
-	if (b.dust) return b.dust;
-	const c = document.createElement('canvas');
-	c.width = c.height = 256;
-	const x = c.getContext('2d');
-	let s = 1234567;
-	const r = () => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
-	for (let i = 0; i < 1400; i++) {
-		x.fillStyle = `rgba(236, 230, 218, ${0.012 + 0.03 * r()})`;
-		x.fillRect(r() * 256, r() * 256, 1 + r() * 1.5, 1 + r() * 1.5);
-	}
-	b.dust = b.ctx.createPattern(c, 'repeat');
-	return b.dust;
-}
-
 // Clear to the board (in CSS pixels from here on). `ground: null` clears it
-// to transparent (a flow drawing on the GPU under it). `shown: false` hides
-// the board's canvas — a flow whose lens (log/lens.js) draws the board on the
-// GPU itself; every other sketch shows it, so a reel stepping from one to the
-// other gets its board back. (The style is touched only when it changes.)
-export function clearBoard(b, { ground = PAL.ground, chalkDust = true, shown = true } = {}) {
+// to transparent (the run draws on the GPU under it). `shown: false` hides
+// the board's canvas: the lens (lens.js) draws the board on the GPU itself.
+// (The style is touched only when it changes.)
+export function clearBoard(b, { ground = PAL.ground, shown = true } = {}) {
 	const { ctx, dpr } = b;
 	if (b.shown !== shown) {
 		b.shown = shown;
 		b.canvas.style.visibility = shown ? '' : 'hidden';
-		// the lens's canvas in its place (log/lens.js), when there is one
+		// the lens's canvas in its place (lens.js), when there is one
 		if (b.lens) b.lens.style.visibility = shown ? 'hidden' : '';
-		// (the page's own tag sits under the board: hidden with it, see
-		// routes/lab and routes/v4)
-		document.documentElement.classList.toggle('board-lens', !shown);
 	}
 	ctx.setTransform(1, 0, 0, 1, 0, 0);
 	ctx.globalAlpha = 1;
@@ -127,11 +87,6 @@ export function clearBoard(b, { ground = PAL.ground, chalkDust = true, shown = t
 		ctx.fillRect(0, 0, b.canvas.width, b.canvas.height);
 	}
 	ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-	const q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
-	if (chalkDust && q?.get('dust') !== '0') {
-		ctx.fillStyle = dust(b);
-		ctx.fillRect(0, 0, b.w, b.h);
-	}
 }
 
 // ── Strokes ──────────────────────────────────────────────────────────────────
@@ -205,8 +160,7 @@ function cutAt(pts, f) {
 	return out;
 }
 
-// A filled disc, with an optional ring round it in another colour (the
-// plates' nodes are chalk discs; their marked points have a dark ring).
+// A filled disc, with an optional ring round it in another colour.
 export function disc(ctx, x, y, r, opts = {}) {
 	const { fill = PAL.node, alpha = 1, ring = null, ringWidth = 1.5, glow = 0 } = opts;
 	if (r <= 0 || alpha <= 0) return;
@@ -229,7 +183,7 @@ export function disc(ctx, x, y, r, opts = {}) {
 	ctx.restore();
 }
 
-// A soft glow of light — the orb, a beat — as a radial gradient.
+// A soft glow of light, as a radial gradient (a flat shoulder: see glow).
 export function bloom(ctx, x, y, r, color, alpha = 1) {
 	if (r <= 0 || alpha <= 0) return;
 	ctx.save();
@@ -239,6 +193,26 @@ export function bloom(ctx, x, y, r, color, alpha = 1) {
 	g.addColorStop(0, color);
 	g.addColorStop(0.25, color);
 	g.addColorStop(1, 'rgba(0,0,0,0)');
+	ctx.fillStyle = g;
+	ctx.beginPath();
+	ctx.arc(x, y, r, 0, TAU);
+	ctx.fill();
+	ctx.restore();
+}
+
+// A soft light with a smooth falloff, added: `rgb` [r, g, b], radius r px.
+// (bloom's flat shoulder reads as a plate when it is large; this does not.)
+export function glow(ctx, x, y, r, rgb, a = 1) {
+	if (r <= 0 || a <= 0) return;
+	ctx.save();
+	ctx.globalCompositeOperation = 'lighter';
+	const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+	const c = (k) => `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${a * k})`;
+	g.addColorStop(0, c(1));
+	g.addColorStop(0.12, c(0.6));
+	g.addColorStop(0.3, c(0.24));
+	g.addColorStop(0.55, c(0.07));
+	g.addColorStop(1, c(0));
 	ctx.fillStyle = g;
 	ctx.beginPath();
 	ctx.arc(x, y, r, 0, TAU);
@@ -272,7 +246,7 @@ export const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 export const add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 export const mul3 = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-export const cross = (a, b) => [
+const cross = (a, b) => [
 	a[1] * b[2] - a[2] * b[1],
 	a[2] * b[0] - a[0] * b[2],
 	a[0] * b[1] - a[1] * b[0]
@@ -283,8 +257,8 @@ export const norm = (a) => {
 };
 
 // ── Time ─────────────────────────────────────────────────────────────────────
-// Every log sketch is a pure function of its progress u in [0, 1] over
-// `seconds`, looping when it runs free — the lab's ?at= pins it exactly.
+// The run is a pure function of its clock t over `seconds`; `at` (a fraction,
+// from ?at=) pins it exactly.
 export function clock(seconds, at) {
 	let t = at === null || at === undefined ? 0 : at * seconds;
 	return {

@@ -1,6 +1,5 @@
 // ── Domain helpers ───────────────────────────────────────────────────────────
-// Dates, and the site's one piece of pseudo-science. Easing and interpolation
-// live in config/ease.js; screen shape lives in config/space.js.
+// Dates, and the site's one piece of pseudo-science.
 
 export function conceptionDate(dateStr) {
 	const d = new Date(dateStr);

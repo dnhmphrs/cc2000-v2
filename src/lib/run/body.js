@@ -1,13 +1,12 @@
 // ── The body: the swimmer as a 3D body of rings ──────────────────────────────
-// The swimmer every v5 flow uses from "compiling" on, lifted out of
-// swimmer/rings.js: STATIONS from the nose to the tip, each a closed SECTION
-// (a ring), joined by GENERATRICES (the curve of one section angle φ down the
-// body), the CONTOUR bold (where the surface turns from the lens); hidden
-// lines by a software depth buffer of the body's own skin (near lines bold,
-// far ones faint and dashed, or gone), as rings.js draws it, in chalk on the
-// board. Drawn on the 2D board through board.js's camera3.
+// The swimmer, from COMPILING on: STATIONS from the nose to the tip, each a
+// closed SECTION (a ring), joined by GENERATRICES (the curve of one section
+// angle φ down the body), the CONTOUR bold (where the surface turns from the
+// lens); hidden lines by a software depth buffer of the body's own skin (near
+// lines bold, far ones faint and dashed, or gone), in chalk on the board.
+// Drawn on the 2D board through board.js's camera3.
 //
-//   import { makeBody, specOf, rosetteSection, BODY } from './log/body.js';
+//   import { makeBody, specOf } from './body.js';
 //   const spec = specOf({ date: 'DDMMYYYY', spice: 1…10 }, { section, sectionAlong })
 //                            the person's body (below); deterministic
 //   const body = makeBody(spec)
@@ -66,7 +65,7 @@
 //   body.at(shape, pose, s)  the centreline's world point at s
 //   body.ring(shape, i, pose, n = M)   station i's ring, a closed world polyline
 //                            of n + 1 points from the top of the section (for
-//                            flows that draw their own build)
+//                            a build the caller draws itself)
 //
 // THE SPEC (specOf): every person's swimmer a little their own, always
 // unmistakably a sperm. d0…d7 the date's digits (DD MM YYYY; a digit not yet
@@ -86,7 +85,7 @@
 //   roll            0.2 + 0.04 n turns a second (0.24…0.6)
 //   phase           2π day/31, where the wave stands at t = 0
 // spec.coeffs lists them in that order, { key, value, from } (from: the
-// digits' indices read, or 'spice'), for a flow that shows them being made.
+// digits' indices read, or 'spice'), for a run that shows them being made.
 // `extra.section` overrides the section (default the ellipse);
 // `extra.sectionAlong(s, part, parts) → 0…1` how much of it each station
 // takes (default BODY.sectionAlong: all of it to the end of the midpiece,
@@ -98,19 +97,8 @@
 // rings from a table `BODY.fine` times finer), so a generatrix is the curve of
 // one φ down the body. A section may carry .M (samples round), .gens (how
 // many generatrices; M is made a multiple of it) and .uniform (true: the same
-// at every station, one table).
-// rosetteSection(rosette, amount, { M }) is the epicycle intro's figure as a
-// section:
-// `rosette` is intro/epicycle.js's rosette(digits, spice) ({ r, f, at }),
-// `amount` 0…1 blends the ellipse into it, (1 − a)e^{iφ} + a·z(φ), normalised
-// so its extent is 1 (the head flattens it as it flattens an ellipse). Its
-// arms all turn at f ≡ 1 (mod n), so the blend is e^{iφ}·((1 − a) + a Σ r_k
-// e^{i n s_k φ}): one lobe per n round the body, and it winds once (a simple
-// flower) while a < 1/(2(1 − r₀)) — for the demo's date about 0.6 — and past
-// that the user's figure itself, self-crossing; kept as it is. Its
-// generatrices run down the petals: at a whole spice n ≥ 5 one down every tip
-// and every valley (2n), else a multiple of n near 12; M is three samples to
-// a turn of its fastest visible arm (70 for the demo at 0.35, 98 at 1).
+// at every station, one table). The run's section is the codons'
+// (sketch.js codonSection).
 //
 // The beat: a travelling wave of the flagellum's TANGENT angle, β(s, t) =
 // Θ(s) sin(k(s − s₀) − ωt − φ₀) in the head's broad plane and helicity ×
@@ -122,18 +110,15 @@
 // heading.
 //
 // Cost, headless 1280 × 800 (median ms of script a frame, fillDepth + draw,
-// the machine shared): the ellipse 1–2.5 (0.5 at ~40 px long); the rosette at
-// 0.35 2–2.5 seen from behind or followed, 2.5–4.5 with the body ~600 px long,
-// 1–1.5 at ~40 px, 4.5–6 with the head filling the frame or the lens beside
-// the neck; spice 10 at 0.35 about a fifth more; the full figure (amount 1)
-// 3.5–7, ~3 even at 40 px (the grid is projected whole), ~10–12 close — for
-// a moment, not for the swim. A ring-by-ring build re-rasterises the skin built so far each
-// frame (+1–2 ms close). shape() 0.1, makeBody 1–3 (cheap enough to remake
-// while the answers are typed). How: ~85 stations × M round, projected once a
-// frame and cached for a second call with the same shape (object), pose (by
-// value) and camera (object) — fillDepth then draw rasterises the skin once;
-// only its front faces, into a
-// quarter-resolution buffer, at a stride keeping chords ~10 px; rings in
+// the machine shared): the ellipse 1–2.5 (0.5 at ~40 px long); a lobed
+// section two to three times that with the body large on the board. A
+// ring-by-ring build re-rasterises the skin built so far each frame (+1–2 ms
+// close). shape() 0.1, makeBody 1–3 (cheap enough to remake while the answers
+// are typed). How: ~85 stations × M round, projected once a frame and cached
+// for a second call with the same shape (object), pose (by value) and camera
+// (object) — fillDepth then draw rasterises the skin once; only its front
+// faces, into a quarter-resolution buffer, at a stride keeping chords ~10 px;
+// rings in
 // chords of ~9 px from the fine table; segments cut to ~12 px for the hidden
 // test and the alike pieces joined again; strokes batched by alpha and width
 // into a few dozen paths. The canvas's own cost is the stroked LENGTH: the
@@ -142,13 +127,13 @@
 // PITFALLS. `cam` is a board.js camera3 (pos, f, r, u, project — not the
 // fall's returned lens); never mutate one in place (the projection is cached
 // by its identity), make a new one when the lens moves. The coordinates are
-// the board's: a ctx.translate / ctx.scale (flow-conception's shift of the
-// swimmer to the fall's vanishing point) is allowed for, but a `depth` passed
+// the board's: a ctx.translate / ctx.scale (a shift of the swimmer to the
+// fall's vanishing point) is allowed for, but a `depth` passed
 // in must be in the coordinates the body is drawn in. `pose.scale`: the body
 // is 52–61 units long (body.length); the beat and the roll are on t, so a
-// flow that brings the swimmer to life passes phase/roll on an eased clock
-// (genome.js: phase = 2π hz·eased(t − t₀) + spec.beat.phase) or the wave
-// starts mid-swing. Finished rings under 3 px fade out as `gens` or `contour`
+// run that brings the swimmer to life passes phase/roll on an eased clock
+// (phase = 2π hz·eased(t − t₀) + spec.beat.phase) or the wave starts
+// mid-swing. Finished rings under 3 px fade out as `gens` or `contour`
 // comes on (under 1 px always: a build of a far tail is beads, then thread);
 // hidden lines at `back` are dashed, which the canvas pays for — back 0 drops
 // them. The lens inside the body drops what is behind it (z ≤ 0.05), and what
@@ -359,7 +344,7 @@ function makePen() {
 			lx = x1;
 			ly = y1;
 		},
-		// Under the context's own globalAlpha (a flow's fade round the call).
+		// Under the context's own globalAlpha (the caller's fade round the call).
 		flush(ctx) {
 			const g0 = ctx.globalAlpha;
 			ctx.save();
@@ -675,7 +660,7 @@ export function makeBody(spec = specOf()) {
 	const WA = new Float64Array(3 * n);
 	const WB = new Float64Array(3 * n);
 	let placed = { shape: null, key: null, scale: 1 };
-	// Poses are compared by value (a flow may reuse one object, moved).
+	// Poses are compared by value (the caller may reuse one object, moved).
 	const poseKey = (p) => [
 		p.path ?? null,
 		p.sigma,
@@ -975,7 +960,7 @@ export function makeBody(spec = specOf()) {
 			pens = true
 		} = o;
 		// The part of the board the canvas shows, in the coordinates drawn in
-		// (the board's transform is its dpr, and perhaps a flow's translate).
+		// (the board's transform is its dpr, and perhaps the caller's translate).
 		const T = ctx.getTransform ? ctx.getTransform() : { a: 1, d: 1, e: 0, f: 0 };
 		const cw = ctx.canvas.width / (T.a || 1);
 		const chh = ctx.canvas.height / (T.d || 1);

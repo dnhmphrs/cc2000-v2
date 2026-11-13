@@ -1,6 +1,6 @@
 // ── The grain: the board's fuzz, on the canvas ───────────────────────────────
-// What a flow's board gets when there is no lens to look through (log/lens.js
-// is the fuzz proper: a soft warm focus — the lines' own glow, a little mist,
+// What the board gets when there is no lens to look through (lens.js is the
+// fuzz proper: a soft warm focus — the lines' own glow, a little mist,
 // the darks lifted warm, a fine grain that breathes, a rare faint leak — on
 // the GPU). Here, the part of it a canvas can do in ONE fill a frame: the
 // darks lifted a hair toward the warm, and a very fine grain in it, felt more
@@ -10,9 +10,9 @@
 //
 //   grain(ctx, w, h, secs, { alpha = 1 })   draw it, over what is there
 //
-// `secs` the clock it moves on: a flow passes answers.hand(t).secs — real
+// `secs` the clock it moves on: the run passes answers.hand(t).secs — real
 // seconds live, so it keeps moving while the run waits at a question; t
-// pinned, in the demo or a reel. `alpha` scales it (0 is none).
+// pinned or in the demo. `alpha` scales it (0 is none).
 
 const TILES = 4;
 const SIZE = 128; // px of a tile, drawn 1:1

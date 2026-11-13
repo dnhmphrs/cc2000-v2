@@ -1,234 +1,80 @@
-// ── Flow: flow-strand-sketch — THE RUN (cut L): the iris, clean ─────────────
-// The lead picked K2 (no flash: the iris) and asked for five things, all
-// here: the entry's AMINO-ACID generator back (H's: the reading frame over
-// the double helix, each codon's own shape flashed in gold and relaxed into
-// the body — log/body.js codonSection, not I3's worldline tube); no record
-// on the screen (K2 never had one); the groove's TURNS JOINED — the hand's
-// wobble on the helix is one noise along the whole groove (sketchTurn:
-// noise of (turn + fraction), one seed), so the end of each turn is the
-// start of the next, where it used to be re-seeded a turn at a time and
-// the arms did not meet; TWO TO THREE TURNS FEWER to swim — the journey
-// two seconds shorter (every beat from the label on at −2 s; 52 s); and
-// AGAIN: the room's sway and the pointer's parallax go on through the
-// dolly (the hold's clock is kept running into the exit, where it was
-// let go and the room went stiff), and the lens dollies ALL THE WAY
-// THROUGH THE SCREEN — the dark glass grows until it covers the board
-// (`covers`) and that is the black the next title types on: no fade cut
-// across the glass's edges. The output on the screen as K's: the song and
-// its artist on the glass, PLAY / AGAIN as keys on it; the Spotify embed
-// is a bar in the top left corner now (runs/Next.svelte). ?v=l is this
-// file; cut K is kept at ?v=k, its endings at ?v=k1 … k5, the MEG machine
-// at ?v=m.
+// ── THE RUN ──────────────────────────────────────────────────────────────────
+// The whole of it, start to end: 44 seconds on the board (board.js), drawn in
+// the sketchy hand (hand.js) and shot through the lens (lens.js). The page
+// (Run.svelte) boots it and steps it. README.md has the beats as a table;
+// CLAUDE.md has what has been decided about each of them, and why.
 //
-// ── Flow: flow-strand-sketch — THE RUN (cut K): clean until the room ────────
-// The lead and the PM: simplicity. No words on the fly-in — no date, no
-// maths, no conversation — just the sperm generated from the DNA, then the
-// spiral it swims into, clean all the way to the conception room; the two
-// status lines stay (COMPILING USER GENETICS, SIMULATING CONCEPTION), and
-// the output — the song, PLAY and AGAIN, the embed — is ON THE COMPUTER
-// SCREEN. Built from I5 (the groove the sperm flies into: "perfect") with
-// I3's sperm generation (the worldline tube: each ring of the body a circle
-// contracted by a digit of the date, flashed in gold as the frame passes;
-// the double helix of the entry as the run's) in place of I5's lathe: the
-// entry and the compile are the run's (log/sketch-copy.js has only the two
-// captions and the verdicts); the tunnel is ONE GROOVE, a helix down the
-// cone turning under the stylus, with nothing lettered on its turns; at the
-// apex the LABEL — the white disc with the spindle hole dark in it, no date
-// — and the dive through the hole into the room; a record on the monitor,
-// the arm swung in, the needle drop the flash; the room in colour, the song
-// and its artist lettered ON THE SCREEN as the record dims, and the page's
-// PLAY / AGAIN and the Spotify embed on the glass too (`screen()` gives the
-// page the glass each frame, parallax and all). The flash and the reveal are
-// the open question: five endings beside it, ?v=k1 … k5, and the MEG
-// machine at ?v=meg. Cut H, the conversation in the tunnel, is kept at ?v=h.
+//   make({ THREE, at }) → { info, seek, update, render, ended, again, song,
+//                           screen, resize }
 //
-// ── Flow: flow-strand-sketch — THE RUN (cut H): without tunnel B ────────────
-// The lead's answer to his own question — what if tunnel B is simply
-// removed: it is the run now (cut G, with tunnel B, is kept at ?v=g). Tunnel
-// A is G's exactly — the swim, the rings, the count, the circles drawn out into the
-// slot, the band, the date, the dive — but the room through the band is
-// THE LAST ROOM (no crossings: FALL_X 0), no tesseract round it and no
-// questions over it; the lens comes to rest in it in four seconds and the
-// sun comes straight after, the room back out of the white in colour, the
-// song on its screen. The breakdown on a verdict is as the run's.
+// Every frame is a pure function of the clock t and the hand (the answers,
+// and when each key came); what is cached is inputs and constants. `at` pins
+// the clock at a fraction of the run and the scripted hand answers; live, the
+// clock HOLDS at each question until a person answers it (answers.js).
 //
-// ── Flow: flow-strand-sketch-b — sketch tuned (0.11: the lens, the GPU ink, inside the room), kept: /next?v=b ──
-// ── Flow: flow-strand-sketch-a — sketch as it was at 0.11 ("sketch A"), kept ──
-// beside the next run for comparison: the lens, the GPU ink, the landing
-// inside the room, and the journey in its two halves (the count, the band,
-// the dive, the rooms, Zeller over them). /next?v=a.
-// flow-strand to the end of the compile, kept as it is (the title, the double
-// helix typed by hand, COMPILING USER GENETICS, the swimmer coming to life at
-// 22.2 s); from there to the landing, the journey drawn in the anime hand —
-// Eva, Akira — that the rooms' cartoon calls for: every line a little off
-// true and drawn AGAIN twelve times a second, on twos, so the lines boil like
-// hand-drawn animation, the camera's own move staying smooth under them
-// (log/sketch-hand.js: the hand, the lettering, the red pencil, the speed
-// lines). ONE zoom from the swim to the last room, one beat:
+// THE BEATS (the table B below, in seconds)
 //
-// THE TUNNEL. As the swimmer sets off the hand comes into its lines (the
-// boil ramped in over 1.4 s: the precise compile loosening into a drawing),
-// and a tunnel is sketched round it, near to far: hand-drawn RINGS, each a
-// circle that does not quite close, its overshoot and its wobble re-drawn
-// each drawing, set along a cone whose apex is the zoom's fixed point (ring
-// i at e^(−0.3 i) of the swim's first distance to it, so the lens flying at
-// a steady rate in e-folds passes the same picture again and again); SPEED
-// LINES (anime focus lines: thin wedges from the vanishing point, re-drawn
-// at fresh angles each drawing) and debris streaming out; at the vanishing
-// point a warm glint, the light it swims at. The lens comes round behind it
-// and onto the axis as in strand. The glint is a LIT GLASS: the fall is
-// already there at the end of the tunnel — its first plate hung at the
-// vanishing point at the zoom the tunnel flies (the fall's ζ run back off the
-// tunnel's e-folds), a speck in the glint at ~29 s, growing at the tunnel's
-// own rate through the count, the room the swimmer will fall into in sight
-// all the way down.
+//   0    – 5.1   THE TITLE, typed by a terminal (terminal.js), then frozen.
+//   5.4  – 15.3  THE ENTRY (makeEntryText). The title fades, its full stop
+//                with the last line. WHEN WERE YOU BORN? and HOW SPICY ARE
+//                YOUR PARENTS? are typed, each inside the 0.8 s before its
+//                wait; the date goes into a field, the spice onto a slider,
+//                and as they do THE STRAND is drawn (drawStrand): a double
+//                helix whose base pairs are the date's digits (basesOf). A
+//                gold trace runs the strand at each Enter (B.trace, B.trace2).
+//   16.5 – 23.3  COMPILING USER GENETICS (caption.js). The lens comes to the
+//                reading (lensAt: side-on, and rolled a quarter turn on a
+//                board taller than it is wide); a reading frame crosses the
+//                strand (drawFrame) and the swimmer's body is written codon
+//                by codon, each ring's own shape flashed in gold
+//                (codonSection; body.js); the strand closes onto the axis,
+//                the backbones twist down the tail (drawRope), the lens draws
+//                back to the whole swimmer; alive at B.life.
+//   23.3 – 34.2  SIMULATING CONCEPTION. The hand comes into the lines (the
+//                boil), the swimmer sets off, the lens goes round behind it
+//                and onto the axis, and THE GROOVE is sketched round it
+//                (rings, sketchTurn): one helix down a cone, about fifteen
+//                turns, swum at a rate that only gathers (SWIM; the table is
+//                made in settled()). The cone is CUT at a throat (throatOf),
+//                and through the cut is the room at the cone's own
+//                perspective (firstRoom, portR): light first (GLOW, lightAt),
+//                the room resolving out of it as the cut grows. From
+//                VERTIGO.from, the dolly zoom (fovAt, dollyAt).
+//   34.2 – 37.2  THE FALL (fall.js; fallen). Through the cut into the room,
+//                opening at the rate the cut was growing. The porthole is the
+//                plate's inscribed circle (holeAt, HOLE_C), past the board's
+//                corners just before the lens is at rest inside the room
+//                (FILL, CIRCLE, INSIDE).
+//   37.1 – 38.3  THE SCREEN (screenOn). The monitor switches on softly, a
+//                touch of light raying out of it over the room. From B.hit
+//                the page puts the output on the glass (ended(), screen()).
+//   to 44        THE HOLD. The room sways after the pointer (PARALLAX, ROOM).
+//                START AGAIN (again(), EXIT): the lens dollies on through the
+//                dark glass until it covers the board, and the next title
+//                types on that dark.
 //
-// THE DAYS, crossed out. The birth date slammed up in hand lettering — 14 ·
-// 02 · 1987 − 266 DAYS — and then the 266 days themselves: the count 266,
-// 265, 264 … flying out of the vanishing point past the lens, white, each
-// STRUCK THROUGH IN RED as it is used (the reference's red-struck letters),
-// slow at first, a blizzard in the middle (~65 a second), slow again for the
-// last ones, 3 … 2 … 1. The months go with them: each month's name and the
-// days it gives (FEB 14, JAN 31, DEC 31 with 1986 over it …) flying out on
-// draft's golden angle and crossed off as its last day goes — exactly the
-// long subtraction back through the months (FEB 14 → 252, JAN 31 → 221 …).
+// A VERDICT — a birthday the archive cannot answer for (songOf → F.edge) — is
+// the same run to the dive, then THE BREAKDOWN (BREAK; breakdown): the
+// verdict's gif tiled across the board, the verdict lettered over it, held.
 //
-// THE BAND. The tunnel NARROWS INTO A SEAM OF LIGHT: the glint in the room's
-// glass stretches into a white-hot horizontal band (the reference's) across
-// the little room, the rings flatten round it into capsules (each ring's two
-// halves drawn apart along the seam, so the round tunnel becomes the slot
-// between two planes, the rings its lines rushing up and down off it — long
-// freehand lines across the whole board, still rushing out above and below it
-// all through the hold), the speed lines and the last days spraying out of its
-// edges. As the count reaches 0 the band thickens and the conception date is
-// lettered ON it in dark ink — 24 · 05 · 1986, the working over it (MAY 31 − 7
-// = 24) — and ringed in red, the room growing behind it, its top and bottom
-// showing above and below. The swimmer DIVES: it punches a ragged HOLE through
-// the white from its nose out (past the board's edges in ~0.35 s: the white
-// torn off the room, never faded to grey over it, the date's dark ink eaten
-// from the middle out with it at full strength, the band's light going with
-// it), the band's two edges parting as lines of light, like a tube switching
-// on — and through the hole is the room it has been swimming at all along, now
-// the fall's first plate, falling on at the tunnel's own rate (the fall starts
-// at the zoom the tunnel has reached, its opening pace the tunnel's, the
-// vanishing point the same). The slot ROUNDS BACK INTO THE TUNNEL about it:
-// the rings round the rooms start as the slot's own straight lines and close
-// into capsules, then circles, as the edges part (36.9 – 37.3), while the
-// tunnel's flattened rings are pushed off the board by the opening edges; the
-// date bursts out past the lens, the speed lines and the debris never stop:
-// one rush, one camera move, one place, the room in sight from the speck to
-// the landing.
+// GPU AND BOARD. Through the lens the board's canvas is a texture, and the
+// hand's many lines are not stroked on it but instanced on the GPU
+// (gpu-ink.js), a layer a draw: the groove under the board (the board is
+// clear where it shows), the speed lines and the debris over it. With no
+// lens (no WebGL, or ?lens=0) the board strokes everything itself and
+// grain.js is the fuzz.
 //
-// THE ROOMS, in the same hand, IN the tunnel. log/fall.js's chalk plates
-// drawn through the hand: every cel jittering a pixel or so each drawing
-// (the wallpaper's mirrored tiles together), every frame, glass and
-// construction line wobbling and overshooting its corners, as a sketch's
-// do; under them the tunnel's rings go on (circles about the vanishing
-// point at the run's one zoom, e^(E − 0.3 i), the rate the rooms grow at),
-// showing round each plate and through each glass, so every room hangs in
-// the tunnel the swimmer came down; the speed lines over them — eleven
-// crossings, twelve rooms, the answer's last, a crossing every ~1.4 s. The
-// rest of the workings fly out of the vanishing point over them as slams in
-// the same lettering: Zeller's congruence (h = (q + ⌊13(m+1)/5⌋ + K +
-// ⌊K/4⌋ + ⌊J/4⌋ + 5J) mod 7, January and February the 13th and 14th months
-// of the year before), its terms struck in red one by one as they are
-// summed, the weekday ringed; the year's room (the site's rule, before 1960
-// the 50s, before 1980 the 60s, before 2005 the 90s, then the 10s), the
-// decade ringed — rooms before its own comes. The rings let go as it lands.
+// SWITCHES, in the query: ?at= (pin) · ?demo=1 (the scripted hand) ·
+// ?edge=past|future|unknown · ?decade=50s|60s|90s|10s · ?screen=title ·
+// ?inside=0.3 (how far into the room the lens rests) · ?vertigo=0|<degrees> ·
+// ?lens=0 · ?gpuink=0 · ?look=halo:0.2,grain:0 (the lens's numbers) ·
+// ?lensres=1.
 //
-// THE LAST ROOM, FROM INSIDE. The fall does not stop at the last room's
-// plate, seen whole from a distance: it goes on into it and slows to rest
-// INSIDE it, as it passed through the others (log/fall.js `inside`: on into
-// its glass until the room is ~3 boards wide and over a board tall — the
-// monitor at the middle, the lamp and the tower either side, the frame far
-// past the edges; an upright phone goes deeper), its pace re-shaped so it
-// still opens at the tunnel's rate.
-//
-// THE CONCEPTION: THE LIGHT. The band returns as the last room's monitor: a
-// white line across the glass opens to fill it (the tube switched on) and
-// the swimmer swims into it; and the light comes OUT of it (log/lens.js
-// `light`, lightAt here) — made of what is on the board: shafts that are the
-// screen's own white smeared out along its rays (the room's lines shadow
-// them), a slow sunburst through them, each ray its own warm hue
-// (red-orange, gold, cream), a white-gold core, and the tunnel's rings come
-// back as rings of light drifting out of the screen. It swells as the
-// swimmer goes in; at the hit a disc of white blooms out of the screen over
-// the whole board and holds (the holy white), then burns out — the darks
-// first, the edges first, the screen last — onto the room in chalk, lit by
-// its beams. Then the COLOUR comes, carried out of the screen by the light:
-// the room coloured inside a hand-drawn ring of warm light spreading from
-// the glass (log/fall.js `reveal`), chalk outside it, out past the corners
-// over ~2.6 s; the beams stay, breathing, and settle to a glow on the room,
-// the boil easing off it. Held; a fade; round. (?inside=0: the old ending —
-// the plate seen whole, the band blowing out into strand's flash, the colour
-// under it, the push in.)
-//
-// EXACT under the play: the count is 266 figures, one a day; each month
-// crossed off at its last day; every date 1900–2099 checked against Date,
-// leap years (29 · 02 · 2000 → 08 · 06 · 1999, a Tuesday; 01 · 03 · 1900,
-// no 29th February, → 08 · 06 · 1899, a Thursday).
-//
-// Beats, in seconds (60; at = t / 60):
-//    0    – 22.3  strand's, unchanged (the title, the strand, the compile)
-//   22.2          life; 22.2 – 23.6 the hand comes into the lines
-//   22.5          the swim from rest; 22.6 – 25.2 the lens round behind it;
-//                 25.6 – 28.4 onto the axis; the zoom at the fall's opening
-//                 rate from 30
-//   23.1 – 26.2   the rings sketched in; 24.2 – 27.2 the speed lines;
-//                 24 – 26 the glint
-//   27.2 – 28.9   the slam: the birth date − 266 DAYS
-//   28.7 – 35.0   THE COUNT: 266 → 1, struck one by one, the months crossed
-//                 off (the first strike 29.2, the last 35.0)
-//   32.6 – 35.0   the tunnel narrows into the band
-//   35.0 – 36.8   the conception date on the band, ringed (35.6)
-//   ~29 – 36.8    the first room at the end of the tunnel, a speck in the
-//                 glint growing at the tunnel's rate (0.34 h by 36.8)
-//   36.8 – 37.7   THE DIVE: the hole punched through the band (clear by
-//                 ~37.15), its edges parting; 36.8 the fall starts (at the
-//                 tunnel's rate, 0.5 e-folds a second), the slot's lines
-//                 closing into the rings round the room, 36.9 – 37.35
-//   38.3 – 46.9   over the rooms: Zeller (38.3, 40.0, the weekday 42.3), the
-//                 room's rule (44.2, ringed 45.0)
-//   50.8 – 52.2   the rings let go; 51.6 – 53.6 the lens slows to rest
-//                 inside the last room; 52.4 – 53.6 the band as its screen
-//   52.6 – 53.7   the light swelling out of the screen as the swimmer goes in
-//   53.7          the conception: the white blooms out of the screen (0.45 s),
-//                 held to 54.4, burnt out onto the chalk room by ~55
-//   55.0 – 57.6   the colour carried out of the screen in a ring of light;
-//                 the beams breathing, settling; 58.8 – 60 a fade; round
-//
-// GPU AND BOARD. Through the lens (log/lens.js: three's WebGPURenderer on
-// its WebGL 2 backend, on its own canvas in the board's place) the board is
-// a texture, and the hand's many lines are not stroked on it but drawn on
-// the GPU (log/gpu-ink.js), one instanced draw a layer, in the lens's scene
-// target: the tunnel's and the fall's RINGS under the board (it is clear
-// where they show), the SPEED LINES, the DEBRIS and every lettered FIGURE
-// (the count, the months, the slams, their red strikes and rings, the
-// band's flecks, the working) over it. What stays on the board's canvas:
-// the title and the strand, the swimmer, the rooms (chalk plates through
-// the hand), the band and its glow, the date on it, the captions, the
-// fade. The fuzz (the old canvas grain: four full-board fills a frame) is
-// the lens's one pass. Without a renderer (or ?lens=0, ?gpuink=0) it is all
-// the board's, as below.
-//
-// The board alone: the lines ARE the picture, and they are few: ~15 rings
-// of ≤ 56 points (a point every ~9 px
-// round the small ones round the rooms; the nearest gone over twice; a piece
-// wholly off one side of the board not stroked), ≤ 95 speed-line wedges in one
-// fill, ≤ 90 debris dashes in one stroke, the figures batched into a path a
-// colour (log/sketch-hand.js makeInk; in the count a keyline only under
-// figures over 40 px — under the smaller ones it changed 0.05% of the pixels),
-// the rooms' lines cut to 18 px for the hand, the band a handful of fills.
-// Script is ~5% of a frame; the rest is the raster, measured layer by layer (a
-// full-board additive glow cost ~10 ms and went). No fogged wall, no thousands
-// of line pieces.
-//
-// Live in the lab (no ?at=, not ?demo=1): the run waits at each question.
-// Pinned, ?demo=1, or in a reel: the scripted hand (14 · 02 · 1987, spice
-// 7). ?decade= forces the room. Every frame a pure function of t and the
-// hand (the boil's drawing is ⌊12 t⌋); the caches are of inputs (when each
-// digit came, the moment the spice was entered) and of constants (the frozen
-// title, the zoom's table, the count's times).
+// THE CUTS BEFORE THIS ONE. This is cut L. It was arrived at through a dozen
+// cuts in a week, and notes below still say what a thing "was" in one of them,
+// by letter (A … M) or by version (0.11 … 0.23). Those cuts, whole, are on the
+// `archive` branch (src/lib/lab/flow-strand-sketch-<letter>.js), and
+// _archive/README.md lists them.
 
 import {
 	getBoard,
@@ -239,9 +85,9 @@ import {
 	PHI,
 	TAU,
 	TECH_FONT,
-	MATH_FONT,
 	stroke,
 	disc,
+	glow,
 	span,
 	smooth,
 	lerp,
@@ -252,18 +98,18 @@ import {
 	norm
 } from './board.js';
 import { NEAR, makeDepth, lit3 } from './space.js';
-import { glow } from './ink.js';
 import { makeAnswers } from './answers.js';
-import { script } from './entry.js';
+import { script } from './demo.js';
 import { makeTerminal } from './terminal.js';
 import { makeBody, specOf } from './body.js';
-import { caption, captionSize, CAPTION } from './caption.js';
+import { caption, captionSize } from './caption.js';
 import { grain } from './grain.js';
 import { makeLens } from './lens.js';
 import { makeGpuInk } from './gpu-ink.js';
 import { makeFall, orderOf } from './fall.js';
 import { DECADES, loadRooms, decadeOfDate, PLATE } from './rooms.js';
-import { COPY, HEADLINES, NOW, fieldsOf, fill } from './copy.js';
+import { COPY, fieldsOf, fill } from './copy.js';
+import { DAYS, birthOf, conceive, fmt } from './date.js';
 import { resolve } from '$lib/functions/answer.js';
 import { GIFS } from '$lib/data/gifs.js';
 import {
@@ -289,7 +135,7 @@ const prof = (n) => window.__prof?.mark(n);
 // two seconds: "the simulation transition can be cut way down, especially
 // the blinding light moment" — the PM)
 const SECONDS = 44;
-const TERM = makeTerminal(0.8, { cmd: false, align: 'center' });
+const TERM = makeTerminal(0.8);
 const FREEZE = TERM.stop + 0.2; // ≈ 5.14
 // The entry's beats: each question asked (q), its field up and taking keys
 // (wait), its answer entered (e).
@@ -324,7 +170,7 @@ const B = {
 	gens: [21.5, 22.6],
 	contour: [22.3, 23.2],
 	life: 23.3,
-	// ── the journey (this variant's) ──
+	// ── the journey ──
 	conception: [23.7, 33.63], // the caption
 	boil: [23.3, 24.7], // the hand comes into the lines
 	swim: 23.6,
@@ -337,7 +183,7 @@ const B = {
 	lines: [25.1, 27.5], // the speed lines come
 	glint: [25.1, 26.7], // the light at the end of it
 	premise: [26.9, 28.39], // the slam: the birth date − 264 DAYS
-	count: [27.9, 33.14], // 264 → 0, struck one by one — spaced out, the observations between (sketch-copy.js)
+	count: [27.9, 33.14], // 264 → 0, struck one by one — spaced out, the observations between (copy.js)
 	seam: [30.21, 33.14], // the tunnel narrowed into the band
 	conceived: [33.14, 34.84], // the conception date on the band
 	// (K2) THE IRIS: the spindle hole widens at ONE rate in e-folds of its
@@ -357,7 +203,6 @@ const B = {
 	hit: 37.2, // = land[1]: the output on the glass the moment the lens is at rest (0.23.9; it was 0.2 s after) // (the output may go on the screen from here: `screen()`)
 	song: [38.4, 39.2],
 	artist: [39, 39.7],
-	push: [37.5, 40.5],
 	out: [97.5, 98] // (never: the run HOLDS on its last frame; `again` restarts it)
 };
 // THE BREAKDOWN (a verdict: a birthday the archive cannot answer for). The
@@ -395,7 +240,7 @@ const PARALLAX = [0.05, 0.03]; // (0.23.3: half again — "still moving too much
 // they were (the PM: too much)
 const ROOM = { calm: 0.3, sway: 0.25 };
 
-// (K2: no flash — the hole is the iris; see the header)
+// (K2: no flash — the hole is the iris)
 
 // ∫ of a smoothstep ramp of length D: a clock that starts from rest.
 function eased(x, D) {
@@ -410,68 +255,6 @@ const backOut = (x) => {
 	const k = clamp01(x) - 1;
 	return 1 + 2.70158 * k * k * k + 1.70158 * k * k;
 };
-
-// ── The date's arithmetic, exact ─────────────────────────────────────────────
-// 266 days (38 weeks) from conception to birth. Checked in a scratch script
-// against Date for every day 1900–2099: the date and the weekday agree.
-const GESTATION = 266;
-const LEAP = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
-const DAYS = (m, y) => [31, LEAP(y) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
-const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-const WEEKDAY = ['SATURDAY', 'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
-const pad2 = (x) => String(x).padStart(2, '0');
-const fmt = ({ d, m, y }) => `${pad2(d)} · ${pad2(m)} · ${y}`;
-
-// The birthday the calculator uses: the typed date, a month past 12 or a
-// day past its month brought back into range (Enter takes any eight digits).
-function birthOf(digits) {
-	const s = String(digits ?? '')
-		.replace(/\D/g, '')
-		.padEnd(8, '0')
-		.slice(0, 8);
-	const y = clamp(Number(s.slice(4, 8)), 100, 9999);
-	const m = clamp(Number(s.slice(2, 4)), 1, 12);
-	const d = clamp(Number(s.slice(0, 2)), 1, DAYS(m, y));
-	return { d, m, y };
-}
-// Back 266 days, a month at a time: the birth month's own d days take it to
-// the last day of the month before; then each whole month's length while
-// what is left is at least that; the last month's length less what is left
-// is the day.
-function conceive({ d, m, y }, days = GESTATION) {
-	const rows = [];
-	let rem = days - d;
-	rows.push({ m, y, take: d, rem });
-	let [mm, yy] = m === 1 ? [12, y - 1] : [m - 1, y];
-	while (rem >= DAYS(mm, yy)) {
-		const L = DAYS(mm, yy);
-		rem -= L;
-		rows.push({ m: mm, y: yy, take: L, rem });
-		[mm, yy] = mm === 1 ? [12, yy - 1] : [mm - 1, yy];
-	}
-	const len = DAYS(mm, yy);
-	return { rows, last: { m: mm, y: yy, len, rem }, date: { d: len - rem, m: mm, y: yy } };
-}
-// Zeller's congruence (Gregorian): h = (q + ⌊13(m+1)/5⌋ + K + ⌊K/4⌋ + ⌊J/4⌋
-// + 5J) mod 7, January and February counted as months 13 and 14 of the year
-// before; K the year of the century, J the century; h = 0 is Saturday.
-function zeller({ d, m, y }) {
-	const mm = m < 3 ? m + 12 : m;
-	const yy = m < 3 ? y - 1 : y;
-	const K = yy % 100;
-	const J = Math.floor(yy / 100);
-	const terms = [
-		d,
-		Math.floor((13 * (mm + 1)) / 5),
-		K,
-		Math.floor(K / 4),
-		Math.floor(J / 4),
-		5 * J
-	];
-	const sum = terms.reduce((s, x) => s + x, 0);
-	const h = ((sum % 7) + 7) % 7;
-	return { q: d, mm, yy, K, J, terms, sum, h, day: WEEKDAY[h] };
-}
 
 // ── The strand ───────────────────────────────────────────────────────────────
 // Each digit d as two bases, d = 4a + b (A C G T for 0 1 2 3), paired with
@@ -552,13 +335,10 @@ const Z_NOSE0 = -X_APEX; // the nose's distance to it as the swim starts
 const V_SWIM = 28; // world units a second as it sets off
 const ZETA_S = 140; // the swimmer shrinks with the zoom below this distance
 const TUN = { k: 0.27, step: 0.3, umin: 0.014, M: 56, wob: 0.05, fadeIn: 1.5 };
-// The fall: eleven crossings (twelve rooms, the answer's last) at strand's
-// pace, so the rooms rush (a crossing every ~1.4 s, at 0.5–1 e-folds a second).
-const FALL_X = 0; // no crossings: the room through the band is the last
-const COUNT_FLIES = false; // the 266 figures and the months flying out (cut G has them)
+// The fall: no crossings — the room the tunnel opens on is the answer's.
+const FALL_X = 0;
 const GROOVE_TURN = 0.11; // (I5) the record's turn under the stylus, turns a second
 const ROOM_AT_BAND = 0.3; // the room this much of the board tall at the dive (firstRoom; the fall's start)
-const INSIDE = 0.12; // the fall stops inside the last room (?inside=: this far into its glass)
 // (0.23.1: 2.1 boards wide — the porthole is the plate's inscribed circle,
 // and at rest it must be past the board's corners: 0.5 × 2.1 / φ = 0.65 of
 // the width, 1.04 of a 16:10 board's height against its corners' 0.94 — and
@@ -582,41 +362,6 @@ const FALL_PACE = { n: 512, c: 0.55, ease: 1.4 };
 // the fall's opening rate as a share of the most it can open at (pace c ->
 // cMax: no gathering, only the slowing to rest)
 const SWIM = { efolds: 4.6, seam: 0.95, cMax: 60 }; // (0.23.16: 4 and 0.8 before the dolly zoom)
-
-// ── The count ────────────────────────────────────────────────────────────────
-// The 266 days struck one at a time over B.count: the rate (in figures a
-// second) climbs from ~1.6 to ~65 and comes down again for the last few, its
-// log a smoothstep bump; T[j] is the second the j-th day is struck (the
-// figure 267 − j), lead[j] how long before it the figure leaves the
-// vanishing point, v[j] how fast it flies (e-folds a second), both from the
-// pace there: the slow ones linger to be read.
-const COUNT = (() => {
-	const [t0, t1] = B.count;
-	const N = 4000;
-	const lr0 = Math.log(2.4);
-	const lr1 = Math.log(95);
-	const bump = (u) => smooth(span(u, 0, 0.34)) * (1 - smooth(span(u, 0.8, 0.98)));
-	const rate = (u) => Math.exp(lerp(lr0, lr1, bump(u)));
-	const cum = [0];
-	for (let i = 1; i <= N; i++) cum[i] = cum[i - 1] + (0.5 * (rate((i - 1) / N) + rate(i / N))) / N;
-	const scale = GESTATION / cum[N];
-	const T = new Float64Array(GESTATION + 2);
-	const lead = new Float64Array(GESTATION + 2);
-	const v = new Float64Array(GESTATION + 2);
-	let i = 0;
-	for (let j = 1; j <= GESTATION; j++) {
-		const want = j / scale;
-		while (i < N - 1 && cum[i + 1] < want) i++;
-		const f = clamp01((want - cum[i]) / (cum[i + 1] - cum[i] || 1));
-		const u = (i + f) / N;
-		T[j] = t0 + u * (t1 - t0);
-		const p = clamp01((Math.log(rate(u)) - lr0) / (lr1 - lr0));
-		lead[j] = lerp(0.62, 0.26, p);
-		v[j] = lerp(2.1, 4.6, p);
-	}
-	T[GESTATION + 1] = t1 + 1;
-	return { T, lead, v };
-})();
 
 // ── The swimmer, followed ────────────────────────────────────────────────────
 // In the chase the lens is on the tunnel's axis D_C body units behind the
@@ -660,7 +405,7 @@ const dollyAt = (t) =>
 // is tall (a phone held upright): there the lens keeps a square's width of
 // the scene instead, k (px a unit at unit depth) set by min(h, w / AMIN) and
 // the vertical field widened to match. A board as wide as it is tall or wider
-// is the lens as it was. The fall fits its rooms to the board (log/fall.js:
+// is the lens as it was. The fall fits its rooms to the board (fall.js:
 // the plate min(0.62 h, 0.74 w / φ)); `plateQ` is that fit against the
 // board's height, which the swimmer over the fall is scaled by.
 const AMIN = 1;
@@ -682,7 +427,7 @@ export default async function make({ THREE, at }) {
 	// for: it answers a pinned frame (?at=) and ?demo=1, never by itself (on
 	// the site it once filled the form in on its own — the lead: "this should
 	// never happen. manual only").
-	// The page puts Spotify's player ON the monitor's glass (runs/Next.svelte)
+	// The page puts Spotify's player ON the monitor's glass (Run.svelte)
 	// and nothing is lettered on it (0.23.2, the default: the PM wanted the
 	// embed, not the title); ?screen=title letters the song and its artist on
 	// the glass instead, as 0.21 – 0.23.1 did
@@ -697,22 +442,21 @@ export default async function make({ THREE, at }) {
 	// canvas is shown after that frame (render), never before. There were
 	// the board's dust, then the lens's grain, then its leak, each coming on
 	// in turn — "many layers of different noise effects" (the lead).
-	clearBoard(board, { chalkDust: false, shown: false });
+	clearBoard(board, { shown: false });
 	const [art] = await Promise.all([
 		loadRooms({ chalk: true }),
-		document.fonts.load(`400 24px ${TECH_FONT}`).catch(() => null),
-		document.fonts.load(`italic 400 24px ${MATH_FONT}`).catch(() => null)
+		document.fonts.load(`400 24px ${TECH_FONT}`).catch(() => null)
 	]);
 	const answers = makeAnswers({ live, beats: ENTRY });
 	const ans = answers.answers;
 	const Z = makeDepth(4);
-	// The hand: the board's context, boiling (log/sketch-hand.js).
+	// The hand: the board's context, boiling (hand.js).
 	const pen = makeHand(board.ctx);
 	// The lens: the board drawn on the GPU through a soft warm lens
-	// (log/lens.js); none without a renderer (?lens=0 neither), and then the
+	// (lens.js); none without a renderer (?lens=0 neither), and then the
 	// board is shown as it is with the canvas grain over it.
 	const lens = q.get('lens') === '0' ? null : await makeLens({ THREE, board });
-	// With the lens, the hand's many lines go to the GPU (log/gpu-ink.js): the
+	// With the lens, the hand's many lines go to the GPU (gpu-ink.js): the
 	// rings UNDER the board (the board clear where they show, its alpha
 	// hiding them under the rooms), the speed lines, the debris and every
 	// lettered figure OVER it — each layer one instanced draw. Without it,
@@ -723,12 +467,11 @@ export default async function make({ THREE, at }) {
 	const inkFor = (g) => (g ? g.ink() : makeInk());
 	// The board is clear (not the ground) while the rings show under it.
 	const ringsShow = (t) => gUnder && t > B.tunnel[0] - 0.15 && t < (S?.tCover ?? B.land[0]) + 0.7;
-	// The fall comes to rest INSIDE the last room (log/fall.js `inside`: this
-	// far on into its glass), the room past the board's edges, before the
-	// light; ?inside=0 lands at the plate and pushes in after the flash, as
-	// it was.
-	const inside = q.has('inside') ? clamp(Number(q.get('inside')) || 0, 0, 0.9) : INSIDE;
-	// ?look=halo:0.2,grain:0 — the lens's numbers (log/lens.js LENS), to try.
+	// The fall comes to rest INSIDE the last room (fall.js `inside`: this far
+	// on into its glass), the room past the board's edges. How far is found
+	// for the board (settled, below); ?inside=0.3 fixes it by hand.
+	const inside = q.has('inside') ? clamp(Number(q.get('inside')) || 0.12, 0.02, 0.9) : null;
+	// ?look=halo:0.2,grain:0 — the lens's numbers (lens.js LENS), to try.
 	const look = {
 		// (L) no leak: the rare light drifting in at an edge read as one more
 		// effect switching on; the mist, the halo, the lift and the grain are
@@ -756,20 +499,16 @@ export default async function make({ THREE, at }) {
 		const body = makeBody(spec);
 		const decade = forced ?? decadeOfDate(ans.date);
 		const order = orderOf(decade, FALL_X);
-		const calc = calcOf(ans.date);
+		// (the conception date as it would be lettered, 24 · 05 · 1986: its width
+		// sizes the band, below)
+		const dateStr = fmt(conceive(birthOf(ans.date)));
 		const F = fieldsOf(ans.date, songOf(ans, q.get('edge')));
 		const words = wordsOf(F);
 		const fb = {
 			fall: B.fall,
 			land: B.land,
-			colour: F.edge ? [999, 1000] : B.colour,
-			push: B.push,
-			swim: [-2, -1]
+			colour: F.edge ? [999, 1000] : B.colour
 		};
-		// The last room ends near full size: the lens pushed in on it after the
-		// flash, to 0.94 of the board's height (an upright board crops its
-		// sides rather than leave it small).
-		const fill = { h: 0.94, w: h > w ? 1.75 : 0.985 };
 		// The fall starts with the first plate 0.3 h tall (0.15 was too small
 		// at the flash — the lead): a speck swum up on slowly, what the band opens
 		// on, the lens still coming to it (at ζ < 0 the lens is X^ζ as far as
@@ -791,7 +530,7 @@ export default async function make({ THREE, at }) {
 		// and at least FILL.h times its height (no ground above or below it):
 		// an upright phone goes deeper than a laptop. (?inside= fixes it.)
 		let deep = inside;
-		if (inside > 0 && !q.has('inside')) {
+		if (deep === null) {
 			const pg = makeFall({
 				onePath: true,
 				art,
@@ -859,10 +598,9 @@ export default async function make({ THREE, at }) {
 			onePath: true,
 			art,
 			order,
-			beats: deep > 0 ? { ...fb, push: null } : fb,
+			beats: fb,
 			zeta0: z0,
 			pace,
-			fill: deep > 0 ? null : fill,
 			inside: deep
 		});
 		const geo = fall.geometry(w, h);
@@ -906,7 +644,7 @@ export default async function make({ THREE, at }) {
 			const i = Math.min(N - 1, Math.floor(f));
 			return lerp(E[i], E[i + 1], f - i);
 		};
-		S = { key, bases, spec, body, decade, fall, geo, rc, efolds, calc, F, words, order, deep };
+		S = { key, bases, spec, body, decade, fall, geo, rc, efolds, F, words, order, deep };
 		// The fall's first plate on this board (px tall): what the swim grows
 		// the room to by the dive, so the fall opens on exactly it (0.22: it
 		// grew to ROOM_AT_BAND of the board, which on a phone the fall's fit
@@ -962,8 +700,8 @@ export default async function make({ THREE, at }) {
 		const H = figH(w, h);
 		// (I5: the label's radius from the date it carries under the hole —
 		// the date across ~0.8 of its width at 0.45 R below the middle)
-		S.dateSize = Math.min(0.036 * H, (0.5 * w) / measure(calc.dateStr));
-		S.bandHold = Math.min(0.62 * S.dateSize * measure(calc.dateStr), 0.36 * Math.min(w, h));
+		S.dateSize = Math.min(0.036 * H, (0.5 * w) / measure(dateStr));
+		S.bandHold = Math.min(0.62 * S.dateSize * measure(dateStr), 0.36 * Math.min(w, h));
 		return S;
 	}
 	settled(board.w, board.h);
@@ -1084,7 +822,7 @@ export default async function make({ THREE, at }) {
 		return lerp(TWIST_NAT, twistOf(hand.value), k);
 	}
 
-	// ── The entry's text (epicycle's, kept as it is) ─────────────────────────
+	// ── The entry's text ─────────────────────────────────────────────────────
 	const entry = makeEntryText(board, answers, live);
 
 	// ── The lens ─────────────────────────────────────────────────────────────
@@ -1497,7 +1235,7 @@ export default async function make({ THREE, at }) {
 	// THE PORTHOLE IS THE ROOM'S OWN FRAME (0.22). A circle at the end of
 	// the tunnel while the room is far (the swim: R = 0.49 of the plate's
 	// height, inscribed in it), and through the fall a circle of R = c × the
-	// plate's REAL height on the board (log/fall.js frameOf — the plate as
+	// plate's REAL height on the board (fall.js frameOf — the plate as
 	// the fall draws it, into the glass and all; the nest law plateH() read
 	// the plate too small past ζ = 0, so the hole lagged the room and had to
 	// be let go after the lens had stopped: "the camera zooms in on the room
@@ -1559,7 +1297,6 @@ export default async function make({ THREE, at }) {
 	}
 	function bandAt(t, w, h, st, O = null, nudge = null) {
 		const m = smooth(span(t, ...B.seam));
-		const hold = smooth(span(t, B.conceived[0] - 0.15, B.conceived[0] + 0.3));
 		// (on a verdict the band opens for the breakdown instead of the dive —
 		// slower, onto the gif, no hole — and its white goes as the strip comes)
 		const edge = !!st.F?.edge;
@@ -1569,7 +1306,6 @@ export default async function make({ THREE, at }) {
 		// (I5: the band is THE LABEL — a disc at the apex, W = hb, the edges'
 		// sqrt profile a circle; it grows out of the glint to its radius
 		// bandHold, which carries the date under the spindle hole)
-		void hold;
 		const hb0 = lerp(1.5, st.bandHold, Math.pow(m, 1.4));
 		const hb = hb0 + (1.1 * h - hb0) * Math.pow(open, 1.6);
 		const tau = Math.max(0, t - (edge ? BREAK.strip[0] : B.dive[0]));
@@ -1674,14 +1410,11 @@ export default async function make({ THREE, at }) {
 		ctx.closePath();
 	}
 	// The glint, the glow round the band and the band itself, white-hot.
-	function drawBand(ctx, ink, w, h, O, band, bo) {
+	function drawBand(ctx, h, O, band) {
 		// (L) Nothing of the label is drawn — no white disc, no glow round it,
 		// no flecks off its rim, no rings on it: the spiral runs to the
 		// porthole and that is all. The glint at the apex while the tunnel
 		// is sketched in stays (the light the swimmer swims at).
-		void ink;
-		void w;
-		void bo;
 		const { glint } = band;
 		if (glint > 0.01 && band.m < 1) {
 			const r = 0.07 * h * (0.6 + 0.4 * glint);
@@ -1704,8 +1437,7 @@ export default async function make({ THREE, at }) {
 	// record's rate (recordTurn), so the stylus tracks a record under it. No
 	// pulling apart along a seam: the groove runs up to the label.)
 	const recordTurn = (t) => TAU * GROOVE_TURN * Math.max(0, t - B.swim);
-	function rings(ink, t, w, h, cam, st, bo, band, O) {
-		void O;
+	function rings(ink, t, w, h, cam, st, bo, band) {
 		let zL = cam.pos[0] - X_APEX;
 		if (zL <= 1) return;
 		// (0.22.2) THROUGH THE FALL THE GROOVE EXPANDS WITH THE ROOM'S FRAME:
@@ -1793,64 +1525,6 @@ export default async function make({ THREE, at }) {
 			prev = s;
 		}
 		flush();
-	}
-	// THE YEARS on the groove: a turn a year (near enough — the years from NOW
-	// back to the birth year spread over the turns the stylus tracks from the
-	// tunnel's start to the date), each lettered at its turn's start, riding
-	// round with the record, in the hand, over the board.
-	// (K: nothing lettered on the turns, no date under the hole — kept, unused)
-	void grooveYears;
-	void conceivedDate;
-	function grooveYears(ink, t, w, h, cam, st, bo) {
-		if (t < B.tunnel[0] + 0.8 || t > B.conceived[0] + 0.6) return;
-		const zL = cam.pos[0] - X_APEX;
-		if (zL <= 1) return;
-		const { k, step, umin } = TUN;
-		const Hh = figH(w, h);
-		const iLo = Math.ceil(Math.log(Z_NOSE0 / (0.985 * zL)) / step);
-		const iHi = Math.floor(Math.log(Z_NOSE0 / (umin * zL)) / step);
-		const rec = recordTurn(t);
-		const i0 = (st.efolds(B.tunnel[0] + 1.0) + 0.015) / step;
-		const i1 = (st.efolds(B.conceived[0]) + 0.015) / step;
-		const y0 = NOW;
-		const y1 = st.F._birth.y;
-		const yearOf = (i) => Math.round(lerp(y0, y1, clamp01((i - i0) / Math.max(1, i1 - i0))));
-		const fade = 1 - smooth(span(t, B.conceived[0] - 0.2, B.conceived[0] + 0.5));
-		for (let i = iLo; i <= iHi; i++) {
-			const y = yearOf(i);
-			if (y === yearOf(i - 1) && i > iLo) continue;
-			if (y < y1) continue;
-			const zi = Z_NOSE0 * Math.exp(-step * i);
-			const u = zi / zL;
-			const ti = B.tunnel[0] + 0.14 * Math.max(0, i - st.iRef);
-			const upto = smooth(span(t, ti + 0.3, ti + 0.8));
-			if (upto <= 0) continue;
-			const a =
-				fade *
-				upto *
-				lerp(0.2, 0.9, smooth(span(u, umin, 0.45))) *
-				(1 - smooth(span(u, 0.8, 0.95)));
-			if (a < 0.02) continue;
-			const rho = k * zi;
-			// the lettering sits a little outside the groove at its start, so
-			// the groove runs under it
-			const ph = rec + 0.06;
-			const q = cam.project([X_APEX + zi, 1.08 * rho * Math.sin(ph), -1.08 * rho * Math.cos(ph)]);
-			const qc = cam.project([X_APEX + zi, 0, 0]);
-			if (q[2] <= NEAR || qc[2] <= NEAR) continue;
-			const R = Math.hypot(q[0] - qc[0], q[1] - qc[1]);
-			const size = clamp(0.1 * R, 6, 0.05 * Hh);
-			if (size < 7) continue;
-			if (q[0] < -3 * size || q[0] > w + 3 * size || q[1] < -2 * size || q[1] > h + 2 * size)
-				continue;
-			letter(ink, String(y), q[0], q[1] + 0.5 * size, size, {
-				seed: 3000 + i,
-				boil: bo,
-				alpha: a,
-				width: 0.13,
-				keyed: size > 40
-			});
-		}
 	}
 	// The tunnel's rings going on round the rooms: circles about the
 	// vanishing point at the run's one zoom (e^(E − 0.3 i), the same rate the
@@ -1944,95 +1618,6 @@ export default async function make({ THREE, at }) {
 		prof('debris');
 	}
 
-	// ── The figures ──────────────────────────────────────────────────────────
-	// Where a flyer leaving at `s0` along `th` is: from the vanishing point —
-	// or, once the band is drawn out, from a point along its edge — out on its
-	// ray, its distance r.
-	function flyerAt(O, w, h, st, s0, th, uSeed, r) {
-		const AX = spreadX(w, h);
-		let fx = O[0];
-		let fy = O[1];
-		if (s0 > B.seam[0]) {
-			const bd = bandAt(s0, w, h, st);
-			if (bd.m > 0.05) {
-				fx += Math.min(bd.W, 0.5 * w) * (2 * uSeed - 1);
-				fy += (Math.sin(th) >= 0 ? 1 : -1) * bd.hb;
-			}
-		}
-		return [fx + AX * r * Math.cos(th), fy + r * Math.sin(th)];
-	}
-	// The count: 266 … 1, each figure out of the vanishing point and struck
-	// through in red at its second.
-	function countdown(ink, w, h, t, O, st, bo) {
-		if (t < B.count[0] - 1 || t > B.count[1] + 1.6) return;
-		const H = figH(w, h);
-		const R = 0.7 * Math.hypot(w, h);
-		for (let j = 1; j <= GESTATION; j++) {
-			const ts = COUNT.T[j];
-			const s0 = ts - COUNT.lead[j];
-			if (t < s0) break;
-			const tau = t - s0;
-			const r = 0.016 * H * Math.exp(COUNT.v[j] * tau);
-			if (r > R) continue;
-			const th = TAU * rand(j, 11);
-			const [x, y] = flyerAt(O, w, h, st, s0, th, rand(j, 12), r);
-			const size = 0.2 * r * (0.85 + 0.3 * rand(j, 13));
-			if (size < 3) continue;
-			if (x < -3 * size || x > w + 3 * size || y < -2 * size || y > h + 2 * size) continue;
-			const a = smooth(span(tau, 0, 0.1));
-			const box = letter(ink, String(GESTATION + 1 - j), x, y + size / 2, size, {
-				seed: j,
-				boil: bo,
-				alpha: a,
-				width: 0.13,
-				keyed: size > 40
-			});
-			strike(ink, [box.x0, box.y0, box.x1, box.y1], span(t, ts, ts + 0.07), {
-				seed: j,
-				boil: bo,
-				alpha: a
-			});
-		}
-	}
-	// The months, out on the golden angle, each its name and the days it
-	// gives, crossed off at its last day (the year over the month it turns
-	// at). Each reaches 0.2 of the board out as it is struck.
-	function months(ink, w, h, t, O, st, bo) {
-		const rows = st.calc.rows;
-		const H = figH(w, h);
-		const R = 0.7 * Math.hypot(w, h);
-		const GOLDEN = Math.PI * (3 - Math.sqrt(5));
-		for (let r = 0; r < rows.length; r++) {
-			const row = rows[r];
-			const t0 = COUNT.T[row.j0] - 0.3;
-			const t1 = COUNT.T[row.j1];
-			if (t < t0) break;
-			const r0 = 0.05 * H;
-			const v = clamp(Math.log(0.2 / 0.05) / Math.max(0.2, t1 - t0), 0.7, 2.4);
-			const rad = r0 * Math.exp(v * (t - t0));
-			if (rad > R) continue;
-			const th = -0.6 + r * GOLDEN;
-			const [x, y] = flyerAt(O, w, h, st, t0, th, rand(r, 71), rad);
-			const size = 0.32 * rad;
-			if (x < -4 * size || x > w + 4 * size || y < -2 * size || y > h + 2 * size) continue;
-			const a = smooth(span(t - t0, 0, 0.15));
-			const box = letter(ink, row.label, x, y + size / 2, size, {
-				seed: 500 + r,
-				boil: bo,
-				alpha: a,
-				width: 0.12
-			});
-			const name = [box.cells[0][0], box.y0, box.cells[2][2], box.y1];
-			strike(ink, name, span(t, t1, t1 + 0.1), { seed: 500 + r, boil: bo, alpha: a, width: 0.15 });
-			if (row.year)
-				letter(ink, row.year, x, box.y0 - 0.3 * size, 0.55 * size, {
-					seed: 700 + r,
-					boil: bo,
-					alpha: 0.9 * a,
-					width: 0.12
-				});
-		}
-	}
 	// A slam: lines of hand lettering popping out of the vanishing point to a
 	// place off it (x, y: of the board, from it), held boiling, then flying on
 	// out past the lens; each line { s, size (of figH), write: [t0, t1],
@@ -2087,121 +1672,9 @@ export default async function make({ THREE, at }) {
 			}
 		});
 	}
-	// The conception date, lettered ON the band in dark ink and ringed in
-	// red; the working over it (the last month's days, then = the day as the
-	// count lands) riding the band's top edge; both burst out past the lens
-	// as the band opens.
-	function conceivedDate(inkD, ink, t, w, h, O, st, bo, band) {
-		const c0 = B.conceived[0];
-		const calc = st.calc;
-		const tw = COUNT.T[calc.lastJ0] - 0.35;
-		const dive = st.F.edge ? BREAK.spread : B.dive;
-		if (t < tw || t > dive[1] + 0.2) return;
-		const H = figH(w, h);
-		// (the date fades with the band on a song's run; on a verdict it bursts
-		// out as the band tears open for the breakdown)
-		// (I5: on every run the date bursts out as the hole opens — it is
-		// clipped to the white that is left, so it is eaten from the middle
-		// out at full ink)
-		const burst = Math.max(0, t - dive[0]);
-		const grow = Math.exp(3.2 * burst);
-		const a = 1 - smooth(span(burst, 0.08, 0.42));
-		const aD = 1 - smooth(span(burst, 0.3, 0.42));
-		if (aD <= 0.01) return;
-		const ws = Math.min(0.04 * H, (0.8 * w) / measure(calc.working + calc.landed)) * grow;
-		const wy = O[1] - band.hb - 0.55 * ws - 0.02 * H;
-		const head = letter(ink, calc.working, O[0], wy, ws, {
-			align: 'right',
-			seed: 880,
-			boil: bo,
-			alpha: a * smooth(span(t, tw, tw + 0.25)),
-			width: 0.12,
-			upto: smooth(span(t, tw, tw + 0.3))
-		});
-		if (t > c0)
-			letter(ink, calc.landed, head.x1 + 0.12 * ws, wy, ws, {
-				align: 'left',
-				seed: 881,
-				boil: bo,
-				alpha: a,
-				width: 0.12,
-				upto: smooth(span(t, c0, c0 + 0.25))
-			});
-		if (t < c0) return;
-		const size = st.dateSize * grow;
-		// (I5: under the spindle hole, on the label)
-		const box = letter(inkD, calc.dateStr, O[0], O[1] + 0.45 * st.bandHold + 0.5 * size, size, {
-			seed: 900,
-			boil: bo,
-			alpha: aD,
-			width: 0.12,
-			color: '#1d1612',
-			keyed: false,
-			upto: smooth(span(t, c0, c0 + 0.45))
-		});
-		circleMark(inkD, [box.x0, box.y0, box.x1, box.y1], span(t, c0 + 0.6, c0 + 1.0), {
-			seed: 901,
-			boil: bo,
-			alpha: aD,
-			pad: 0.42
-		});
-	}
-	// A stream of figures (the years in the cloud): each flying out of the
-	// vanishing point on its own ray, struck through in red at its second.
-	function flyers(ink, w, h, t, O, list, bo) {
-		const H = figH(w, h);
-		const R = 0.7 * Math.hypot(w, h);
-		const AX = spreadX(w, h);
-		for (const e of list) {
-			const tau = t - (e.T - e.lead);
-			if (tau < 0) continue;
-			const r = e.r0 * H * Math.exp(e.v * tau);
-			if (r > R) continue;
-			const x = O[0] + AX * r * Math.cos(e.th);
-			const y = O[1] + r * Math.sin(e.th);
-			const size = e.k * r;
-			if (size < 3) continue;
-			if (x < -4 * size || x > w + 4 * size || y < -2 * size || y > h + 3 * size) continue;
-			const a = smooth(span(tau, 0, 0.1));
-			const box = letter(ink, e.text, x, y + size / 2, size, {
-				seed: e.seed,
-				boil: bo,
-				alpha: a,
-				width: 0.13,
-				keyed: size > 40
-			});
-			strike(ink, [box.x0, box.y0, box.x1, box.y1], span(t, e.T, e.T + 0.07), {
-				seed: e.seed,
-				boil: bo,
-				alpha: a
-			});
-			if (e.sub) {
-				const sz = Math.min(0.42 * size, (0.5 * w) / measure(e.sub));
-				const b2 = letter(ink, e.sub, x, box.y1 + 1.15 * sz, sz, {
-					seed: e.seed + 3,
-					boil: bo,
-					alpha: 0.9 * a,
-					width: 0.12
-				});
-				strike(ink, [b2.x0, b2.y0, b2.x1, b2.y1], span(t, e.T + 0.08, e.T + 0.16), {
-					seed: e.seed + 5,
-					boil: bo,
-					alpha: a,
-					width: 0.14
-				});
-			}
-		}
-	}
 	// Everything flying over the journey at t.
 	function figures(ink, w, h, t, O, st, bo) {
 		for (const sl of st.words.slams) slam(ink, t, w, h, O, bo, sl, 1 - exitWords());
-		for (const s of st.words.streams) flyers(ink, w, h, t, O, s, bo);
-		// (the count's figures and the months no longer fly — visual noise, the
-		// lead said; the numbers come sparingly, as answers in the conversation)
-		if (COUNT_FLIES) {
-			months(ink, w, h, t, O, st, bo);
-			countdown(ink, w, h, t, O, st, bo);
-		}
 	}
 
 	// THE BREAKDOWN'S GIF (the original site's three: the dinosaurs, the
@@ -2238,8 +1711,6 @@ export default async function make({ THREE, at }) {
 				: 0;
 		ctx.save();
 		ctx.globalAlpha = a0 * dim;
-		void y0;
-		void y1;
 		bandPath(ctx, w, h, O, band, boilAt(t)); // (I5: the gif in the label's disc)
 		ctx.clip();
 		const rows = Math.ceil(h / th) + 1;
@@ -2312,22 +1783,6 @@ export default async function make({ THREE, at }) {
 					? 1
 					: 0;
 	const exitWords = () => (exit ? smooth(span(exit.s, ...EXIT.words)) : 0);
-	// The veer: where the answers have turned the swimmer at t — each slam
-	// with a `veer` bends it off its line while it is up, the way read off
-	// the answer (a turn of the circle); [x, y] on the board, −1 … 1.
-	function veerAt(t, st) {
-		let vx = 0;
-		let vy = 0;
-		for (const sl of st.words.slams) {
-			if (sl.veer === null || sl.veer === undefined) continue;
-			const k = span(t, sl.at - 0.5, sl.at + 2.8);
-			if (k <= 0 || k >= 1) continue;
-			const b = Math.sin(Math.PI * k);
-			vx += Math.cos(TAU * sl.veer) * b;
-			vy += Math.sin(TAU * sl.veer) * b;
-		}
-		return [vx, vy];
-	}
 
 	// (K2: no band on the screen and no light out of it — the monitor comes
 	// on softly in fallen(), screenOn)
@@ -2339,14 +1794,14 @@ export default async function make({ THREE, at }) {
 	function render() {
 		window.__prof?.begin();
 		const t = time.t;
-		clearBoard(board, { chalkDust: false, shown: !lens, ground: ringsShow(t) ? null : PAL.ground });
+		clearBoard(board, { shown: !lens, ground: ringsShow(t) ? null : PAL.ground });
 		gUnder?.reset();
 		gOver?.reset();
 		prof('clear');
 		const { ctx, w, h } = board;
 		const hand = answers.hand(t);
 		// The fuzz's clock: real seconds live (it keeps moving while the run
-		// waits at a question), exactly t pinned, in the demo, in a reel.
+		// waits at a question), exactly t pinned or in the demo.
 		const secs = hand.secs;
 		secsNow = secs;
 		// (L: kept through AGAIN's exit too, so the room sways on under the
@@ -2361,7 +1816,7 @@ export default async function make({ THREE, at }) {
 		}
 		if (t < FREEZE) {
 			entry.reset();
-			TERM.draw(ctx, w, h, t / 10, t, t - 10);
+			TERM.draw(ctx, w, h, t);
 			fuzz(ctx, w, h, secs);
 			window.__prof?.end();
 			return;
@@ -2375,10 +1830,8 @@ export default async function make({ THREE, at }) {
 			/* the dark alone */
 		} else if (t < B.fall[0] || st.F.edge) world(ctx, w, h, t, hand, st);
 		else fallen(ctx, w, h, t, st);
-		// The captions at the terminal's size, and at least 15 px on a phone.
-		const size = Math.max(captionSize(w, h), Math.min(15, 0.04 * Math.min(w, h)));
-		void CAPTION; // (the status lines are the table's, sketch-copy.js)
-		void size;
+		// The captions (the table's, copy.js) at the terminal's size, and at
+		// least 15 px on a phone.
 		{
 			const size = Math.max(captionSize(w, h), Math.min(15, 0.04 * Math.min(w, h)));
 			const edge = st.F.edge;
@@ -2402,7 +1855,7 @@ export default async function make({ THREE, at }) {
 		window.__prof?.end();
 	}
 	// (0.22) A TOUCH OF THE HOLY LIGHT: as the monitor comes on (B.on) a
-	// light sits in its glass — log/lens.js `light`: the picture's own
+	// light sits in its glass — lens.js `light`: the picture's own
 	// brights (the lit glass) smeared out along a slow sunburst's rays, so
 	// shafts of warm light lie across the room, and a small core — low, no
 	// bloom, no burn, no veil: the sun of sketch A's conception at a touch,
@@ -2566,7 +2019,7 @@ export default async function make({ THREE, at }) {
 	// 0.34 h as the band opens — over it, not onto it: the room the swimmer
 	// falls into grows out of the tunnel in the one camera move.
 	// (K2) THE IRIS: the last room's colour REVEALED inside the spindle hole
-	// (log/fall.js `reveal`: a disc about the hole's centre, a hair wider
+	// (fall.js `reveal`: a disc about the hole's centre, a hair wider
 	// than the hole so the hand's wobble on its rim never shows chalk, its
 	// edge feathered under the label's rim), chalk outside it — and nothing
 	// of the colour before the hole is a hole.
@@ -2612,7 +2065,6 @@ export default async function make({ THREE, at }) {
 				const camR = st.fall.draw(roomPen(O, tf, bo), w, h, t, {
 					origin: O,
 					colourAlong: false,
-					dust: null,
 					reveal: () => ({ cx: O[0], cy: O[1], r: 1.1 * R, wob: 0, feather: 0.03 })
 				});
 				// (L) the monitor's glass as drawn — never the spiral through it
@@ -2677,7 +2129,7 @@ export default async function make({ THREE, at }) {
 			body.fillDepth(Z, cam, shape, pose);
 			prof('depth');
 			const ink = inkFor(gUnder);
-			rings(ink, t, w, h, cam, st, bo, band, O);
+			rings(ink, t, w, h, cam, st, bo, band);
 			ink.flush(ctx);
 			prof('rings');
 			if (!st.F.edge) firstRoom(ctx, w, h, t, st, bo);
@@ -2773,7 +2225,7 @@ export default async function make({ THREE, at }) {
 			const ink = inkFor(gOver);
 			const inkD = makeInk();
 			prof('frame');
-			drawBand(ctx, ink, w, h, O, band, bo);
+			drawBand(ctx, h, O, band);
 			if (st.F.edge) breakdown(ctx, w, h, t, O, band, st);
 			prof('band');
 			ctx.save();
@@ -2977,9 +2429,7 @@ export default async function make({ THREE, at }) {
 		// the board's corners (bandAt's hole)
 		// (0.22: until the room's frame — the porthole — has passed the
 		// board's corners, holeAt; it does so before the lens is at rest)
-		const veer = veerAt(t, st);
-		const nd = nudgeOf(t, secsNow);
-		const nudge = [nd[0] + 0.08 * veer[0], nd[1] + 0.05 * veer[1]];
+		const nudge = [...nudgeOf(t, secsNow)];
 		const camT = lensAt(t, w, h, st);
 		const Oa = camT.project([X_APEX, 0, 0]);
 		const O = Oa[2] > NEAR ? [Oa[0], Oa[1]] : [w / 2, h / 2];
@@ -3007,7 +2457,7 @@ export default async function make({ THREE, at }) {
 			// the board by the band's edges.
 			Z.reset(w, h);
 			const ink = inkFor(gUnder);
-			rings(ink, t, w, h, camT, st, bo, band, O);
+			rings(ink, t, w, h, camT, st, bo, band);
 			ink.flush(ctx);
 		}
 		prof('lens');
@@ -3046,8 +2496,6 @@ export default async function make({ THREE, at }) {
 			// the lens leans after the swimmer's veer, and after the pointer
 			nudge,
 			// (no tesseract in this cut)
-			tiles: 0,
-			tilesAlpha: 0.5,
 			// (K2) the fall's own lit glass (a glow blooming at the middle of
 			// the screen) is kept OFF: the monitor's face is screenOn's, even
 			screenOff: 1,
@@ -3055,7 +2503,6 @@ export default async function make({ THREE, at }) {
 			// (slow and gentle — the lead; `fly` is a smoothstep over EXIT.fly)
 			zeta: exit ? g.L + st.deep + EXIT.depth * Math.pow(fly, 1.35) : null,
 			colourAlong: false,
-			dust: null,
 			// (K2) the colour through the hole while it opens; all colour
 			// once it has taken the frame (the flood, long done)
 			reveal: opening ? iris(band, O) : null,
@@ -3105,11 +2552,8 @@ export default async function make({ THREE, at }) {
 			const shape = shapeAt(t, st);
 			// The chase's offset off the axis, given up as the first glass
 			// opens round the vanishing point, so the nose goes into it.
-			const off = mul3(OFF, 1 - smooth(span(t, B.fall[0] + 0.6, B.fall[0] + 2.6)));
-			// … and the veer: off its line and leaning into the turn
-			const at = add3(off, [0, 2.2 * veer[1], 2.2 * veer[0]]);
-			const dir = norm(add3(DIR_C, [0, 0.32 * veer[1], 0.32 * veer[0]]));
-			const pose = { at, dir, up: [0, 0, 1], scale: exit ? lerp(1, 0.55, fly) : 1 };
+			const at = mul3(OFF, 1 - smooth(span(t, B.fall[0] + 0.6, B.fall[0] + 2.6)));
+			const pose = { at, dir: DIR_C, up: [0, 0, 1], scale: exit ? lerp(1, 0.55, fly) : 1 };
 			const hd = swimmerHand(ctx, t, bo);
 			ctx.save();
 			const am = exit ? 1 : aim;
@@ -3124,7 +2568,7 @@ export default async function make({ THREE, at }) {
 		// swimmer's nose out; the speed lines over it; the date bursting out
 		// of it, its dark ink torn away with the white it is written on.
 		const ink = inkFor(gOver);
-		if (opening) drawBand(ctx, ink, w, h, O, band, bo);
+		if (opening) drawBand(ctx, h, O, band);
 		prof('band');
 		// (the spray out of the thin seam, not the parting edges, and on down)
 		const slot = band && !(band.open > 0) ? band : { m: 1, W: 1.6 * w, hb: st.bandHold, open: 0 };
@@ -3222,18 +2666,11 @@ export default async function make({ THREE, at }) {
 	};
 }
 
-// ── The calculation, laid out ────────────────────────────────────────────────
-// The rows of the count back through the months (each its days j0…j1 of the
-// 266, its label, the year where it turns), the working of the last month,
-// the date; and the slams: the premise before the count, and over the rooms
-// Zeller's congruence worked (its terms struck as they are summed, the
-// weekday ringed) and the year's room (the decade ringed). `narrow` (a board
-// taller than it is wide): the formula in two lines.
 // ── The song (functions/answer.js: the archive, the one place it is asked) ──
 // The copy's {title} {artist} {chart} {spice}: the chart's track at the
 // spice's position in the week the conception falls in. A birthday the
 // archive cannot answer for ({edge}: 'past', 'future' or 'unknown') has no
-// song yet — its words are blank until the error flows are drawn in.
+// song: its title and artist are blank, and the run breaks down (BREAK).
 const EDGES = ['past', 'future', 'unknown'];
 function songOf(ans, forcedEdge = null) {
 	const b = birthOf(ans.date);
@@ -3257,16 +2694,11 @@ function songOf(ans, forcedEdge = null) {
 	};
 }
 
-// ── The words, laid out (log/sketch-copy.js COPY → what flies) ──────────────
+// ── The words, laid out (copy.js COPY → what is lettered) ───────────────────
 // Each slam row's tokens filled in and its marks found in its lines (the
-// first place the mark's text occurs, by glyph); each stream row scheduled —
-// the years NOW … the birth year (a headline with every `every`-th, from
-// HEADLINES; none with `every: 0`) — every figure with its second, its lead
-// out of the vanishing point and its pace, on its own ray. (The count, the
-// months and the date on the band are the sketch's own, exact.)
+// first place the mark's text occurs, by glyph).
 function wordsOf(F) {
 	const slams = [];
-	const streams = [];
 	let seed = 100;
 	for (const row of COPY) {
 		// `when`: 'song' only on a run with a song, 'edge' only on a verdict,
@@ -3306,94 +2738,14 @@ function wordsOf(F) {
 				seed: (seed += 100),
 				hold: !!row.hold,
 				color: row.color,
-				veer: row.veer ? (F._veer?.[row.veer] ?? null) : null,
 				lines
 			});
-		} else if (row.stream === 'years') {
-			const y1 = F._birth.y;
-			const n = Math.max(1, NOW - y1 + 1);
-			const sch = schedule(n, row.at, row.out, row.slow ?? 2, row.fast ?? 14);
-			const every = Math.max(0, row.every ?? 3);
-			streams.push(
-				sch.map((s, j) => {
-					const y = NOW - j;
-					const news = every > 0 && j % every === 0 ? HEADLINES[y]?.[0] : null;
-					return {
-						...s,
-						text: String(y),
-						sub: news ?? null,
-						th: TAU * rand(j, 21),
-						seed: 2000 + j,
-						r0: 0.03,
-						k: 0.22
-					};
-				})
-			);
 		}
 	}
-	return { slams, streams };
-}
-// When each of n figures is struck over [t0, t1]: the rate (figures a second)
-// climbs from `slow` to `fast` and comes back down for the last few (its log
-// a smoothstep bump), so the first and the last can be read; with it how long
-// before its strike each leaves the vanishing point and how fast it flies
-// (e-folds a second), from the pace there: the slow ones linger to be read.
-function schedule(n, t0, t1, slow, fast) {
-	const N = Math.max(200, 8 * n);
-	const lr0 = Math.log(slow);
-	const lr1 = Math.log(Math.max(slow, fast));
-	const bump = (u) => smooth(span(u, 0, 0.34)) * (1 - smooth(span(u, 0.8, 0.98)));
-	const rate = (u) => Math.exp(lerp(lr0, lr1, bump(u)));
-	const cum = [0];
-	for (let i = 1; i <= N; i++) cum[i] = cum[i - 1] + (0.5 * (rate((i - 1) / N) + rate(i / N))) / N;
-	const scale = n / cum[N];
-	const out = [];
-	let i = 0;
-	for (let j = 1; j <= n; j++) {
-		const want = j / scale;
-		while (i < N - 1 && cum[i + 1] < want) i++;
-		const f = clamp01((want - cum[i]) / (cum[i + 1] - cum[i] || 1));
-		const u = (i + f) / N;
-		const p = lr1 > lr0 ? clamp01((Math.log(rate(u)) - lr0) / (lr1 - lr0)) : 0;
-		out.push({ T: t0 + u * (t1 - t0), lead: lerp(0.62, 0.26, p), v: lerp(2.1, 4.6, p) });
-	}
-	return out;
+	return { slams };
 }
 
-function calcOf(digits) {
-	const b = birthOf(digits);
-	const c = conceive(b);
-	const z = zeller(c.date);
-	let j = 0;
-	const rows = c.rows.map((r, i) => {
-		const j0 = j + 1;
-		j += r.take;
-		return {
-			...r,
-			j0,
-			j1: j,
-			label: `${MON[r.m - 1]} ${r.take}`,
-			year: i > 0 && r.y !== c.rows[i - 1].y ? String(r.y) : null
-		};
-	});
-	const lastJ0 = Math.min(GESTATION, j + 1);
-	const working = `${MON[c.last.m - 1]} ${c.last.len} − ${c.last.rem}`;
-	const landed = `= ${c.date.d}`;
-	return {
-		birth: b,
-		rows,
-		last: c.last,
-		date: c.date,
-		zeller: z,
-		weekday: z.day,
-		dateStr: fmt(c.date),
-		working,
-		landed,
-		lastJ0
-	};
-}
-
-// ── Which groups cannot be (epicycle's) ──────────────────────────────────────
+// ── Which of the date's groups cannot be, as it is typed ─────────────────────
 const pad = (x, n) => String(x).padStart(n, '0');
 function canBe(part, lo, hi, n) {
 	for (let x = lo; x <= hi; x++) if (pad(x, n).startsWith(part)) return true;
@@ -3415,8 +2767,7 @@ function badGroups(typed) {
 }
 
 // ── The entry's text: the title fading, the two questions, the field and the
-// slider — intro/epicycle.js's, as it lays them, without its figure (the kit
-// draws them only round its own figure).
+// slider.
 const Q1_TEXT = 'when were you born?';
 const Q2_TEXT = 'how spicy are your parents?';
 const MASK = 'dd.mm.yyyy';
@@ -3537,7 +2888,7 @@ function makeEntryText(board, answers, live) {
 		c.height = Math.round(h * dpr);
 		const x = c.getContext('2d');
 		x.setTransform(dpr, 0, 0, dpr, 0, 0);
-		TERM.draw(x, w, h, FREEZE / 10, FREEZE, FREEZE - 10);
+		TERM.draw(x, w, h, FREEZE);
 		frozen = { c, w, h, dpr };
 		return c;
 	}

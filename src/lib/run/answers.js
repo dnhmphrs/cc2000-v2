@@ -1,8 +1,8 @@
 // ── The answers: the two questions, taken by hand ────────────────────────────
-// The site asks two things — when were you born, and how spicy (1 to 10) —
-// and a sketch that asks them draws its own fields; this is what is the same
-// under all of them: the keyboard and the pointer, the run WAITING at each
-// question until it is answered, and the demo's hand when no one is there.
+// The site asks two things — when were you born, and how spicy (1 to 10).
+// The sketch draws the fields (makeEntryText); this is what is under them:
+// the keyboard and the pointer, the run WAITING at each question until it is
+// answered, and the scripted hand when it is asked for.
 //
 //   const A = makeAnswers({ live, beats });
 //   A.step(time, dt)        advance the sketch's clock (board.js clock), held
@@ -19,13 +19,13 @@
 // `beats`, in the sketch's seconds: { q1, wait1, e1, q2, wait2, e2 } — the
 // date asked at q1; the field ready at wait1 (live: the clock holds here
 // until Enter; scripted: the typing starts here); Enter at e1 (scripted; live,
-// the clock jumps to e1 when Enter is pressed, so what a sketch draws on
+// the clock jumps to e1 when Enter is pressed, so what the sketch draws on
 // Enter plays the same either way). The same for the spice at q2, wait2, e2.
 // Scripted needs e1 ≥ wait1 + 2.0 and e2 ≥ wait2 + 1.9.
 //
-// Live means a person is there: the lab, unpinned (no ?at=), not ?demo=1 —
-// the sketch decides and passes it. Scripted, every frame is a pure function
-// of t (log/entry.js's hand: 14 · 02 · 1987, spice 7).
+// Live means a person is there: no ?at= pin and no ?demo=1 — the sketch
+// decides and passes it. Scripted, every frame is a pure function of t
+// (demo.js's hand: 14 · 02 · 1987, spice 7).
 //
 // The hand at t:
 //   asking    'date' | 'spice' | null — which field is taking keys now
@@ -42,7 +42,7 @@
 //   secs      the clock a caret blinks on: real seconds live, t scripted
 //   touch     1 when the person is on a touch screen (no keyboard of its own)
 //   cover     px at the bottom of the board the on-screen keyboard hides now
-//             (0 with none) — a sketch lifts its field above h − cover
+//             (0 with none) — the sketch lifts its field above h − cover
 //
 // Keys (from wait1 and wait2): the date — digits, Backspace, Enter (once all
 // eight are in). The spice — drag the handle, or ← → (one stop), a digit (0
@@ -58,7 +58,7 @@
 // dragged with a finger). While it runs the page takes no pan or pinch, so a
 // drag stays a drag.
 
-import { script, HAND, DEMO } from './entry.js';
+import { script, HAND, DEMO } from './demo.js';
 import { span, PAL, TECH_FONT } from './board.js';
 
 function validDate(d) {

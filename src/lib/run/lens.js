@@ -21,16 +21,16 @@
 // texture on the lens's own renderer (makeLens, below): uploaded each frame
 // (on a GPU a copy that never leaves it), laid into a scene target over the
 // ground — between a
-// layer the flow draws UNDER it and one OVER it, on the GPU (log/gpu-ink.js:
+// layer the run draws UNDER it and one OVER it, on the GPU (gpu-ink.js:
 // the lines that are cheap there and dear on a canvas) — then blurred down a
 // chain of small targets (a quarter, an eighth, a sixteenth of each side;
 // four bilinear taps each), the halo worked out once at a quarter size from
 // them, and the whole read once, at full size, by ONE pass to the canvas:
 // the picture (one unfiltered read), its quarter blur (the mist), the halo,
 // the lift, two reads of a small noise tile (the grain) and the leak (and,
-// given `light`, a flow's light — flow-strand-sketch's conception). Every
+// given `light`, the run's light — the conception's). Every
 // pixel of the frame is touched by that pass alone; a software GPU (the
-// headless lanes: SwiftShader) pays ~50 ms for even a constant colour at
+// headless tools': SwiftShader) pays ~50 ms for even a constant colour at
 // 2880 × 1800, so the pass is kept to five reads and a little arithmetic,
 // and there the lens draws at fewer pixels than the board's (a budget a
 // frame: see buildLens; ?lensres=1 every pixel).
@@ -39,19 +39,18 @@
 // grain: a pattern and three washes, 20 Mpx at DPR 2).
 //
 // THE CLOCK. `secs`, not the run's t: the grain and the leak keep moving
-// while a live run waits at a question (t held), as v3's gate holds t and
-// runs on. A flow passes answers.hand(t).secs — real seconds live, exactly t
-// pinned, in the demo or a reel — so a seek is still a run.
+// while a live run waits at a question (t held). The run passes
+// answers.hand(t).secs — real seconds live, exactly t pinned or in the demo.
 //
 //   const lens = await makeLens({ THREE, board })   null where WebGL 2 is not
 //   clearBoard(board, { shown: !lens })               the board hidden while
 //                                                     the lens draws it
 //   lens.frame({ secs, look, under, over, after, light })   after the board
 //     under(renderer, { dpr }), over(…)   a GPU layer drawn into the scene
-//          target under / over the board (log/gpu-ink.js), or null
+//          target under / over the board (gpu-ink.js), or null
 //     after(renderer, { board, dpr })     onto the canvas after the pass
 //     look   any of LENS's numbers, this frame (e.g. { grain: 0 })
-//     light  a light at (x, y), CSS px — flow-strand-sketch's conception:
+//     light  a light at (x, y), CSS px — the conception's:
 //            { x, y, r (its core's radius), soft (the radius within which
 //            its rays go to an even glow, so they never meet at a point —
 //            r if absent), rays (its shafts: the picture's
@@ -69,8 +68,9 @@
 //   lens.renderer, lens.canvas, lens.software, lens.res
 //
 // Colours are the board's own display values: the renderer's output is set
-// to its working space for the pass (ColorManagement is off on the site), so
-// there is no output conversion and no half-float frame target.
+// to its working space for the pass and every texture is tagged as carrying
+// no colour space, so there is no conversion on the way in or out and no
+// half-float frame target.
 
 import {
 	Fn,
@@ -118,20 +118,20 @@ const hex3 = (hex) => {
 	return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 };
 
-// ONE lens a page (a reel builds every flow up front): its own canvas over
-// the page where the board is, and its own renderer — three's WebGPURenderer
-// on its WebGL 2 backend, because a 2D canvas goes into a WebGL texture by
+// ONE lens a page: its own canvas over the page where the board is, and its
+// own renderer — three's WebGPURenderer on its WebGL 2 backend, because a 2D
+// canvas goes into a WebGL texture by
 // the browser's own GPU copy (texImage2D: 1.2 ms a frame at 2880 × 1800 on
 // Chrome 153), where WebGPU's copyExternalImageToTexture from the same canvas
 // took 340–400 ms in every form tried (canvas, ImageBitmap, OffscreenCanvas).
-// Shown in place of the board while a flow draws through it (clearBoard's
-// `shown: false` swaps the two), hidden for every other sketch.
+// Shown in place of the board while the run draws through it (clearBoard's
+// `shown: false` swaps the two).
 let ONE = null;
 export async function makeLens({ THREE, board }) {
 	if (!THREE || typeof document === 'undefined') return null;
 	if (ONE) return ONE;
 	const canvas = document.createElement('canvas');
-	canvas.className = 'log-lens';
+	canvas.className = 'lens';
 	Object.assign(canvas.style, {
 		position: 'fixed',
 		inset: '0',
@@ -161,7 +161,7 @@ export async function makeLens({ THREE, board }) {
 	return ONE;
 }
 
-// A software GL (SwiftShader, llvmpipe: the headless lanes), where every
+// A software GL (SwiftShader, llvmpipe: the headless tools'), where every
 // fragment costs the CPU: there the lens draws at one device pixel to the
 // CSS pixel (a quarter of the fragments at DPR 2) unless ?lensres=1 asks
 // for every pixel (for sheets to judge it by). On a GPU, every pixel.
@@ -211,7 +211,7 @@ function buildLens({ THREE, renderer, board, canvas }) {
 		leak: uniform(LENS.leak),
 		leakEvery: uniform(LENS.leakEvery),
 		ground: uniform(V3(hex3(PAL.ground))),
-		// a flow's light (god rays): centre (device px), strength, core, rays
+		// the run's light (god rays): centre (device px), strength, core, rays
 		lightP: uniform(V2(0, 0)), // the light, lens px
 		lightR: uniform(40), // its core's radius, lens px
 		lightSoft: uniform(40), // the radius within which its rays go diffuse, lens px
@@ -321,7 +321,7 @@ function buildLens({ THREE, renderer, board, canvas }) {
 	for (let i = 0; i < 3; i++) {
 		const step = uniform(V2(1 / 1280, 1 / 800)); // the source's texel
 		const sm = i === 0 ? src : sampler();
-		// (the board is premultiplied, and may be clear where a flow draws a
+		// (the board is premultiplied, and may be clear where the run draws a
 		// layer under it: laid over the ground here, as in the final pass)
 		const tap = (dx, dy) => {
 			const c = sm.at(screenUV.add(vec2(dx, dy).mul(step)));
@@ -414,7 +414,7 @@ function buildLens({ THREE, renderer, board, canvas }) {
 	const halo = texture(placeholder, screenUV); // the halo
 	const raysTex = texture(placeholder, screenUV); // a light's shafts
 	// One pass, built per what it carries this frame (switched in JS: a
-	// software GPU runs an untaken branch anyway): the leak, a flow's light.
+	// software GPU runs an untaken branch anyway): the leak, the run's light.
 	const outOf = ({ leak, light, full }) =>
 		Fn(() => {
 			const pic = full ? srcLoad : srcAt;
@@ -702,7 +702,7 @@ function buildLens({ THREE, renderer, board, canvas }) {
 			const P = window.__prof; // a profiling harness's marks, if any
 			P?.mark('lens:js');
 			const tex = boardTexture();
-			// The picture: the board alone, or the board between the flow's
+			// The picture: the board alone, or the board between the run's
 			// own GPU layers in the scene target.
 			if (under || over) {
 				if (!scene) scene = RT(w, h);
@@ -739,7 +739,7 @@ function buildLens({ THREE, renderer, board, canvas }) {
 			renderer.setRenderTarget(null);
 			const leak = drift(secs);
 			renderer.render(finalScene({ leak, light: !!L, full: res >= 0.999 }), camera);
-			// What the flow draws over it on the GPU (log/gpu-ink.js): onto the
+			// What the run draws over it on the GPU (gpu-ink.js): onto the
 			// canvas as it is, given the board (its alpha says where the board
 			// covers a layer meant to be under it) and the lens's pixel ratio.
 			if (after) {

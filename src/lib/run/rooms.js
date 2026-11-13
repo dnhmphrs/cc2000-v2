@@ -1,14 +1,13 @@
 // ── Rooms: the site's bedrooms, for drawing on the board ─────────────────────
-// Lifted from log-fall.js so any sketch can put a room on the board. The room
-// is six flat drawings at six depths behind a golden-rectangle frame
-// (data/roomElements.js: DECADES, LAYERS, placement, elementUrl); this loads
+// A room is six flat drawings at six depths behind a golden-rectangle frame
+// (data/roomElements.js: DECADES, LAYERS, placement, elementUrl). This loads
 // them as Image()s, each with a mip chain (halved canvases, so a small room
 // is drawn from a small copy and never shimmers), the monitor's glass cut out
-// (keyed out within the measured rect, glass.js's GLASS_KEY, so the board
-// shows through it), and on request a CHALK copy of each — the artwork's ink
-// lifted off it and redrawn in chalk. roomOf lays a room out in the plate's
-// units; drawRoom draws one flat into a rectangle of the screen, turned, with
-// its layers slid against each other by depth: the parallax the site has.
+// (keyed out within the measured rect — SCREEN_GLASS, GLASS_KEY — so what is
+// behind shows through it), and on request a CHALK copy of each: the
+// artwork's ink lifted off it and redrawn in chalk. roomOf lays a room out in
+// the plate's units; fall.js draws it, its layers slid against each other by
+// depth.
 //
 // Plate units: x right, y up, the frame W = 2φ wide and H = 2 tall, centred
 // on the origin, the frame's plane at z = 0 and the back wall at z = −DEPTH.

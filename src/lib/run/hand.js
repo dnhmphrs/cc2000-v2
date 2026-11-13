@@ -1,13 +1,12 @@
 // ── The sketch hand: shaky, warm, boiling lines and hand-lettered figures ────
-// The anime hand (Eva, Akira) for the board, lifted out of
-// flow-strand-sketch.js: every line drawn a little off true, and drawn AGAIN
-// a few times a second — "on twos", 12 drawings a second — so the lines boil
-// the way hand-drawn animation does, while the camera's own move stays
-// smooth. Every frame a pure function of t (the drawing it is on is
-// boilOf(t)).
+// The anime hand (Eva, Akira) for the board: every line drawn a little off
+// true, and drawn AGAIN a few times a second — "on twos", 12 drawings a
+// second — so the lines boil the way hand-drawn animation does, while the
+// camera's own move stays smooth. Every frame a pure function of t (the
+// drawing it is on is boilOf(t)).
 //
 //   import { HAND, boilOf, makeHand, makeInk, letter, strike, circleMark,
-//            speedLines, rand } from './log/sketch-hand.js';
+//            speedLines, rand } from './hand.js';
 //
 //   const hand = makeHand(ctx)   a stand-in for the board's context: anything
 //                                drawn through hand.ctx (body.js's swimmer,
@@ -1530,7 +1529,7 @@ export function circleMark(ink, box, k, o = {}) {
 // `band` { W, hb } spreads their feet along a horizontal seam W either side
 // of the point and lifts them off its edges (hb), so they spray out of it.
 // `rIn(r01)` the inner radius for a line's random 0…1. One fill — or, given
-// `gpu` (log/gpu-ink.js), a wedge apiece onto that layer.
+// `gpu` (gpu-ink.js), a wedge apiece onto that layer.
 export function speedLines(ctx, o) {
 	const {
 		ox,

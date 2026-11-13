@@ -8,14 +8,14 @@
 //
 // `at` the second it starts typing, `until` the second it is gone (it fades
 // over the 0.4 s before). `size` the type's size (default: the terminal's at
-// 0.8, 0.8 × min(0.036 h, …), as the epicycle questions), `x`, `y` where its
+// 0.8, 0.8 × min(0.036 h, …), as the two questions), `x`, `y` where its
 // baseline starts (default: the terminal's left margin, 0.9 h), `align`
 // 'left' or 'center' (the line's full width with its dots counted, so it does
 // not shift as the dots come).
 
 import { PAL, TECH_FONT, span, smooth } from './board.js';
 
-export const CAPTION = {
+const CAPTION = {
 	char: 0.045, // seconds a keystroke
 	cycle: 1.2, // seconds the dots take to come and go
 	fade: 0.4,
