@@ -101,7 +101,7 @@ export const LAYERS = [
 		port: { x: 0.3, y: 0.66, width: 0.46 },
 		// The 90s wall is drawn with the poster's own edges on it (the tape
 		// marks), so the sprite must sit EXACTLY where the artist's composite
-		// (static/90s_Illustration.jpg) has it: the sprite fitted to the
+		// (90s_Illustration.jpg, on the archive branch) has it: the sprite fitted to the
 		// composite by least difference lands at (1973, 0) of 3840 × 2160 at
 		// its own 1180 × 1176 — the bg covers the plate at its height, so a
 		// composite px is H/2160 plate units: centre (643, 492) px off the
@@ -188,8 +188,8 @@ export const LAYERS = [
 ];
 
 // ── THE 50s, WHOLE ───────────────────────────────────────────────────────────
-// The 50s does not need to be guessed at. It ships `50s_Illustration_desktop.jpg`
-// — the artist's own finished composite — and every element PNG is a 1:1 CROP of
+// The 50s does not need to be guessed at. It came with `50s_Illustration_desktop.jpg`
+// (on the archive branch) — the artist's own finished composite — and every element PNG is a 1:1 CROP of
 // it, which means each one has exactly one offset at which it matches, and that
 // offset is the placement. Found by sliding each sprite over the composite and
 // taking the minimum, then converted with the frame's own arithmetic: the
@@ -212,49 +212,28 @@ export const LAYERS = [
 // Detected as the largest uniform-colour region in each PNG, except the 50s,
 // whose screen fill is too close to its own casing for that to work — measured
 // off the artwork by hand instead.
-// Moved to config/layout.js, where every other screen-space size lives.
-// Re-exported so nothing that already imports it from here has to change.
-export { SCREEN_GLASS, GLASS_SAFETY } from '$lib/config';
-import { rand } from '$lib/random';
+// (centre cx/cy and size w/h as fractions of the PNG, 0..1; `art` is the PNG's
+// own pixel aspect, which turns those fractions into a real shape)
+export const SCREEN_GLASS = {
+	'50s': { cx: 0.545, cy: 0.42, w: 0.73, h: 0.58, art: 1024 / 1099 },
+	'60s': { cx: 0.382, cy: 0.391, w: 0.64, h: 0.65, art: 1289 / 1148 },
+	'90s': { cx: 0.352, cy: 0.436, w: 0.51, h: 0.63, art: 1457 / 1182 },
+	'10s': { cx: 0.498, cy: 0.319, w: 0.94, h: 0.6, art: 1097 / 999 }
+};
 
-// The palettes the blueprint field takes while the search turns through the
-// decades. The first stop is never used — the scene's own ground overrides it —
-// so these are really [ignored, the RULE, the LATTICE].
-//
-// All four are golds, because the field is the paper the second half of the run
-// is worked on and the paper does not change material between eras. What the
-// decade shifts is the temperature of the gold: warm brass for the fifties,
-// hard yellow for the sixties, a greener gold for the nineties, and something
-// nearly white for the twenty-tens.
-export const DECADE_FIELD = {
-	'50s': [0xffe6a3, 0xffc46a, 0xe08a2e],
-	'60s': [0xffd426, 0xffd23a, 0xf2a521],
-	'90s': [0xfff2c0, 0xe6d878, 0xbfae3e],
-	'10s': [0xeef4ff, 0xfff0c8, 0xd8d0a0]
+// And what that glass is painted. Every decade's monitor is drawn with its
+// glass ONE flat colour, measured off the artwork: the 50s set is a
+// see-through frame (alpha 0), the 60s a flat yellow, the 90s black, the 10s
+// a flat blue, ±12/255. Keying those pixels out turns the screen sprite into
+// a window (run/rooms.js).
+export const GLASS_KEY = {
+	'50s': { alpha: true },
+	'60s': { rgb: [252 / 255, 254 / 255, 143 / 255] },
+	'90s': { rgb: [0, 0, 0] },
+	'10s': { rgb: [44 / 255, 78 / 255, 150 / 255] }
 };
 
 export function elementUrl(decade, key) {
 	const files = FILES[decade] || FILES['90s'];
 	return `/room-elements/${decade}/${files[key]}`;
-}
-
-// Fisher–Yates shuffle (returns a new array).
-export function shuffle(arr) {
-	const a = arr.slice();
-	for (let i = a.length - 1; i > 0; i--) {
-		const j = Math.floor(rand() * (i + 1));
-		[a[i], a[j]] = [a[j], a[i]];
-	}
-	return a;
-}
-
-// Assign the four decades across `count` faces at random, guaranteeing every
-// decade appears at least once (the remaining faces get random repeats).
-export function assignDecades(count = 6) {
-	const base = shuffle(DECADES);
-	const extra = [];
-	for (let i = DECADES.length; i < count; i++) {
-		extra.push(DECADES[Math.floor(rand() * DECADES.length)]);
-	}
-	return shuffle(base.concat(extra)).slice(0, count);
 }

@@ -1,70 +1,77 @@
 // ── The contact sheet ────────────────────────────────────────────────────────
-// Screenshot any beat of any 3D scene, exactly.
+// Screenshot any moment of the run, exactly.
 //
-//   npm run dev      in one terminal
-//   node scripts/shots.mjs
+//   npm run dev                                  in one terminal
+//   BASE=http://localhost:3000 node scripts/shots.mjs
 //
-// Every 3D scene is a pure function of its own progress — nothing in them
-// integrates dt — so ?at= PINS a scene at a fraction of its duration and holds
-// it there (config/dev.js). The frame you get is the frame the run would have
-// drawn at that moment, not an approximation of it, and that is the whole point:
-// checking a half-second beat inside a fifteen-second scene by taking timed
-// screenshots and hoping is not a method.
+// The run is a pure function of its clock, so ?at= PINS it at a fraction of
+// its length and holds it there: the frame you get is the frame the run draws
+// at that moment, not a timed screenshot and a hope. A pinned frame is the
+// same on every load, byte for byte, so two sheets of the same moments can be
+// diffed, and a difference is a change.
 //
-// It is also how the one hand-over in the run is checked. Shoot the approach
-// at 1 and the descent at 0 and the two files should be the same picture — the
-// portal's glass filling the frame's height, room 0 inside it — because both
-// are nest.pose(0).
-//
-//   PLAN   [[sceneKey, [progress, ...]], ...]  scene keys are the dev harness's
-//          own: "2" approach, "3" descent, "5" room.
-//   OUT    where to write        W, H   viewport        BASE   dev server
-//   SEED   the ?seed= every frame is shot with (default 1), so the panes and
-//          the motes fall the same way on every load and a sheet can be diffed
-//          against another — config/dev.js
-//   LANE   webgl (default) or webgpu — lane.mjs
-//
-//   PLAN='[["2",[0,0.5,1]],["3",[0]]]' node scripts/shots.mjs
+//   BASE     the server (npm run dev picks a free port: read it from its log)
+//   AT       the moments, in SECONDS of the run, comma separated
+//            (default: a walk through the whole run)
+//   OUT      where to write (default .shots): one PNG a moment, and sheet.jpg
+//   W, H     the viewport (default 1440 × 900; a phone is W=390 H=844)
+//   QUERY    more query on every pin, e.g. QUERY='edge=past' for a verdict's
+//            run, 'decade=50s' for a room (the run's own switches are listed
+//            at the top of src/lib/run/sketch.js)
 import fs from 'fs';
-import { launch } from './lane.mjs';
+import { launch, ready } from './launch.mjs';
 
-const BASE = process.env.BASE ?? 'http://127.0.0.1:5178';
+const BASE = process.env.BASE ?? 'http://localhost:3000';
 const OUT = process.env.OUT ?? '.shots';
-// An extra query on every pin, e.g. QUERY='edge=past': ?edge=past|future seeds a
-// birthday with no answer, so key 4 pins the breakdown (config/dev.js).
+const W = Number(process.env.W ?? 1440);
+const H = Number(process.env.H ?? 900);
 const QUERY = process.env.QUERY ? `&${process.env.QUERY}` : '';
-const W = Number(process.env.W ?? 1280);
-const H = Number(process.env.H ?? 800);
-const PLAN = JSON.parse(process.env.PLAN ?? '[["2",[0,0.25,0.5,0.75,1]]]');
-const SEED = process.env.SEED ?? '1';
-const NAME = { 2: 'approach', 3: 'descent', 4: 'kaleido', 5: 'room' };
+const SECONDS = 44; // the run's length (SECONDS in src/lib/run/sketch.js)
+const AT = (
+	process.env.AT ?? '2.5,5.2,8.2,13,16.6,18.4,21,24.6,27.6,31.5,34.3,34.9,35.5,36.2,37.3,39.5'
+)
+	.split(',')
+	.map(Number)
+	.filter((s) => Number.isFinite(s));
 
 fs.mkdirSync(OUT, { recursive: true });
-
-const { browser: b, lane } = await launch();
-console.log(`lane  ${lane}`);
-const p = await b.newPage({ viewport: { width: W, height: H } });
+const browser = await launch();
+const page = await browser.newPage({ viewport: { width: W, height: H } });
 const errs = [];
-p.on('pageerror', (e) => errs.push('PAGEERROR: ' + e.message));
-p.on('console', (m) => m.type() === 'error' && errs.push('CONSOLE: ' + m.text()));
+page.on('pageerror', (e) => errs.push('PAGEERROR: ' + e.message));
+page.on('console', (m) => m.type() === 'error' && errs.push('CONSOLE: ' + m.text()));
 
-for (const [key, ats] of PLAN) {
-	for (const at of ats) {
-		// DEV_AT is read once at module load, so each frame is its own page load.
-		await p.goto(`${BASE}/?at=${at}&seed=${SEED}${QUERY}`, { waitUntil: 'networkidle' });
-		// The stage warms every program up before its first frame and says so;
-		// a key pressed before that lands on a canvas still at opacity 0.
-		await p.waitForFunction(() => window.__stage, null, { timeout: 180000 }).catch(() => {});
-		await p.waitForTimeout(1400);
-		// 1–5 jump straight to a scene, seeding a real answer on the way past the
-		// calculator so the computation has a decade to find — config/dev.js.
-		await p.keyboard.press(key);
-		await p.waitForTimeout(1800);
-		const file = `${OUT}/${NAME[key] ?? key}-${String(at).replace('.', '_')}.png`;
-		await p.screenshot({ path: file });
-		console.log(file);
-	}
+const files = [];
+for (const s of AT) {
+	// ?at= is read once, as the page boots: each frame is its own page load.
+	await page.goto(`${BASE}/?at=${(s / SECONDS).toFixed(5)}${QUERY}`, { waitUntil: 'load' });
+	await ready(page);
+	await page.evaluate(() => document.fonts.ready);
+	await page.waitForTimeout(900);
+	const file = `${OUT}/${s.toFixed(2).replace('.', '_')}.png`;
+	await page.screenshot({ path: file });
+	files.push({ file, s });
+	console.log(file);
 }
 
-console.log(errs.length ? errs.slice(0, 10).join('\n') : 'no console errors');
-await b.close();
+// The sheet: every frame, in order, with its second.
+const cols = Math.min(4, files.length);
+const rows = Math.ceil(files.length / cols);
+const cw = Math.round(1600 / cols);
+const ch = Math.round((cw * H) / W);
+const sheet = await browser.newPage({ viewport: { width: cols * cw, height: rows * ch } });
+await sheet.setContent(
+	`<body style="margin:0;background:#111;display:grid;grid-template-columns:repeat(${cols},${cw}px)">${files
+		.map(
+			({ file, s }) =>
+				`<div style="position:relative;height:${ch}px"><img src="data:image/png;base64,${fs.readFileSync(file).toString('base64')}" style="width:${cw}px;height:${ch}px;display:block"><span style="position:absolute;left:6px;bottom:4px;font:12px monospace;color:#fff;background:rgba(0,0,0,.6);padding:1px 4px">${s} s</span></div>`
+		)
+		.join('')}</body>`
+);
+await sheet.waitForFunction(() => [...document.images].every((i) => i.complete));
+await sheet.screenshot({ path: `${OUT}/sheet.jpg`, type: 'jpeg', quality: 88 });
+console.log(`${OUT}/sheet.jpg`);
+
+console.log(errs.length ? [...new Set(errs)].slice(0, 10).join('\n') : 'no console errors');
+await browser.close();
+process.exit(errs.length ? 1 : 0);

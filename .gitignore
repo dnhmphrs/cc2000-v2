@@ -10,8 +10,10 @@ node_modules
 .output
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-.verify/
 .shots/
+
+# yarn.lock is the tracked lockfile, and what Vercel installs from.
+package-lock.json
 
 # The harness keeps its worktrees here.
 .claude/

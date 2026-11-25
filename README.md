@@ -1,10 +1,10 @@
 # Conception Calculator 2000
 
-Give it your birthday and how spicy you like it, and it tells you the song that
-was playing at your moment of conception — then flies you into the bedroom where
+Give it your birthday and how spicy your parents are, and it finds the song that
+was playing at your moment of conception — then takes you to the bedroom where
 it happened.
 
-SvelteKit + three.js.
+One page, one run. SvelteKit + three.js.
 
 ```
 nvm use          # Node 22 — see .nvmrc
@@ -15,163 +15,119 @@ npm run dev      # http://localhost:3000
 **Node 22 or 24, not 23** (ESLint 10 and vite-plugin-svelte skip 23; Vercel
 builds on `nodejs22.x`, pinned in `vite.config.js`).
 
----
-
-## Two sites
-
-One repo builds two sites (`vite.config.js`, `src/lib/site.js`). **main** —
-the `main` branch's deploy, the site — is THE RUN ALONE: the sketch
-(`src/lib/lab/flow-strand-sketch.js`, `runs/Next.svelte`) at `/`, every
-other path a 404, nothing in the corner but a small build label. **dev** —
-`dev`'s preview, and any local build — is everything below: the runs, the
-next run with all its variants at `/next`, the lab and the archive. Decided
-at build time from `SITE=main|dev`, or Vercel's environment (Production is
-main, Preview is dev). `SITE=main npm run build` and
-`node scripts/verify-main.mjs` check the main site locally; CLAUDE.md has
-the detail.
-
-## Two runs (dev)
-
-The dev site keeps two versions of the run, side by side. The switch in the top
-left corner of every page moves between them, next to the build it is (the
-package's version and the commit, `components/Version.svelte`).
-
-|        | where         | what it is                                                                                                           | entry                    |
-| ------ | ------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| **v3** | `/` and `/v3` | the run as it is: approach → kaleido → descent → room, on one WebGPU renderer (WebGL 2 behind it; `?gl=1` forces it) | `src/lib/runs/V3.svelte` |
-| **v2** | `/v2`         | the WebGL run v3 replaced: the fly-in down the tunnel, the ovum, the conception, the computation, the room           | `src/lib/runs/V2.svelte` |
-
-`/v3` is the address v3 keeps when the next run takes `/`. Both runs share the
-title card, the two mid-flight questions, the room and the director
-(`scenes/director.js`, switched to v2's scene names by `setRun('v2')`).
-
-The workshop is beside them: `/lab?sketch=…` puts one sketch on a bare canvas,
-and `/v4` chains the rebuild's sketches end to end (`docs/v4-plan.md` is the
-plan v3 was built from — the "v4" in those names is the rebuild's, not a run).
-The next rebuild is being looked for at **`/log`**: the run as maths on a
-blackboard — the golden-spiral swimmer, the golden-angle tunnel, the Möbius
-turn, the fall into the rooms — every variant of every beat, and a reel of one
-of each (`docs/explore-03.md`), and the second round on the same board —
-beginnings, the way into spacetime, space closing up round the sphere, the
-rooms appearing, and some play with the clopen geometry
-(`docs/explore-04.md`); and the third round, Einstein meets Gödel — his
-rotating universe where time closes up, the closed universes from inside,
-coordinate charts, more rooms out of the dot, and moving through rooms in
-other geometries (`docs/explore-05.md`); and the fourth, the v4 flows — whole
-runs on the board, each a different answer to the same brief, at **`/flows`**
-— with one-offs on tame geometry, abelian varieties and the Kummer surface,
-more rooms out of the geometry, the other spherical space forms from inside
-and maps on the torus (`docs/explore-06.md`). `/log` lists every experiment there has been, `/cut`
-plays every variant of every beat end to end in the run's order (fifteen
-minutes; ← and → step between beats, and `/v4?chain=one` is the short cut,
-one of each), and a small bar in the corner of any of them steps to the next.
-
-### v3
-
-```
-  title card      ┌──────────┐      ┌─────────┐      ┌─────────┐   splosh   ┌──────┐
-  (lifts itself)  │ Approach │ ───▶ │ Kaleido │ ───▶ │ Descent │ ─────────▶ │ Room │
-                  └──────────┘      └─────────┘      └─────────┘            └──────┘
-                     ▲  asks: birthday · spice    │ no answer                   │
-                     │                            ▼                             │
-                     ├───── calculate again ── verdict                          │
-                     └─────────────────────────── go again ─────────────────────┘
-```
-
-Space, and the swimmer ahead of the lens asked your two questions; the 60s
-television coming up dead ahead, gently turning; through its glass and down a
-tunnel of the archive — the drawings looped in rings round a wall of grooves —
-into a record's funnel whose hole is a monitor; rooms through rooms, decade by
-decade, to the answer's room and the splosh on its screen; the readout in that
-glass; and home through it to the next flight. A birthday the archive cannot
-answer for goes down a tunnel of its verdict's gif instead, stops in it, and the
-verdict is typed over it.
-
-The three 3D scenes are **one shot**: each ends on the frame the next opens on,
-on one lens and one slow hand on the camera, and the pace only gathers until the
-fall lands. The grooves are the critical line of ζ as the primes write it,
-`Σ cos(t log p)/p`, wound round the record in colour. `CLAUDE.md` has the
-details and the traps; `docs/v4-flow.md` is the run as a contact sheet.
-
-```
-src/lib/three/Stage.svelte     one canvas, one WebGPU renderer, the clock
-src/lib/three/world/
-  approach.js  kaleido.js  descent.js     the three scenes
-  kaleidoscope.js                         the set, the tunnel, the camera down it
-  nest.js                                 the record and the rooms, pose(ζ)
-  wobble.js                               the hand on the camera
-src/lib/three/tsl/                        TSL materials and nodes (zeta.js: the grooves)
-```
-
-### v2
-
-`three/StageV2.svelte` on a WebGL renderer, with `components/Background.svelte`
-behind it; the scenes are `scenes/{FlyIn,Conception,Computation}.svelte` over
-`three/world/{tunnel,egg,lattice}.js` and `three/shaders/`. How it was built,
-and why, is in `docs/design-notes.md`.
+This tree is the current version and nothing else. Everything that came before
+it — the two 3D runs, the lab and every sketch tried in it, the earlier cuts of
+this run — is on the **`archive`** branch; [`_archive/`](_archive/README.md)
+says what is there and how to look at it.
 
 ---
+
+## The run
+
+Forty-four seconds, drawn on a blackboard in a sketchy hand and shot through a
+soft warm lens. It waits at its two questions until they are answered.
+
+| part       | from | to   | what happens                                                                                                                                                                                              |
+| ---------- | ---- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Title      | 0    | 5.1  | a terminal types the title                                                                                                                                                                                |
+| Entry      | 5.4  | 15.3 | WHEN WERE YOU BORN? and HOW SPICY ARE YOUR PARENTS?, typed into a double helix; a gold trace runs the strand as each is entered                                                                           |
+| Compile    | 16.5 | 23.3 | COMPILING USER GENETICS: a reading frame crosses the helix and the swimmer's body is written codon by codon, then comes alive                                                                             |
+| Swim       | 23.3 | 27.9 | SIMULATING CONCEPTION: the swimmer sets off, the lens comes round behind it and onto the axis, and a groove is sketched round it, a helix down a cone                                                     |
+| The groove | 27.9 | 34.2 | about fifteen turns swum fast, gathering all the way, with a dolly zoom over the last of it; the end of the cone is a pinprick of light with a sunbeam out of it, and the room resolves out of that light |
+| The fall   | 34.2 | 37.2 | through the end of the tunnel into the room, one zoom across the dive, slowing to rest inside it                                                                                                          |
+| The screen | 37.1 | 38.3 | the monitor switches on; the moment the lens is at rest the output is on its glass: YOU WERE CONCEIVED TO, Spotify's player, SHARE and START AGAIN                                                        |
+| The hold   | 39.7 | 44   | the room holds, swaying after the pointer; START AGAIN dollies the lens on through the dark glass, and the next title types on that dark                                                                  |
+
+A birthday the archive cannot answer for (too early, too late, or the servers
+overheating) runs the same run to the dive and breaks down there: the verdict's
+gif tiled across the board, the verdict lettered over it, and START AGAIN under
+it.
+
+The numbers are the beat table `B` in `src/lib/run/sketch.js`; when a beat
+moves, this table moves with it.
 
 ## Where everything is
 
 ```
-src/lib/
-  runs/          V2.svelte, V3.svelte — each run, whole
-  config/        every tunable number: timing.js (durations, windows), space.js
-                 (distances, the nest, the kaleidoscope), layout.js, palette.js,
-                 ease.js, dev.js; one barrel, $lib/config
-  scenes/        the director, the title card, the room, v2's scenes
-  store/         every store, its writer named beside it
-  components/    the questions (Prompt), the verdict (error/), the raster (Glass),
-                 the corner switch (Version), the dev keys (Dev)
-  three/         both Stages, world/ (the scenes), tsl/, shaders/ (v2), geometry/
-  data/          the room drawings' layout; gifs.js, generated by scripts/gifs.mjs
-  lab/           the workshop sketches
+src/
+  app.html                 the shell: the first paint is the run's own dark
+  routes/
+    +layout.svelte         the stylesheet, the faces, the corner's build label
+    +page.svelte           the page: the run
+    styles.css
+  lib/
+    run/
+      Run.svelte           the frame round the run: boots it, steps it, and puts
+                           the output on the monitor's glass
+      sketch.js            THE RUN: every beat, timed (the table B), start to end
+      copy.js              every word, in one table: the captions, the verdicts,
+                           the output's line and keys (PAGE)
+      answers.js           the two questions, taken by hand: the keyboard, touch
+      demo.js              the scripted hand that answers when asked to (?demo=1)
+      terminal.js          the title, typed
+      date.js              the date's arithmetic: 266 days back, the weekday
+      body.js              the swimmer's body, written from the answers
+      fall.js  rooms.js    the fall into the room; the four bedrooms on the board
+      hand.js              the sketchy hand: lines that boil, lettering, speed lines
+      board.js             the board: the canvas, the palette, strokes, the clock
+      space.js             a depth buffer, so a line can hide behind the swimmer
+      caption.js           the two status lines
+      lens.js              the lens: the board drawn on the GPU, soft and warm, with
+                           the conception's light
+      gpu-ink.js           the hand's many lines, instanced on the GPU
+      grain.js             the grain, without the lens
+    data/
+      cc2000_data.json     the archive: the charts, week by week
+      roomElements.js      the four rooms' drawings and where each piece sits
+      gifs.js              how each verdict's gif sheet is cut
+    functions/
+      answer.js  utils.js  a birthday and a spice in, a song (or a verdict) out
+static/
+  room-elements/           the rooms' artwork, six layers a decade
+  gifs/                    the verdicts' gifs, baked into sheets of their frames
+  fonts/                   NB Architekt
+scripts/
+  verify.mjs               the smoke test, run against a build before every push
+  shots.mjs                pinned frames and a contact sheet
+_archive/README.md         the account of every version and branch before this
 ```
-
----
 
 ## Looking at it
 
-Every 3D scene is a pure function of its progress, so any frame can be pinned:
+The run is a pure function of its clock, so any frame can be pinned, and a
+pinned frame is the same on every load.
 
-| query        |                                                                                           |
-| ------------ | ----------------------------------------------------------------------------------------- |
-| `?at=0.42`   | pins the running scene at that fraction of its duration                                   |
-| `?seed=1`    | the same rooms, panes and motes on every load                                             |
-| `?speed=6`   | the whole run six times faster (or `0.3`, slower)                                         |
-| `?edge=past` | a birthday the archive cannot answer for (`future`, `unknown`) — the verdict's gif tunnel |
-| `?sperm=0`   | no swimmer (its roll is the one thing two loads never agree on)                           |
-
-With the dev keys on (`config/dev.js`): `1` restarts from the title card, `2`
-approach, `4` kaleido, `3` descent, `5` room.
+| query           |                                                                               |
+| --------------- | ----------------------------------------------------------------------------- |
+| `?at=0.42`      | pins the run at that fraction of its 44 seconds                               |
+| `?demo=1`       | the scripted hand answers the two questions (14 · 02 · 1987, spice 7)         |
+| `?edge=past`    | a birthday the archive cannot answer for (`future`, `unknown`): the breakdown |
+| `?decade=50s`   | lands in that room (`60s`, `90s`, `10s`) whatever the date                    |
+| `?screen=title` | the song lettered on the monitor instead of the player                        |
+| `?vertigo=0`    | no dolly zoom (`?vertigo=<degrees>` sets its widest angle)                    |
+| `?lens=0`       | the board bare, without the lens (`?gpuink=0`: the lens, the lines on canvas) |
 
 ```
-npm run dev        vite dev server
-npm run build      production build
-npm run lint       prettier --check + eslint
-npm run verify     drive the real site in a browser (needs dev running)
+npm run dev        the dev server
+npm run lint       prettier --check, then eslint
+npm run build      the production build
+npm run verify     the smoke test (BASE=http://localhost:<port>)
+npm run shots      a contact sheet (BASE, AT, W, H, QUERY — see scripts/shots.mjs)
 ```
 
-- `scripts/verify.mjs` walks the whole thing in Chromium — `BASE=…`,
-  `ROUTE=/v2` for v2, `LANE=webgpu` for a real WebGPU device.
-- `scripts/shots.mjs` makes a contact sheet of any beat:
-  `PLAN='[["4",[0.5,1]],["3",[0]]]' BASE=… OUT=… node scripts/shots.mjs`.
-- `scripts/gifs.mjs` bakes every gif in `static/gifs` into a sheet of frames.
+## Working on it
 
----
+Work happens on `dev` and reaches the site by a pull request to `main`; `main`
+is what Vercel deploys. The corner of the page says which build it is —
+`package.json`'s version and the commit — and the version is bumped with every
+pull request. `CLAUDE.md` has the working agreements, how a change is checked,
+and what has been decided about the run and must not be undone by accident.
 
-## Things that will bite you
+## Versions and branches
 
-- **`main` is `pointer-events: none`** so the 3D shows through the UI layer;
-  every screen that wants clicks sets `pointer-events: auto` on its own root.
-- **A seek is not a run.** A pinned frame runs `reset()` first, so anything a
-  scene inherits from the one before it is absent in a seeked frame and present
-  in a real run — check a claim on both.
-- **A GL warning is not an error.** A texture wider than the GPU allows uploads
-  nothing and the frame goes flat with only a warning in the console; the
-  contact sheets report errors only.
-- **Threshold latches.** `if (progress < 0.02)` is not a one-shot at a normal
-  frame rate; use an explicit boolean.
-- **Custom shaders must premultiply** — the canvas is premultiplied, so a
-  material that hands back straight colour paints at full strength.
+| what                                                                    | where                                                          |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------- |
+| the run, the current version (0.24 on)                                  | `main` (the site) and `dev` (the work), this tree              |
+| everything before it, as one building site: v2, v3, the lab, every cut  | `archive`, frozen at 0.23.18                                   |
+| how the project got here: the eras, the versions, every branch, in full | [`_archive/README.md`](_archive/README.md)                     |
+| older working branches (`fullflow-*`, `v4*`, `lab`, `scene-*`, …)       | left as they were; all but a few commits of them are in `main` |
